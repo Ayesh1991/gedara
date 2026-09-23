@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import type { Membership } from '@/lib/queries';
 import { initials, longDate } from '@/lib/time';
 import { Brand, EnvChip, LogoMark } from './Brand';
+import { WedgeListener } from './scan/WedgeListener';
 import { VersionBadge } from './VersionBadge';
 
 type NavKey = 'home' | 'money' | 'scan' | 'pantry' | 'things' | 'places' | 'insights' | 'settings';
@@ -76,6 +77,7 @@ export function AppShell({ membership, children }: { membership: Membership; chi
 
   return (
     <div className="relative z-10 min-h-dvh lg:flex">
+      <WedgeListener />
       {/* Desktop / iPad landscape: glass rail */}
       <aside className="glass-strong hidden border-y-0 border-l-0 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-[248px] lg:shrink-0 lg:flex-col lg:gap-7 lg:px-[18px] lg:py-7">
         <div className="px-1.5">

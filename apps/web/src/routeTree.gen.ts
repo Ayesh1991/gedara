@@ -16,9 +16,12 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppInsightsRouteImport } from './routes/_app/insights'
 import { Route as AppMoneyRouteImport } from './routes/_app/money'
 import { Route as AppPantryRouteImport } from './routes/_app/pantry'
-import { Route as AppPlacesRouteImport } from './routes/_app/places'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
 import { Route as AppThingsRouteImport } from './routes/_app/things'
+import { Route as AppPlacesIndexRouteImport } from './routes/_app/places/index'
+import { Route as AppPlacesPlaceIdRouteImport } from './routes/_app/places/$placeId'
+import { Route as AppPlacesLabelsRouteImport } from './routes/_app/places/labels'
+import { Route as AppSCodeRouteImport } from './routes/_app/s.$code'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings/appearance'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings/diagnostics'
@@ -57,11 +60,6 @@ const AppPantryRoute = AppPantryRouteImport.update({
   path: '/pantry',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPlacesRoute = AppPlacesRouteImport.update({
-  id: '/places',
-  path: '/places',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppScanRoute = AppScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -70,6 +68,26 @@ const AppScanRoute = AppScanRouteImport.update({
 const AppThingsRoute = AppThingsRouteImport.update({
   id: '/things',
   path: '/things',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlacesIndexRoute = AppPlacesIndexRouteImport.update({
+  id: '/places/',
+  path: '/places/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlacesPlaceIdRoute = AppPlacesPlaceIdRouteImport.update({
+  id: '/places/$placeId',
+  path: '/places/$placeId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlacesLabelsRoute = AppPlacesLabelsRouteImport.update({
+  id: '/places/labels',
+  path: '/places/labels',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSCodeRoute = AppSCodeRouteImport.update({
+  id: '/s/$code',
+  path: '/s/$code',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
@@ -95,11 +113,14 @@ export interface FileRoutesByFullPath {
   '/insights': typeof AppInsightsRoute
   '/money': typeof AppMoneyRoute
   '/pantry': typeof AppPantryRoute
-  '/places': typeof AppPlacesRoute
   '/scan': typeof AppScanRoute
   '/things': typeof AppThingsRoute
+  '/places/$placeId': typeof AppPlacesPlaceIdRoute
+  '/places/labels': typeof AppPlacesLabelsRoute
+  '/s/$code': typeof AppSCodeRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/places/': typeof AppPlacesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -108,12 +129,15 @@ export interface FileRoutesByTo {
   '/insights': typeof AppInsightsRoute
   '/money': typeof AppMoneyRoute
   '/pantry': typeof AppPantryRoute
-  '/places': typeof AppPlacesRoute
   '/scan': typeof AppScanRoute
   '/things': typeof AppThingsRoute
   '/': typeof AppIndexRoute
+  '/places/$placeId': typeof AppPlacesPlaceIdRoute
+  '/places/labels': typeof AppPlacesLabelsRoute
+  '/s/$code': typeof AppSCodeRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/places': typeof AppPlacesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -124,12 +148,15 @@ export interface FileRoutesById {
   '/_app/insights': typeof AppInsightsRoute
   '/_app/money': typeof AppMoneyRoute
   '/_app/pantry': typeof AppPantryRoute
-  '/_app/places': typeof AppPlacesRoute
   '/_app/scan': typeof AppScanRoute
   '/_app/things': typeof AppThingsRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/places/$placeId': typeof AppPlacesPlaceIdRoute
+  '/_app/places/labels': typeof AppPlacesLabelsRoute
+  '/_app/s/$code': typeof AppSCodeRoute
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/_app/places/': typeof AppPlacesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -141,11 +168,14 @@ export interface FileRouteTypes {
     | '/insights'
     | '/money'
     | '/pantry'
-    | '/places'
     | '/scan'
     | '/things'
+    | '/places/$placeId'
+    | '/places/labels'
+    | '/s/$code'
     | '/settings/appearance'
     | '/settings/diagnostics'
+    | '/places/'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,12 +184,15 @@ export interface FileRouteTypes {
     | '/insights'
     | '/money'
     | '/pantry'
-    | '/places'
     | '/scan'
     | '/things'
     | '/'
+    | '/places/$placeId'
+    | '/places/labels'
+    | '/s/$code'
     | '/settings/appearance'
     | '/settings/diagnostics'
+    | '/places'
     | '/settings'
   id:
     | '__root__'
@@ -169,12 +202,15 @@ export interface FileRouteTypes {
     | '/_app/insights'
     | '/_app/money'
     | '/_app/pantry'
-    | '/_app/places'
     | '/_app/scan'
     | '/_app/things'
     | '/_app/'
+    | '/_app/places/$placeId'
+    | '/_app/places/labels'
+    | '/_app/s/$code'
     | '/_app/settings/appearance'
     | '/_app/settings/diagnostics'
+    | '/_app/places/'
     | '/_app/settings/'
   fileRoutesById: FileRoutesById
 }
@@ -235,13 +271,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPantryRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/places': {
-      id: '/_app/places'
-      path: '/places'
-      fullPath: '/places'
-      preLoaderRoute: typeof AppPlacesRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/scan': {
       id: '/_app/scan'
       path: '/scan'
@@ -254,6 +283,34 @@ declare module '@tanstack/react-router' {
       path: '/things'
       fullPath: '/things'
       preLoaderRoute: typeof AppThingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/places/': {
+      id: '/_app/places/'
+      path: '/places'
+      fullPath: '/places/'
+      preLoaderRoute: typeof AppPlacesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/places/$placeId': {
+      id: '/_app/places/$placeId'
+      path: '/places/$placeId'
+      fullPath: '/places/$placeId'
+      preLoaderRoute: typeof AppPlacesPlaceIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/places/labels': {
+      id: '/_app/places/labels'
+      path: '/places/labels'
+      fullPath: '/places/labels'
+      preLoaderRoute: typeof AppPlacesLabelsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/s/$code': {
+      id: '/_app/s/$code'
+      path: '/s/$code'
+      fullPath: '/s/$code'
+      preLoaderRoute: typeof AppSCodeRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/': {
@@ -284,12 +341,15 @@ interface AppRouteChildren {
   AppInsightsRoute: typeof AppInsightsRoute
   AppMoneyRoute: typeof AppMoneyRoute
   AppPantryRoute: typeof AppPantryRoute
-  AppPlacesRoute: typeof AppPlacesRoute
   AppScanRoute: typeof AppScanRoute
   AppThingsRoute: typeof AppThingsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppPlacesPlaceIdRoute: typeof AppPlacesPlaceIdRoute
+  AppPlacesLabelsRoute: typeof AppPlacesLabelsRoute
+  AppSCodeRoute: typeof AppSCodeRoute
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
+  AppPlacesIndexRoute: typeof AppPlacesIndexRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
@@ -297,12 +357,15 @@ const AppRouteChildren: AppRouteChildren = {
   AppInsightsRoute: AppInsightsRoute,
   AppMoneyRoute: AppMoneyRoute,
   AppPantryRoute: AppPantryRoute,
-  AppPlacesRoute: AppPlacesRoute,
   AppScanRoute: AppScanRoute,
   AppThingsRoute: AppThingsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppPlacesPlaceIdRoute: AppPlacesPlaceIdRoute,
+  AppPlacesLabelsRoute: AppPlacesLabelsRoute,
+  AppSCodeRoute: AppSCodeRoute,
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
+  AppPlacesIndexRoute: AppPlacesIndexRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 

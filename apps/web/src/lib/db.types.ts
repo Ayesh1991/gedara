@@ -29,6 +29,74 @@ export type Database = {
         }
         Relationships: []
       }
+      attachment: {
+        Row: {
+          bytes: number | null
+          created_at: string
+          created_by: string | null
+          drive_file_id: string | null
+          entity_id: string
+          entity_type: string
+          height: number | null
+          household_id: string
+          id: string
+          is_primary: boolean
+          kind: string
+          mime: string | null
+          ocr_json: Json | null
+          provider: string
+          storage_path: string
+          thumb_path: string | null
+          width: number | null
+        }
+        Insert: {
+          bytes?: number | null
+          created_at?: string
+          created_by?: string | null
+          drive_file_id?: string | null
+          entity_id: string
+          entity_type: string
+          height?: number | null
+          household_id: string
+          id?: string
+          is_primary?: boolean
+          kind?: string
+          mime?: string | null
+          ocr_json?: Json | null
+          provider?: string
+          storage_path: string
+          thumb_path?: string | null
+          width?: number | null
+        }
+        Update: {
+          bytes?: number | null
+          created_at?: string
+          created_by?: string | null
+          drive_file_id?: string | null
+          entity_id?: string
+          entity_type?: string
+          height?: number | null
+          household_id?: string
+          id?: string
+          is_primary?: boolean
+          kind?: string
+          mime?: string | null
+          ocr_json?: Json | null
+          provider?: string
+          storage_path?: string
+          thumb_path?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachment_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household: {
         Row: {
           created_at: string
@@ -123,6 +191,149 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "household"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      label_profile: {
+        Row: {
+          cols: number
+          created_at: string
+          gutter_x: number
+          gutter_y: number
+          household_id: string
+          id: string
+          margin_bottom: number
+          margin_left: number
+          margin_right: number
+          margin_top: number
+          name: string
+          offset_x: number
+          offset_y: number
+          orientation: string
+          qr_mm: number
+          rows: number
+          template: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cols?: number
+          created_at?: string
+          gutter_x?: number
+          gutter_y?: number
+          household_id: string
+          id?: string
+          margin_bottom?: number
+          margin_left?: number
+          margin_right?: number
+          margin_top?: number
+          name: string
+          offset_x?: number
+          offset_y?: number
+          orientation?: string
+          qr_mm?: number
+          rows?: number
+          template?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cols?: number
+          created_at?: string
+          gutter_x?: number
+          gutter_y?: number
+          household_id?: string
+          id?: string
+          margin_bottom?: number
+          margin_left?: number
+          margin_right?: number
+          margin_top?: number
+          name?: string
+          offset_x?: number
+          offset_y?: number
+          orientation?: string
+          qr_mm?: number
+          rows?: number
+          template?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "label_profile_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location: {
+        Row: {
+          climate: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          kind: string | null
+          map_x: number | null
+          map_y: number | null
+          name: string
+          notes: string | null
+          parent_id: string | null
+          path: string
+          sort: number
+          updated_at: string
+        }
+        Insert: {
+          climate?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          kind?: string | null
+          map_x?: number | null
+          map_y?: number | null
+          name: string
+          notes?: string | null
+          parent_id?: string | null
+          path: string
+          sort?: number
+          updated_at?: string
+        }
+        Update: {
+          climate?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          kind?: string | null
+          map_x?: number | null
+          map_y?: number | null
+          name?: string
+          notes?: string | null
+          parent_id?: string | null
+          path?: string
+          sort?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_household_id_parent_id_fkey"
+            columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
           },
         ]
       }

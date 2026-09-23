@@ -1,10 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { CircleCheck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { ChevronRight, CircleCheck, MapPin } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
 import { StatTile } from '@/components/aurora/StatTile';
 import { Card } from '@/components/ui/card';
+import { placesQuery } from '@/lib/places';
 import { dayPart, firstName, hourIn } from '@/lib/time';
 
 export const Route = createFileRoute('/_app/')({
@@ -28,6 +30,30 @@ function AwaitingChip({ phase }: { phase: number }) {
 
 function EmptyNote({ children }: { children: ReactNode }) {
   return <p className="text-[13.5px] leading-relaxed text-[#a5b0d0]">{children}</p>;
+}
+
+/** Places is not in the phone dock (§5.1), so Home links to it — with real counts only. */
+function PlacesCard({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const places = useQuery(placesQuery(householdId));
+  const total = places.data?.length ?? 0;
+  const rooms = places.data?.filter((p) => !p.parent_id).length ?? 0;
+  return (
+    <Link to="/places" className="block">
+      <Card className="flex items-center gap-4 transition-colors hover:border-white/25">
+        <div className="brand-gradient flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-[#05070F]">
+          <MapPin className="h-6 w-6" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-[17px] font-semibold">{t('nav.places')}</div>
+          <div className="tabular text-[13px] text-muted">
+            {places.isPending ? '…' : total ? t('home.placesSummary', { count: total, rooms }) : t('home.placesEmpty')}
+          </div>
+        </div>
+        <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
+      </Card>
+    </Link>
+  );
 }
 
 function Pulse() {
@@ -61,6 +87,8 @@ function Pulse() {
         <StatTile empty label={t('home.pantryValue')} value="Rs —" footer={<AwaitingChip phase={3} />} />
         <StatTile empty label={t('home.things')} value="—" footer={<AwaitingChip phase={5} />} />
       </section>
+
+      <PlacesCard householdId={membership.household.id} />
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
         <Card className="flex flex-col gap-3">

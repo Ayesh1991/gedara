@@ -24,7 +24,6 @@
     "searchSoon": "Search everything with ⌘K arrives in Phase 6.",
     "notifications": "Notifications",
     "notificationsSoon": "Alerts for expiring food, bills and warranties arrive in Phase 6.",
-    "scanSoon": "Camera and USB scanning arrive in Phase 1.",
     "roleLine": "{{role}} · {{household}}",
     "roles": { "owner": "Owner", "member": "Member", "viewer": "Viewer" }
   },
@@ -60,10 +59,8 @@
   "placeholder": {
     "comingIn": "Coming in Phase {{phase}}",
     "money": "Accounts, transactions, bill import and budgets.",
-    "scan": "Camera + USB scanner, QR labels and deep links.",
     "pantry": "Stock, lots, expiry and the shopping list.",
     "things": "Assets, warranties, documents and maintenance.",
-    "places": "The location tree with QR labels.",
     "insights": "Drill-down analytics for every number."
   },
   "home": {
@@ -87,7 +84,10 @@
     "attentionEmpty": "All clear. Expiring food, bills due and warranties ending will show up here.",
     "activity": "Recent activity",
     "live": "LIVE",
-    "activityEmpty": "Everything your household does (bills, stock, moves) will stream here in real time."
+    "activityEmpty": "Everything your household does (bills, stock, moves) will stream here in real time.",
+    "placesSummary": "{{count}} places · {{rooms}} at the top level",
+    "placesSummary_one": "1 place · {{rooms}} at the top level",
+    "placesEmpty": "Map your home: rooms, cupboards and boxes, each with a QR label"
   },
   "settings": {
     "title": "Settings",
@@ -95,6 +95,7 @@
     "appearanceHint": "Aurora colour theme and motion",
     "diagnostics": "Diagnostics",
     "diagnosticsHint": "Version, Test connection, clear cache",
+    "placesHint": "Rooms, boxes and QR labels",
     "signedInAs": "Signed in as {{email}}",
     "role": "Role: {{role}}",
     "signOut": "Sign out"
@@ -153,9 +154,196 @@
     "retry": "Try again",
     "diagnostics": "Open Diagnostics"
   },
+  "places": {
+    "intro": "Rooms, cupboards and boxes. Each one has its own QR label.",
+    "addPlace": "Add place",
+    "addFirst": "Add your first room",
+    "addTitle": "New place",
+    "editTitle": "Edit place",
+    "addInside": "Add a place inside",
+    "add": "Add place",
+    "save": "Save",
+    "saving": "Saving…",
+    "created": "{{name}} added",
+    "saved": "{{name}} saved",
+    "deleted": "{{name}} deleted",
+    "moved": "{{name}} moved to {{target}}",
+    "copied": "Code copied",
+    "select": "Select",
+    "selectedCount": "{{count}} selected",
+    "selectedCount_one": "1 selected",
+    "printLabels": "Print labels",
+    "printLabel": "Print label",
+    "printAllInside": "Labels for all {{count}}",
+    "printAllInside_one": "Label for 1",
+    "emptyTitle": "Start with a room",
+    "emptyBody": "Add the rooms of your home, then the cupboards, shelves and boxes inside them. Print a QR label for each one and scan it to see what's there.",
+    "loadError": "Couldn't load your places. Check your connection and try again.",
+    "notFoundTitle": "Place not found",
+    "notFoundBody": "It may have been deleted, or it belongs to another household.",
+    "backToPlaces": "Back to Places",
+    "breadcrumb": "Where this place is",
+    "labelCode": "Label code",
+    "copyCode": "Copy code",
+    "edit": "Edit",
+    "move": "Move",
+    "label": "Label",
+    "delete": "Delete",
+    "inside": "Inside",
+    "insideCount": "{{count}} inside",
+    "insideCount_one": "1 inside",
+    "insideEmpty": "Nothing inside yet. Add a shelf, drawer or box.",
+    "pantrySoon": "Food and supplies kept here will be listed with their expiry dates (Phase 3).",
+    "thingsSoon": "Appliances, tools and documents kept here will be listed with photos (Phase 5).",
+    "topLevel": "Top level (a room)",
+    "moreDetails": "More details",
+    "climateNone": "Not set",
+    "removePhoto": "Remove photo",
+    "moveTitle": "Move {{name}}",
+    "moveScan": "Scan the label of the new place",
+    "moveChooseFromList": "Choose from the list instead",
+    "moveSearch": "Search places",
+    "moveScanNotPlace": "That label isn't one of your places.",
+    "stats": {
+      "places": "places",
+      "places_one": "place",
+      "rooms": "rooms",
+      "rooms_one": "room",
+      "photos": "with photos",
+      "photos_one": "with a photo"
+    },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Kitchen, Pantry cupboard, Box 3",
+      "kind": "Type",
+      "inside": "Inside",
+      "photo": "Photo",
+      "photoHint": "Optional. Shrunk on your phone before upload.",
+      "climate": "Climate",
+      "notes": "Notes"
+    },
+    "kinds": {
+      "room": "Room",
+      "furniture": "Furniture",
+      "container": "Box",
+      "drawer": "Drawer",
+      "shelf": "Shelf",
+      "zone": "Zone",
+      "vehicle": "Vehicle",
+      "offsite": "Off-site"
+    },
+    "climates": {
+      "ambient": "Room temp",
+      "fridge": "Fridge",
+      "freezer": "Freezer",
+      "dry": "Dry",
+      "humid": "Humid"
+    },
+    "errors": {
+      "hasChildren": "Move or delete the places inside it first.",
+      "cycle": "A place can't go inside itself.",
+      "denied": "You don't have permission to change places.",
+      "generic": "Couldn't save. Check your connection and try again."
+    },
+    "photoErrors": {
+      "unsupported": "That photo format isn't supported here. Try a JPEG or PNG.",
+      "tooLarge": "That photo is too large (over 40 MB).",
+      "decode": "Couldn't read that photo.",
+      "upload": "The place was saved, but the photo didn't upload."
+    }
+  },
+  "scan": {
+    "aim": "Point the camera at a Gedara label. It stays open, so you can scan one label after another.",
+    "startCamera": "Start camera",
+    "retryCamera": "Try again",
+    "starting": "Starting…",
+    "torchOn": "Turn on the light",
+    "torchOff": "Turn off the light",
+    "usbReady": "USB scanner ready",
+    "typeCode": "Or type the code",
+    "find": "Find",
+    "open": "Open",
+    "recent": "Earlier scans",
+    "recentEmpty": "Scans from this session appear here.",
+    "lookupFailed": "Couldn't look that up. Check your connection.",
+    "deepLinkHint": "Check the label, or scan it again from the Scan screen.",
+    "scanAnother": "Scan a label",
+    "notFound": {
+      "title": "No place has this code"
+    },
+    "invalid": {
+      "title": "Not a Gedara label"
+    },
+    "later": {
+      "title": "Arrives in Phase {{phase}}",
+      "pantry": "Products and barcodes are scanned into the pantry from Phase 3.",
+      "asset": "Asset labels arrive with Things in Phase 5."
+    },
+    "short": {
+      "notFound": "Unknown code",
+      "invalid": "Not a Gedara label",
+      "later": "Not in this phase yet",
+      "place": ""
+    },
+    "cameraErrors": {
+      "denied": "Camera access is blocked. Allow the camera for this site in your browser settings, then try again.",
+      "notFound": "No camera found on this device. Type the code below or use the USB scanner.",
+      "insecure": "The camera needs a secure (https) connection.",
+      "unavailable": "The camera couldn't start. Close other apps using it and try again."
+    }
+  },
+  "labels": {
+    "title": "Labels",
+    "count": "{{count}} labels",
+    "count_one": "1 label",
+    "printer": "Printer",
+    "modes": {
+      "a4": "A4 sheet · Epson",
+      "niimbot": "20 mm · NIIMBOT"
+    },
+    "none": "No places selected. Go to Places, tap Select, and pick the places to label.",
+    "sheetPreview": "Sheet preview",
+    "sheets": "{{count}} sheets",
+    "sheets_one": "1 sheet",
+    "tapStart": "Using a half-used sticker sheet? Tap the first free sticker.",
+    "startHere": "Start at row {{row}}, column {{col}}",
+    "downloadPdf": "Download PDF",
+    "building": "Building…",
+    "calibration": "Calibration page",
+    "calibrationCaption": "Gedara calibration · offset X {{x}} mm · Y {{y}} mm · print at 100 % (Actual size)",
+    "printHint": "Print at 100 % (“Actual size”, not “Fit to page”) on the Epson.",
+    "printerSettings": "Printer settings",
+    "calibrationHint": "Print the calibration page on plain paper, hold it over a sticker sheet against the light, and nudge the offsets until the crosses sit in the middle of each sticker.",
+    "offsetX": "Offset X",
+    "offsetY": "Offset Y",
+    "less": "Less {{what}}",
+    "more": "More {{what}}",
+    "grid": "Sheet layout",
+    "orientation": "Orientation",
+    "landscape": "Landscape",
+    "portrait": "Portrait",
+    "rows": "Rows",
+    "cols": "Columns",
+    "marginTop": "Top margin (mm)",
+    "marginBottom": "Bottom margin (mm)",
+    "marginLeft": "Left margin (mm)",
+    "marginRight": "Right margin (mm)",
+    "gutterX": "Gap across (mm)",
+    "gutterY": "Gap down (mm)",
+    "qrSize": "QR size (mm)",
+    "saveProfile": "Save for this printer",
+    "saved": "Printer settings saved",
+    "saveFailed": "Couldn't save the printer settings.",
+    "pdfFailed": "Couldn't build the PDF.",
+    "png": "PNG",
+    "niimbotHint": "Download a label and print it from the NIIMBOT app on a 20 × 20 mm label, without scaling. Each one is a sharp 1-bit image at the printer's 203 dpi. Printing straight from Gedara comes with the Pi station (Phase 6b)."
+  },
   "common": {
     "loading": "Loading…",
     "unknown": "?",
-    "back": "Back"
+    "back": "Back",
+    "close": "Close",
+    "cancel": "Cancel",
+    "undo": "Undo"
   }
 }

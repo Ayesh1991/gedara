@@ -71,6 +71,12 @@ registerRoute(
   new NetworkFirst({ cacheName: SHELL_CACHE, networkTimeoutSeconds: 4 }),
 );
 
+// Scanner / image-encoder WASM (hashed, same origin): network first, cached for offline scanning.
+registerRoute(
+  ({ url }) => url.origin === self.location.origin && url.pathname.endsWith('.wasm'),
+  new NetworkFirst({ cacheName: SHELL_CACHE, networkTimeoutSeconds: 4 }),
+);
+
 // Images and fonts: stale-while-revalidate (MASTER_PLAN §2).
 registerRoute(
   ({ request }) => request.destination === 'image' || request.destination === 'font',

@@ -10,15 +10,19 @@ import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPSlot } from '@/components/ui/input-otp';
 import { otpErrorKey } from '@/lib/auth-errors';
 import { getSession } from '@/lib/queries';
+import { safeRedirect } from '@/lib/redirect';
 import { supabase } from '@/lib/supabase';
 
 const RESEND_SECONDS = 60;
 const OTP_SLOTS = [0, 1, 2, 3, 4, 5];
 const emailSchema = z.email();
 
+const SearchSchema = z.object({ redirect: z.string().optional() });
+
 export const Route = createFileRoute('/login')({
-  beforeLoad: async () => {
-    if (await getSession()) throw redirect({ to: '/' });
+  validateSearch: SearchSchema,
+  beforeLoad: async ({ search }) => {
+    if (await getSession()) throw redirect({ href: safeRedirect(search.redirect) });
   },
   component: LoginPage,
 });
@@ -27,6 +31,7 @@ function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { queryClient } = Route.useRouteContext();
+  const { redirect: returnTo } = Route.useSearch();
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [code, setCode] = useState('');
@@ -77,7 +82,7 @@ function LoginPage() {
     }
     await queryClient.invalidateQueries();
     setBusy(false);
-    await navigate({ to: '/' });
+    await navigate({ href: safeRedirect(returnTo), replace: true });
   }
 
   return (
