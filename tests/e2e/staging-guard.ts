@@ -27,3 +27,5 @@ export async function mintOtp(email = E2E_EMAIL): Promise<string> {
   if (!otp) throw new Error('generateLink returned no email_otp');
   return otp;
 }
+
+export const STORAGE_STATE = 'playwright/.auth/user.json';

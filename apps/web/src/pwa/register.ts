@@ -46,10 +46,28 @@ export function registerServiceWorker() {
   });
 }
 
+/** On a first visit the worker takes control a moment after load; wait briefly for it. */
+function waitForController(timeoutMs: number): Promise<ServiceWorker | null> {
+  const sw = typeof navigator !== 'undefined' ? navigator.serviceWorker : undefined;
+  if (!sw) return Promise.resolve(null);
+  if (sw.controller) return Promise.resolve(sw.controller);
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(sw.controller), timeoutMs);
+    sw.addEventListener(
+      'controllerchange',
+      () => {
+        clearTimeout(timer);
+        resolve(sw.controller);
+      },
+      { once: true },
+    );
+  });
+}
+
 /** Asks the active worker for its version (Diagnostics). */
-export function getServiceWorkerVersion(timeoutMs = 2000): Promise<string | null> {
-  const controller = typeof navigator !== 'undefined' ? navigator.serviceWorker?.controller : null;
-  if (!controller) return Promise.resolve(null);
+export async function getServiceWorkerVersion(timeoutMs = 2000): Promise<string | null> {
+  const controller = await waitForController(5000);
+  if (!controller) return null;
   return new Promise((resolve) => {
     const channel = new MessageChannel();
     const timer = setTimeout(() => resolve(null), timeoutMs);

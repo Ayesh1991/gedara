@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { STORAGE_STATE } from './auth.setup';
+import { STORAGE_STATE } from './staging-guard';
 
 test.use({ storageState: STORAGE_STATE });
 
@@ -23,13 +23,16 @@ test('shell: tabs navigate and nothing scrolls sideways', async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test('diagnostics: test connection is all green', async ({ page }) => {
-  await page.goto('/');
-  // Wait until the service worker controls the page, so the SW check can pass.
-  await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, { timeout: 20_000 });
+test('diagnostics: all green even as the very first page (SW still installing)', async ({ page }) => {
   await page.goto('/settings/diagnostics');
-  await expect(page.getByTestId('diag-summary')).toHaveText('All green', { timeout: 30_000 });
-  for (const id of ['auth', 'db', 'storage', 'realtime', 'edge', 'sw']) {
-    await expect(page.getByTestId(`check-${id}`)).toHaveAttribute('data-ok', 'true');
-  }
+  // Wait for all six checks to finish, then report every row so a failure names its check.
+  await expect(page.getByTestId('diag-summary')).toBeVisible({ timeout: 30_000 });
+  const rows = await Promise.all(
+    ['auth', 'db', 'storage', 'realtime', 'edge', 'sw'].map(async (id) => {
+      const row = page.getByTestId(`check-${id}`);
+      return { id, ok: await row.getAttribute('data-ok'), text: (await row.innerText()).replace(/\s+/g, ' ') };
+    }),
+  );
+  expect(rows.filter((r) => r.ok !== 'true'), JSON.stringify(rows, null, 1)).toEqual([]);
+  await expect(page.getByTestId('diag-summary')).toHaveText('All green');
 });

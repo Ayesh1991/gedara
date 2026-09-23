@@ -13,7 +13,9 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   reporter: [['list']],
-  use: { baseURL, trace: 'retain-on-failure', serviceWorkers: 'allow' },
+  // Default: full Chromium in new-headless mode (no headless-shell download). E2E_CHANNEL=msedge
+  // uses the Edge that ships with Windows.
+  use: { baseURL, channel: process.env.E2E_CHANNEL ?? 'chromium', trace: 'retain-on-failure', serviceWorkers: 'allow' },
   projects: [
     { name: 'setup', testMatch: /auth\.setup\.ts/ },
     {

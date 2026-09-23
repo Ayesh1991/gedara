@@ -114,14 +114,21 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
     realtime: () =>
       new Promise<string>((resolve, reject) => {
         const channel = supabase.channel(`diagnostics-${crypto.randomUUID()}`);
+        let settled = false;
+        // Settle BEFORE removing: removeChannel synchronously re-enters this callback with CLOSED,
+        // and removing again from inside it would loop (phx_leave storm, stack overflow).
         channel.subscribe((status, err) => {
+          if (settled) return;
           if (status === 'SUBSCRIBED') {
-            void supabase.removeChannel(channel);
+            settled = true;
             resolve(status);
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-            void supabase.removeChannel(channel);
+            settled = true;
             reject(err ?? new Error(status));
+          } else {
+            return;
           }
+          void supabase.removeChannel(channel);
         });
       }),
 

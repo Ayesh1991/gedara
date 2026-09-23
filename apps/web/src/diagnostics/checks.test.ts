@@ -1,5 +1,43 @@
-import { describe, expect, it } from 'vitest';
-import { CheckError, runCheck, withTimeout } from './checks';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { describe, expect, it, vi } from 'vitest';
+import type { Database } from '@/lib/db.types';
+import { CheckError, buildChecks, runCheck, withTimeout } from './checks';
+
+type StatusCb = (status: string, err?: Error) => void;
+
+/** Fake client whose removeChannel re-enters the subscribe callback with CLOSED, like realtime-js. */
+function fakeRealtime(first: 'SUBSCRIBED' | 'CHANNEL_ERROR') {
+  let cb: StatusCb = () => undefined;
+  const channel = {
+    subscribe: (fn: StatusCb) => {
+      cb = fn;
+      queueMicrotask(() => cb(first, first === 'CHANNEL_ERROR' ? new Error('denied') : undefined));
+      return channel;
+    },
+  };
+  const removeChannel = vi.fn(() => {
+    cb('CLOSED');
+    return Promise.resolve('ok');
+  });
+  const supabase = { channel: () => channel, removeChannel } as unknown as SupabaseClient<Database>;
+  return { supabase, removeChannel };
+}
+
+describe('realtime check', () => {
+  it('passes on SUBSCRIBED even though removing the channel reports CLOSED', async () => {
+    const { supabase, removeChannel } = fakeRealtime('SUBSCRIBED');
+    const checks = buildChecks({ supabase, appVersion: '1', getSwVersion: () => Promise.resolve('1') });
+    await expect(checks.realtime()).resolves.toBe('SUBSCRIBED');
+    expect(removeChannel).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails on CHANNEL_ERROR and removes the channel once', async () => {
+    const { supabase, removeChannel } = fakeRealtime('CHANNEL_ERROR');
+    const checks = buildChecks({ supabase, appVersion: '1', getSwVersion: () => Promise.resolve('1') });
+    await expect(checks.realtime()).rejects.toThrow('denied');
+    expect(removeChannel).toHaveBeenCalledTimes(1);
+  });
+});
 
 const t = (key: string, params?: Record<string, string | number>) =>
   params ? `${key} ${JSON.stringify(params)}` : key;

@@ -1,7 +1,7 @@
 import { expect, test as setup } from '@playwright/test';
-import { E2E_EMAIL, mintOtp } from './staging-guard';
+import { E2E_EMAIL, STORAGE_STATE, mintOtp } from './staging-guard';
 
-export const STORAGE_STATE = 'playwright/.auth/user.json';
+
 
 setup('log in with an email OTP', async ({ page }) => {
   // Don't send a real email: pretend the OTP request succeeded, then use an admin-minted code.

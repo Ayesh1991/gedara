@@ -23,3 +23,5 @@ Format: date · decision · why. Append-only.
 - 2026-09-23 · RLS helpers live in schema `private` (`private.is_member`, `private.can_write`, `private.is_owner`), moved there by migration 6 · Supabase advisor 0029: SECURITY DEFINER helpers shouldn't be callable as /rest/v1/rpc; cheaper to fix before dozens of policies exist
 - 2026-09-23 · Accepted advisor warnings: `schema_version()` executable by anon/authenticated (intentional — badge shows DB version on the login screen) · leaked-password protection off (OTP-only, no passwords)
 - 2026-09-23 · gedara-staging was created in **Tokyo (ap-northeast-1)**, prod is Singapore · staging-only latency cost; not worth recreating now
+- 2026-09-23 · Email OTP Length set to **6** in both Supabase projects (was 8) · app + email template expect a 6-digit code; an 8-digit code was silently truncated
+- 2026-09-23 · e2e runs on the system **Microsoft Edge** (`E2E_CHANNEL=msedge`) on the dev PC · Playwright's Chromium 1243 fails to start on this Windows 10 machine (side-by-side error)

@@ -85,7 +85,7 @@ function DiagnosticsPage() {
       </Card>
 
       <Card>
-        <CardTitle>
+        <CardTitle className="flex items-center justify-between gap-3">
           <span>{t('diagnostics.test')}</span>
           {!running && done.length === CHECK_IDS.length && (
             <span className={failed ? 'text-sm text-red' : 'text-sm text-teal'} data-testid="diag-summary">
