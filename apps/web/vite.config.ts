@@ -36,6 +36,8 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, 'src') },
   },
+  // jsquash locates its .wasm with new URL(…, import.meta.url); pre-bundling would break that path.
+  optimizeDeps: { exclude: ['@jsquash/webp'] },
   plugins: [
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     react(),
@@ -49,6 +51,8 @@ export default defineConfig({
       injectManifest: {
         // The list only warms the NetworkFirst cache on install; nothing is served cache-first.
         globPatterns: ['index.html', 'assets/*.{js,css}', '*.{png,svg,ico}'],
+        // The label-PDF builder (pdf-lib + fontkit, ~1 MB) is only for the Labels screen: fetched on use.
+        globIgnores: ['assets/pdf-*.js'],
         buildPlugins: {
           vite: [
             {

@@ -1,5 +1,5 @@
 import { Link, createFileRoute, type LinkProps } from '@tanstack/react-router';
-import { ChevronRight, Palette, Stethoscope, type LucideIcon } from 'lucide-react';
+import { ChevronRight, MapPin, Palette, Stethoscope, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -43,6 +43,7 @@ function SettingsPage() {
     <div className="flex flex-col gap-4">
       <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('settings.title')}</h1>
 
+      <SettingsLink to="/places" icon={MapPin} title={t('nav.places')} hint={t('settings.placesHint')} />
       <SettingsLink
         to="/settings/appearance"
         icon={Palette}

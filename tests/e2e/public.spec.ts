@@ -10,9 +10,14 @@ test('login screen shows brand, invite-only copy and the version badge', async (
   await expect(page.getByTestId('version-badge')).toHaveText(/^v\d+\.\d+\.\d+ · \w{5,7} · db \d+ · \w+$/);
 });
 
-test('protected pages redirect to login', async ({ page }) => {
+test('protected pages redirect to login and remember where you were going', async ({ page }) => {
   await page.goto('/settings/diagnostics');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fsettings%2Fdiagnostics$/);
+});
+
+test('a scanned label URL survives the trip through login', async ({ page }) => {
+  await page.goto('/s/HL:LOC:7K2P9Q');
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fs%2FHL%3ALOC%3A7K2P9Q$/);
 });
 
 test('no horizontal scroll on the login screen', async ({ page }) => {
