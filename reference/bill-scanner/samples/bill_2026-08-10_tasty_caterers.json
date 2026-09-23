@@ -1,0 +1,25 @@
+{
+  "shop": "TASTY CATERERS - CAFE 88",
+  "branch": "Fife Road, Colombo 05",
+  "date": "2026-08-10",
+  "time": "08:26",
+  "invoice_no": "2600791932",
+  "currency": "LKR",
+  "payment_method": "card",
+  "items": [
+    {
+      "name": "Bun - Egg N Seeni Sambal",
+      "category": "dining",
+      "subcategory": "Takeaway",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 190.00,
+      "amount": 190.00
+    }
+  ],
+  "sub_total": 190.00,
+  "discount": 0,
+  "rounding": 0,
+  "total": 190.00,
+  "notes": "Paid via Mastercard."
+}

@@ -3,7 +3,10 @@
 This folder becomes the **root of your `gedara` Git repo**. Nothing is coded yet. Claude Code
 builds it phase by phase from `docs/MASTER_PLAN.md`.
 
-## 1. One-time setup (about 30 min)
+## 1. One-time setup (about 1–2 hours)
+
+> **New to this? Follow `SETUP_GUIDE.md`** — it walks through steps 2–5 click by click.
+
 1. **GitHub:** create a private repo `gedara`. Copy everything in this folder into it (including
    the hidden `.claude/`, `.gitignore`, `.env.example`) and push.
 2. **Supabase:** sign up with **ayeshmantha1991.24@gmail.com** → create `gedara-staging` and
@@ -11,10 +14,15 @@ builds it phase by phase from `docs/MASTER_PLAN.md`.
    password manager.
    - Auth → Providers → Email: enable, **turn OFF "Allow new users to sign up"** (invite-only).
    - Auth → Email templates → "Magic Link": make it show the `{{ .Token }}` 6-digit code.
+   - Auth → Emails → **SMTP Settings: custom SMTP via Gmail** (`smtp.gmail.com:587`, sender
+     `ayeshmantha1991.24@gmail.com`, a Gmail **App Password**). Without this, login codes are not
+     delivered: the built-in sender only emails Supabase team members, 2 per hour.
 3. **Vercel:** sign in with GitHub → import the `gedara` repo → project name **`gedara`**
-   (if taken: `gedara-home`, and tell Claude Code). Leave the build settings for Claude Code.
-4. **Local tools:** Node 20+, pnpm (`npm i -g pnpm`), Supabase CLI, Git, Docker Desktop (for
-   local Supabase), and `npm i -g typescript-language-server typescript`.
+   (if taken: `gedara-home`, and tell Claude Code). Set **Root Directory = `apps/web`**. The first
+   build fails (expected), which reserves the name without publishing the docs. Leave the rest for
+   Claude Code.
+4. **Local tools:** Node 20+, pnpm (`npm i -g pnpm`), Supabase CLI, Git, Docker Desktop (optional — for
+   local Supabase; without it, tell Claude Code to develop against `gedara-staging`), and `npm i -g typescript-language-server typescript`.
 5. **Add reference files** (see `reference/README.md`): the Bill Scanner prompt, 5–10 sample bill
    JSONs, and the ledger Google Sheet as CSV.
 
@@ -57,6 +65,7 @@ Plan mode first."*
 ## 5. What's in this folder
 | Path | Purpose |
 |---|---|
+| `SETUP_GUIDE.md` | Beginner click-by-click guide for accounts and tools (steps 2–5) |
 | `CLAUDE.md` | Rules Claude Code follows every session |
 | `docs/MASTER_PLAN.md` | The full design: schema, modules, UX, analytics, devices, phases |
 | `docs/HANDOVER.md` | History + hard-won lessons from ledger v1–v7 |

@@ -1,0 +1,309 @@
+id,date,time,shop,category,subcategory,item,qty,unit,unit_price,amount,paid_by,notes,source,synced_at
+TEST-1782990687582,2026-07-02,,EDITOR TEST,Other,Miscellaneous,test row — safe to delete,,,,0,,,test,7/2/2026 16:41:28
+mr3du3xnbr8jn,2026-06-27,21:49,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,My Choice Garbage Bag - Medium,1,pcs,335,335,cash + loyalty points,Invoice 299,scan,7/2/2026
+mr3du3xo4sid5,2026-06-27,21:49,CARGILLS FOOD CITY,Grocery,Rice,Keeri Samba Bulk,1,pcs,260,260,cash + loyalty points,Invoice 299,scan,7/2/2026
+TEST-1782991919606,2026-07-02,,EDITOR TEST,Other,Miscellaneous,test row — safe to delete,,,,0,,,test,7/2/2026 17:02:00
+mr3fkru62ipe2,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Dairy & milk,Kotmale Set Kiri,1,pcs,180,180,cash,Invoice 49,scan,7/2/2026
+mr3fkru7ikvew,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Sugar,My Choice Brown Sugar Pkt,1,pcs,285,285,cash,Invoice 49,scan,7/2/2026
+mr3fkru7danfa,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Salt & spices,Freelan Mustard Seeds,1,pcs,50,50,cash,Invoice 49,scan,7/2/2026
+mr3fkru7qapap,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Dairy & milk,Highland Plain Yoghurt,4,pcs,80,320,cash,Invoice 49,scan,7/2/2026
+mr3fkru79s6o0,2026-06-27,11:53,CARGILLS FOOD CITY,Other,Miscellaneous,Amritha Incense Sticks Green,1,pcs,160,160,cash,Invoice 49,scan,7/2/2026
+mr3fkru7lhqis,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Dairy & milk,Ambewela Butter Salted,1,pcs,1200,1080,cash,Invoice 49,scan,7/2/2026
+mr3fkru7v3567,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Salt & spices,Navin Oregano,1,pcs,161,161,cash,Invoice 49,scan,7/2/2026
+mr3fkru7lqqjt,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Rice,Ruhunu Red Rice Flour,1,pcs,190,190,cash,Invoice 49,scan,7/2/2026
+mr3fkru7zxlc1,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Dairy & milk,Sera Real Coconut Milk,1,pcs,210,210,cash,Invoice 49,scan,7/2/2026
+mr3fkru7a3qzb,2026-06-27,11:53,CARGILLS FOOD CITY,Consumables,Toiletries,Ayush Toothpaste Anticavity,1,pcs,295,295,cash,Invoice 49,scan,7/2/2026
+mr3fkru7ogvde,2026-06-27,11:53,CARGILLS FOOD CITY,Grocery,Eggs,Araliya Brown Eggs,1,pcs,560,560,cash,Invoice 49,scan,7/2/2026
+mr3fkru8h7tez,2026-06-18,22:24,LAUGFS SUPERMARKET,Consumables,Medicine & pharmacy,Benof EX 100ml,1,pcs,480,480,cash,Invoice I26RJ07010836,scan,7/2/2026
+mr3fkru8uyfgh,2026-06-18,22:24,LAUGFS SUPERMARKET,Consumables,Medicine & pharmacy,Azee 500mg,3,pcs,104.73,314.19,cash,Invoice I26RJ07010836,scan,7/2/2026
+mr3fkru8rdsk8,2026-06-18,22:24,LAUGFS SUPERMARKET,Consumables,Medicine & pharmacy,Zeos 10mg,10,pcs,37,370,cash,Invoice I26RJ07010836,scan,7/2/2026
+mr3fkru8mznac,2026-06-18,22:24,LAUGFS SUPERMARKET,Consumables,Medicine & pharmacy,Dexamethasone Tab 0.5mg,6,pcs,1.1,6.6,cash,Invoice I26RJ07010836,scan,7/2/2026
+mr3fkru8bz5r2,2026-06-27,21:49,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,My Choice Garbage Bag - Medium,1,pcs,335,335,cash + loyalty points,Invoice 299,scan,7/2/2026
+mr3fkru8qtcy5,2026-06-27,21:49,CARGILLS FOOD CITY,Grocery,Rice,Keeri Samba Bulk,1,pcs,260,260,cash + loyalty points,Invoice 299,scan,7/2/2026
+mr3fq96wu9yts,2026-06-18,22:28,LAUGFS SUPER,Grocery,Meat,Gold Chicken Sausages 150g,1,pcs,410,410,cash,Invoice L6RJ01029605,scan,7/2/2026
+mr3fq96wi8ryg,2026-06-18,22:28,LAUGFS SUPER,Grocery,Bread & bakery,Crimson Bread,1,pcs,148,148,cash,Invoice L6RJ01029605,scan,7/2/2026
+mr3rsrrxu6mli,2026-06-27,10:47,CEY FISH,Grocery,Fish & seafood,Kumbala,0.37,kg,1820,673.4,cash,Invoice 000028,scan,7/2/2026
+mr3rsrrxe2v0l,2026-06-27,10:47,CEY FISH,Grocery,Fish & seafood,Kelawalla M,0.75,kg,1680,1260,cash,Invoice 000028,scan,7/2/2026
+mr3rsrs05tez3,2026-07-02,17:26,THE FAB,Dining out,Takeaway,Chicken Sausage Pastry,1,pcs,190,190,cash,Invoice 031907227,scan,7/2/2026
+mr3rsrs0clt8x,2026-07-02,17:26,THE FAB,Dining out,Takeaway,Crispy Chicken & Egg Roll,1,pcs,260,260,cash,Invoice 031907227,scan,7/2/2026
+mr3tpqzr2yb0o,2026-06-06,14:21,SRINA PALACE,Consumables,Personal care,Bellavita Date Woman Deo Body Spray,1,pcs,2190,2190,card,Invoice 00000166,scan,7/2/2026
+mr3tpqzri96p5,2026-06-06,14:21,SRINA PALACE,Consumables,Personal care,Tinkle Eyebrow Razor 3pcs Set,1,pcs,290,290,card,Invoice 00000166,scan,7/2/2026
+mr3tpqzrwmfyp,2026-06-06,14:21,SRINA PALACE,Consumables,Personal care,Nugel Non UV Gel Nail Polish 13ml,1,pcs,980,980,card,Invoice 00000166,scan,7/2/2026
+mr3tvh6z99pqs,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Dairy & milk,Highland F/C Milk Powder,1,pcs,1150,1150,card,Invoice 227,scan,7/2/2026
+mr3tvh6z94d6q,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Rice,Samba Rice Bulk - Local,1.006,kg,235,236.41,card,Invoice 227,scan,7/2/2026
+mr3tvh6zzl3x9,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Bread & bakery,Prima Sunrise Paratha,1,pcs,760,684,card,Invoice 227,scan,7/2/2026
+mr3tvh6z0pyfs,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Tea & coffee,Nescafe Classic Bottle,1,pcs,1100,1100,card,Invoice 227,scan,7/2/2026
+mr3tvh6z84rzh,2026-06-21,18:49,CARGILLS FOOD CITY,Consumables,Toiletries,Velvet Soap Rose & Milk Eco,1,pcs,525,393.75,card,Invoice 227,scan,7/2/2026
+mr3tvh6zgmnut,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Other grocery,My Choice Red Dhal Pkt,1,pcs,144,144,card,Invoice 227,scan,7/2/2026
+mr3tvh70vkzmn,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Dairy & milk,Sera Real Coconut Milk,1,pcs,210,210,card,Invoice 227,scan,7/2/2026
+mr3tvh707lxla,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Other grocery,My Choice Green Gram Pkt,1,pcs,430,430,card,Invoice 227,scan,7/2/2026
+mr3tvh70xjutm,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Other grocery,Kist Mayonnaise Pouch,1,pcs,580,580,card,Invoice 227,scan,7/2/2026
+mr3tvh70idd8l,2026-06-21,18:49,CARGILLS FOOD CITY,Grocery,Meat,Chicken B/less Breast,0.158,kg,2290,361.82,card,Invoice 227,scan,7/2/2026
+mr3u4pnsyj1aq,2026-05-30,21:04,LAUGFS SUPER,Grocery,Bread & bakery,Crimson Bread,1,pcs,148,148,cash,Invoice L26RJ01020649,scan,7/2/2026
+mr3u4pns2ybaa,2026-05-30,21:04,LAUGFS SUPER,Grocery,Bread & bakery,Crimson Viyana Bun,1,pcs,85,85,cash,Invoice L26RJ01020649,scan,7/2/2026
+mr3u4pns1wqem,2026-05-30,21:04,LAUGFS SUPER,Grocery,Dairy & milk,Fresh Coconut Milk 200ml,2,pcs,99,198,cash,Invoice L26RJ01020649,scan,7/2/2026
+mr3u4pntrn1ey,2026-06-07,10:41,SUPOSHA,Grocery,Bread & bakery,Suposha 700g,2,pcs,590,1180,cash,Invoice 0000445,scan,7/2/2026
+mr3u4pntyufai,2026-06-07,10:41,SUPOSHA,Grocery,Bread & bakery,Suposha Aggala (4-Pack),1,pcs,160,160,cash,Invoice 0000445,scan,7/2/2026
+mr3u4pntl2vgk,2026-06-07,10:41,SUPOSHA,Grocery,Snacks & biscuits,Chocolate Cup Cake (01 Pack),1,pcs,110,110,cash,Invoice 0000445,scan,7/2/2026
+mr3u4pntcbaz9,2026-06-07,10:41,SUPOSHA,Grocery,Tea & coffee,CF Tea Cup,2,pcs,50,100,cash,Invoice 0000445,scan,7/2/2026
+b1yyq4jo-0-n90mr5,2026-07-03,13:26,LADY J,Other,Miscellaneous,Money Plant M,1,pcs,390,390,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-1-n90mr5,2026-07-03,13:26,LADY J,Other,Miscellaneous,Money Plant M,1,pcs,390,390,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-2-4ogvwb,2026-07-03,13:26,LADY J,Non-consumables,Furniture,Wooden Rack M-CE840,1,pcs,1590,1590,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-3-1n3ojao,2026-07-03,13:26,LADY J,Non-consumables,Kitchenware,Bottle-AJ202,6,pcs,150,900,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-4-oyh7ob,2026-07-03,13:26,LADY J,Non-consumables,Kitchenware,Bottle Spice-AJ209,1,pcs,90,90,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-5-oyh7ob,2026-07-03,13:26,LADY J,Non-consumables,Kitchenware,Bottle Spice-AJ209,1,pcs,90,90,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-6-1w5yejy,2026-07-03,13:26,LADY J,Non-consumables,Kitchenware,Bottle 1pcs-AJ206,3,pcs,220,660,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-7-t4fyjt,2026-07-03,13:26,LADY J,Other,Miscellaneous,Flower Pot-7PLJ-010,1,pcs,950,950,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-8-1sna4ix,2026-07-03,13:26,LADY J,Non-consumables,Clothing,L/Blouse-B1026,1,pcs,1550,1550,card,Invoice 100000107,scan,7/3/2026
+b1yyq4jo-9-1rr1jxa,2026-07-03,13:26,LADY J,Non-consumables,Clothing,L/Short (Rowan),1,pcs,550,550,card,Invoice 100000107,scan,7/3/2026
+mr555ogd5p92m,2026-07-03,21:51,,Energy,Petrol,Petrol,19.323,L,414,7999.72,cash,,manual,7/4/2026
+b1g6yo0i-0-1nfa3lc,2026-07-03,10:48,PickMe,Transport,Taxi / PickMe / Uber,Taxi ride - Rajagiriya to Colombo 08,1,pcs,313.82,313.82,cash,,scan,7/4/2026
+bqzqom6-0-1x5m71k,2026-07-03,14:05,PickMe,Transport,Taxi / PickMe / Uber,Taxi ride - Colombo 10 to Colombo 08,1,pcs,685.94,685.94,cash,,scan,7/4/2026
+mr9gug5zgkxng,2026-07-06,9:00,Keells,Dining out,Takeaway,Omelette Bun,1,pcs,180,180,cash,Invoice 5224002,scan,7/6/2026
+mr9gug5z2ll0a,2026-07-06,9:00,Keells,Dining out,Takeaway,Egg Bun,1,pcs,160,160,cash,Invoice 5224002,scan,7/6/2026
+mr9gug5z941tl,2026-07-06,9:00,Keells,Grocery,Beverages,Milo Food Drink Chocolate Tetra 180ml,2,pcs,130,260,cash,Invoice 5224002,scan,7/6/2026
+mr9gug60zd5t2,2026-07-06,19:37,CARGILLS FOOD CITY,Grocery,Eggs,Happy Hen Eggs Large,1,pcs,580,580,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug6028bxw,2026-07-06,19:37,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Prima Sunrise Shawarma,1,pcs,660,660,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60unbk8,2026-07-06,19:37,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,Flora Mini Serviette,1,pcs,200,200,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60to1q7,2026-07-06,19:37,CARGILLS FOOD CITY,Grocery,Salt & spices,Raigam Isi Cooking Salt,1,pcs,140,140,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60y5qfj,2026-07-06,19:37,CARGILLS FOOD CITY,Grocery,Meat,Prima Whole Chicken W.GIB 1KG,0.932,kg,1350,1258.2,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60mtxuy,2026-07-06,19:37,CARGILLS FOOD CITY,Grocery,Flour & grains,MDK STR Hopper Flour White,1,pcs,295,295,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60anu7y,2026-07-06,19:37,CARGILLS FOOD CITY,Consumables,Toiletries,Swabha Cey Shampoo Anti Dandruff,1,pcs,585,585,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60skkpd,2026-07-06,19:37,CARGILLS FOOD CITY,Consumables,Personal care,Janet Wild Straw Lip Balm,1,pcs,330,330,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60pplhu,2026-07-06,19:37,CARGILLS FOOD CITY,Grocery,Dairy & milk,Highland Plain Yoghurt,4,pcs,80,320,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60c20ct,2026-07-06,19:37,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,Brightex Sponge Scrub,1,pcs,420,420,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug60du2ns,2026-07-06,19:37,CARGILLS FOOD CITY,Grocery,Vegetables,Selected Big Onion,0.84,kg,330,277.2,cash,Invoice SEWWANDI No: 66,scan,7/6/2026
+mr9gug62mzs48,2026-06-27,12:20,GPK,Grocery,Vegetables,Karawila (Bitter Gourd),0.27,kg,1000,270,cash,Invoice 000008,scan,7/6/2026
+mr9gug622ver0,2026-06-27,12:20,GPK,Grocery,Vegetables,Gherkin (small cucumber),0.33,kg,800,264,cash,Invoice 000008,scan,7/6/2026
+mr9gug62gz3ya,2026-06-27,12:20,GPK,Grocery,Vegetables,Thakkali (Tomato),0.12,kg,800,96,cash,Invoice 000008,scan,7/6/2026
+b1kgtshd-0-13qv5oq,2026-07-07,21:51,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Munchee Milk Short Cake,1,pcs,120,120,cash,Invoice 318,scan,7/7/2026
+b1kgtshd-1-1ljihg8,2026-07-07,21:51,CARGILLS FOOD CITY,Grocery,Dairy & milk,Highland Plain Curd,1,pcs,420,420,cash,Invoice 318,scan,7/7/2026
+b1nyztjx-0-ij6ds6,2026-07-07,16:07,CARGILLS FOOD CITY,Consumables,Stationery,Mango Writing Paper A4,2,pcs,270,459,cash,Invoice 145,scan,7/7/2026
+bxbzshg-0-ygvt4f,2026-07-12,22:35,THE SANCTUARII,Dining out,Restaurant,Hyderabadi Biryani,1,pcs,1990,1990,cash,Invoice 79,scan,7/13/2026
+bxbzshg-1-lx3ce0,2026-07-12,22:35,THE SANCTUARII,Dining out,Restaurant,Lime Juice,1,pcs,790,790,cash,Invoice 79,scan,7/13/2026
+b1u88ypr-0-1qoroyv,2026-07-11,15:06,CARGILLS FOOD CITY,Consumables,Personal care,Lipice S/Color Ardent Lip Balm,1,pcs,1690,1690,cash,Invoice 2865092,scan,7/13/2026
+b1u88ypr-1-62dq23,2026-07-11,15:06,CARGILLS FOOD CITY,Water,Bottled water,Knuckles Drinking Water,1,pcs,100,100,cash,Invoice 2865092,scan,7/13/2026
+b1u88ypr-2-oj32kb,2026-07-11,15:06,CARGILLS FOOD CITY,Grocery,Eggs,Nel Farms Eggs Medium,1,pcs,560,560,cash,Invoice 2865092,scan,7/13/2026
+b1u88ypr-3-15yz6hv,2026-07-11,15:06,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,Vim Dish Wash Spouted Pouch,1,pcs,325,260,cash,Invoice 2865092,scan,7/13/2026
+b1u88ypr-4-1nh7r0t,2026-07-11,15:06,CARGILLS FOOD CITY,Grocery,Salt & spices,Catch Biriyani Whole Spice Mix,1,pcs,100,100,cash,Invoice 2865092,scan,7/13/2026
+b1u88ypr-5-s4mcoy,2026-07-11,15:06,CARGILLS FOOD CITY,Grocery,Salt & spices,My Choice Cinnamon,1,pcs,490,490,cash,Invoice 2865092,scan,7/13/2026
+b1u88ypr-6-xkhahl,2026-07-11,15:06,CARGILLS FOOD CITY,Consumables,Personal care,Natures Vit C Serum Skin/Radi,1,pcs,1690,1690,cash,Invoice 2865092,scan,7/13/2026
+b1fxf806-0-1440ech,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Pumpkin,0.525,kg,280,147,cash,Invoice 000136,scan,7/13/2026
+b1fxf806-1-1mb58bu,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Potatoes,0.475,kg,400,190,cash,Invoice 000136,scan,7/13/2026
+b1fxf806-2-15ti9rv,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Beetroot,0.22,kg,600,132,cash,Invoice 000136,scan,7/13/2026
+b1fxf806-3-1n9q0gt,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Leeks,0.095,kg,560,53.2,cash,Invoice 000136,scan,7/13/2026
+b1fxf806-4-1mmxfm0,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Carrot,0.205,kg,560,114.8,cash,Invoice 000136,scan,7/13/2026
+b1fxf806-5-1vz2st1,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Kesell Muwa (Banana flower),0.45,kg,280,126,cash,Invoice 000136,scan,7/13/2026
+b1fxf806-6-1qmcbfb,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Japanese Cucumber,0.225,kg,600,135,cash,Invoice 000136,scan,7/13/2026
+b1fxf806-7-feum3k,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Lime,0.145,kg,800,116,cash,Invoice 000136,scan,7/13/2026
+b1fxf806-8-1c7034j,2026-07-11,14:14,SAHANA VEGEMART,Grocery,Vegetables,Beans,0.105,kg,600,63,cash,Invoice 000136,scan,7/13/2026
+bc2f771-0-vmwflj,2026-07-11,13:31,2ndhandbooks.lk,Non-consumables,Books,Fiction / Non Fiction Books,1,pcs,1500,1500,cash,Invoice INV-1-26-07-04066,scan,7/13/2026
+b1j970t1-0-fzgzzl,2026-07-04,,Kithul Products,Grocery,Sugar,"Kithul products (treacle/jaggery, no itemization)",,pcs,,3900,cash,,scan,7/13/2026
+b1gsjyvs-0-8ijqji,2026-07-04,,Udispattuwa Vegetable Store,Grocery,Vegetables,"Vegetables (mixed, no itemization)",,pcs,,490,cash,,scan,7/13/2026
+b1w0zdhj-0-1gwi913,2026-07-08,21:32,LAUGFS SUPERMARKET,Grocery,Bread & bakery,Crimson Bread,1,pcs,148,148,cash,Invoice I26RJ09053382,scan,7/13/2026
+b12kaxy0-0-1b39bhu,2026-07-08,21:28,LAUGFS SUPERMARKET,Consumables,Medicine & pharmacy,Rapisol 500mg,10,pcs,3.49,34.9,cash,Invoice I26RJ07013860,scan,7/13/2026
+b6vways-0-1maffqe,2026-07-17,19:00,PERERA AND SONS,Dining out,Takeaway,Dosai,1,pcs,140,140,cash,Invoice 288-688334,scan,7/18/2026
+b6vways-1-1x879uu,2026-07-17,19:00,PERERA AND SONS,Dining out,Takeaway,Sultana Bun,1,pcs,80,80,cash,Invoice 288-688334,scan,7/18/2026
+b1ixho1q-0-1cxawc2,2026-07-14,14:49,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Munchee Malt Up Biscuits,3,pcs,100,300,card,Invoice 130,scan,7/18/2026
+b1ixho1q-1-fbiuo0,2026-07-14,14:49,CARGILLS FOOD CITY,Consumables,Stationery,Rotomac Ten Pen Set - 3 Blue,1,pcs,75,75,card,Invoice 130,scan,7/18/2026
+b1ixho1q-2-fcliln,2026-07-14,14:49,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Munchee Malt Up Choco Biscuit,1,pcs,120,120,card,Invoice 130,scan,7/18/2026
+b1ixho1q-3-ccvyzi,2026-07-14,14:49,CARGILLS FOOD CITY,Grocery,Dairy & milk,Ambewela Fresh Milk,2,pcs,140,280,card,Invoice 130,scan,7/18/2026
+b1ixho1q-4-1ngssr,2026-07-14,14:49,CARGILLS FOOD CITY,Grocery,Dairy & milk,Silvermill Coconut Milk,1,pcs,375,375,card,Invoice 130,scan,7/18/2026
+b15l41pt-0-18js0nw,2026-07-13,23:19,SLT MOBITEL,Services,Mobile & telephone,SLT Mobitel Bill Payment,1,pcs,3000.46,3000.46,online,Invoice XQA17839648309411,scan,7/18/2026
+mrzumbi34wyya,2026-07-25,,,Energy,Petrol,Petrol,,pcs,,7000,cash,,manual,7/25/2026
+b1hkk31c-0-1w3oxxm,2026-07-22,,CIB SHOPPING CENTRE,Non-consumables,Clothing,Yoyo Crushed Y001 Fabric,2.5,m,1075,2687.5,card,Invoice 223109072618,scan,7/25/2026
+b1hkk31c-1-kgdhkl,2026-07-22,,CIB SHOPPING CENTRE,Non-consumables,Clothing,Poplin Fabric,1,m,290,290,card,Invoice 223109072618,scan,7/25/2026
+b13jzslq-0-340qw4,2026-07-25,9:17,PERERA AND SONS,Dining out,Takeaway,Fish Bun,2,pcs,110,220,cash,Invoice 288-691955,scan,7/25/2026
+b13jzslq-1-ejugpo,2026-07-25,9:17,PERERA AND SONS,Dining out,Takeaway,Chicken Sausage Pastry,2,pcs,140,280,cash,Invoice 288-691955,scan,7/25/2026
+bjp2s4k-0-1ja5pkh,2026-07-25,9:06,UNION CHEMISTS (PTE) LTD,Consumables,Medicine & pharmacy,Meftal Tabs 500gm,10,tabs,16.87,168.7,cash,Invoice 2332168,scan,7/25/2026
+btlvw0e-0-1maffqe,2026-07-24,18:12,PERERA AND SONS,Dining out,Takeaway,Dosai,1,pcs,140,140,cash,Invoice 288-691796,scan,7/25/2026
+btlvw0e-1-1jspcml,2026-07-24,18:12,PERERA AND SONS,Dining out,Takeaway,Masala Wadei,1,pcs,120,120,cash,Invoice 288-691796,scan,7/25/2026
+b1sd528w-0-tp6344,2026-07-22,,Dehiwala-Galkissa Municipal Council,Transport,Parking & tolls,Vehicle parking fee,1,pcs,70,70,cash,Invoice 06768,scan,7/25/2026
+b16jrqr1-0-a41cmh,2026-07-18,23:11,LAUGFS SUPERMARKET,Grocery,Vegetables,Green Chilies,0.14,kg,1848,258.72,cash,Invoice I26RJ09059574 CS:2018112,scan,7/25/2026
+b16jrqr1-1-11r2ial,2026-07-18,23:11,LAUGFS SUPERMARKET,Grocery,Other grocery,Edinborough Mustard Cream 165g,1,pcs,380,380,cash,Invoice I26RJ09059574 CS:2018112,scan,7/25/2026
+b16jrqr1-2-r4k12t,2026-07-18,23:11,LAUGFS SUPERMARKET,Grocery,Bread & bakery,Crimson Bread Crumbs 500g,1,pcs,300,300,cash,Invoice I26RJ09059574 CS:2018112,scan,7/25/2026
+b16jrqr1-3-1q3agt0,2026-07-18,23:11,LAUGFS SUPERMARKET,Grocery,Vegetables,Edinborough Tomato Sauce Pouch,1,pcs,360,360,cash,Invoice I26RJ09059574 CS:2018112,scan,7/25/2026
+bsrp6eg-0-vhiczk,2026-07-09,,SHALWAR BRIDES,Non-consumables,Clothing,"Saree/Shalwar (handwritten, illegible description)",1,pcs,,12900,cash,Invoice 143,scan,7/25/2026
+b18k8s7c-0-ti3at5,2026-07-18,12:51,M.D. GUNASENA,Consumables,Stationery,Pen (Atlas Glyde) Blue,5,pcs,40,200,card,Invoice 181018072612,scan,7/25/2026
+b18k8s7c-1-1qmk2jp,2026-07-18,12:51,M.D. GUNASENA,Consumables,Stationery,Pen (Atlas Sharp) Blue 0.7mm,2,pcs,30,60,card,Invoice 181018072612,scan,7/25/2026
+b1cv6bz3-0-1s4p4md,2026-07-18,12:41,THE FASHION STORE,Non-consumables,Other non-consumable,Hand Bag S038-B2-2,1,pcs,2690,2690,card,Invoice 00000045,scan,7/25/2026
+b1cv6bz3-1-11cks2s,2026-07-18,12:41,THE FASHION STORE,Non-consumables,Clothing,Ladies Casual Short 119,1,pcs,1390,1390,card,Invoice 00000045,scan,7/25/2026
+b1cv6bz3-2-4sdke2,2026-07-18,12:41,THE FASHION STORE,Non-consumables,Clothing,Ladies Casual Top H002-MQTOP-015,1,pcs,1490,745,card,Invoice 00000045,scan,7/25/2026
+b1cv6bz3-3-qcypsn,2026-07-18,12:41,THE FASHION STORE,Non-consumables,Clothing,Ladies Casual T-Shirt 276,1,pcs,890,890,card,Invoice 00000045,scan,7/25/2026
+b1cv6bz3-4-1msep1c,2026-07-18,12:41,THE FASHION STORE,Non-consumables,Kitchenware,Place Mat N025-JS1-603-9,3,pcs,490,1470,card,Invoice 00000045,scan,7/25/2026
+bqydi0r-0-1g5ydqs,2026-07-18,12:43,THE FASHION STORE,Non-consumables,Other non-consumable,CM Trender Sunglasses 009,1,pcs,1490,1490,card,Invoice 00000046,scan,7/25/2026
+bcobitz-0-bpj078,2026-07-18,13:45,KEELLS,Grocery,Eggs,Nel Farm Brown Eggs Medium 10s,1,pack,560,560,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-1-18ashnd,2026-07-18,13:45,KEELLS,Grocery,Salt & spices,Wijaya Curry Powder 100g,1,pack,230,230,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-2-1bjf09c,2026-07-18,13:45,KEELLS,Grocery,Dairy & milk,Highland Curd Plastic Tub Plain 510g,1,tub,420,420,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-3-esfhw3,2026-07-18,13:45,KEELLS,Grocery,Salt & spices,Keells Coriander Powder 100g,1,pack,110,110,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-4-54ocek,2026-07-18,13:45,KEELLS,Consumables,Cleaning & detergents,Lifebuoy H/Wash Kitchen F. Refill 180ml,1,pack,350,350,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-5-1ddlhxb,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Kekiri,0.284,kg,160,45.44,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-6-om633m,2026-07-18,13:45,KEELLS,Grocery,Sugar,Brown Sugar Bulk,1.116,kg,255,284.58,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-7-ezzbpl,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Garlic,0.146,kg,850,124.1,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-8-1biowfs,2026-07-18,13:45,KEELLS,Grocery,Meat,New Anthonys Pre Cut Whole Chicken,1.46,kg,1495,2182.7,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-9-1ms1e1l,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Carrot,0.236,kg,380,89.68,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-10-eh9kpb,2026-07-18,13:45,KEELLS,Grocery,Meat,Raigam Soya Meat Fried & Devld Prawn 110g,1,pack,190,190,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-11-18waxz4,2026-07-18,13:45,KEELLS,Grocery,Dairy & milk,Sera Real Coconut Milk 180ml,2,pack,210,420,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-12-d9u2w3,2026-07-18,13:45,KEELLS,Grocery,Snacks & biscuits,Ritzbury Tropica Chocolate 13g,2,pcs,40,80,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-13-1py3zsz,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Bitter Gourd,0.23,kg,500,115,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-14-13jepl2,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Green Chilies,0.042,kg,1850,77.7,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-15-127a1i4,2026-07-18,13:45,KEELLS,Grocery,Other grocery,Green Gram Bulk,0.508,kg,845,429.26,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-16-1wk9nu2,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Potatoes,0.57,kg,430,245.1,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-17-u0my15,2026-07-18,13:45,KEELLS,Grocery,Other grocery,Edinborough Egg Mayonnaise Pouch 100g,1,pouch,400,400,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-18-1hcv1f7,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Edinborough Tomato Sauce 405g,1,bottle,520,520,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-19-odx6ze,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Big Onions,0.536,kg,290,155.44,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-20-1ulou2u,2026-07-18,13:45,KEELLS,Grocery,Other grocery,Mysoore Dhal Bulk,0.59,kg,225,132.75,cash,Invoice 4125650,scan,7/25/2026
+bcobitz-21-3v9dp8,2026-07-18,13:45,KEELLS,Grocery,Vegetables,Cabbage,0.314,kg,120,37.68,cash,Invoice 4125650,scan,7/25/2026
+b4f4x07-0-1bjf09c,2026-07-29,10:36,KEELLS,Grocery,Dairy & milk,Highland Curd Plastic Tub Plain 510g,1,pcs,420,420,cash,Invoice R:3193096,scan,8/2/2026
+b4f4x07-1-340rvv,2026-07-29,10:36,KEELLS,Grocery,Bread & bakery,Fish Bun,2,pcs,190,380,cash,Invoice R:3193096,scan,8/2/2026
+b4f4x07-2-qtnjsn,2026-07-29,10:36,KEELLS,Consumables,Personal care,Bellose Roll On Dearo Men Fresh 50ml,1,pcs,720,720,cash,Invoice R:3193096,scan,8/2/2026
+b4f4x07-3-1dyjwcc,2026-07-29,10:36,KEELLS,Grocery,Snacks & biscuits,Munchee Salsa Biscuit 30g,1,pcs,50,50,cash,Invoice R:3193096,scan,8/2/2026
+b1juqoqf-0-1lkqyjc,2026-07-29,10:24,SRINA PALACE,Non-consumables,Other non-consumable,Sarome Nail Enamel 15ml N18,1,pcs,695,695,cash,Invoice 00000004,scan,8/2/2026
+bc6t1ib-0-w64yrj,2026-07-29,10:10,SAMUDRA BOOK SHOP,Consumables,Stationery,Pencil Case - PC1 C,1,pcs,210,210,cash,Invoice BO/B242,scan,8/2/2026
+bc6t1ib-1-p59w1i,2026-07-29,10:10,SAMUDRA BOOK SHOP,Consumables,Stationery,Push Pin - Colour,1,pcs,85,85,cash,Invoice BO/B242,scan,8/2/2026
+bc6t1ib-2-ev9ti4,2026-07-29,10:10,SAMUDRA BOOK SHOP,Consumables,Stationery,Photo Copy Papers - A4 80 GSM 500,1,pcs,1130,1130,cash,Invoice BO/B242,scan,8/2/2026
+bc6t1ib-3-1tlzc27,2026-07-29,10:10,SAMUDRA BOOK SHOP,Consumables,Stationery,Colour Board 230GSM - A4,20,pcs,20,400,cash,Invoice BO/B242,scan,8/2/2026
+b5hcm8i-0-nyvcnh,2026-07-25,18:13,CARGILLS FOOD CITY,Grocery,Eggs,Araliya Brown Eggs,1,pcs,560,560,card,Invoice 189,scan,8/2/2026
+b5hcm8i-1-1t32y9r,2026-07-25,18:13,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Kotmale Butterscotch Ice Cream Cone,1,pcs,180,180,card,Invoice 189,scan,8/2/2026
+b5hcm8i-2-1rxhbyq,2026-07-25,18:13,CARGILLS FOOD CITY,Consumables,Toiletries,Ayush Toothpaste Anticavity,1,pcs,295,295,card,Invoice 189,scan,8/2/2026
+b5hcm8i-3-123b20r,2026-07-25,18:13,CARGILLS FOOD CITY,Grocery,Fruits,Papaw,0.488,kg,140,68.32,card,Invoice 189,scan,8/2/2026
+b5hcm8i-4-15rbo3k,2026-07-25,18:13,CARGILLS FOOD CITY,Consumables,Toiletries,Lux Body Wash Fragrant Skin,1,pcs,245,245,card,Invoice 189,scan,8/2/2026
+b5hcm8i-5-1asl33r,2026-07-25,18:13,CARGILLS FOOD CITY,Grocery,Cooking oil,Sunup RBD Coconut Oil,1,pcs,875,875,card,Invoice 189,scan,8/2/2026
+b5hcm8i-6-1cj0w41,2026-07-25,18:13,CARGILLS FOOD CITY,Consumables,Personal care,Vaseline Glutahya Dewy Radiance,1,pcs,1650,1402.5,card,Invoice 189,scan,8/2/2026
+b5hcm8i-7-100hcs7,2026-07-25,18:13,CARGILLS FOOD CITY,Consumables,Toiletries,Signal Toothbrush Fighter Double M,1,pcs,260,221,card,Invoice 189,scan,8/2/2026
+b5hcm8i-8-kgy443,2026-07-25,18:13,CARGILLS FOOD CITY,Dining out,Takeaway,Prima Sunrise Shawarma,1,pcs,660,660,card,Invoice 189,scan,8/2/2026
+bgpfkv1-0-ashr3u,2026-08-01,17:19,SAHANA VEGEMART,Grocery,Vegetables,Beetroot,0.235,kg,520,122.2,cash,Invoice 000116,scan,8/2/2026
+bgpfkv1-1-1s7aqfq,2026-08-01,17:19,SAHANA VEGEMART,Grocery,Vegetables,Carrot,0.19,kg,480,91.2,cash,Invoice 000116,scan,8/2/2026
+bgpfkv1-2-1oqhgni,2026-08-01,17:19,SAHANA VEGEMART,Grocery,Vegetables,Lime,0.075,kg,800,60,cash,Invoice 000116,scan,8/2/2026
+bgpfkv1-3-1qmcbec,2026-08-01,17:19,SAHANA VEGEMART,Grocery,Vegetables,Japanese Cucumber,0.205,kg,600,123,cash,Invoice 000116,scan,8/2/2026
+bgpfkv1-4-a5nifr,2026-08-01,17:19,SAHANA VEGEMART,Grocery,Vegetables,Round Eggplant,0.205,kg,560,114.8,cash,Invoice 000116,scan,8/2/2026
+bgpfkv1-5-12zj74s,2026-08-01,17:19,SAHANA VEGEMART,Grocery,Vegetables,Lady's Fingers,0.135,kg,400,54,cash,Invoice 000116,scan,8/2/2026
+bgpfkv1-6-7zgc5,2026-08-01,17:19,SAHANA VEGEMART,Grocery,Vegetables,Green Chillie,0.05,kg,1800,90,cash,Invoice 000116,scan,8/2/2026
+b1epa85g-0-u0sng,2026-08-01,,PearlTech Computers,Non-consumables,Electronics,DDR4 Laptop RAM 8GB (2 months warranty),1,pcs,12500,12500,bank transfer,Invoice PTC002016,scan,8/2/2026
+b139sow3-0-1qaq1p3,2026-07-25,18:12,"L.B.S. Vegetable Traders (Sinhala signage, name approximate)",Grocery,Vegetables,Lanka Potato (Ala),0.525,kg,480,252,cash,Invoice 000056,scan,8/2/2026
+b139sow3-1-g4o9m0,2026-07-25,18:12,"L.B.S. Vegetable Traders (Sinhala signage, name approximate)",Grocery,Vegetables,Big Onion (B Onion),0.52,kg,300,156,cash,Invoice 000056,scan,8/2/2026
+b139sow3-2-tph18m,2026-07-25,18:12,"L.B.S. Vegetable Traders (Sinhala signage, name approximate)",Other,Miscellaneous,Shopping Bag,1,pcs,3,3,cash,Invoice 000056,scan,8/2/2026
+bv9ez00-0-1n7vlw0,2026-07-27,18:16,KEELLS,Dining out,Takeaway,Egg Bun,1,pcs,160,160,cash,Invoice R1362660,scan,8/2/2026
+bv9ez00-1-bmipr9,2026-07-27,18:16,KEELLS,Dining out,Takeaway,Roast Bread with Pol Sambol,1,pcs,170,170,cash,Invoice R1362660,scan,8/2/2026
+bv9ez00-2-txbeoc,2026-07-27,18:16,KEELLS,Dining out,Takeaway,White String Hoppers 10S with Pol Sambol,2,pcs,180,360,cash,Invoice R1362660,scan,8/2/2026
+bv9ez00-3-1dwgpuq,2026-07-27,18:16,KEELLS,Consumables,Personal care,Eva Pads Drytex Wings 16S,1,pcs,425,425,cash,Invoice R1362660,scan,8/2/2026
+bv9ez00-4-128arqs,2026-07-27,18:16,KEELLS,Other,Miscellaneous,Keells Bag 16x18 (Re-use),1,pcs,0.01,0.01,cash,Invoice R1362660,scan,8/2/2026
+bv9ez00-5-i7vphw,2026-07-27,18:16,KEELLS,Other,Miscellaneous,Keells Bag 16x18 (Refund),-1,pcs,0.01,-0.01,cash,Invoice R1362660,scan,8/2/2026
+btr44yr-0-1oxayo6,2026-07-25,17:05,CEY FISH,Grocery,Fish & seafood,Balaya (Skipjack Tuna),0.9,kg,980,882,cash,Invoice 000161,scan,8/2/2026
+b17snx1s-0-1wfhd9t,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Fruits,Unidentified item (sold per piece),1,pcs,180,180,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-1-boi16m,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Fruits,Kesel Muwa (Banana),0.42,kg,280,117.6,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-2-feum2l,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Fruits,Lime,0.13,kg,800,104,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-3-1qmcbcn,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Vegetables,Japanese Cucumber,0.18,kg,600,108,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-4-58g90r,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Vegetables,Brinjals,0.29,kg,700,203,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-5-lkp9wv,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Vegetables,Sweet Potatoes,0.31,kg,400,124,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-6-1af71rt,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Vegetables,Kochchi (Green Chili),0.04,kg,2800,112,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-7-1rfy15a,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Vegetables,Tomato,0.195,kg,600,117,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-8-rqljha,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Vegetables,Beans,0.2,kg,560,112,cash,Invoice 000231,scan,8/2/2026
+b17snx1s-9-7bhsg5,2026-07-25,17:24,SAHANA VEGEMART,Grocery,Vegetables,Green Chillie,0.06,kg,1800,108,cash,Invoice 000231,scan,8/2/2026
+b1edgys3-0-1seqmsn,2026-07-25,16:55,MILCO (PVT) LTD,Grocery,Dairy & milk,Plain Curd 500ML,1,pcs,420,420,cash,Invoice 109523,scan,8/2/2026
+b1edgys3-1-snsycg,2026-07-25,16:55,MILCO (PVT) LTD,Grocery,Dairy & milk,Milk Powder 400G,2,pcs,1200,2400,cash,Invoice 109523,scan,8/2/2026
+b1edgys3-2-ej3rp3,2026-07-25,16:55,MILCO (PVT) LTD,Grocery,Dairy & milk,Set (Yoghurt) 250ML,1,pcs,250,250,cash,Invoice 109523,scan,8/2/2026
+ms0c0lsh1k586,2026-07-25,,Ninewells IOC,Energy,Petrol,Petrol,12,L,,5000,cash,,manual,8/8/2026
+mskn2sez7pzsq,2026-08-08,,Ninewells IOC,Energy,Petrol,Petrol,,pcs,,5000,cash,,manual,8/8/2026
+b165b6ty-0-13jjatp,2026-08-01,15:30,CARGILLS FOOD CITY,Grocery,Eggs,Happy Hen Eggs Large,1,pcs,590,590,card,Invoice 89,scan,8/8/2026
+b165b6ty-1-yrfne3,2026-08-01,15:30,CARGILLS FOOD CITY,Grocery,Cooking oil,Sera Real Coconut Milk,1,pcs,210,210,card,Invoice 89,scan,8/8/2026
+b165b6ty-2-c1ntma,2026-08-01,15:30,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,MD Polos Curry,1,pcs,950,950,card,Invoice 89,scan,8/8/2026
+b165b6ty-3-rluygd,2026-08-01,15:30,CARGILLS FOOD CITY,Grocery,Tea & coffee,Nescafe Classic Sachet,1,pcs,940,940,card,Invoice 89,scan,8/8/2026
+b165b6ty-4-1xk45fp,2026-08-01,15:30,CARGILLS FOOD CITY,Other,Miscellaneous,Amritha Incense Sticks Green,1,pcs,160,160,card,Invoice 89,scan,8/8/2026
+b165b6ty-5-rq992n,2026-08-01,15:30,CARGILLS FOOD CITY,Consumables,Toiletries,Flora Mini Serviette,1,pcs,200,200,card,Invoice 89,scan,8/8/2026
+b165b6ty-6-jerfkn,2026-08-01,15:30,CARGILLS FOOD CITY,Grocery,Other grocery,My Choice Red Dhal Packet,1,pcs,144,144,card,Invoice 89,scan,8/8/2026
+b165b6ty-7-1gvfu5z,2026-08-01,15:30,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,Natur Food Wrapping Sheet,1,pcs,685,685,card,Invoice 89,scan,8/8/2026
+b165b6ty-8-1uqnpym,2026-08-01,15:30,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,My Choice Garbage Bag - Medium,1,pcs,335,335,card,Invoice 89,scan,8/8/2026
+b165b6ty-9-qdfb3d,2026-08-01,15:30,CARGILLS FOOD CITY,Consumables,Toiletries,Velvet Soap Rose & Milk Eco,1,pcs,525,525,card,Invoice 89,scan,8/8/2026
+b165b6ty-10-10f7itk,2026-08-01,15:30,CARGILLS FOOD CITY,Grocery,Salt & spices,My Choice Table Salt,1,pcs,118,118,card,Invoice 89,scan,8/8/2026
+b165b6ty-11-w2rr0p,2026-08-01,15:30,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Magic Chocolate Ice Cream Cone,1,pcs,160,160,card,Invoice 89,scan,8/8/2026
+b165b6ty-12-123sarp,2026-08-01,15:30,CARGILLS FOOD CITY,Other,Miscellaneous,Handle Bag Large LDPE 12+5x20,2,pcs,5,10,card,Invoice 89,scan,8/8/2026
+bzzeyc5-0-1xbkmk7,2026-08-08,11:32,CARGILLS FOOD CITY,Grocery,Salt & spices,Freelan Mustard Seeds,1,pcs,50,50,card,Invoice 56,scan,8/8/2026
+bzzeyc5-1-1mizkx8,2026-08-08,11:32,CARGILLS FOOD CITY,Grocery,Salt & spices,Mas All Purpose Meat Curry Mix,1,pcs,130,117,card,Invoice 56,scan,8/8/2026
+bzzeyc5-2-kgy443,2026-08-08,11:32,CARGILLS FOOD CITY,Dining out,Takeaway,Prima Sunrise Shawarma,1,pcs,660,660,card,Invoice 56,scan,8/8/2026
+bzzeyc5-3-bnrngx,2026-08-08,11:32,CARGILLS FOOD CITY,Consumables,Personal care,Natures Oil/Con G.T & Aloe F/W,1,pcs,690,690,card,Invoice 56,scan,8/8/2026
+bzzeyc5-4-yrfp3i,2026-08-08,11:32,CARGILLS FOOD CITY,Grocery,Cooking oil,Sera Real Coconut Milk,2,pcs,210,420,card,Invoice 56,scan,8/8/2026
+bzzeyc5-5-39umbf,2026-08-08,11:32,CARGILLS FOOD CITY,Grocery,Dairy & milk,Highland Plain Yoghurt,4,pcs,80,320,card,Invoice 56,scan,8/8/2026
+bzzeyc5-6-ok4wp8,2026-08-08,11:32,CARGILLS FOOD CITY,Grocery,Sugar,Brown Sugar Bulk,1.012,kg,255,258.06,card,Invoice 56,scan,8/8/2026
+bzzeyc5-7-13pl4lp,2026-08-08,11:32,CARGILLS FOOD CITY,Grocery,Fruits,Cavendish Banana,0.438,kg,340,148.92,card,Invoice 56,scan,8/8/2026
+bzzeyc5-8-w2rr0p,2026-08-08,11:32,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Magic Chocolate Ice Cream Cone,1,pcs,160,160,card,Invoice 56,scan,8/8/2026
+bzzeyc5-9-ug0ken,2026-08-08,11:32,CARGILLS FOOD CITY,Grocery,Meat,Bairaha Whole Chicken,1.14,kg,1350,1539,card,Invoice 56,scan,8/8/2026
+b143td01-0-106gp8u,2026-08-08,10:54,SAHANA VEGEMART,Grocery,Vegetables,Breadfruit (Dhel),1.075,kg,400,430,cash,Invoice 000003,scan,8/8/2026
+b143td01-1-85aql9,2026-08-08,10:54,SAHANA VEGEMART,Grocery,Salt & spices,Lemongrass (Sera),0.05,kg,1000,50,cash,Invoice 000003,scan,8/8/2026
+b143td01-2-46em1e,2026-08-08,10:54,SAHANA VEGEMART,Grocery,Vegetables,Japanese Cucumber,0.215,kg,480,103.2,cash,Invoice 000003,scan,8/8/2026
+b143td01-3-sg2x6k,2026-08-08,10:54,SAHANA VEGEMART,Grocery,Vegetables,Green Chillie,0.045,kg,1500,67.5,cash,Invoice 000003,scan,8/8/2026
+b143td01-4-1c7037a,2026-08-08,10:54,SAHANA VEGEMART,Grocery,Vegetables,Beans,0.155,kg,600,93,cash,Invoice 000003,scan,8/8/2026
+b143td01-5-xq0obp,2026-08-08,10:54,SAHANA VEGEMART,Grocery,Vegetables,Tomato,0.12,kg,480,57.6,cash,Invoice 000003,scan,8/8/2026
+b1v1a6um-0-1txjxc1,2026-08-08,,XCLUSIVE ACCESSORIES,Non-consumables,Electronics,"Logitech Pebble 2 Combo - Tonal Graphite (2530SC132ZN9, 1 Year Warranty)",1,pcs,18000,17000,cash,Invoice INV-67159,scan,8/8/2026
+b1g12cpx-0-1maffqe,2026-08-06,16:36,P&S (Perera & Sons),Dining out,Takeaway,Dosai,1,pcs,140,140,cash,Invoice 288-697993,scan,8/8/2026
+b1g12cpx-1-1jspcml,2026-08-06,16:36,P&S (Perera & Sons),Dining out,Takeaway,Masala Wadei,1,pcs,120,120,cash,Invoice 288-697993,scan,8/8/2026
+bs8y3k7-0-ly591j,2026-08-06,20:56,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,Sunlight Naturals Matic Pouch,1,pcs,575,575,cash,Invoice 322,scan,8/8/2026
+bs8y3k7-1-1nhk75m,2026-08-06,20:56,CARGILLS FOOD CITY,Grocery,Meat,Goldi Supreme Chicken Sausages,1,pcs,440,440,cash,Invoice 322,scan,8/8/2026
+bs8y3k7-2-1mjj3j5,2026-08-06,20:56,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,Turbo1 Windscreen Cleaner,1,pcs,340,340,cash,Invoice 322,scan,8/8/2026
+bs8y3k7-3-1cxaunk,2026-08-06,20:56,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Munchee Malt Up Biscuits,1,pcs,100,100,cash,Invoice 322,scan,8/8/2026
+bs8y3k7-4-39umbf,2026-08-06,20:56,CARGILLS FOOD CITY,Grocery,Dairy & milk,Highland Plain Yoghurt,4,pcs,80,320,cash,Invoice 322,scan,8/8/2026
+bs8y3k7-5-187c1ix,2026-08-06,20:56,CARGILLS FOOD CITY,Other,Miscellaneous,Handle Bag Large LDPE 12+5x20,1,pcs,5,5,cash,Invoice 322,scan,8/8/2026
+bwizgcx-0-kliy5e,2026-08-04,9:11,LAUGFS SUPERMARKET,Grocery,Eggs,Happy Hen Brown Eggs 10's (L),1,pcs,590,590,cash,Invoice I26PT03049970 CS:2014443,scan,8/8/2026
+bwizgcx-1-gr1uaa,2026-08-04,9:11,LAUGFS SUPERMARKET,Grocery,Dairy & milk,Highland Curd 500ml,1,pcs,420,420,cash,Invoice I26PT03049970 CS:2014443,scan,8/8/2026
+bwizgcx-2-1shubdy,2026-08-04,9:11,LAUGFS SUPERMARKET,Grocery,Bread & bakery,Crimson Kurakkan Bread 400g,1,pcs,270,270,cash,Invoice I26PT03049970 CS:2014443,scan,8/8/2026
+b1x602gn-0-1crpc8w,2026-08-04,19:59,CARGILLS FOOD CITY,Grocery,Fruits,Dole Cavendish Banana,0.954,kg,576,549.5,cash,Invoice 157,scan,8/8/2026
+b1x602gn-1-yyxbu9,2026-08-04,19:59,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Munchee Cream Cracker Junior,1,pcs,100,100,cash,Invoice 157,scan,8/8/2026
+b1x602gn-2-hko9ar,2026-08-04,19:59,CARGILLS FOOD CITY,Grocery,Beverages,Scan Drinking Water,1,pcs,400,400,cash,Invoice 157,scan,8/8/2026
+b1x602gn-3-15igkxf,2026-08-04,19:59,CARGILLS FOOD CITY,Other,Miscellaneous,KFC Offer Voucher,1,pcs,0.01,0,cash,Invoice 157,scan,8/8/2026
+bu5519d-0-yqbh8y,2026-08-04,,DEBUG COMPUTER PERIPHERIALS (PVT) LTD,Services,Repairs & maintenance,Epson L3150 Maintenance Box Assy.B,1,pcs,1150.51,1150.51,cash,Invoice 007599,scan,8/8/2026
+bu5519d-1-18muv7k,2026-08-04,,DEBUG COMPUTER PERIPHERIALS (PVT) LTD,Services,Repairs & maintenance,Service Charge,1,pcs,4000,4000,cash,Invoice 007599,scan,8/8/2026
+ba8gr7-0-hm1hdl,2026-08-01,16:48,COOL PLANET,Non-consumables,Footwear,Shoe Ladies Casual Shoe Modano 38 #R,1,pcs,3590,3590,card,Invoice 01M128082616,scan,8/8/2026
+ba8gr7-1-iba5fs,2026-08-01,16:48,COOL PLANET,Non-consumables,Clothing,Jewellery Ladies Hair Slide MOO #CP1,1,pcs,290,290,card,Invoice 01M128082616,scan,8/8/2026
+ba8gr7-2-1i0rnbx,2026-08-01,16:48,COOL PLANET,Other,Miscellaneous,"Cool Planet Poly Bag #14""+3""x18""",1,pcs,0.01,0,card,Invoice 01M128082616,scan,8/8/2026
+ba8gr7-3-ho5yau,2026-08-01,16:48,COOL PLANET,Other,Miscellaneous,"Cool Planet Poly Bag #7+2""x12""",1,pcs,0.01,0,card,Invoice 01M128082616,scan,8/8/2026
+b17gkmf7-0-s524k9,2026-08-18,22:33,HAVELOCK CITY PARKING (Payable Pvt Ltd),Transport,Parking & tolls,Parking Charge - Vehicle CBH1593,1,pcs,600,600,card,,scan,8/21/2026
+bgx53w9-0-13jjatp,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Eggs,Happy Hen Eggs Large,1,pc,590,590,card,Invoice 216,scan,8/21/2026
+bgx53w9-1-1ix6cc7,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Skinned Raw Peanuts,0.2,kg,1880,376,card,Invoice 216,scan,8/21/2026
+bgx53w9-2-1bod92c,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Vegetables,Ladies Fingers,0.138,kg,130,17.94,card,Invoice 216,scan,8/21/2026
+bgx53w9-3-1gnv209,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Vegetables,Bitter Gourd,0.206,kg,390,80.34,card,Invoice 216,scan,8/21/2026
+bgx53w9-4-yrfp3i,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Cooking oil,Sera Real Coconut Milk,2,pc,210,420,card,Invoice 216,scan,8/21/2026
+bgx53w9-5-10102pp,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Dairy & milk,Highland F/C Milk Powder,1,pc,1150,1150,card,Invoice 216,scan,8/21/2026
+bgx53w9-6-1asl33r,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Cooking oil,Sunup RBD Coconut Oil,1,pc,875,875,card,Invoice 216,scan,8/21/2026
+bgx53w9-7-1a9qwl2,2026-08-13,21:30,CARGILLS FOOD CITY,Consumables,Cleaning & detergents,Harpic 10X Refreshing Marine,1,pc,480,480,card,Invoice 216,scan,8/21/2026
+bgx53w9-8-y90wj,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Fish & seafood,Raigam Cuttle Fish Soya Devel,1,pc,190,190,card,Invoice 216,scan,8/21/2026
+bgx53w9-9-c1ntma,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,MD Polos Curry,1,pc,950,950,card,Invoice 216,scan,8/21/2026
+bgx53w9-10-101c4ek,2026-08-13,21:30,CARGILLS FOOD CITY,Grocery,Vegetables,Dambala,0.122,kg,540,65.88,card,Invoice 216,scan,8/21/2026
+bgx53w9-11-1l48guv,2026-08-13,21:30,CARGILLS FOOD CITY,Other,Miscellaneous,Points For G. G. Bag Reus,1,pc,0.01,0.01,card,Invoice 216,scan,8/21/2026
+bgx53w9-12-1ms2uhj,2026-08-13,21:30,CARGILLS FOOD CITY,Other,Miscellaneous,KFC Offer,1,pc,0.01,0,card,Invoice 216,scan,8/21/2026
+b1s4h7b8-0-1i6wf55,2026-08-18,22:21,ROOTS,Dining out,Takeaway,1 Scoop Premium (GLT-Oreo),1,pc,550,550,cash,Invoice 10693-164454,scan,8/21/2026
+b7upquy-0-1187bf5,2026-08-18,21:56,TACO BELL,Dining out,Restaurant,Fajita Chicken Crunchy Wheat Taco,1,pcs,0,0,card,Invoice A87504,scan,8/21/2026
+b7upquy-1-grd3d1,2026-08-18,21:56,TACO BELL,Dining out,Restaurant,Crispy Chicken Crunchy Wheat Taco,1,pcs,720,720,card,Invoice A87504,scan,8/21/2026
+b1fl4xn6-0-gnmkvb,2026-08-16,20:56,LAUGFS SUPERMARKET,Grocery,Dairy & milk,Kotmale Fresh Milk 200ml Plain,1,pc,140,140,cash,Invoice I26RJ09076088,scan,8/21/2026
+b1fl4xn6-1-1deq1kk,2026-08-16,20:56,LAUGFS SUPERMARKET,Grocery,Bread & bakery,Crimson Super Sandwich Bread (S),1,pc,330,330,cash,Invoice I26RJ09076088,scan,8/21/2026
+b52bltn-0-ml46oc,2026-08-12,10:59,LAUGFS SUPER,Grocery,Beverages,Sunquick Guava & Strawberry 300ml,1,pc,850,850,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-1-1kwkf41,2026-08-12,10:59,LAUGFS SUPER,Grocery,Dairy & milk,Highland Yoghurt 85ml Plain,4,pc,80,320,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-2-2o7pee,2026-08-12,10:59,LAUGFS SUPER,Grocery,Fruits,Banana - Cavendish,0.47,kg,379,178.13,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-3-11sutev,2026-08-12,10:59,LAUGFS SUPER,Grocery,Bread & bakery,Crimson Sliced Bread,1,pc,153,153,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-4-wv85w6,2026-08-12,10:59,LAUGFS SUPER,Other,Miscellaneous,Bag Shopping 13x6x21in Biodegradable PE,1,pc,5,5,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-5-1qhsnbs,2026-08-12,10:59,LAUGFS SUPER,Grocery,Snacks & biscuits,Crimson Happy Sticks (125g),1,pc,135,135,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-6-xf973q,2026-08-12,10:59,LAUGFS SUPER,Grocery,Salt & spices,Edinborough Mayonnaise Pouch 100g,1,pc,400,400,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-7-1loijwg,2026-08-12,10:59,LAUGFS SUPER,Grocery,Snacks & biscuits,Crimson Nai Miris Creamy Chicken Roll,1,pc,180,180,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-8-xhyez6,2026-08-12,10:59,LAUGFS SUPER,Grocery,Salt & spices,Laugfs Salted Dhal 50g,1,pc,85,85,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-9-9glw5i,2026-08-12,10:59,LAUGFS SUPER,Grocery,Snacks & biscuits,Laugfs Indian Mixture 50g,1,pc,105,105,cash,Invoice I26RJ05023504,scan,8/21/2026
+b52bltn-10-149ohxg,2026-08-12,10:59,LAUGFS SUPER,Grocery,Salt & spices,Edinborough Easy Cheezy Pouch 100g,1,pc,390,390,cash,Invoice I26RJ05023504,scan,8/21/2026
+b19ktc05-0-fkjdvs,2026-08-18,19:00,SCOPE CINEMAS,Other,Festivals & events,"E3 Spider Man: Brand - Ticket (Seat E-11, Full)",1,pcs,1800,1800,cash,Invoice 004735-004736,scan,8/21/2026
+b19ktc05-1-11lcsy1,2026-08-18,19:00,SCOPE CINEMAS,Other,Festivals & events,"E3 Spider Man: Brand - Ticket (Seat E-12, Full)",1,pcs,1800,1800,cash,Invoice 004735-004736,scan,8/21/2026
+b1jucc6x-0-1p17k6x,2026-08-13,21:36,KFC,Dining out,Restaurant,Pepsi - R,1,pcs,440,440,card,Invoice G93926,scan,8/21/2026
+b1jucc6x-1-qk8vuw,2026-08-13,21:36,KFC,Dining out,Restaurant,KFC Masala Rice,1,pcs,890,890,card,Invoice G93926,scan,8/21/2026
+b1jucc6x-2-p1bgxc,2026-08-13,21:36,KFC,Dining out,Restaurant,KFC Caribbean Rice,1,pcs,890,890,card,Invoice G93926,scan,8/21/2026
+bhw4ln4-0-1lheyed,2026-08-21,13:22,CARGILLS FOOD CITY,Grocery,Beverages,Sunquick Guava+Strawberry,1,pc,850,850,card,Invoice 199,scan,8/21/2026
+bhw4ln4-1-5kz1i2,2026-08-21,13:22,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Munchee Bourbon Biscuits,1,pc,160,160,card,Invoice 199,scan,8/21/2026
+bhw4ln4-2-40o038,2026-08-21,13:22,CARGILLS FOOD CITY,Grocery,Bread & bakery,Finagle Swiss Roll Coffee,1,pc,685,685,card,Invoice 199,scan,8/21/2026
+bn3letd-0-nhg5yh,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Vegetables,Capcium,0.096,kg,790,75.84,card,Invoice 149,scan,8/21/2026
+bn3letd-1-1nhk72v,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Meat,Goldi Supreme Chicken Sausages,1,pc,410,410,card,Invoice 149,scan,8/21/2026
+bn3letd-2-qyag0m,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Vegetables,Big Onion,0.288,kg,290,83.52,card,Invoice 149,scan,8/21/2026
+bn3letd-3-2680pm,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Vegetables,Long Beans,0.132,kg,420,55.44,card,Invoice 149,scan,8/21/2026
+bn3letd-4-1sf5ubo,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Snacks & biscuits,Oateo Instant Oats,1,pc,300,300,card,Invoice 149,scan,8/21/2026
+bn3letd-5-63vo26,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Salt & spices,My Choice Red Dhal Pkt,1,pc,144,144,card,Invoice 149,scan,8/21/2026
+bn3letd-6-39umbf,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Dairy & milk,Highland Plain Yoghurt,4,pc,80,320,card,Invoice 149,scan,8/21/2026
+bn3letd-7-19ug8ms,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Eggs,Havana Brown Egg Large,1,pc,590,590,card,Invoice 149,scan,8/21/2026
+bn3letd-8-1bejtbs,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Vegetables,Tomato,0.114,kg,560,63.84,card,Invoice 149,scan,8/21/2026
+bn3letd-9-1jwjik5,2026-08-19,20:25,CARGILLS FOOD CITY,Grocery,Vegetables,Coconut Jumbo,1,pc,165,165,card,Invoice 149,scan,8/21/2026
+bn3letd-10-1ms2uhj,2026-08-19,20:25,CARGILLS FOOD CITY,Other,Miscellaneous,KFC Offer,1,pc,0.01,0,card,Invoice 149,scan,8/21/2026
+boxrg8g-0-13kfmiz,2026-08-18,19:05,SCOPE CINEMAS,Dining out,Tea shop / snacks,Popcorn Combo - Cheese & Coca-Cola 300ml,1,pcs,1550,1550,card,Invoice 1569694,scan,8/21/2026
+b1ank8lg-0-1mafi7b,2026-08-10,17:35,P&S,Dining out,Takeaway,Dosai,3,pcs,140,420,cash,Invoice 288-699927,scan,8/21/2026

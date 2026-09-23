@@ -1,0 +1,43 @@
+{
+  "shop": "SHOE FAIR 2026",
+  "branch": "Kohuwala",
+  "date": "2026-08-22",
+  "time": "18:34",
+  "invoice_no": "00000387",
+  "currency": "LKR",
+  "payment_method": "card",
+  "items": [
+    {
+      "name": "ONX PU-223 Shoes (Tan, Size 40)",
+      "category": "nonconsumable",
+      "subcategory": "Footwear",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 1850.00,
+      "amount": 1850.00
+    },
+    {
+      "name": "GJB_0032 (item code unclear)",
+      "category": "nonconsumable",
+      "subcategory": "Bags & accessories",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 1300.00,
+      "amount": 1300.00
+    },
+    {
+      "name": "NRC Ladies Wallet",
+      "category": "nonconsumable",
+      "subcategory": "Accessories",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 900.00,
+      "amount": 900.00
+    }
+  ],
+  "sub_total": 4050.00,
+  "discount": 0,
+  "rounding": 0,
+  "total": 4050.00,
+  "notes": "Paid via visa. Item 2 product description (GJB_0032) is a generic item code — actual product name not printed on receipt; verify physically if needed."
+}

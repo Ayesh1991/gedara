@@ -1,0 +1,106 @@
+{
+  "shop": "CARGILLS FOOD CITY",
+  "branch": "Rajagiriya 03",
+  "date": "2026-08-22",
+  "time": "20:20",
+  "invoice_no": "265",
+  "currency": "LKR",
+  "payment_method": "card",
+  "items": [
+    {
+      "name": "Bic Twin Lady Razor",
+      "category": "consumable",
+      "subcategory": "Personal care",
+      "qty": 2,
+      "unit": null,
+      "unit_price": 160.00,
+      "amount": 320.00
+    },
+    {
+      "name": "Anchor Hot Chocolate",
+      "category": "grocery",
+      "subcategory": "Beverages",
+      "qty": 2,
+      "unit": null,
+      "unit_price": 130.00,
+      "amount": 260.00
+    },
+    {
+      "name": "Prima Sunrise Shawarma",
+      "category": "grocery",
+      "subcategory": "Snacks & biscuits",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 660.00,
+      "amount": 660.00
+    },
+    {
+      "name": "Sera Real Coconut Milk",
+      "category": "grocery",
+      "subcategory": "Dairy & milk",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 210.00,
+      "amount": 210.00
+    },
+    {
+      "name": "Prima Meat Balls",
+      "category": "grocery",
+      "subcategory": "Meat",
+      "qty": 2,
+      "unit": null,
+      "unit_price": 210.00,
+      "amount": 420.00
+    },
+    {
+      "name": "Wijaya Chilli Pieces",
+      "category": "grocery",
+      "subcategory": "Salt & spices",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 220.00,
+      "amount": 220.00
+    },
+    {
+      "name": "Kist Mayonnaise Pouch",
+      "category": "grocery",
+      "subcategory": "Condiments & sauces",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 580.00,
+      "amount": 580.00
+    },
+    {
+      "name": "Comfort Fabric Conditioner - Pink Lily Fresh",
+      "category": "consumable",
+      "subcategory": "Cleaning & detergents",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 1260.00,
+      "amount": 1260.00
+    },
+    {
+      "name": "Aquafina Drinking Water",
+      "category": "water",
+      "subcategory": "Bottled water",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 120.00,
+      "amount": 120.00
+    },
+    {
+      "name": "Havana Brown Egg Medium",
+      "category": "grocery",
+      "subcategory": "Eggs",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 570.00,
+      "amount": 570.00
+    }
+  ],
+  "sub_total": 4620.00,
+  "discount": 0,
+  "rounding": 0,
+  "total": 4620.00,
+  "notes": "Paid via card. Cargills Star Points: 106.04 prior balance, 4.62 earned on this bill, 110.66 total — loyalty info only, not an expense."
+}

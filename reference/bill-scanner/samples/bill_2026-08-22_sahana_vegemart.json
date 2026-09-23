@@ -1,0 +1,88 @@
+{
+  "shop": "SAHANA VEGEMART",
+  "branch": "Economic Center, Narahenpita",
+  "date": "2026-08-22",
+  "time": "19:42",
+  "invoice_no": "000275",
+  "currency": "LKR",
+  "payment_method": "cash",
+  "items": [
+    {
+      "name": "Myokka",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.270,
+      "unit": "kg",
+      "unit_price": 240.00,
+      "amount": 64.80
+    },
+    {
+      "name": "Lemongrass (Sera)",
+      "category": "grocery",
+      "subcategory": "Salt & spices",
+      "qty": 0.035,
+      "unit": "kg",
+      "unit_price": 1000.00,
+      "amount": 35.00
+    },
+    {
+      "name": "Kesel Muwa (Banana flower)",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.470,
+      "unit": "kg",
+      "unit_price": 280.00,
+      "amount": 131.60
+    },
+    {
+      "name": "Green Chillie",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.045,
+      "unit": "kg",
+      "unit_price": 1200.00,
+      "amount": 54.00
+    },
+    {
+      "name": "Bola Batu",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.210,
+      "unit": "kg",
+      "unit_price": 400.00,
+      "amount": 84.00
+    },
+    {
+      "name": "Beans",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.140,
+      "unit": "kg",
+      "unit_price": 600.00,
+      "amount": 84.00
+    },
+    {
+      "name": "Ginger",
+      "category": "grocery",
+      "subcategory": "Salt & spices",
+      "qty": 0.020,
+      "unit": "kg",
+      "unit_price": 1600.00,
+      "amount": 32.00
+    },
+    {
+      "name": "Kochchi",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.020,
+      "unit": "kg",
+      "unit_price": 2800.00,
+      "amount": 56.00
+    }
+  ],
+  "sub_total": 541.40,
+  "discount": 0,
+  "rounding": 0,
+  "total": 541.40,
+  "notes": "Paid in cash, no change due."
+}

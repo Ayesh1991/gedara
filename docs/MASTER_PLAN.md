@@ -794,6 +794,12 @@ Secrets go in `.env.local` (git-ignored) and in Supabase/Vercel secret settings.
   must work without push.
 - **Camera scanning** needs HTTPS (fine on Vercel) and a user tap to start on iOS.
 - **Free Supabase allows 2 active projects** — staging + prod uses both.
+- **Auth email delivery:** Supabase's default SMTP only sends to org team members, 2/hour. Both
+  projects use **custom SMTP through Gmail** (`ayeshmantha1991.24@gmail.com`, App Password,
+  `smtp.gmail.com:587`), with the auth email rate limit set to 30/hour.
+- **Vercel first import** uses Root Directory `apps/web`, so the planning docs (which contain
+  personal emails) are never deployed as static files.
+- **No Docker on the dev PC** is allowed: then develop and test against `gedara-staging`, never prod.
 - **Supabase MCP in Claude Code:** connect it to **staging** with full access; connect prod
   read-only or not at all. Schema changes reach prod only through migration files.
 

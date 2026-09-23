@@ -1,0 +1,52 @@
+{
+  "shop": "LAKSHMI SARUBALA VYAPARIKAYO",
+  "branch": "V-16, Narahenpita",
+  "date": "2026-08-22",
+  "time": "20:31",
+  "invoice_no": "000063",
+  "currency": "LKR",
+  "payment_method": "cash",
+  "items": [
+    {
+      "name": "Vegetable item 1 (Sinhala script, unreadable)",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.410,
+      "unit": "kg",
+      "unit_price": 480.00,
+      "amount": 196.80
+    },
+    {
+      "name": "Vegetable item 2 (Sinhala script, unreadable)",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.085,
+      "unit": "kg",
+      "unit_price": 780.00,
+      "amount": 66.30
+    },
+    {
+      "name": "Vegetable item 3 (Sinhala script, unreadable)",
+      "category": "grocery",
+      "subcategory": "Vegetables",
+      "qty": 0.430,
+      "unit": "kg",
+      "unit_price": 360.00,
+      "amount": 154.80
+    },
+    {
+      "name": "Shopping Bag",
+      "category": "other",
+      "subcategory": "Miscellaneous",
+      "qty": 1,
+      "unit": null,
+      "unit_price": 3.00,
+      "amount": 3.00
+    }
+  ],
+  "sub_total": 420.90,
+  "discount": 0,
+  "rounding": 0,
+  "total": 420.90,
+  "notes": "Sinhala-script vegetable receipt (Lakshmi Sarubala vegetable shop). Item names on lines 1-3 are illegible in the photo (faded print) — quantities and prices are clear and verified against the printed total (420.90), but item names need physical verification against the receipt. Payment method not explicitly printed; inferred as cash — unconfirmed."
+}
