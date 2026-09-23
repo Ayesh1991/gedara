@@ -27,7 +27,7 @@ vite-plugin-pwa (NetworkFirst) · Vercel · Vitest + Playwright · Python 3 for 
 
 ## Non-negotiable rules
 1. Stock and balances are never edited directly. Only `stock_movement` rows written through the SECURITY DEFINER RPCs (`rpc_purchase`, `rpc_consume`, `rpc_weigh`, `rpc_undo` …).
-2. Every table has `household_id`, RLS enabled (`is_member(household_id)`), and a SQL test showing another household can't read or write it.
+2. Every table has `household_id`, RLS enabled (`private.is_member(household_id)` for reads, `private.can_write(household_id)` for writes), and a SQL test showing another household can't read or write it.
 3. Migrations are forward-only. Never edit a migration that has already been applied. Staging first, prod only via migration files.
 4. Money is `numeric(14,2)` and quantities `numeric(14,4)`. Format with `Intl.NumberFormat('en-LK',{style:'currency',currency:'LKR'})`. Prices are also stored per base unit (`price_per_base`).
 5. Fingerprints are deterministic (djb2, same format as `reference/ledger-v7`: `b<hash>` for bills, `b<hash>-<lineNo>-<hash>` for lines) and unique per household. Never replace them with random IDs.
@@ -36,7 +36,7 @@ vite-plugin-pwa (NetworkFirst) · Vercel · Vitest + Playwright · Python 3 for 
 8. Never put the service-role key or any Google/Claude API key in `apps/web`. Secrets live only in Edge Functions and `.env.local` (git-ignored).
 9. Compress photos in the browser (WebP 1600 px + 320 px thumb) before upload. Don't use Supabase image transforms.
 10. Mobile-first: one-thumb reach, test at 375 px and iPad widths. Respect `prefers-reduced-motion`.
-11. Design tokens come from ledger v7 (`--ink #0B101C`, `--panel #141C30`, `--gold #F2B33D`, `--teal #2FC6A0`, `--red #FF6B6B`, Space Grotesk + IBM Plex Mono). Gold is for the single primary action only.
+11. Design language is "Aurora" (approved 2026-09-23; tokens in `apps/web/src/styles/index.css`): void `#05070F`, glass panels, Space Grotesk + IBM Plex Mono (every number). User-selectable aurora themes (aurora/nebula/lagoon/ember/mono) change only the aurora light and accents; gold `#F5B83D` is the single primary action per screen and status colours (red unsafe, amber best-before, cyan due, violet info, teal good) never change. Never show fake numbers in the app: empty states until real data exists.
 12. All UI strings go through i18n (`en` now, `si` later).
 13. "Done" means deployed to a Vercel preview and the version badge on that URL matches. Say so explicitly.
 

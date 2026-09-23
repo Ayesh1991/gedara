@@ -1,1 +1,35 @@
-<h1>Gedara ගෙදර — coming soon</h1>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#05070F" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Gedara — household ledger, pantry and things" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Gedara" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/icon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <title>Gedara · ගෙදර</title>
+    <!-- Paint the saved theme before anything renders (keys/ids mirror src/theme/prefs.ts + themes.ts). -->
+    <script>
+      (function () {
+        var r = document.documentElement;
+        r.dataset.theme = 'aurora';
+        r.dataset.motion = 'system';
+        try {
+          var p = JSON.parse(localStorage.getItem('gedara:prefs') || '{}');
+          if (['aurora', 'nebula', 'lagoon', 'ember', 'mono'].indexOf(p.theme) >= 0) r.dataset.theme = p.theme;
+          if (['system', 'on', 'off'].indexOf(p.motion) >= 0) r.dataset.motion = p.motion;
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

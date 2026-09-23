@@ -1,0 +1,161 @@
+{
+  "app": {
+    "name": "Gedara",
+    "subtitle": "ගෙදර",
+    "tagline": "your home, in one place",
+    "env": { "local": "LOCAL", "staging": "STAGING", "prod": "" },
+    "updated": "Updated to v{{version}}",
+    "offlineReady": "Ready to work offline"
+  },
+  "nav": {
+    "home": "Home",
+    "money": "Money",
+    "scan": "Scan",
+    "pantry": "Pantry",
+    "things": "Things",
+    "places": "Places",
+    "insights": "Insights",
+    "settings": "Settings",
+    "main": "Main navigation"
+  },
+  "shell": {
+    "search": "Search bills, products, places…",
+    "searchShort": "Search",
+    "searchSoon": "Search everything with ⌘K arrives in Phase 6.",
+    "notifications": "Notifications",
+    "notificationsSoon": "Alerts for expiring food, bills and warranties arrive in Phase 6.",
+    "scanSoon": "Camera and USB scanning arrive in Phase 1.",
+    "roleLine": "{{role}} · {{household}}",
+    "roles": { "owner": "Owner", "member": "Member", "viewer": "Viewer" }
+  },
+  "login": {
+    "title": "Sign in",
+    "intro": "Gedara is invite-only. Enter your email and we'll send you a 6-digit code.",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeTitle": "Enter your code",
+    "codeSent": "We sent a 6-digit code to {{email}}. Check Spam the first time.",
+    "code": "Login code",
+    "verify": "Sign in",
+    "verifying": "Checking…",
+    "resend": "Resend code",
+    "resendIn": "Resend in {{seconds}} s",
+    "changeEmail": "Use a different email",
+    "footer": "Invite-only · no passwords",
+    "errors": {
+      "invalidEmail": "Enter a valid email address.",
+      "notInvited": "This email isn't invited to Gedara.",
+      "rateLimited": "Too many attempts. Wait a minute and try again.",
+      "badCode": "That code is wrong or has expired.",
+      "generic": "Something went wrong: {{message}}"
+    }
+  },
+  "notInvited": {
+    "title": "No household yet",
+    "body": "You're signed in as {{email}}, but this account isn't a member of any household. Ask the owner to invite this email.",
+    "signOut": "Sign out"
+  },
+  "placeholder": {
+    "comingIn": "Coming in Phase {{phase}}",
+    "money": "Accounts, transactions, bill import and budgets.",
+    "scan": "Camera + USB scanner, QR labels and deep links.",
+    "pantry": "Stock, lots, expiry and the shopping list.",
+    "things": "Assets, warranties, documents and maintenance.",
+    "places": "The location tree with QR labels.",
+    "insights": "Drill-down analytics for every number."
+  },
+  "home": {
+    "greeting": {
+      "morning": "Good morning, {{name}}",
+      "afternoon": "Good afternoon, {{name}}",
+      "evening": "Good evening, {{name}}"
+    },
+    "net": "Net this month",
+    "spent": "Spent this month",
+    "pantryValue": "Pantry value",
+    "things": "Things you own",
+    "awaiting": "Arrives in Phase {{phase}}",
+    "cashFlow": "Cash flow",
+    "income": "Income",
+    "outgoing": "Spent",
+    "cashFlowEmpty": "Your income and spending will draw here once bills are imported.",
+    "budget": "Budget burn",
+    "budgetEmpty": "Set monthly budgets per category to see how fast each one is used.",
+    "attention": "Attention",
+    "attentionEmpty": "All clear. Expiring food, bills due and warranties ending will show up here.",
+    "activity": "Recent activity",
+    "live": "LIVE",
+    "activityEmpty": "Everything your household does (bills, stock, moves) will stream here in real time."
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "appearanceHint": "Aurora colour theme and motion",
+    "diagnostics": "Diagnostics",
+    "diagnosticsHint": "Version, Test connection, clear cache",
+    "signedInAs": "Signed in as {{email}}",
+    "role": "Role: {{role}}",
+    "signOut": "Sign out"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "theme": "Colour theme",
+    "themeHint": "Changes the aurora light and accents. Gold always marks the main action; status colours never change.",
+    "motion": "Motion",
+    "motionHint": "Aurora drift, counting numbers and page transitions.",
+    "motionModes": { "system": "Follow device", "on": "On", "off": "Off" },
+    "synced": "Saved to your account, so it follows you to every device.",
+    "saveFailed": "Couldn't save your theme to your account: {{message}}",
+    "themes": {
+      "aurora": { "name": "Aurora", "desc": "Violet, cyan and teal" },
+      "nebula": { "name": "Nebula", "desc": "Magenta, violet and indigo" },
+      "lagoon": { "name": "Lagoon", "desc": "Teal, cyan and emerald" },
+      "ember": { "name": "Ember", "desc": "Amber, rose and violet" },
+      "mono": { "name": "Mono", "desc": "Quiet slate and steel" }
+    }
+  },
+  "diagnostics": {
+    "title": "Diagnostics",
+    "version": "Version",
+    "appVersion": "App",
+    "gitSha": "Git SHA",
+    "buildTime": "Built",
+    "environment": "Environment",
+    "schemaVersion": "DB schema",
+    "swVersion": "Service worker",
+    "swNone": "not active",
+    "test": "Test connection",
+    "testing": "Testing…",
+    "allGreen": "All green",
+    "someFailed": "{{count}} check(s) failed",
+    "clearCache": "Clear cache & reload",
+    "checks": {
+      "auth": "Auth",
+      "db": "Database",
+      "storage": "Storage",
+      "realtime": "Realtime",
+      "edge": "Edge function",
+      "sw": "Service worker"
+    },
+    "errors": {
+      "timeout": "Timed out after {{ms}} ms",
+      "noSession": "No session",
+      "noHousehold": "No household membership",
+      "noController": "No active service worker",
+      "swMismatch": "SW is v{{sw}}, app is v{{app}}"
+    }
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "offlineTitle": "You're offline",
+    "retry": "Try again",
+    "diagnostics": "Open Diagnostics"
+  },
+  "common": {
+    "loading": "Loading…",
+    "unknown": "?",
+    "back": "Back"
+  }
+}

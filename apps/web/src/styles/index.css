@@ -1,0 +1,267 @@
+@import 'tailwindcss';
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+
+/*
+ * "Aurora" design language (approved 2026-09-23, docs/decisions.md).
+ * Fixed in every theme: void background, glass surfaces, text, gold (the single primary action)
+ * and the status colours. Themes (html[data-theme]) only change the aurora light and accents.
+ * Keep the [data-theme] blocks in sync with src/theme/themes.ts (a unit test checks it).
+ */
+:root {
+  --ink: #05070f; /* void */
+  --ink-2: #0a0f1e;
+  --panel: #10162a;
+  --panel-2: #172039;
+  --glass: rgba(16, 22, 42, 0.62);
+  --glass-strong: rgba(10, 14, 28, 0.82);
+  --line: rgba(255, 255, 255, 0.07);
+  --line-2: rgba(255, 255, 255, 0.12);
+  --text: #ecf1ff;
+  --muted: #8c95b5;
+  --faint: #6b7496;
+  --gold: #f5b83d;
+  --gold-hi: #ffcb5c;
+  --gold-soft: rgba(245, 184, 61, 0.16);
+  --red: #ff6b81; /* unsafe / expired */
+  --caution: #fbbf24; /* best-before / near limit */
+  --due: #22d3ee; /* bills due */
+  --info: #a78bfa; /* warranty / info */
+  --teal: #2dd4a7; /* good / income */
+  --r: 20px;
+  --nav-h: 72px;
+  --font-d: 'Space Grotesk', system-ui, sans-serif;
+  --font-m: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-b: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* theme: aurora (default) */
+  --aur-1: #7c3aed;
+  --aur-2: #0891b2;
+  --aur-3: #0d9488;
+  --accent-a: #8b5cf6;
+  --accent-b: #22d3ee;
+  --glow: #8b5cf6;
+  --aur-strength: 1;
+}
+
+:root[data-theme='nebula'] {
+  --aur-1: #c026d3;
+  --aur-2: #7c3aed;
+  --aur-3: #4338ca;
+  --accent-a: #d946ef;
+  --accent-b: #818cf8;
+  --glow: #d946ef;
+  --aur-strength: 1;
+}
+:root[data-theme='lagoon'] {
+  --aur-1: #0d9488;
+  --aur-2: #0891b2;
+  --aur-3: #059669;
+  --accent-a: #2dd4a7;
+  --accent-b: #22d3ee;
+  --glow: #2dd4a7;
+  --aur-strength: 0.9;
+}
+:root[data-theme='ember'] {
+  --aur-1: #d97706;
+  --aur-2: #e11d48;
+  --aur-3: #7c3aed;
+  --accent-a: #fb7185;
+  --accent-b: #c084fc;
+  --glow: #fb7185;
+  --aur-strength: 0.85;
+}
+:root[data-theme='mono'] {
+  --aur-1: #334155;
+  --aur-2: #475569;
+  --aur-3: #64748b;
+  --accent-a: #cbd5e1;
+  --accent-b: #94a3b8;
+  --glow: #94a3b8;
+  --aur-strength: 0.6;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-teal: var(--teal);
+  --color-red: var(--red);
+  --color-caution: var(--caution);
+  --color-due: var(--due);
+  --color-info: var(--info);
+  --color-accent-a: var(--accent-a);
+  --color-accent-b: var(--accent-b);
+
+  --color-background: var(--ink);
+  --color-foreground: var(--text);
+  --color-card: var(--panel);
+  --color-card-foreground: var(--text);
+  --color-primary: var(--gold);
+  --color-primary-foreground: #1a1200;
+  --color-secondary: var(--panel-2);
+  --color-secondary-foreground: var(--text);
+  --color-muted-foreground: var(--muted);
+  --color-destructive: var(--red);
+  --color-border: var(--line-2);
+  --color-input: var(--line-2);
+  --color-ring: var(--accent-a);
+
+  --font-display: var(--font-d);
+  --font-mono: var(--font-m);
+  --font-sans: var(--font-b);
+  --radius-card: var(--r);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  body {
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--font-b);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  * {
+    border-color: var(--line);
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent-b);
+    outline-offset: 2px;
+  }
+}
+
+@utility glass {
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid var(--line-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 60px -34px rgba(0, 0, 0, 0.8);
+}
+
+@utility glass-strong {
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid var(--line-2);
+}
+
+@utility glow-gold {
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  color: #1a1200;
+  box-shadow:
+    0 10px 34px -10px rgba(245, 184, 61, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+@utility accent-pill {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent-a) 24%, transparent),
+    color-mix(in srgb, var(--accent-b) 6%, transparent)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-a) 38%, transparent);
+}
+
+@utility brand-gradient {
+  background: linear-gradient(135deg, var(--accent-a) 0%, var(--accent-b) 55%, var(--aur-3) 100%);
+}
+
+@utility tabular {
+  font-family: var(--font-m);
+  font-variant-numeric: tabular-nums;
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Aurora light: three blurred blobs that drift slowly. */
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+  animation: aurora-drift 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.aurora-blob.b2 {
+  animation-duration: 30s;
+  animation-direction: alternate-reverse;
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(60px, 40px) scale(1.08);
+  }
+  100% {
+    transform: translate(-40px, 70px) scale(0.95);
+  }
+}
+
+/* Page enter transition (keyed on the route). */
+.page-enter {
+  animation: page-enter 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.caret-blink {
+  animation: caret-blink 1s steps(2) infinite;
+}
+@keyframes caret-blink {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Motion: Settings › Appearance (off / on / system). System follows prefers-reduced-motion. */
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='on']) *,
+  :root:not([data-motion='on']) *::before,
+  :root:not([data-motion='on']) *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

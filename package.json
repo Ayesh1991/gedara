@@ -1,0 +1,25 @@
+{
+  "name": "gedara",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.5.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @gedara/web dev",
+    "build": "pnpm --filter @gedara/web build",
+    "typecheck": "pnpm --filter @gedara/web typecheck && tsc -p tsconfig.json",
+    "lint": "pnpm --filter @gedara/web lint",
+    "test": "pnpm --filter @gedara/web test",
+    "test:db": "node scripts/sql-test.mjs",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@supabase/supabase-js": "2.116.0",
+    "@types/node": "24.13.6",
+    "dotenv": "17.4.2",
+    "typescript": "6.0.3"
+  }
+}
