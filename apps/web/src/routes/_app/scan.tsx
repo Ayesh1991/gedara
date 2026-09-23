@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { ScanLine } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Placeholder } from '@/components/Placeholder';
 
@@ -8,5 +9,5 @@ export const Route = createFileRoute('/_app/scan')({
 
 function Page() {
   const { t } = useTranslation();
-  return <Placeholder title={t('nav.scan')} description={t('placeholder.scan')} phase="1" />;
+  return <Placeholder title={t('nav.scan')} description={t('placeholder.scan')} phase="1" icon={ScanLine} />;
 }

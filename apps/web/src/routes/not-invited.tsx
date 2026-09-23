@@ -20,7 +20,7 @@ function NotInvited() {
   const { t } = useTranslation();
   const { email } = Route.useRouteContext();
   return (
-    <div className="pt-safe flex min-h-dvh flex-col items-center justify-center px-4">
+    <div className="pt-safe relative z-10 flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <Brand />
         <Card className="space-y-4">

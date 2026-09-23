@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.2 — Aurora redesign + colour themes
+- New design language "Aurora": drifting aurora light, glass rail/cards, floating phone dock with a gold Scan orb,
+  page transitions, count-up numbers (all respect Motion / reduced-motion).
+- Settings › Appearance: 5 aurora themes (Aurora, Nebula, Lagoon, Ember, Mono) + Motion; synced per user.
+- Home "Pulse": KPI tiles, cash-flow, budget, attention and activity panels with honest empty states.
+- Redesigned sign-in; ⌘K / search and notifications show what's coming; version badge no longer wraps.
+
 ## 0.0.1 — Phase 0 Foundation (in progress)
 - pnpm workspace; `apps/web` = Vite 8 + React 19 + TS 6 (strict) + Tailwind 4 + shadcn-style UI,
   TanStack Router (file-based) + Query, supabase-js, Zod, i18next (`en`).

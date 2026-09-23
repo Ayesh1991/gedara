@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { Link, Outlet, createRootRouteWithContext, type ErrorComponentProps } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Toaster } from 'sonner';
+import { AuroraBackground } from '@/components/aurora/AuroraBackground';
 import { Brand } from '@/components/Brand';
 import { VersionBadge } from '@/components/VersionBadge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ export interface RouterContext {
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
+      <AuroraBackground />
       <Outlet />
       <Toaster theme="dark" position="top-center" richColors />
     </>
@@ -25,7 +27,7 @@ function RootError({ error, reset }: ErrorComponentProps) {
   const { t } = useTranslation();
   const offline = typeof navigator !== 'undefined' && !navigator.onLine;
   return (
-    <div className="pt-safe flex min-h-dvh flex-col items-center justify-center px-4">
+    <div className="pt-safe relative z-10 flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <Brand />
         <Card className="space-y-3">

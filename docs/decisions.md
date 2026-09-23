@@ -25,3 +25,8 @@ Format: date · decision · why. Append-only.
 - 2026-09-23 · gedara-staging was created in **Tokyo (ap-northeast-1)**, prod is Singapore · staging-only latency cost; not worth recreating now
 - 2026-09-23 · Email OTP Length set to **6** in both Supabase projects (was 8) · app + email template expect a 6-digit code; an 8-digit code was silently truncated
 - 2026-09-23 · e2e runs on the system **Microsoft Edge** (`E2E_CHANNEL=msedge`) on the dev PC · Playwright's Chromium 1243 fails to start on this Windows 10 machine (side-by-side error)
+- 2026-09-23 · Design language **Aurora** replaces the ledger v7 palette (void #05070F, glass, violet/cyan/teal aurora; gold #F5B83D kept for the single primary action) · approved from the design preview; CLAUDE.md rule 11 updated
+- 2026-09-23 · User-selectable aurora themes (aurora, nebula, lagoon, ember, mono) + Motion (system/on/off), stored in Supabase Auth `user_metadata.prefs` and mirrored to localStorage for a flash-free first paint · per user, synced across devices, no new table/RLS; themes never change gold or status colours so meaning is stable
+- 2026-09-23 · Real app shows empty states (ghost charts, "arrives in Phase N"), never sample numbers · a finance app must not display invented amounts
+- 2026-09-23 · Appearance prefs carry `updatedAt`; on start-up the newer of device vs account wins and a newer local choice is re-pushed · a save interrupted by a reload/navigation would otherwise be lost or overwritten by stale account data
+- 2026-09-23 · Web build order is `vite build && tsc -b --noEmit` · the TanStack Router plugin generates routeTree.gen.ts during the Vite build, so new route files are unknown to tsc until then

@@ -2,10 +2,10 @@ import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
-import { Brand } from '@/components/Brand';
+import { LockKeyhole } from 'lucide-react';
+import { EnvChip, LogoMark } from '@/components/Brand';
 import { VersionBadge } from '@/components/VersionBadge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPSlot } from '@/components/ui/input-otp';
 import { otpErrorKey } from '@/lib/auth-errors';
@@ -81,17 +81,28 @@ function LoginPage() {
   }
 
   return (
-    <div className="pt-safe pb-safe flex min-h-dvh flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <Brand />
-        <Card className="space-y-4">
-          <h1 className="font-display text-xl font-semibold">{t('login.title')}</h1>
+    <div className="pt-safe pb-safe relative z-10 flex min-h-dvh flex-col items-center px-5 sm:justify-center">
+      <div className="mt-16 flex w-full max-w-sm flex-col items-center gap-10 sm:mt-0">
+        <div className="flex flex-col items-center gap-4">
+          <LogoMark size={76} />
+          <div className="flex flex-col items-center gap-1">
+            <span className="font-display text-[34px] leading-none font-bold tracking-tight">{t('app.name')}</span>
+            <span className="text-base text-[#a5b0d0]">
+              {t('app.subtitle')} · {t('app.tagline')}
+            </span>
+            <EnvChip />
+          </div>
+        </div>
 
+        <div className="glass w-full space-y-5 rounded-[26px] p-6">
           {step === 'email' ? (
-            <form onSubmit={(e) => void sendCode(e)} className="space-y-4" noValidate>
-              <p className="text-sm text-muted">{t('login.intro')}</p>
-              <label className="block space-y-1.5">
-                <span className="text-sm">{t('login.email')}</span>
+            <form onSubmit={(e) => void sendCode(e)} className="space-y-5" noValidate>
+              <div className="space-y-1.5">
+                <h1 className="font-display text-[22px] font-semibold">{t('login.title')}</h1>
+                <p className="text-sm leading-relaxed text-[#a5b0d0]">{t('login.intro')}</p>
+              </div>
+              <label className="block space-y-2">
+                <span className="text-[13px] text-[#a5b0d0]">{t('login.email')}</span>
                 <Input
                   type="email"
                   inputMode="email"
@@ -104,21 +115,24 @@ function LoginPage() {
                   required
                 />
               </label>
-              <Button type="submit" variant="primary" className="w-full" disabled={busy}>
+              <Button type="submit" variant="primary" className="h-[54px] w-full rounded-2xl text-base" disabled={busy}>
                 {busy ? t('login.sending') : t('login.sendCode')}
               </Button>
             </form>
           ) : (
             <form
-              className="space-y-4"
+              className="space-y-5"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (code.length === 6) void verify(code);
               }}
             >
-              <p className="text-sm text-muted">{t('login.codeSent', { email })}</p>
               <div className="space-y-1.5">
-                <span className="text-sm">{t('login.code')}</span>
+                <h1 className="font-display text-[22px] font-semibold">{t('login.codeTitle')}</h1>
+                <p className="text-sm leading-relaxed text-[#a5b0d0]">{t('login.codeSent', { email })}</p>
+              </div>
+              <div className="space-y-2">
+                <span className="text-[13px] text-[#a5b0d0]">{t('login.code')}</span>
                 <InputOTP
                   maxLength={6}
                   value={code}
@@ -136,14 +150,25 @@ function LoginPage() {
                   ))}
                 </InputOTP>
               </div>
-              <Button type="submit" variant="primary" className="w-full" disabled={busy || code.length !== 6}>
+              <Button
+                type="submit"
+                variant="primary"
+                className="h-[54px] w-full rounded-2xl text-base"
+                disabled={busy || code.length !== 6}
+              >
                 {busy ? t('login.verifying') : t('login.verify')}
               </Button>
               <div className="flex items-center justify-between">
-                <Button variant="ghost" size="sm" onClick={() => setStep('email')}>
+                <Button variant="ghost" size="sm" className="px-0 font-normal text-[#a5b0d0]" onClick={() => setStep('email')}>
                   {t('login.changeEmail')}
                 </Button>
-                <Button variant="ghost" size="sm" disabled={cooldown > 0 || busy} onClick={() => void sendCode()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="tabular px-0 font-normal text-[#a5b0d0]"
+                  disabled={cooldown > 0 || busy}
+                  onClick={() => void sendCode()}
+                >
                   {cooldown > 0 ? t('login.resendIn', { seconds: cooldown }) : t('login.resend')}
                 </Button>
               </div>
@@ -155,8 +180,13 @@ function LoginPage() {
               {error}
             </p>
           )}
-        </Card>
-        <div className="text-center">
+        </div>
+
+        <div className="flex flex-col items-center gap-1.5 pb-6">
+          <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+            <LockKeyhole className="h-3.5 w-3.5" aria-hidden />
+            {t('login.footer')}
+          </span>
           <VersionBadge linked={false} />
         </div>
       </div>

@@ -9,7 +9,7 @@ import { APP_VERSION, GIT_SHA, formatBadge } from '@/lib/version';
 export function VersionBadge({ className, linked = true }: { className?: string; linked?: boolean }) {
   const { data: schemaVersion } = useQuery(schemaVersionQuery);
   const text = formatBadge({ version: APP_VERSION, sha: GIT_SHA, schemaVersion, env: env.VITE_APP_ENV });
-  const cls = cn('tabular text-[11px] text-muted', className);
+  const cls = cn('tabular whitespace-nowrap text-[10.5px] text-faint hover:text-muted', className);
   return linked ? (
     <Link to="/settings/diagnostics" className={cls} data-testid="version-badge">
       {text}

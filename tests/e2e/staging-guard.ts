@@ -29,3 +29,6 @@ export async function mintOtp(email = E2E_EMAIL): Promise<string> {
 }
 
 export const STORAGE_STATE = 'playwright/.auth/user.json';
+
+/** Home heading: time-of-day greeting. */
+export const GREETING = /^Good (morning|afternoon|evening), /;

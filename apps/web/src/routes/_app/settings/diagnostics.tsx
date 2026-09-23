@@ -10,6 +10,7 @@ import { env } from '@/lib/env';
 import { schemaVersionQuery } from '@/lib/queries';
 import { supabase } from '@/lib/supabase';
 import { APP_VERSION, BUILD_TIME, GIT_SHA } from '@/lib/version';
+import { useCountUp } from '@/hooks/useCountUp';
 import { clearCacheAndReload, getServiceWorkerVersion } from '@/pwa/register';
 
 const CHECK_TIMEOUT_MS = 8000;
@@ -17,6 +18,11 @@ const CHECK_TIMEOUT_MS = 8000;
 export const Route = createFileRoute('/_app/settings/diagnostics')({
   component: DiagnosticsPage,
 });
+
+function Ms({ value }: { value: number }) {
+  const shown = useCountUp(value, 600);
+  return <span className="tabular text-xs text-muted">{Math.round(shown)} ms</span>;
+}
 
 function DiagnosticsPage() {
   const { t } = useTranslation();
@@ -68,7 +74,7 @@ function DiagnosticsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-2xl font-semibold">{t('diagnostics.title')}</h1>
+      <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('diagnostics.title')}</h1>
 
       <Card>
         <CardTitle>{t('diagnostics.version')}</CardTitle>
@@ -108,7 +114,7 @@ function DiagnosticsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex justify-between gap-2">
                     <span className="font-display">{t(`diagnostics.checks.${id}`)}</span>
-                    {r && <span className="tabular text-xs text-muted">{r.ms} ms</span>}
+                    {r && <Ms value={r.ms} />}
                   </div>
                   {r && (
                     <div className={`tabular break-all text-xs ${r.ok ? 'text-muted' : 'text-red'}`}>
@@ -120,7 +126,7 @@ function DiagnosticsPage() {
             );
           })}
         </ul>
-        <Button variant="primary" className="mt-4 w-full" disabled={running} onClick={() => setRunId((n) => n + 1)}>
+        <Button variant="accent" className="mt-4 w-full" disabled={running} onClick={() => setRunId((n) => n + 1)}>
           {running ? t('diagnostics.testing') : t('diagnostics.test')}
         </Button>
       </Card>

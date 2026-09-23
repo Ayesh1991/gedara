@@ -18,15 +18,16 @@ export function InputOTPSlot({ index, className }: { index: number; className?: 
   return (
     <div
       className={cn(
-        'relative flex h-14 w-11 items-center justify-center rounded-[10px] border border-line-2 bg-ink-2 tabular text-2xl',
-        slot?.isActive && 'border-gold',
+        'tabular relative flex h-14 flex-1 items-center justify-center rounded-[14px] border border-line-2 bg-white/5 text-2xl font-semibold transition-[box-shadow,border-color]',
+        slot?.isActive &&
+          'border-accent-a bg-[color-mix(in_srgb,var(--accent-a)_12%,transparent)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--accent-a)_18%,transparent),0_0_24px_color-mix(in_srgb,var(--accent-a)_35%,transparent)]',
         className,
       )}
     >
       {slot?.char}
       {slot?.hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-6 w-px animate-pulse bg-text" />
+          <div className="caret-blink h-7 w-0.5 bg-text" />
         </div>
       )}
     </div>

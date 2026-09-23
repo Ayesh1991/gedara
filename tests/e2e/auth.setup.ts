@@ -1,5 +1,5 @@
 import { expect, test as setup } from '@playwright/test';
-import { E2E_EMAIL, STORAGE_STATE, mintOtp } from './staging-guard';
+import { E2E_EMAIL, GREETING, STORAGE_STATE, mintOtp } from './staging-guard';
 
 
 
@@ -17,6 +17,6 @@ setup('log in with an email OTP', async ({ page }) => {
   const otp = await mintOtp();
   await page.getByLabel('Login code').fill(otp);
 
-  await expect(page.getByRole('heading', { name: /Welcome to Gedara/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: GREETING })).toBeVisible();
   await page.context().storageState({ path: STORAGE_STATE });
 });

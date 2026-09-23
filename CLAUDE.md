@@ -36,7 +36,7 @@ vite-plugin-pwa (NetworkFirst) · Vercel · Vitest + Playwright · Python 3 for 
 8. Never put the service-role key or any Google/Claude API key in `apps/web`. Secrets live only in Edge Functions and `.env.local` (git-ignored).
 9. Compress photos in the browser (WebP 1600 px + 320 px thumb) before upload. Don't use Supabase image transforms.
 10. Mobile-first: one-thumb reach, test at 375 px and iPad widths. Respect `prefers-reduced-motion`.
-11. Design tokens come from ledger v7 (`--ink #0B101C`, `--panel #141C30`, `--gold #F2B33D`, `--teal #2FC6A0`, `--red #FF6B6B`, Space Grotesk + IBM Plex Mono). Gold is for the single primary action only.
+11. Design language is "Aurora" (approved 2026-09-23; tokens in `apps/web/src/styles/index.css`): void `#05070F`, glass panels, Space Grotesk + IBM Plex Mono (every number). User-selectable aurora themes (aurora/nebula/lagoon/ember/mono) change only the aurora light and accents; gold `#F5B83D` is the single primary action per screen and status colours (red unsafe, amber best-before, cyan due, violet info, teal good) never change. Never show fake numbers in the app: empty states until real data exists.
 12. All UI strings go through i18n (`en` now, `si` later).
 13. "Done" means deployed to a Vercel preview and the version badge on that URL matches. Say so explicitly.
 

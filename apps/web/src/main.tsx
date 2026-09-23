@@ -7,6 +7,7 @@ import './styles/index.css';
 import { supabase } from './lib/supabase';
 import { registerServiceWorker } from './pwa/register';
 import { routeTree } from './routeTree.gen';
+import { ThemeProvider } from './theme/ThemeProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -43,7 +44,9 @@ if (!root) throw new Error('#root missing');
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ThemeProvider>
+        <RouterProvider router={router} />
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

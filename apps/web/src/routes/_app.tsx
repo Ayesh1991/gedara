@@ -11,9 +11,14 @@ export const Route = createFileRoute('/_app')({
     if (!membership) throw redirect({ to: '/not-invited' });
     return { membership };
   },
-  component: () => (
-    <AppShell>
+  component: AppLayout,
+});
+
+function AppLayout() {
+  const { membership } = Route.useRouteContext();
+  return (
+    <AppShell membership={membership}>
       <Outlet />
     </AppShell>
-  ),
-});
+  );
+}

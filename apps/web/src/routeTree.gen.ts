@@ -20,6 +20,7 @@ import { Route as AppPlacesRouteImport } from './routes/_app/places'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
 import { Route as AppThingsRouteImport } from './routes/_app/things'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
+import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings/appearance'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings/diagnostics'
 
 const AppRoute = AppRouteImport.update({
@@ -76,6 +77,11 @@ const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsAppearanceRoute = AppSettingsAppearanceRouteImport.update({
+  id: '/settings/appearance',
+  path: '/settings/appearance',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsDiagnosticsRoute = AppSettingsDiagnosticsRouteImport.update({
   id: '/settings/diagnostics',
   path: '/settings/diagnostics',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/places': typeof AppPlacesRoute
   '/scan': typeof AppScanRoute
   '/things': typeof AppThingsRoute
+  '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/': typeof AppSettingsIndexRoute
 }
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/scan': typeof AppScanRoute
   '/things': typeof AppThingsRoute
   '/': typeof AppIndexRoute
+  '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings': typeof AppSettingsIndexRoute
 }
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/_app/scan': typeof AppScanRoute
   '/_app/things': typeof AppThingsRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
 }
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/places'
     | '/scan'
     | '/things'
+    | '/settings/appearance'
     | '/settings/diagnostics'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/things'
     | '/'
+    | '/settings/appearance'
     | '/settings/diagnostics'
     | '/settings'
   id:
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/_app/scan'
     | '/_app/things'
     | '/_app/'
+    | '/_app/settings/appearance'
     | '/_app/settings/diagnostics'
     | '/_app/settings/'
   fileRoutesById: FileRoutesById
@@ -251,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/appearance': {
+      id: '/_app/settings/appearance'
+      path: '/settings/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AppSettingsAppearanceRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/diagnostics': {
       id: '/_app/settings/diagnostics'
       path: '/settings/diagnostics'
@@ -269,6 +288,7 @@ interface AppRouteChildren {
   AppScanRoute: typeof AppScanRoute
   AppThingsRoute: typeof AppThingsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
@@ -281,6 +301,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppScanRoute: AppScanRoute,
   AppThingsRoute: AppThingsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
