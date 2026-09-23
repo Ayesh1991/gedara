@@ -1,0 +1,15 @@
+{
+  // Root tooling only (Playwright e2e, scripts). The web app has its own configs in apps/web.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["playwright.config.ts", "tests/e2e/**/*.ts", "scripts/**/*.mjs"]
+}

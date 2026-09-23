@@ -27,7 +27,7 @@ vite-plugin-pwa (NetworkFirst) · Vercel · Vitest + Playwright · Python 3 for 
 
 ## Non-negotiable rules
 1. Stock and balances are never edited directly. Only `stock_movement` rows written through the SECURITY DEFINER RPCs (`rpc_purchase`, `rpc_consume`, `rpc_weigh`, `rpc_undo` …).
-2. Every table has `household_id`, RLS enabled (`is_member(household_id)`), and a SQL test showing another household can't read or write it.
+2. Every table has `household_id`, RLS enabled (`private.is_member(household_id)` for reads, `private.can_write(household_id)` for writes), and a SQL test showing another household can't read or write it.
 3. Migrations are forward-only. Never edit a migration that has already been applied. Staging first, prod only via migration files.
 4. Money is `numeric(14,2)` and quantities `numeric(14,4)`. Format with `Intl.NumberFormat('en-LK',{style:'currency',currency:'LKR'})`. Prices are also stored per base unit (`price_per_base`).
 5. Fingerprints are deterministic (djb2, same format as `reference/ledger-v7`: `b<hash>` for bills, `b<hash>-<lineNo>-<hash>` for lines) and unique per household. Never replace them with random IDs.

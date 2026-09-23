@@ -1,0 +1,119 @@
+@import 'tailwindcss';
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+
+/* Design tokens — copied verbatim from reference/ledger-v7/index.html (:root). */
+:root {
+  --ink: #0b101c;
+  --ink-2: #0f1626;
+  --panel: #141c30;
+  --panel-2: #1a2440;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --text: #e9edf6;
+  --muted: #8b94ab;
+  --gold: #f2b33d;
+  --gold-soft: rgba(242, 179, 61, 0.14);
+  --teal: #2fc6a0;
+  --red: #ff6b6b;
+  --paper: #f7f4e9;
+  --paper-ink: #26221a;
+  --paper-muted: #7a7261;
+  --r: 16px;
+  --nav-h: 64px;
+  --font-d: 'Space Grotesk', system-ui, sans-serif;
+  --font-m: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-b: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Tailwind theme bound to the tokens (shadcn-style semantic names). */
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-teal: var(--teal);
+  --color-red: var(--red);
+
+  --color-background: var(--ink);
+  --color-foreground: var(--text);
+  --color-card: var(--panel);
+  --color-card-foreground: var(--text);
+  --color-primary: var(--gold);
+  --color-primary-foreground: #1a1300;
+  --color-secondary: var(--panel-2);
+  --color-secondary-foreground: var(--text);
+  --color-muted-foreground: var(--muted);
+  --color-destructive: var(--red);
+  --color-border: var(--line-2);
+  --color-input: var(--line-2);
+  --color-ring: var(--gold);
+
+  --font-display: var(--font-d);
+  --font-mono: var(--font-m);
+  --font-sans: var(--font-b);
+  --radius-card: var(--r);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  body {
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--font-b);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  * {
+    border-color: var(--line);
+  }
+  :focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+}
+
+@utility glass {
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line-2);
+}
+
+@utility tabular {
+  font-family: var(--font-m);
+  font-variant-numeric: tabular-nums;
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

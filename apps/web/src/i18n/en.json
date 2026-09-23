@@ -1,0 +1,112 @@
+{
+  "app": {
+    "name": "Gedara",
+    "subtitle": "ගෙදර",
+    "env": { "local": "LOCAL", "staging": "STAGING", "prod": "" },
+    "updated": "Updated to v{{version}}",
+    "offlineReady": "Ready to work offline"
+  },
+  "nav": {
+    "home": "Home",
+    "money": "Money",
+    "scan": "Scan",
+    "pantry": "Pantry",
+    "things": "Things",
+    "places": "Places",
+    "insights": "Insights",
+    "settings": "Settings",
+    "main": "Main navigation"
+  },
+  "login": {
+    "title": "Sign in",
+    "intro": "Gedara is invite-only. Enter your email and we'll send you a 6-digit code.",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeSent": "We sent a 6-digit code to {{email}}. Check Spam the first time.",
+    "code": "Login code",
+    "verify": "Sign in",
+    "verifying": "Checking…",
+    "resend": "Resend code",
+    "resendIn": "Resend in {{seconds}} s",
+    "changeEmail": "Use a different email",
+    "errors": {
+      "invalidEmail": "Enter a valid email address.",
+      "notInvited": "This email isn't invited to Gedara.",
+      "rateLimited": "Too many attempts. Wait a minute and try again.",
+      "badCode": "That code is wrong or has expired.",
+      "generic": "Something went wrong: {{message}}"
+    }
+  },
+  "notInvited": {
+    "title": "No household yet",
+    "body": "You're signed in as {{email}}, but this account isn't a member of any household. Ask the owner to invite this email.",
+    "signOut": "Sign out"
+  },
+  "placeholder": {
+    "comingIn": "Coming in Phase {{phase}}",
+    "money": "Accounts, transactions, bill import and budgets.",
+    "scan": "Camera + USB scanner, QR labels and deep links.",
+    "pantry": "Stock, lots, expiry and the shopping list.",
+    "things": "Assets, warranties, documents and maintenance.",
+    "places": "The location tree with QR labels.",
+    "insights": "Drill-down analytics for every number."
+  },
+  "home": {
+    "greeting": "Welcome to {{household}}",
+    "phase0": "Foundation is in place. Modules arrive phase by phase.",
+    "openPlaces": "Places",
+    "openInsights": "Insights"
+  },
+  "settings": {
+    "title": "Settings",
+    "diagnostics": "Diagnostics",
+    "diagnosticsHint": "Version, Test connection, clear cache",
+    "signedInAs": "Signed in as {{email}}",
+    "role": "Role: {{role}}",
+    "signOut": "Sign out"
+  },
+  "diagnostics": {
+    "title": "Diagnostics",
+    "version": "Version",
+    "appVersion": "App",
+    "gitSha": "Git SHA",
+    "buildTime": "Built",
+    "environment": "Environment",
+    "schemaVersion": "DB schema",
+    "swVersion": "Service worker",
+    "swNone": "not active",
+    "test": "Test connection",
+    "testing": "Testing…",
+    "allGreen": "All green",
+    "someFailed": "{{count}} check(s) failed",
+    "clearCache": "Clear cache & reload",
+    "checks": {
+      "auth": "Auth",
+      "db": "Database",
+      "storage": "Storage",
+      "realtime": "Realtime",
+      "edge": "Edge function",
+      "sw": "Service worker"
+    },
+    "errors": {
+      "timeout": "Timed out after {{ms}} ms",
+      "noSession": "No session",
+      "noHousehold": "No household membership",
+      "noController": "No active service worker",
+      "swMismatch": "SW is v{{sw}}, app is v{{app}}"
+    }
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "offlineTitle": "You're offline",
+    "retry": "Try again",
+    "diagnostics": "Open Diagnostics"
+  },
+  "common": {
+    "loading": "Loading…",
+    "unknown": "?",
+    "back": "Back"
+  }
+}
