@@ -332,9 +332,12 @@ export async function updateAccount(
 }
 
 /** Postgres / RPC error → i18n key suffix under money.errors. */
-export function moneyErrorKey(e: unknown): 'duplicate' | 'invalid' | 'reference' | 'denied' | 'nameTaken' | 'generic' {
+export function moneyErrorKey(
+  e: unknown,
+): 'duplicate' | 'invalid' | 'reference' | 'denied' | 'nameTaken' | 'reviewed' | 'generic' {
   const code = (e as { code?: string } | null)?.code;
   if (code === 'GDDUP') return 'duplicate';
+  if (code === 'GDLNK') return 'reviewed';
   if (code === '23514') return 'invalid';
   if (code === '23503') return 'reference';
   if (code === '42501') return 'denied';

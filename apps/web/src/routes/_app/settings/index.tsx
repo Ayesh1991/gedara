@@ -1,5 +1,5 @@
 import { Link, createFileRoute, type LinkProps } from '@tanstack/react-router';
-import { ChevronRight, MapPin, Palette, Shapes, Stethoscope, Wallet, type LucideIcon } from 'lucide-react';
+import { ChevronRight, MapPin, Palette, Shapes, Smartphone, Stethoscope, Wallet, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -55,6 +55,12 @@ function SettingsPage() {
         icon={Shapes}
         title={t('categories.title')}
         hint={t('settings.categoriesHint')}
+      />
+      <SettingsLink
+        to="/settings/devices"
+        icon={Smartphone}
+        title={t('devices.title')}
+        hint={t('settings.devicesHint')}
       />
       <SettingsLink
         to="/settings/appearance"

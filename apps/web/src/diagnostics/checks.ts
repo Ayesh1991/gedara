@@ -139,7 +139,10 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
       );
       if (error) throw error;
       if (!data?.ok) throw new Error('ping returned no ok');
-      return data.fn_version;
+      // Bank-SMS ingest (Phase 2b): its version answers a plain GET.
+      const sms = await supabase.functions.invoke<{ ok: boolean; fn_version: string }>('sms-ingest', { method: 'GET' });
+      if (sms.error || !sms.data?.ok) throw new CheckError('diagnostics.errors.smsIngest');
+      return `${data.fn_version} · ${sms.data.fn_version}`;
     },
 
     sw: async () => {

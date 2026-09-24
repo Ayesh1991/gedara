@@ -592,6 +592,13 @@ export type Database = {
             referencedColumns: ["household_id", "account_id"]
           },
           {
+            foreignKeyName: "money_transaction_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_balance_check"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
             foreignKeyName: "money_transaction_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
@@ -625,6 +632,199 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_account_balance"
             referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_to_account_id_fkey"
+            columns: ["household_id", "to_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_balance_check"
+            referencedColumns: ["household_id", "account_id"]
+          },
+        ]
+      }
+      sms_device: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dropped_count: number
+          household_id: string
+          id: string
+          last_rejected_at: string | null
+          last_rejected_sender: string | null
+          last_seen_at: string | null
+          message_count: number
+          name: string
+          revoked_at: string | null
+          token_hash: string
+          token_hint: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dropped_count?: number
+          household_id: string
+          id?: string
+          last_rejected_at?: string | null
+          last_rejected_sender?: string | null
+          last_seen_at?: string | null
+          message_count?: number
+          name: string
+          revoked_at?: string | null
+          token_hash: string
+          token_hint: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dropped_count?: number
+          household_id?: string
+          id?: string
+          last_rejected_at?: string | null
+          last_rejected_sender?: string | null
+          last_seen_at?: string | null
+          message_count?: number
+          name?: string
+          revoked_at?: string | null
+          token_hash?: string
+          token_hint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_device_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_message: {
+        Row: {
+          account_id: string | null
+          amount: number | null
+          balance_after: number | null
+          bank_txn_id: string | null
+          body: string
+          channel: string
+          created_at: string
+          currency: string
+          device_id: string | null
+          fingerprint: string
+          household_id: string
+          id: string
+          ignored: boolean
+          institution: string | null
+          kind: string
+          last_digits: string | null
+          merchant_text: string | null
+          occurred_at: string | null
+          occurred_on: string
+          parser: string | null
+          parser_version: number | null
+          received_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sender: string
+          transaction_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          amount?: number | null
+          balance_after?: number | null
+          bank_txn_id?: string | null
+          body: string
+          channel: string
+          created_at?: string
+          currency?: string
+          device_id?: string | null
+          fingerprint: string
+          household_id: string
+          id?: string
+          ignored?: boolean
+          institution?: string | null
+          kind: string
+          last_digits?: string | null
+          merchant_text?: string | null
+          occurred_at?: string | null
+          occurred_on: string
+          parser?: string | null
+          parser_version?: number | null
+          received_at: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sender: string
+          transaction_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number | null
+          balance_after?: number | null
+          bank_txn_id?: string | null
+          body?: string
+          channel?: string
+          created_at?: string
+          currency?: string
+          device_id?: string | null
+          fingerprint?: string
+          household_id?: string
+          id?: string
+          ignored?: boolean
+          institution?: string | null
+          kind?: string
+          last_digits?: string | null
+          merchant_text?: string | null
+          occurred_at?: string | null
+          occurred_on?: string
+          parser?: string | null
+          parser_version?: number | null
+          received_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sender?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_message_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "sms_message_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "sms_message_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_balance_check"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "sms_message_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "sms_device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "sms_message_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_message_household_id_transaction_id_fkey"
+            columns: ["household_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "money_transaction"
+            referencedColumns: ["household_id", "id"]
           },
         ]
       }
@@ -803,6 +1003,26 @@ export type Database = {
           },
         ]
       }
+      v_sms_balance_check: {
+        Row: {
+          account_id: string | null
+          bank_reported: number | null
+          gedara_value: number | null
+          household_id: string | null
+          is_set_up: boolean | null
+          reported_at: string | null
+          sms_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_spend_by_category_month: {
         Row: {
           category_id: string | null
@@ -846,6 +1066,34 @@ export type Database = {
         Returns: number
       }
       rpc_save_transaction: { Args: { p: Json }; Returns: Json }
+      rpc_sms_device_create: {
+        Args: { p_household: string; p_name: string }
+        Returns: Json
+      }
+      rpc_sms_device_revoke: { Args: { p_id: string }; Returns: undefined }
+      rpc_sms_ignore: {
+        Args: { p_ids: string[]; p_ignored: boolean }
+        Returns: number
+      }
+      rpc_sms_import: {
+        Args: { p_household: string; p_messages: Json }
+        Returns: Json
+      }
+      rpc_sms_ingest_device: {
+        Args: {
+          p_dropped?: number
+          p_messages: Json
+          p_rejected_sender?: string
+          p_token_hash: string
+        }
+        Returns: Json
+      }
+      rpc_sms_link: {
+        Args: { p_sms_ids: string[]; p_transaction: string }
+        Returns: Json
+      }
+      rpc_sms_post: { Args: { p: Json; p_sms_ids: string[] }; Returns: Json }
+      rpc_sms_unlink: { Args: { p_ids: string[] }; Returns: number }
       safe_uuid: { Args: { p: string }; Returns: string }
       schema_version: { Args: never; Returns: number }
     }

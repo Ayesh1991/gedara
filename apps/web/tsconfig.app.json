@@ -17,7 +17,7 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "paths": { "@/*": ["./src/*"] }
+    "paths": { "@/*": ["./src/*"], "@sms/*": ["../../supabase/functions/_shared/sms/*"] }
   },
   "include": ["src"],
   "exclude": ["src/sw.ts", "src/**/*.test.ts", "src/**/*.test.tsx"]

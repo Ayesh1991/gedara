@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { lineFingerprint, manualFingerprint } from '@/lib/money/fingerprint';
 import { formatLKR, parseAmount, sumAmounts } from '@/lib/money/format';
-import { subsOf, type CategoryRow } from '@/lib/money/categoriesMap';
+import { findSub, type CategoryRow } from '@/lib/money/categoriesMap';
 import {
   invalidateMoney,
   lastAccount,
@@ -38,11 +38,6 @@ const QUICK: Array<[string, string, string, string]> = [
   ['🍽️', 'Dining', 'dining', 'Restaurant'],
   ['🛒', 'Grocery', 'grocery', 'Other grocery'],
 ];
-
-function findSub(categories: CategoryRow[], key: string, name: string): CategoryRow | undefined {
-  const top = categories.find((c) => c.parent_id === null && c.key === key);
-  return top ? subsOf(categories, top.id).find((s) => s.name === name) : undefined;
-}
 
 interface LineState {
   key: string;

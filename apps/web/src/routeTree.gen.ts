@@ -19,6 +19,7 @@ import { Route as AppScanRouteImport } from './routes/_app/scan'
 import { Route as AppThingsRouteImport } from './routes/_app/things'
 import { Route as AppMoneyIndexRouteImport } from './routes/_app/money/index'
 import { Route as AppMoneyImportRouteImport } from './routes/_app/money/import'
+import { Route as AppMoneyInboxRouteImport } from './routes/_app/money/inbox'
 import { Route as AppPlacesIndexRouteImport } from './routes/_app/places/index'
 import { Route as AppPlacesPlaceIdRouteImport } from './routes/_app/places/$placeId'
 import { Route as AppPlacesLabelsRouteImport } from './routes/_app/places/labels'
@@ -26,6 +27,7 @@ import { Route as AppSCodeRouteImport } from './routes/_app/s.$code'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings/appearance'
 import { Route as AppSettingsCategoriesRouteImport } from './routes/_app/settings/categories'
+import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings/diagnostics'
 import { Route as AppMoneyAccountsIndexRouteImport } from './routes/_app/money/accounts/index'
 import { Route as AppMoneyAccountsAccountIdRouteImport } from './routes/_app/money/accounts/$accountId'
@@ -80,6 +82,11 @@ const AppMoneyImportRoute = AppMoneyImportRouteImport.update({
   path: '/money/import',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMoneyInboxRoute = AppMoneyInboxRouteImport.update({
+  id: '/money/inbox',
+  path: '/money/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPlacesIndexRoute = AppPlacesIndexRouteImport.update({
   id: '/places/',
   path: '/places/',
@@ -115,6 +122,11 @@ const AppSettingsCategoriesRoute = AppSettingsCategoriesRouteImport.update({
   path: '/settings/categories',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsDevicesRoute = AppSettingsDevicesRouteImport.update({
+  id: '/settings/devices',
+  path: '/settings/devices',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsDiagnosticsRoute = AppSettingsDiagnosticsRouteImport.update({
   id: '/settings/diagnostics',
   path: '/settings/diagnostics',
@@ -146,11 +158,13 @@ export interface FileRoutesByFullPath {
   '/scan': typeof AppScanRoute
   '/things': typeof AppThingsRoute
   '/money/import': typeof AppMoneyImportRoute
+  '/money/inbox': typeof AppMoneyInboxRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/labels': typeof AppPlacesLabelsRoute
   '/s/$code': typeof AppSCodeRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/categories': typeof AppSettingsCategoriesRoute
+  '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/money/': typeof AppMoneyIndexRoute
   '/places/': typeof AppPlacesIndexRoute
@@ -168,11 +182,13 @@ export interface FileRoutesByTo {
   '/things': typeof AppThingsRoute
   '/': typeof AppIndexRoute
   '/money/import': typeof AppMoneyImportRoute
+  '/money/inbox': typeof AppMoneyInboxRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/labels': typeof AppPlacesLabelsRoute
   '/s/$code': typeof AppSCodeRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/categories': typeof AppSettingsCategoriesRoute
+  '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/money': typeof AppMoneyIndexRoute
   '/places': typeof AppPlacesIndexRoute
@@ -192,11 +208,13 @@ export interface FileRoutesById {
   '/_app/things': typeof AppThingsRoute
   '/_app/': typeof AppIndexRoute
   '/_app/money/import': typeof AppMoneyImportRoute
+  '/_app/money/inbox': typeof AppMoneyInboxRoute
   '/_app/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/_app/places/labels': typeof AppPlacesLabelsRoute
   '/_app/s/$code': typeof AppSCodeRoute
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/categories': typeof AppSettingsCategoriesRoute
+  '/_app/settings/devices': typeof AppSettingsDevicesRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/_app/money/': typeof AppMoneyIndexRoute
   '/_app/places/': typeof AppPlacesIndexRoute
@@ -216,11 +234,13 @@ export interface FileRouteTypes {
     | '/scan'
     | '/things'
     | '/money/import'
+    | '/money/inbox'
     | '/places/$placeId'
     | '/places/labels'
     | '/s/$code'
     | '/settings/appearance'
     | '/settings/categories'
+    | '/settings/devices'
     | '/settings/diagnostics'
     | '/money/'
     | '/places/'
@@ -238,11 +258,13 @@ export interface FileRouteTypes {
     | '/things'
     | '/'
     | '/money/import'
+    | '/money/inbox'
     | '/places/$placeId'
     | '/places/labels'
     | '/s/$code'
     | '/settings/appearance'
     | '/settings/categories'
+    | '/settings/devices'
     | '/settings/diagnostics'
     | '/money'
     | '/places'
@@ -261,11 +283,13 @@ export interface FileRouteTypes {
     | '/_app/things'
     | '/_app/'
     | '/_app/money/import'
+    | '/_app/money/inbox'
     | '/_app/places/$placeId'
     | '/_app/places/labels'
     | '/_app/s/$code'
     | '/_app/settings/appearance'
     | '/_app/settings/categories'
+    | '/_app/settings/devices'
     | '/_app/settings/diagnostics'
     | '/_app/money/'
     | '/_app/places/'
@@ -353,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMoneyImportRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/money/inbox': {
+      id: '/_app/money/inbox'
+      path: '/money/inbox'
+      fullPath: '/money/inbox'
+      preLoaderRoute: typeof AppMoneyInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/places/': {
       id: '/_app/places/'
       path: '/places'
@@ -402,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsCategoriesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/devices': {
+      id: '/_app/settings/devices'
+      path: '/settings/devices'
+      fullPath: '/settings/devices'
+      preLoaderRoute: typeof AppSettingsDevicesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/diagnostics': {
       id: '/_app/settings/diagnostics'
       path: '/settings/diagnostics'
@@ -440,11 +478,13 @@ interface AppRouteChildren {
   AppThingsRoute: typeof AppThingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppMoneyImportRoute: typeof AppMoneyImportRoute
+  AppMoneyInboxRoute: typeof AppMoneyInboxRoute
   AppPlacesPlaceIdRoute: typeof AppPlacesPlaceIdRoute
   AppPlacesLabelsRoute: typeof AppPlacesLabelsRoute
   AppSCodeRoute: typeof AppSCodeRoute
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsCategoriesRoute: typeof AppSettingsCategoriesRoute
+  AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
   AppMoneyIndexRoute: typeof AppMoneyIndexRoute
   AppPlacesIndexRoute: typeof AppPlacesIndexRoute
@@ -461,11 +501,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppThingsRoute: AppThingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppMoneyImportRoute: AppMoneyImportRoute,
+  AppMoneyInboxRoute: AppMoneyInboxRoute,
   AppPlacesPlaceIdRoute: AppPlacesPlaceIdRoute,
   AppPlacesLabelsRoute: AppPlacesLabelsRoute,
   AppSCodeRoute: AppSCodeRoute,
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsCategoriesRoute: AppSettingsCategoriesRoute,
+  AppSettingsDevicesRoute: AppSettingsDevicesRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
   AppMoneyIndexRoute: AppMoneyIndexRoute,
   AppPlacesIndexRoute: AppPlacesIndexRoute,

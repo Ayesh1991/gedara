@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { BillImport } from '@/components/money/BillImport';
 import { SheetImport } from '@/components/money/SheetImport';
+import { SmsBackupImport } from '@/components/money/SmsBackupImport';
 import { useMoneyBasics } from '@/components/money/useMoney';
 import { Card } from '@/components/ui/card';
 import { todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
 
-const SearchSchema = z.object({ tab: z.enum(['bill', 'sheet']).optional() });
+const SearchSchema = z.object({ tab: z.enum(['bill', 'sheet', 'sms']).optional() });
 
 export const Route = createFileRoute('/_app/money/import')({
   validateSearch: SearchSchema,
@@ -32,8 +33,8 @@ function ImportPage() {
       </Link>
       <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('money.import.title')}</h1>
 
-      <div role="tablist" aria-label={t('money.import.title')} className="grid grid-cols-2 gap-1 rounded-2xl bg-white/5 p-1">
-        {(['bill', 'sheet'] as const).map((k) => (
+      <div role="tablist" aria-label={t('money.import.title')} className="grid grid-cols-3 gap-1 rounded-2xl bg-white/5 p-1">
+        {(['bill', 'sheet', 'sms'] as const).map((k) => (
           <button
             key={k}
             type="button"
@@ -42,7 +43,7 @@ function ImportPage() {
             onClick={() => void navigate({ search: { tab: k }, replace: true })}
             className={cn('h-11 rounded-xl font-display text-[14.5px] font-medium text-muted', tab === k && 'accent-pill text-text')}
           >
-            {t(k === 'bill' ? 'money.import.billTab' : 'money.import.sheetTab')}
+            {t(k === 'bill' ? 'money.import.billTab' : k === 'sheet' ? 'money.import.sheetTab' : 'money.import.smsTab')}
           </button>
         ))}
       </div>
@@ -51,6 +52,8 @@ function ImportPage() {
         <Card className="text-[14px] text-muted">{t('money.errors.denied')}</Card>
       ) : !accounts.data || !categories.data ? (
         <div className="glass h-40 animate-pulse rounded-[var(--r)]" aria-hidden />
+      ) : tab === 'sms' ? (
+        <SmsBackupImport householdId={householdId} />
       ) : tab === 'bill' ? (
         <BillImport
           householdId={householdId}
