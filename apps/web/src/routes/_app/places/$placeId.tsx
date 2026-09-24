@@ -1,9 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronRight, Copy, FolderInput, Package, Pencil, Plus, Printer, ShoppingBasket, Trash } from 'lucide-react';
+import { ChevronRight, Copy, FolderInput, Package, Pencil, Plus, Printer, Trash } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { PlaceStock } from '@/components/pantry/PlaceStock';
 import { MoveSheet } from '@/components/places/MoveSheet';
 import { PlaceForm } from '@/components/places/PlaceForm';
 import { PlaceGrid, PlacesSkeleton, usePlaces } from '@/components/places/PlaceGrid';
@@ -195,10 +196,15 @@ function PlacePage() {
         )}
       </section>
 
-      <section className="grid gap-3 md:grid-cols-2">
-        <ComingPanel icon={ShoppingBasket} title={t('nav.pantry')} body={t('places.pantrySoon')} />
-        <ComingPanel icon={Package} title={t('nav.things')} body={t('places.thingsSoon')} />
-      </section>
+      <PlaceStock
+        householdId={householdId}
+        placeId={place.id}
+        timezone={membership.household.timezone}
+        locale={membership.household.locale}
+        canWrite={canWrite}
+      />
+
+      <ComingPanel icon={Package} title={t('nav.things')} body={t('places.thingsSoon')} />
 
       <PlaceForm
         open={sheet === 'edit'}

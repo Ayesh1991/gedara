@@ -30,7 +30,7 @@ export function WedgeListener() {
         void resolveScan(text)
           .then((result) => {
             toast.custom(
-              (id) => <ScanResult result={result} onNavigate={() => toast.dismiss(id)} className="w-[min(92vw,380px)]" />,
+              (id) => <ScanResult result={result} compact onNavigate={() => toast.dismiss(id)} className="w-[min(92vw,380px)]" />,
               { duration: 8000 },
             );
           })

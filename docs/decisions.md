@@ -65,3 +65,17 @@ Format: date · decision · why. Append-only.
 - 2026-09-24 · `rpc_save_transaction` became a wrapper around `private.save_transaction(p, source)` (migration 20, create or replace) so SMS posts are `source = 'sms'` · same checks/fee logic for manual and SMS entries; the applied migration 16 is untouched
 - 2026-09-24 · The Flex virtual-wallet SMS thread is not forwarded (not allow-listed) · it carries OTPs in the same thread
 - 2026-09-24 · e2e specs use their own name prefixes for cleanup (`E2E-SMS …`) · money.spec's cleanup pattern `E2E …<project>-…` deleted the SMS spec's accounts mid-run when both ran in parallel
+- 2026-09-24 · **No Grocy import** in Phase 3; products are entered fresh (scan an unknown barcode → prefilled new product) · Grocy hadn't been used for 8+ months, its data is stale; MASTER_PLAN §8/§9 annotated
+- 2026-09-24 · Stock = `stock_lot` + append-only `stock_movement`; `qty_remaining` is changed only by the movement trigger, movements only by the SECURITY DEFINER RPCs (`rpc_purchase/consume/open/transfer/inventory/set_lot_due/undo`); a trigger even refuses UPDATEs of journal rows · rule 1; invariant qty_remaining = Σ delta is tested
+- 2026-09-24 · FEFO order everywhere = opened lots first, then earliest due (no date last), then oldest purchase; candidate lots are locked FOR UPDATE in that order · Grocy's default; cuts waste; two phones can't go negative
+- 2026-09-24 · Opening or moving part of a lot splits it into a new lot (`split_from_id`); whole lots change in place with before/after state in `stock_movement.meta` · per-lot due dates stay right; undo can restore the old state
+- 2026-09-24 · `rpc_undo(correlation)` reverses one action once, and refuses (GDUND) when a touched lot changed since (ordering by `stock_movement.seq`, not timestamps) · undo must never rewrite history out of order
+- 2026-09-24 · Moving stock into a freezer place restarts its due date at today + `due_days_frozen` (when set); "Still fine +30 days" is an `edit` movement · §0.1 #3; both undoable
+- 2026-09-24 · A product's stock unit is fixed once it has stock history (GDUNL); a unit's size/dimension never changes; 'other' units (pack, bottle) convert only through product pack sizes, looked up forwards or backwards · every lot is stored in the stock unit; the "$6 M" bug came from invisible conversions
+- 2026-09-24 · Every product gets an immutable HL:PRD code (not only loose goods); one barcode maps to one product per household · any product can have a label; scans are never ambiguous
+- 2026-09-24 · Manual "Add stock" never creates a money transaction; `stock_lot.transaction_line_id` exists for Phase 4 · bills stay the only source of spending, no double counting
+- 2026-09-24 · Pantry status chips are computed in the web app (`lib/pantry/status.ts`, due soon = 5 days); SQL views give raw facts · thresholds cheap to tune
+- 2026-09-24 · Swipe gestures on pantry cards deferred to Phase 7; cards have a visible −1 and a ⋯ menu · Didula's choice; no accidental use while scrolling
+- 2026-09-24 · HL:LOT lot labels deferred (scanner says "comes later") · optional per §3.8; not needed for Phase 3's done-when
+- 2026-09-24 · Place photo helpers generalised into `lib/photos.ts` (location + product) · rule 9 pipeline written once
+- 2026-09-24 · Route search params that can look like numbers (`?new=<barcode>`, `?q=`) are accepted as string or number and turned into text · TanStack Router JSON-parses typed/shared URLs, so `?new=4792024000222` arrived as a number and the page errored

@@ -642,6 +642,272 @@ export type Database = {
           },
         ]
       }
+      product: {
+        Row: {
+          archived: boolean
+          attributes: Json
+          category_id: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          default_due_days: number | null
+          default_location_id: string | null
+          due_days_after_open: number | null
+          due_days_frozen: number | null
+          due_type: string
+          household_id: string
+          id: string
+          min_qty: number | null
+          name: string
+          name_si: string | null
+          notes: string | null
+          parent_id: string | null
+          purchase_unit_id: string | null
+          quick_consume_qty: number
+          reorder_qty: number | null
+          stock_unit_id: string
+          treat_opened_as_out: boolean
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          attributes?: Json
+          category_id?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          default_due_days?: number | null
+          default_location_id?: string | null
+          due_days_after_open?: number | null
+          due_days_frozen?: number | null
+          due_type?: string
+          household_id: string
+          id?: string
+          min_qty?: number | null
+          name: string
+          name_si?: string | null
+          notes?: string | null
+          parent_id?: string | null
+          purchase_unit_id?: string | null
+          quick_consume_qty?: number
+          reorder_qty?: number | null
+          stock_unit_id: string
+          treat_opened_as_out?: boolean
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          attributes?: Json
+          category_id?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          default_due_days?: number | null
+          default_location_id?: string | null
+          due_days_after_open?: number | null
+          due_days_frozen?: number | null
+          due_type?: string
+          household_id?: string
+          id?: string
+          min_qty?: number | null
+          name?: string
+          name_si?: string | null
+          notes?: string | null
+          parent_id?: string | null
+          purchase_unit_id?: string | null
+          quick_consume_qty?: number
+          reorder_qty?: number | null
+          stock_unit_id?: string
+          treat_opened_as_out?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_household_id_default_location_id_fkey"
+            columns: ["household_id", "default_location_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_household_id_parent_id_fkey"
+            columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_household_id_parent_id_fkey"
+            columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "product_purchase_unit_id_fkey"
+            columns: ["purchase_unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_unit_id_fkey"
+            columns: ["stock_unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_barcode: {
+        Row: {
+          barcode: string
+          created_at: string
+          household_id: string
+          id: string
+          merchant_id: string | null
+          note: string | null
+          product_id: string
+          qty: number
+          unit_id: string | null
+        }
+        Insert: {
+          barcode: string
+          created_at?: string
+          household_id: string
+          id?: string
+          merchant_id?: string | null
+          note?: string | null
+          product_id: string
+          qty?: number
+          unit_id?: string | null
+        }
+        Update: {
+          barcode?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          merchant_id?: string | null
+          note?: string | null
+          product_id?: string
+          qty?: number
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_barcode_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_barcode_household_id_merchant_id_fkey"
+            columns: ["household_id", "merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchant"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_barcode_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_barcode_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "product_barcode_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_unit_conversion: {
+        Row: {
+          created_at: string
+          factor: number
+          from_unit_id: string
+          household_id: string
+          product_id: string
+          to_unit_id: string
+        }
+        Insert: {
+          created_at?: string
+          factor: number
+          from_unit_id: string
+          household_id: string
+          product_id: string
+          to_unit_id: string
+        }
+        Update: {
+          created_at?: string
+          factor?: number
+          from_unit_id?: string
+          household_id?: string
+          product_id?: string
+          to_unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_unit_conversion_from_unit_id_fkey"
+            columns: ["from_unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_unit_conversion_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_unit_conversion_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_unit_conversion_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "product_unit_conversion_to_unit_id_fkey"
+            columns: ["to_unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sms_device: {
         Row: {
           created_at: string
@@ -828,6 +1094,213 @@ export type Database = {
           },
         ]
       }
+      stock_lot: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          household_id: string
+          id: string
+          location_id: string | null
+          note: string | null
+          opened_at: string | null
+          product_id: string
+          purchased_on: string | null
+          qty_initial: number
+          qty_remaining: number
+          split_from_id: string | null
+          status: string | null
+          transaction_line_id: string | null
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          household_id: string
+          id?: string
+          location_id?: string | null
+          note?: string | null
+          opened_at?: string | null
+          product_id: string
+          purchased_on?: string | null
+          qty_initial: number
+          qty_remaining?: number
+          split_from_id?: string | null
+          status?: string | null
+          transaction_line_id?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          household_id?: string
+          id?: string
+          location_id?: string | null
+          note?: string | null
+          opened_at?: string | null
+          product_id?: string
+          purchased_on?: string | null
+          qty_initial?: number
+          qty_remaining?: number
+          split_from_id?: string | null
+          status?: string | null
+          transaction_line_id?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_lot_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_split_from_id_fkey"
+            columns: ["household_id", "split_from_id"]
+            isOneToOne: false
+            referencedRelation: "stock_lot"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_transaction_line_id_fkey"
+            columns: ["household_id", "transaction_line_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_line"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
+      stock_movement: {
+        Row: {
+          actor: string | null
+          correlation_id: string
+          created_at: string
+          delta: number
+          household_id: string
+          id: string
+          location_id: string | null
+          lot_id: string
+          meta: Json | null
+          note: string | null
+          product_id: string
+          reason: string
+          reverses_id: string | null
+          seq: number
+          unit_cost: number | null
+        }
+        Insert: {
+          actor?: string | null
+          correlation_id: string
+          created_at?: string
+          delta: number
+          household_id: string
+          id?: string
+          location_id?: string | null
+          lot_id: string
+          meta?: Json | null
+          note?: string | null
+          product_id: string
+          reason: string
+          reverses_id?: string | null
+          seq?: never
+          unit_cost?: number | null
+        }
+        Update: {
+          actor?: string | null
+          correlation_id?: string
+          created_at?: string
+          delta?: number
+          household_id?: string
+          id?: string
+          location_id?: string | null
+          lot_id?: string
+          meta?: Json | null
+          note?: string | null
+          product_id?: string
+          reason?: string
+          reverses_id?: string | null
+          seq?: never
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movement_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_lot_id_fkey"
+            columns: ["household_id", "lot_id"]
+            isOneToOne: false
+            referencedRelation: "stock_lot"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_reverses_id_fkey"
+            columns: ["household_id", "reverses_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movement"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_reverses_id_fkey"
+            columns: ["household_id", "reverses_id"]
+            isOneToOne: false
+            referencedRelation: "v_stock_journal"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
       transaction_line: {
         Row: {
           amount: number
@@ -1003,6 +1476,30 @@ export type Database = {
           },
         ]
       }
+      v_product_stock: {
+        Row: {
+          below_min: boolean | null
+          household_id: string | null
+          last_unit_cost: number | null
+          lots: number | null
+          next_due: string | null
+          product_id: string | null
+          qty: number | null
+          qty_effective: number | null
+          qty_opened: number | null
+          unpriced_qty: number | null
+          value: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_sms_balance_check: {
         Row: {
           account_id: string | null
@@ -1049,6 +1546,123 @@ export type Database = {
           },
         ]
       }
+      v_stock: {
+        Row: {
+          any_opened: boolean | null
+          household_id: string | null
+          location_id: string | null
+          lots: number | null
+          next_due: string | null
+          product_id: string | null
+          qty: number | null
+          value: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_lot_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+        ]
+      }
+      v_stock_journal: {
+        Row: {
+          actor: string | null
+          actor_name: string | null
+          correlation_id: string | null
+          created_at: string | null
+          delta: number | null
+          household_id: string | null
+          id: string | null
+          location_id: string | null
+          location_path: string | null
+          lot_id: string | null
+          meta: Json | null
+          note: string | null
+          product_id: string | null
+          product_name: string | null
+          reason: string | null
+          reverses_id: string | null
+          seq: number | null
+          undone: boolean | null
+          unit_code: string | null
+          unit_cost: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movement_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_lot_id_fkey"
+            columns: ["household_id", "lot_id"]
+            isOneToOne: false
+            referencedRelation: "stock_lot"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_reverses_id_fkey"
+            columns: ["household_id", "reverses_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movement"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_reverses_id_fkey"
+            columns: ["household_id", "reverses_id"]
+            isOneToOne: false
+            referencedRelation: "v_stock_journal"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_invites_for: {
@@ -1056,16 +1670,21 @@ export type Database = {
         Returns: number
       }
       accept_pending_invites: { Args: never; Returns: number }
+      rpc_consume: { Args: { p: Json }; Returns: Json }
       rpc_delete_transaction: { Args: { p_id: string }; Returns: undefined }
       rpc_import_bills: {
         Args: { p_bills: Json; p_household: string }
         Returns: Json
       }
+      rpc_inventory: { Args: { p: Json }; Returns: Json }
       rpc_move_transactions: {
         Args: { p_account: string; p_ids: string[] }
         Returns: number
       }
+      rpc_open: { Args: { p: Json }; Returns: Json }
+      rpc_purchase: { Args: { p: Json }; Returns: Json }
       rpc_save_transaction: { Args: { p: Json }; Returns: Json }
+      rpc_set_lot_due: { Args: { p: Json }; Returns: Json }
       rpc_sms_device_create: {
         Args: { p_household: string; p_name: string }
         Returns: Json
@@ -1094,6 +1713,8 @@ export type Database = {
       }
       rpc_sms_post: { Args: { p: Json; p_sms_ids: string[] }; Returns: Json }
       rpc_sms_unlink: { Args: { p_ids: string[] }; Returns: number }
+      rpc_transfer: { Args: { p: Json }; Returns: Json }
+      rpc_undo: { Args: { p_correlation: string }; Returns: Json }
       safe_uuid: { Args: { p: string }; Returns: string }
       schema_version: { Args: never; Returns: number }
     }
