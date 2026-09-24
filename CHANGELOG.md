@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.2.1 — Phase 2b Bank SMS import
+- **Bank alerts inbox** (Money › Alerts): every bank / card SMS lands here first; nothing reaches the
+  ledger until someone confirms it. Suggestions per alert: link to the scanned bill or Sheet row it
+  belongs to (a bill waiting in "Card — to be matched" moves to the card the alert names), BOC debit +
+  card payment → one transfer with its Rs 25 CEFT fee (either order, up to 36 h apart), ATM → Cash,
+  money in → income, anything else → a new expense (category remembered per merchant). One gold
+  "Accept N clear matches"; Reviewed tab with Undo; live updates via Realtime.
+- **Balance checks**: each alert's "Balance available" / "Avl bal" is chained to the previous one
+  (a jump flags a missed alert or a pending hold); USD card charges get their rupee cost from the
+  drop in available credit; account pages show "Bank said … / Gedara …".
+- **Phone forwarding** (Settings › SMS forwarding, owner only): add an Android phone, copy the ready
+  settings for the open-source "SMS to URL Forwarder" app (URL, secret header, JSON template, sender
+  allow-list, OTP-blocking text filter); last seen / counts / rejected sender; remove = token dead.
+- **SMS backup import** (Money › Import › Bank SMS): an "SMS Backup & Restore" .xml is filtered in the
+  browser (bank senders only, no OTPs / promos / personal messages) and sent through the same parser.
+- Parsers for BOC savings + BOC card, Sampath, People's and Seylan (all real formats seen so far);
+  unknown formats from these senders are kept as "New kind of alert".
+- Edge Function `sms-ingest` (sms-ingest-1): device token (sha256 only in the DB) or signed-in user,
+  Zod, size caps, OTP / promo drop, counts-only replies and logs. Diagnostics shows its version.
+- Supabase migrations 18–21: `sms_device`, `sms_message`, SMS RPCs (+ `rpc_save_transaction` now
+  wraps `private.save_transaction`), `v_sms_balance_check`. schema_version = 21.
+- pgTAP: 41 SMS assertions (isolation, owner-only devices, hidden token hash, service-role-only
+  device ingest, OTPs never stored, dedupe, link/post/ignore/unlink). Vitest: parsers on every real
+  sample, matcher, backup reader. Playwright: import → link → transfer + fee → balances → phone
+  forwarding, on phone + iPad.
+
 ## 0.2.0 — Phase 2 Money core
 - **Money**: month view with In / Spent / Net, account strip, ledger-style list grouped by day with
   search + account / category filters; transaction page with lines, Rs per kg / L, fingerprint, edit

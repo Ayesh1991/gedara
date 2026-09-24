@@ -75,6 +75,12 @@ export function subsOf(categories: CategoryRow[], topId: string): CategoryRow[] 
   return categories.filter((c) => c.parent_id === topId).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
 }
 
+/** A sub-category by top key + exact name, e.g. ('services', 'Banking & fees'). */
+export function findSub(categories: CategoryRow[], key: string, name: string): CategoryRow | undefined {
+  const top = categories.find((c) => c.parent_id === null && c.key === key);
+  return top ? subsOf(categories, top.id).find((s) => s.name === name) : undefined;
+}
+
 /**
  * Top key + (scanner or Sheet) sub-category name → category id. Unknown subs follow ledger v7
  * `guessSub`: a sub whose first word appears in the item name, then keyword rules, then the

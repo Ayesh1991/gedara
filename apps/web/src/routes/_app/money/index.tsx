@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, FileUp, Plus, Search, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileUp, MessageSquareText, Plus, Search, Wallet } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { subsOf } from '@/lib/money/categoriesMap';
 import { cashflowQuery, monthTransactionsQuery, type Account } from '@/lib/money/queries';
+import { smsQuery } from '@/lib/sms/queries';
 import { addMonths, formatMonth, todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +44,8 @@ function MoneyPage() {
   const { accounts, categories, merchants } = useMoneyBasics(householdId);
   const txs = useQuery(monthTransactionsQuery(householdId, month));
   const flow = useQuery(cashflowQuery(householdId));
+  const sms = useQuery(smsQuery(householdId));
+  const newAlerts = (sms.data ?? []).filter((s) => !s.ignored && !s.transaction_id).length;
   const thisMonth = flow.data?.find((f) => f.month === month);
   const hasAnything = (flow.data?.length ?? 0) > 0 || (txs.data?.length ?? 0) > 0;
 
@@ -77,6 +80,17 @@ function MoneyPage() {
           <p className="mt-1 text-[14.5px] text-muted">{t('money.intro')}</p>
         </div>
         <div className="flex gap-2.5">
+          <Link
+            to="/money/inbox"
+            className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+            aria-label={t('money.inbox.linkLabel', { count: newAlerts })}
+          >
+            <MessageSquareText className="h-4 w-4" aria-hidden />
+            {t('money.inbox.short')}
+            {newAlerts > 0 && (
+              <span className="tabular rounded-full bg-due/20 px-1.5 text-[11.5px] text-due">{newAlerts}</span>
+            )}
+          </Link>
           {canWrite && (
             <Link to="/money/import" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
               <FileUp className="h-4 w-4" aria-hidden />

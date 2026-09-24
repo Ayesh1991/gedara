@@ -417,3 +417,9 @@ enabled = true
 [functions.ping]
 enabled = true
 verify_jwt = true
+
+# Bank-SMS alerts from the phone (no Supabase session): the handler checks a device token or the
+# signed-in user's JWT itself.
+[functions.sms-ingest]
+enabled = true
+verify_jwt = false

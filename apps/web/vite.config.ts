@@ -34,7 +34,11 @@ export default defineConfig({
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
   resolve: {
-    alias: { '@': path.resolve(import.meta.dirname, 'src') },
+    alias: {
+      '@': path.resolve(import.meta.dirname, 'src'),
+      // Bank-SMS parsers shared with the sms-ingest Edge Function (plain TS, no imports).
+      '@sms': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/sms'),
+    },
   },
   // jsquash locates its .wasm with new URL(…, import.meta.url); pre-bundling would break that path.
   optimizeDeps: { exclude: ['@jsquash/webp'] },

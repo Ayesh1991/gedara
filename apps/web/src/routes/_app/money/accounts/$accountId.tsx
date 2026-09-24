@@ -1,15 +1,15 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ArrowRightLeft, ChevronLeft, ListChecks, Pencil, Scale, X } from 'lucide-react';
+import { ArrowRightLeft, ChevronLeft, CircleAlert, CircleCheck, ListChecks, MessageSquareText, Pencil, Scale, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AccountBalance } from '@/components/money/AccountCard';
 import { AccountForm, BalanceForm } from '@/components/money/AccountForms';
-import { AccountDot, AccountSelect } from '@/components/money/bits';
+import { AccountDot, AccountSelect, Money } from '@/components/money/bits';
 import { TransactionList } from '@/components/money/TransactionList';
 import { useMoneyBasics } from '@/components/money/useMoney';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   accountTransactionsQuery,
@@ -18,6 +18,7 @@ import {
   moveTransactions,
   pickableAccounts,
 } from '@/lib/money/queries';
+import { smsBalanceQuery } from '@/lib/sms/queries';
 import { formatDay, todayIn } from '@/lib/time';
 
 export const Route = createFileRoute('/_app/money/accounts/$accountId')({
@@ -33,6 +34,7 @@ function AccountPage() {
   const canWrite = membership.role !== 'viewer';
   const { accounts, categories } = useMoneyBasics(householdId);
   const txs = useQuery(accountTransactionsQuery(householdId, accountId));
+  const bankSays = useQuery(smsBalanceQuery(householdId)).data?.get(accountId);
   const [form, setForm] = useState<'edit' | 'opening' | 'reconcile' | null>(null);
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -99,6 +101,29 @@ function AccountPage() {
           )}
         </div>
         <AccountBalance account={account} large />
+        {bankSays && account.isSetUp && bankSays.gedara_value !== null && (
+          <p
+            className={`flex items-start gap-2 text-[13px] ${Math.round(bankSays.bank_reported * 100) === Math.round(bankSays.gedara_value * 100) ? 'text-teal' : 'text-caution'}`}
+          >
+            {Math.round(bankSays.bank_reported * 100) === Math.round(bankSays.gedara_value * 100) ? (
+              <CircleCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            ) : (
+              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            )}
+            <span>
+              {t(account.credit_limit !== null ? 'money.inbox.bankSaysAvailable' : 'money.inbox.bankSaysBalance', {
+                when: formatDay(bankSays.reported_at.slice(0, 10), locale, today.slice(0, 4)),
+              })}{' '}
+              <Money value={bankSays.bank_reported} className="font-medium" />
+              {Math.round(bankSays.bank_reported * 100) !== Math.round(bankSays.gedara_value * 100) && (
+                <>
+                  {' · '}
+                  {t('money.inbox.gedaraSays')} <Money value={bankSays.gedara_value} />
+                </>
+              )}
+            </span>
+          </p>
+        )}
         {account.isSetUp && account.opening_on && !account.is_suspense && (
           <p className="text-[12.5px] text-faint">
             {t('money.accounts.countingFrom', { date: formatDay(account.opening_on, locale, today.slice(0, 4)) })}
@@ -128,6 +153,10 @@ function AccountPage() {
       {account.is_suspense && canWrite && movable.length > 0 && (
         <Card className="flex flex-col gap-3 border-caution/30">
           <p className="text-[14px] leading-relaxed text-[#a5b0d0]">{t('money.accounts.matchHelp')}</p>
+          <Link to="/money/inbox" className={buttonVariants({ variant: 'accent', size: 'sm', className: 'self-start' })}>
+            <MessageSquareText className="h-4 w-4" aria-hidden />
+            {t('money.inbox.matchFromAlerts')}
+          </Link>
           <Button
             size="sm"
             className="self-start"
