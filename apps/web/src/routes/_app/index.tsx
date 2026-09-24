@@ -5,9 +5,12 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
 import { StatTile } from '@/components/aurora/StatTile';
+import { Money } from '@/components/money/bits';
 import { Card } from '@/components/ui/card';
+import { formatLKR } from '@/lib/money/format';
+import { cashflowQuery, type MonthFlow } from '@/lib/money/queries';
 import { placesQuery } from '@/lib/places';
-import { dayPart, firstName, hourIn } from '@/lib/time';
+import { addMonths, dayPart, firstName, formatMonth, hourIn, todayIn } from '@/lib/time';
 
 export const Route = createFileRoute('/_app/')({
   component: Pulse,
@@ -17,7 +20,6 @@ export const Route = createFileRoute('/_app/')({
 const GHOST_TREND = [3, 4, 3.6, 5, 4.6, 6];
 const GHOST_IN = [70, 72, 71, 80, 78, 74];
 const GHOST_OUT = [50, 58, 46, 64, 55, 48];
-const MONTHS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
 
 function AwaitingChip({ phase }: { phase: number }) {
   const { t } = useTranslation();
@@ -56,11 +58,26 @@ function PlacesCard({ householdId }: { householdId: string }) {
   );
 }
 
+/** The last six calendar months ending with this one, with zeros where nothing was recorded. */
+function lastSixMonths(flow: MonthFlow[] | undefined, thisMonth: string): MonthFlow[] {
+  return Array.from({ length: 6 }, (_, i) => {
+    const month = addMonths(thisMonth, i - 5);
+    return flow?.find((f) => f.month === month) ?? { month, income: 0, spent: 0, net: 0, bills: 0 };
+  });
+}
+
 function Pulse() {
   const { t } = useTranslation();
   const { membership } = Route.useRouteContext();
-  const part = dayPart(hourIn(membership.household.timezone));
+  const { timezone, locale, id: householdId } = membership.household;
+  const part = dayPart(hourIn(timezone));
   const name = firstName(membership.displayName, membership.email);
+  const flow = useQuery(cashflowQuery(householdId));
+  const thisMonth = todayIn(timezone).slice(0, 7);
+  const six = lastSixMonths(flow.data, thisMonth);
+  const now = six.at(-1)!;
+  const hasMoney = six.some((m) => m.bills > 0 || m.income > 0);
+  const top = Math.max(1, ...six.map((m) => Math.max(m.income, m.spent)));
 
   return (
     <div className="flex flex-col gap-5">
@@ -69,21 +86,25 @@ function Pulse() {
       </h1>
 
       <section aria-label={t('home.net')} className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <StatTile
-          highlight
-          empty
-          label={t('home.net')}
-          value="Rs —"
-          footer={<AwaitingChip phase={2} />}
-          side={<Sparkline values={GHOST_TREND} width={88} height={30} ghost />}
-        />
-        <StatTile
-          empty
-          label={t('home.spent')}
-          value="Rs —"
-          footer={<AwaitingChip phase={2} />}
-          side={<Ring value={0} size={60} label={t('home.budget')} />}
-        />
+        <Link to="/money" className="contents">
+          <StatTile
+            highlight
+            empty={!hasMoney}
+            label={t('home.net')}
+            value={hasMoney ? <Money value={now.net} whole /> : 'Rs —'}
+            footer={hasMoney ? t('home.incomeLine', { amount: formatLKR(now.income, { whole: true }) }) : t('home.noMoneyYet')}
+            side={<Sparkline values={hasMoney ? six.map((m) => m.net) : GHOST_TREND} width={88} height={30} ghost={!hasMoney} />}
+          />
+        </Link>
+        <Link to="/money" className="contents">
+          <StatTile
+            empty={!hasMoney}
+            label={t('home.spent')}
+            value={hasMoney ? <Money value={now.spent} whole /> : 'Rs —'}
+            footer={hasMoney ? t('home.billsLine', { count: now.bills }) : t('home.noMoneyYet')}
+            side={<Ring value={0} size={60} label={t('home.budget')} />}
+          />
+        </Link>
         <StatTile empty label={t('home.pantryValue')} value="Rs —" footer={<AwaitingChip phase={3} />} />
         <StatTile empty label={t('home.things')} value="—" footer={<AwaitingChip phase={5} />} />
       </section>
@@ -112,32 +133,34 @@ function Pulse() {
                 fill="none"
               />
               <path
-                d={smoothPath(GHOST_IN, 700, 150, 20)}
+                d={hasMoney ? smoothPath(six.map((m) => m.income), 700, 150, 20, [0, top]) : smoothPath(GHOST_IN, 700, 150, 20)}
                 fill="none"
-                strokeWidth={2}
-                strokeDasharray="4 7"
+                strokeWidth={hasMoney ? 2.5 : 2}
+                strokeDasharray={hasMoney ? undefined : '4 7'}
                 vectorEffect="non-scaling-stroke"
-                style={{ stroke: 'color-mix(in srgb, var(--accent-b) 45%, transparent)' }}
+                style={{ stroke: hasMoney ? 'var(--accent-b)' : 'color-mix(in srgb, var(--accent-b) 45%, transparent)' }}
               />
               <path
-                d={smoothPath(GHOST_OUT, 700, 150, 20)}
+                d={hasMoney ? smoothPath(six.map((m) => m.spent), 700, 150, 20, [0, top]) : smoothPath(GHOST_OUT, 700, 150, 20)}
                 fill="none"
-                strokeWidth={2}
-                strokeDasharray="4 7"
+                strokeWidth={hasMoney ? 2.5 : 2}
+                strokeDasharray={hasMoney ? undefined : '4 7'}
                 vectorEffect="non-scaling-stroke"
-                style={{ stroke: 'color-mix(in srgb, var(--accent-a) 45%, transparent)' }}
-                transform="translate(0 16)"
+                style={{ stroke: hasMoney ? 'var(--accent-a)' : 'color-mix(in srgb, var(--accent-a) 45%, transparent)' }}
+                transform={hasMoney ? undefined : 'translate(0 16)'}
               />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
-              <div className="glass-strong max-w-sm rounded-2xl px-4 py-3">
-                <EmptyNote>{t('home.cashFlowEmpty')}</EmptyNote>
+            {!hasMoney && (
+              <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
+                <div className="glass-strong max-w-sm rounded-2xl px-4 py-3">
+                  <EmptyNote>{t('home.cashFlowEmpty')}</EmptyNote>
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <div className="tabular flex justify-between text-[11.5px] text-faint">
-            {MONTHS.map((m) => (
-              <span key={m}>{m}</span>
+            {six.map((m) => (
+              <span key={m.month}>{formatMonth(m.month, locale, true)}</span>
             ))}
           </div>
         </Card>

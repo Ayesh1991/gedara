@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.0 — Phase 2 Money core
+- **Money**: month view with In / Spent / Net, account strip, ledger-style list grouped by day with
+  search + account / category filters; transaction page with lines, Rs per kg / L, fingerprint, edit
+  and delete (8 s Undo).
+- **Add**: expense / income / transfer in one sheet (≤ 5 fields, ledger v7 quick tiles, split into
+  lines, optional bank fee on transfers); a repeat of the same entry asks "save another?".
+- **Accounts**: Cash, BOC Savings, four credit cards (limits, owed, available, % used) and
+  "Card — to be matched"; starting balance (cards from the SMS "Avl bal"), reconcile via a
+  correction entry, bulk-move matched card bills; balances are always computed.
+- **Import**: Bill Scanner JSON (files or paste; HTML/Google-Doc and bad shapes rejected, ledger v7
+  fingerprints so repeats show "Already imported", discount/rounding line so totals match) and the
+  old ledger Sheet CSV with a per-month reconciliation (to the rupee).
+- **Categories** settings (ledger v7 set + Income), Home Net / Spent tiles and 6-month cash flow
+  from real data.
+- Supabase migrations 11–17: `unit`, `category` (+ seed), `merchant`, `account` (+ seed),
+  `money_transaction` + `transaction_line`, write RPCs, balance / cash-flow views. schema_version = 17.
+- pgTAP: money master data + transactions (isolation, viewer read-only, RPC rules, balances).
+  Vitest: fingerprints against all 240 Sheet line ids and the 5 scanner samples, Sheet parser
+  reconciliation, bill schema, dates. Playwright: the Phase 2 flow on phone + iPad.
+
 ## 0.1.0 — Phase 1 Places & Scanning
 - **Places explorer**: rooms → furniture → boxes as photo tiles with counts; drill-in pages with
   breadcrumb, kind/climate chips, the place's QR code, add inside / edit / move / delete (8 s Undo);
