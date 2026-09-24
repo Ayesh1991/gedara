@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 // Gold (`primary`) is reserved for the single primary action on a screen (rule 11).
-const buttonVariants = cva(
+export const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 rounded-[14px] font-display font-semibold transition-[filter,background-color,box-shadow] disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {

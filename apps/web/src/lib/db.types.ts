@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      account: {
+        Row: {
+          archived: boolean
+          color: string | null
+          created_at: string
+          credit_limit: number | null
+          currency: string
+          household_id: string
+          id: string
+          institution: string | null
+          is_suspense: boolean
+          kind: string
+          last4: string | null
+          name: string
+          opening_balance: number
+          opening_on: string | null
+          sort: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          currency?: string
+          household_id: string
+          id?: string
+          institution?: string | null
+          is_suspense?: boolean
+          kind: string
+          last4?: string | null
+          name: string
+          opening_balance?: number
+          opening_on?: string | null
+          sort?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          currency?: string
+          household_id?: string
+          id?: string
+          institution?: string | null
+          is_suspense?: boolean
+          kind?: string
+          last4?: string | null
+          name?: string
+          opening_balance?: number
+          opening_on?: string | null
+          sort?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_meta: {
         Row: {
           key: string
@@ -94,6 +159,69 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "household"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      category: {
+        Row: {
+          archived: boolean
+          color: string | null
+          created_at: string
+          default_destiny: string
+          household_id: string
+          icon: string | null
+          id: string
+          key: string | null
+          kind: string
+          name: string
+          parent_id: string | null
+          sort: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          default_destiny?: string
+          household_id: string
+          icon?: string | null
+          id?: string
+          key?: string | null
+          kind?: string
+          name: string
+          parent_id?: string | null
+          sort?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          default_destiny?: string
+          household_id?: string
+          icon?: string | null
+          id?: string
+          key?: string | null
+          kind?: string
+          name?: string
+          parent_id?: string | null
+          sort?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_household_id_parent_id_fkey"
+            columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
           },
         ]
       }
@@ -337,9 +465,370 @@ export type Database = {
           },
         ]
       }
+      merchant: {
+        Row: {
+          aliases: string[]
+          created_at: string
+          household_id: string
+          id: string
+          kind: string | null
+          location_text: string | null
+          name: string
+          name_norm: string | null
+          updated_at: string
+        }
+        Insert: {
+          aliases?: string[]
+          created_at?: string
+          household_id: string
+          id?: string
+          kind?: string | null
+          location_text?: string | null
+          name: string
+          name_norm?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aliases?: string[]
+          created_at?: string
+          household_id?: string
+          id?: string
+          kind?: string | null
+          location_text?: string | null
+          name?: string
+          name_norm?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      money_transaction: {
+        Row: {
+          account_id: string
+          created_at: string
+          created_by: string | null
+          discount: number
+          fingerprint: string
+          household_id: string
+          id: string
+          invoice_no: string | null
+          merchant_id: string | null
+          notes: string | null
+          occurred_at: string | null
+          occurred_on: string
+          payee_text: string | null
+          related_id: string | null
+          source: string
+          subtotal: number | null
+          to_account_id: string | null
+          total: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          created_by?: string | null
+          discount?: number
+          fingerprint: string
+          household_id: string
+          id?: string
+          invoice_no?: string | null
+          merchant_id?: string | null
+          notes?: string | null
+          occurred_at?: string | null
+          occurred_on: string
+          payee_text?: string | null
+          related_id?: string | null
+          source?: string
+          subtotal?: number | null
+          to_account_id?: string | null
+          total: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          created_by?: string | null
+          discount?: number
+          fingerprint?: string
+          household_id?: string
+          id?: string
+          invoice_no?: string | null
+          merchant_id?: string | null
+          notes?: string | null
+          occurred_at?: string | null
+          occurred_on?: string
+          payee_text?: string | null
+          related_id?: string | null
+          source?: string
+          subtotal?: number | null
+          to_account_id?: string | null
+          total?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "money_transaction_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_merchant_id_fkey"
+            columns: ["household_id", "merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchant"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_related_id_fkey"
+            columns: ["household_id", "related_id"]
+            isOneToOne: false
+            referencedRelation: "money_transaction"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_to_account_id_fkey"
+            columns: ["household_id", "to_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_to_account_id_fkey"
+            columns: ["household_id", "to_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+        ]
+      }
+      transaction_line: {
+        Row: {
+          amount: number
+          base_qty: number | null
+          category_id: string | null
+          destiny: string | null
+          fingerprint: string
+          household_id: string
+          id: string
+          line_no: number
+          price_per_base: number | null
+          qty: number | null
+          raw_name: string
+          transaction_id: string
+          unit_id: string | null
+          unit_price: number | null
+          unit_text: string | null
+        }
+        Insert: {
+          amount: number
+          base_qty?: number | null
+          category_id?: string | null
+          destiny?: string | null
+          fingerprint: string
+          household_id: string
+          id?: string
+          line_no: number
+          price_per_base?: number | null
+          qty?: number | null
+          raw_name: string
+          transaction_id: string
+          unit_id?: string | null
+          unit_price?: number | null
+          unit_text?: string | null
+        }
+        Update: {
+          amount?: number
+          base_qty?: number | null
+          category_id?: string | null
+          destiny?: string | null
+          fingerprint?: string
+          household_id?: string
+          id?: string
+          line_no?: number
+          price_per_base?: number | null
+          qty?: number | null
+          raw_name?: string
+          transaction_id?: string
+          unit_id?: string | null
+          unit_price?: number | null
+          unit_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_line_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_line_household_id_transaction_id_fkey"
+            columns: ["household_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "money_transaction"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit: {
+        Row: {
+          aliases: string[]
+          code: string
+          created_at: string
+          dimension: string
+          household_id: string | null
+          id: string
+          name: string
+          to_base: number
+        }
+        Insert: {
+          aliases?: string[]
+          code: string
+          created_at?: string
+          dimension: string
+          household_id?: string | null
+          id?: string
+          name: string
+          to_base: number
+        }
+        Update: {
+          aliases?: string[]
+          code?: string
+          created_at?: string
+          dimension?: string
+          household_id?: string | null
+          id?: string
+          name?: string
+          to_base?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      v_account_balance: {
+        Row: {
+          account_id: string | null
+          available: number | null
+          balance: number | null
+          household_id: string | null
+          is_set_up: boolean | null
+          last_on: string | null
+          transaction_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_account_effect: {
+        Row: {
+          account_id: string | null
+          effect: number | null
+          household_id: string | null
+          occurred_on: string | null
+          transaction_id: string | null
+        }
+        Relationships: []
+      }
+      v_monthly_cashflow: {
+        Row: {
+          bills: number | null
+          household_id: string | null
+          income: number | null
+          month: string | null
+          net: number | null
+          spent: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "money_transaction_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_spend_by_category_month: {
+        Row: {
+          category_id: string | null
+          household_id: string | null
+          lines: number | null
+          month: string | null
+          spent: number | null
+          top_category_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_line_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_invites_for: {
@@ -347,6 +836,16 @@ export type Database = {
         Returns: number
       }
       accept_pending_invites: { Args: never; Returns: number }
+      rpc_delete_transaction: { Args: { p_id: string }; Returns: undefined }
+      rpc_import_bills: {
+        Args: { p_bills: Json; p_household: string }
+        Returns: Json
+      }
+      rpc_move_transactions: {
+        Args: { p_account: string; p_ids: string[] }
+        Returns: number
+      }
+      rpc_save_transaction: { Args: { p: Json }; Returns: Json }
       safe_uuid: { Args: { p: string }; Returns: string }
       schema_version: { Args: never; Returns: number }
     }

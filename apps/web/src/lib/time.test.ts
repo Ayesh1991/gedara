@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayPart, firstName, hourIn, initials, longDate } from './time';
+import { addMonths, dayPart, firstName, formatDay, hourIn, initials, longDate, monthRange, timeNowIn, todayIn } from './time';
 
 describe('time helpers', () => {
   // 2026-09-23 13:10 UTC = 18:40 in Colombo (UTC+5:30)
@@ -29,5 +29,18 @@ describe('time helpers', () => {
     expect(firstName(null, 'sandeepani@gmail.com')).toBe('Sandeepani');
     expect(initials('Didula Ayeshmantha', 'x@y.z')).toBe('DA');
     expect(initials(null, 'ab@c.d')).toBe('AB');
+  });
+
+  it('knows today and the time in Colombo, across UTC midnight', () => {
+    const late = new Date('2026-09-23T19:45:00Z'); // 01:15 on the 24th in Colombo
+    expect(todayIn('Asia/Colombo', late)).toBe('2026-09-24');
+    expect(timeNowIn('Asia/Colombo', late)).toBe('01:15');
+  });
+
+  it('does month arithmetic on YYYY-MM', () => {
+    expect(addMonths('2026-12', 1)).toBe('2027-01');
+    expect(addMonths('2026-01', -1)).toBe('2025-12');
+    expect(monthRange('2026-09')).toEqual({ start: '2026-09-01', end: '2026-10-01' });
+    expect(formatDay('2026-09-24', 'en-LK', '2026')).toContain('24');
   });
 });

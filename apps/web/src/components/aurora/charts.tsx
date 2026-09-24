@@ -5,11 +5,14 @@ function useSvgId() {
   return `g${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 }
 
-/** Smooth path through evenly spaced points (horizontal-tangent cubic segments). */
-export function smoothPath(values: number[], width: number, height: number, pad = 4): string {
+/**
+ * Smooth path through evenly spaced points (horizontal-tangent cubic segments). Pass `range` to
+ * put several series on one shared scale.
+ */
+export function smoothPath(values: number[], width: number, height: number, pad = 4, range?: [number, number]): string {
   if (values.length === 0) return '';
-  const max = Math.max(...values);
-  const min = Math.min(...values);
+  const max = range ? range[1] : Math.max(...values);
+  const min = range ? range[0] : Math.min(...values);
   const span = max - min || 1;
   const step = values.length > 1 ? width / (values.length - 1) : 0;
   const pts = values.map((v, i) => [i * step, pad + (1 - (v - min) / span) * (height - pad * 2)] as const);
