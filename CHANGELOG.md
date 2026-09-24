@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.0 — Phase 3 Pantry core
+- **Pantry** (replaces Grocy, fresh start, no import): stock overview with search, filter chips
+  (needs a look / expired / past best-before / due soon / running low / opened / out / archived),
+  stat tiles (in stock, stock value with "N without a price", needs a look), product cards with a
+  one-tap −1 and a ⋯ menu (Add / Use / Open / Move / Count / Waste), each with an 8 s Undo.
+- **Products**: ≤ 5 fields (name, category, counted-in unit, usual place, dates) + "More details"
+  (Sinhala/Tamil name, bought-as unit with "1 pack = 400 g", minimum, quick-use amount, days once
+  opened / in the freezer, photo). A new product copies the settings of the last one in its category.
+  Every product gets an HL:PRD label code (A4 + NIIMBOT labels from the product page).
+- **Product page**: stock, value, price per kg / L / pc, lots in FEFO order (place, due, opened,
+  cost) with Use / Open / Move / "Still fine +30 days" / Change date, barcodes and pack sizes, history.
+- **Stock journal** (Pantry › Journal): every movement, grouped per action, Undo once.
+- **Scan**: product labels and barcodes open the product with Use / Add; an unknown barcode offers
+  "New product" (prefilled) or "Add to a product"; old Grocy labels say so. Place pages list the
+  stock kept there. Home shows the real pantry value.
+- **Units** (Settings › Units): household units (tin, sachet, dozen = 12 pcs); sizes never change.
+- Supabase migrations 22–27: household units, `product`, `product_barcode` + `product_unit_conversion`,
+  `stock_lot` + append-only `stock_movement`, stock RPCs (purchase / consume / open / transfer /
+  inventory / set due / undo; FEFO, row locks), `v_stock` / `v_product_stock` / `v_stock_journal`.
+  schema_version = 27.
+- pgTAP: 56 stock-RPC assertions (conversions, FEFO across 2 lots, opened first, splits, freezer,
+  inventory, undo + refusal, Σ delta invariant), 34 product/unit/barcode isolation, 26 stock isolation.
+  Vitest: unit conversion, display, status chips. Playwright: product → 2 lots → FEFO use → Undo →
+  journal → scan, on phone + iPad.
+
 ## 0.2.1 — Phase 2b Bank SMS import
 - **Bank alerts inbox** (Money › Alerts): every bank / card SMS lands here first; nothing reaches the
   ledger until someone confirms it. Suggestions per alert: link to the scanned bill or Sheet row it

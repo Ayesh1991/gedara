@@ -9,6 +9,7 @@ import { Money } from '@/components/money/bits';
 import { Card } from '@/components/ui/card';
 import { formatLKR } from '@/lib/money/format';
 import { cashflowQuery, type MonthFlow } from '@/lib/money/queries';
+import { productsQuery } from '@/lib/pantry/queries';
 import { placesQuery } from '@/lib/places';
 import { addMonths, dayPart, firstName, formatMonth, hourIn, todayIn } from '@/lib/time';
 
@@ -32,6 +33,25 @@ function AwaitingChip({ phase }: { phase: number }) {
 
 function EmptyNote({ children }: { children: ReactNode }) {
   return <p className="text-[13.5px] leading-relaxed text-[#a5b0d0]">{children}</p>;
+}
+
+/** Pantry value: real stock only; an empty tile until something is in stock. */
+function PantryTile({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const products = useQuery(productsQuery(householdId));
+  const inStock = (products.data ?? []).filter((p) => !p.archived && p.stock.qty > 0);
+  const value = inStock.reduce((s, p) => s + p.stock.value, 0);
+  const has = inStock.length > 0;
+  return (
+    <Link to="/pantry" className="contents">
+      <StatTile
+        empty={!has}
+        label={t('home.pantryValue')}
+        value={has ? <Money value={value} whole /> : 'Rs —'}
+        footer={has ? t('home.pantryLine', { count: inStock.length }) : t('home.noPantryYet')}
+      />
+    </Link>
+  );
 }
 
 /** Places is not in the phone dock (§5.1), so Home links to it — with real counts only. */
@@ -105,7 +125,7 @@ function Pulse() {
             side={<Ring value={0} size={60} label={t('home.budget')} />}
           />
         </Link>
-        <StatTile empty label={t('home.pantryValue')} value="Rs —" footer={<AwaitingChip phase={3} />} />
+        <PantryTile householdId={membership.household.id} />
         <StatTile empty label={t('home.things')} value="—" footer={<AwaitingChip phase={5} />} />
       </section>
 

@@ -117,7 +117,11 @@ function ScanPage() {
                       {h.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-[14px]">
-                      {h.result.status === 'place' ? h.result.place.path : t(`scan.short.${h.result.status}`)}
+                      {h.result.status === 'place'
+                        ? h.result.place.path
+                        : h.result.status === 'product'
+                          ? h.result.product.name
+                          : t(`scan.short.${h.result.status}`)}
                     </span>
                   </li>
                 ))}

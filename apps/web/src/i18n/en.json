@@ -91,7 +91,10 @@
     "incomeLine": "In {{amount}} this month",
     "billsLine": "{{count}} bills this month",
     "billsLine_one": "1 bill this month",
-    "noMoneyYet": "Add a bill or import your ledger"
+    "noMoneyYet": "Add a bill or import your ledger",
+    "pantryLine": "{{count}} products in stock",
+    "pantryLine_one": "1 product in stock",
+    "noPantryYet": "Add your first product"
   },
   "settings": {
     "title": "Settings",
@@ -99,6 +102,7 @@
     "appearanceHint": "Aurora colour theme and motion",
     "diagnostics": "Diagnostics",
     "diagnosticsHint": "Version, Test connection, clear cache",
+    "unitsHint": "Your own units: tin, sachet, dozen",
     "placesHint": "Rooms, boxes and QR labels",
     "signedInAs": "Signed in as {{email}}",
     "role": "Role: {{role}}",
@@ -201,7 +205,6 @@
     "insideCount": "{{count}} inside",
     "insideCount_one": "1 inside",
     "insideEmpty": "Nothing inside yet. Add a shelf, drawer or box.",
-    "pantrySoon": "Food and supplies kept here will be listed with their expiry dates (Phase 3).",
     "thingsSoon": "Appliances, tools and documents kept here will be listed with photos (Phase 5).",
     "topLevel": "Top level (a room)",
     "moreDetails": "More details",
@@ -248,7 +251,7 @@
       "humid": "Humid"
     },
     "errors": {
-      "hasChildren": "Move or delete the places inside it first.",
+      "hasChildren": "Move or delete the places inside it, and use up or move its stock, first.",
       "cycle": "A place can't go inside itself.",
       "denied": "You don't have permission to change places.",
       "generic": "Couldn't save. Check your connection and try again."
@@ -282,15 +285,32 @@
     "invalid": {
       "title": "Not a Gedara label"
     },
+    "unknownBarcode": {
+      "title": "New barcode",
+      "create": "New product",
+      "link": "Add to a product",
+      "linkTitle": "Barcode {{code}}",
+      "product": "Product",
+      "pick": "Choose a product",
+      "oneScanIs": "One scan is",
+      "save": "Save barcode",
+      "linked": "Barcode added to {{name}}"
+    },
+    "grocy": {
+      "title": "Old Grocy label",
+      "body": "Grocy labels aren't used in Gedara. Print a new label from the product page."
+    },
     "later": {
       "title": "Arrives in Phase {{phase}}",
-      "pantry": "Products and barcodes are scanned into the pantry from Phase 3.",
+      "lot": "Labels for single jars and freezer bags come later.",
       "asset": "Asset labels arrive with Things in Phase 5."
     },
     "short": {
       "notFound": "Unknown code",
       "invalid": "Not a Gedara label",
       "later": "Not in this phase yet",
+      "unknownBarcode": "New barcode",
+      "grocy": "Old Grocy label",
       "place": ""
     },
     "cameraErrors": {
@@ -345,6 +365,251 @@
     "pdfFailed": "Couldn't build the PDF.",
     "png": "PNG",
     "niimbotHint": "Download a label and print it from the NIIMBOT app on a 20 × 20 mm label, without scaling. Each one is a sharp 1-bit image at the printer's 203 dpi. Printing straight from Gedara comes with the Pi station (Phase 6b)."
+  },
+  "pantry": {
+    "intro": "Food and supplies: what you have, where it is, and what to use first.",
+    "newProduct": "New product",
+    "addFirst": "Add your first product",
+    "scanFirst": "Scan a barcode",
+    "emptyTitle": "Start your pantry",
+    "emptyBody": "Add the things you keep at home (rice, sugar, spices, medicines) with the unit you count them in. Then add stock when you buy it and use it from here, the Scan screen or a place. Scanning a barcode you haven't seen before creates the product for you.",
+    "loadError": "Couldn't load the pantry. Check your connection and try again.",
+    "noMatches": "Nothing matches.",
+    "notFoundTitle": "Product not found",
+    "notFoundBody": "It may have been deleted, or it belongs to another household.",
+    "back": "Back to Pantry",
+    "summary": "Pantry summary",
+    "search": "Search products",
+    "filterLabel": "Show",
+    "useQuick": "Use {{qty}} of {{name}}",
+    "more": "More actions for {{name}}",
+    "stats": {
+      "inStock": "In stock",
+      "ofProducts": "of {{count}} products",
+      "ofProducts_one": "of 1 product",
+      "value": "Stock value",
+      "unpriced": "{{count}} without a price",
+      "unpriced_one": "1 without a price",
+      "attention": "Needs a look",
+      "show": "Show them",
+      "allGood": "Nothing due or low"
+    },
+    "filters": {
+      "all": "All",
+      "attention": "Needs a look",
+      "expired": "Expired",
+      "bbPassed": "Past best-before",
+      "dueSoon": "Due soon",
+      "belowMin": "Running low",
+      "opened": "Opened",
+      "out": "Out of stock",
+      "archived": "Archived"
+    },
+    "status": {
+      "expired": "Expired",
+      "bbPassed": "Past best-before",
+      "dueSoon": "Due soon",
+      "belowMin": "Running low",
+      "opened": "Opened",
+      "out": "Out of stock"
+    },
+    "due": {
+      "none": "No date",
+      "best_before": "Best before",
+      "expiry": "Expires"
+    },
+    "dueText": {
+      "bestBefore": "Best before",
+      "expires": "Expires"
+    },
+    "actions": {
+      "add": "Add stock",
+      "use": "Use",
+      "waste": "Waste",
+      "open": "Open",
+      "move": "Move",
+      "count": "Count",
+      "due": "Change date",
+      "extend": "Still fine +{{days}} days",
+      "edit": "Edit",
+      "details": "Details"
+    },
+    "sheet": {
+      "add": "Add {{name}}",
+      "use": "Use {{name}}",
+      "waste": "Waste {{name}}",
+      "open": "Open {{name}}",
+      "move": "Move {{name}}",
+      "count": "Count {{name}}",
+      "due": "Due date · {{name}}"
+    },
+    "form": {
+      "qty": "Quantity",
+      "unit": "Unit",
+      "place": "Put it in",
+      "noPlace": "No place",
+      "anyPlace": "Any place",
+      "totalPrice": "Price paid (Rs, optional)",
+      "boughtOn": "Bought on",
+      "dueDate": "Due date",
+      "noDueDate": "No date",
+      "useAll": "All of it",
+      "allOfIt": "All of it",
+      "fromPlace": "From",
+      "toPlace": "To",
+      "countedAt": "Where you counted",
+      "countWhole": "Everywhere (the total)",
+      "counted": "How much is there",
+      "gedaraThinks": "Gedara thinks:",
+      "lot": "Which one",
+      "fefo": "Oldest first (opened, then due soonest)",
+      "firstUnopened": "The next unopened one",
+      "fefoHint": "Uses opened packs first, then the one due soonest."
+    },
+    "done": {
+      "added": "Added {{qty}} of {{name}}",
+      "used": "Used {{qty}} of {{name}}",
+      "wasted": "Wasted {{qty}} of {{name}}",
+      "opened": "Opened {{qty}} of {{name}}",
+      "moved": "Moved {{qty}} of {{name}} to {{place}}",
+      "counted": "{{name}}: now {{qty}}",
+      "countSame": "{{name}}: the count matches",
+      "dueChanged": "Due date changed",
+      "extended": "Extended by {{days}} days",
+      "undone": "Undone"
+    },
+    "errors": {
+      "noStock": "There isn't that much in stock.",
+      "noStockLeft": "There's only {{qty}} left.",
+      "unitMismatch": "That unit can't be converted for this product. Add a pack size on the product page.",
+      "cantUndo": "Can't undo: it was already undone, or the stock has been used since.",
+      "unitLocked": "The unit can't change once the product has stock history.",
+      "duplicate": "That name or barcode is already in use.",
+      "reference": "Something it refers to is missing.",
+      "invalid": "Check the values and try again.",
+      "denied": "You don't have permission to change the pantry.",
+      "generic": "Something went wrong. Try again."
+    },
+    "lot": {
+      "opened": "opened"
+    },
+    "lots": {
+      "title": "In stock",
+      "empty": "Nothing in stock. Add stock when you buy some.",
+      "bought": "Bought {{date}}"
+    },
+    "codes": {
+      "title": "Barcodes & pack sizes",
+      "barcodes": "Barcodes",
+      "noBarcodes": "No barcode yet. Scan or type one to make scanning this product instant.",
+      "barcode": "Barcode",
+      "barcodePlaceholder": "Scan or type",
+      "remove": "Remove barcode {{code}}",
+      "packs": "Pack sizes",
+      "noPacks": "No pack sizes. Add one to buy or use it by the pack, e.g. 1 pack = 400 g.",
+      "packUnit": "Pack unit",
+      "packFactor": "How much is in one",
+      "pickUnit": "Unit…",
+      "removePack": "Remove pack size",
+      "add": "Add"
+    },
+    "product": {
+      "newTitle": "New product",
+      "editTitle": "Edit {{name}}",
+      "name": "Name",
+      "namePlaceholder": "e.g. Sugar",
+      "category": "Category",
+      "defaultsFrom": "Settings copied from {{name}}.",
+      "stockUnit": "Counted in",
+      "stockUnitHint": "What you count it in: g for rice and spices, pcs for eggs, ml for oil.",
+      "unitLockedHint": "The unit is fixed while there is stock.",
+      "place": "Usually kept in",
+      "dates": "Dates",
+      "dueDays": "days after buying",
+      "more": "More details",
+      "nameSi": "Sinhala / Tamil name",
+      "purchaseUnit": "Bought as",
+      "sameAsStock": "Same unit",
+      "packFactor": "1 {{unit}} = how many {{stock}}",
+      "packKeep": "Leave empty to keep",
+      "minQty": "Keep at least ({{unit}})",
+      "quickQty": "Quick use ({{unit}})",
+      "afterOpen": "Days once opened",
+      "frozen": "Days in the freezer",
+      "openedAsOut": "Opened packs don't count as \"enough\"",
+      "barcode": "Barcode",
+      "notes": "Notes",
+      "photo": "Photo",
+      "save": "Save",
+      "created": "{{name}} added",
+      "saved": "{{name}} saved",
+      "archive": "Archive",
+      "restore": "Restore",
+      "archivedToast": "{{name}} archived",
+      "restored": "{{name}} restored",
+      "delete": "Delete",
+      "deleted": "{{name}} deleted",
+      "hasHistory": "It has stock history, so it can't be deleted. Archive it instead.",
+      "inStock": "In stock",
+      "value": "Value",
+      "price": "Price",
+      "noPrice": "No price yet"
+    },
+    "journal": {
+      "title": "Stock journal",
+      "short": "Journal",
+      "intro": "Every change to your stock, newest first. Undo reverses one action.",
+      "history": "History",
+      "seeAll": "See all",
+      "empty": "Nothing yet.",
+      "more": "Show more",
+      "undoLabel": "Undo this",
+      "undoneBadge": "undone",
+      "reasons": {
+        "purchase": "Added",
+        "consume": "Used",
+        "waste": "Wasted",
+        "open": "Opened",
+        "transfer_out": "Moved out",
+        "transfer_in": "Moved in",
+        "adjust": "Counted",
+        "edit": "Date changed",
+        "undo": "Undo"
+      }
+    },
+    "place": {
+      "title": "Pantry here",
+      "empty": "No stock is kept here yet."
+    },
+    "scan": {
+      "use": "Use {{qty}}",
+      "add": "Add {{qty}}"
+    }
+  },
+  "units": {
+    "title": "Units",
+    "intro": "What things are counted and bought in. The built-in units always convert (1 kg = 1000 g). Add your own for packages like a tin or sachet, or for counts like a dozen.",
+    "own": "Your units",
+    "ownEmpty": "None yet.",
+    "system": "Built-in",
+    "code": "Short name",
+    "name": "Name",
+    "dimension": "Measures",
+    "size": "How many {{base}}",
+    "hint": "A unit's size can't change later, because stock is stored in it. Pack sizes for one product (1 pack = 400 g) are set on the product page.",
+    "add": "Add unit",
+    "added": "{{code}} added",
+    "deleted": "{{code}} deleted",
+    "delete": "Delete {{code}}",
+    "inUse": "This unit is in use, so it can't be deleted.",
+    "dimensions": {
+      "other": "Package (tin, sachet…)",
+      "mass": "Weight",
+      "volume": "Volume",
+      "count": "Count",
+      "length": "Length",
+      "energy": "Energy"
+    }
   },
   "common": {
     "loading": "Loading…",

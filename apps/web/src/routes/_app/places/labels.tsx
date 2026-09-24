@@ -15,12 +15,15 @@ import { env } from '@/lib/env';
 import type { FontBytes } from '@/lib/labels/pdf';
 import { cellRect, layoutSheets, pageSize, type SheetProfile } from '@/lib/labels/sheet';
 import { composeSq20, encodePng1bit, rasterizeText, sq20TextArea } from '@/lib/labels/bitmap';
+import { productsQuery } from '@/lib/pantry/queries';
 import { labelProfileQuery, saveLabelProfile, type Place } from '@/lib/places';
 import { rawCodeQr } from '@/lib/qr';
 import { cn } from '@/lib/utils';
 
 const SearchSchema = z.object({
   ids: z.string().optional(),
+  /** Product ids (HL:PRD labels for jars and loose goods). */
+  products: z.string().optional(),
   mode: z.enum(['a4', 'niimbot']).optional(),
 });
 
@@ -54,16 +57,23 @@ const stamp = () => new Date().toISOString().slice(0, 10);
 
 function LabelsPage() {
   const { t } = useTranslation();
-  const { ids = '', mode = 'a4' } = Route.useSearch();
+  const { ids = '', products: productIds = '', mode = 'a4' } = Route.useSearch();
   const navigate = Route.useNavigate();
   const { membership } = Route.useRouteContext();
   const householdId = membership.household.id;
   const { places, tree } = usePlaces(householdId);
+  const products = useQuery({ ...productsQuery(householdId), enabled: Boolean(productIds) });
 
-  const selected = useMemo(() => {
+  const selected = useMemo((): LabelItem[] => {
     const wanted = ids.split(',').filter(Boolean);
-    return wanted.map((id) => tree.byId.get(id)).filter((p): p is Place => Boolean(p));
-  }, [ids, tree]);
+    const placeItems = wanted.map((id) => tree.byId.get(id)).filter((p): p is Place => Boolean(p));
+    const wantedProducts = new Set(productIds.split(',').filter(Boolean));
+    // A product label's small line is its name; there is no breadcrumb.
+    const productItems = (products.data ?? [])
+      .filter((p) => wantedProducts.has(p.id))
+      .map((p) => ({ id: p.id, code: p.code, name: p.name, path: p.name }));
+    return [...placeItems, ...productItems];
+  }, [ids, productIds, tree, products.data]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -94,7 +104,7 @@ function LabelsPage() {
         ))}
       </div>
 
-      {places.isPending ? null : selected.length === 0 ? (
+      {places.isPending || (Boolean(productIds) && products.isPending) ? null : selected.length === 0 ? (
         <Card className="text-[14px] text-[#a5b0d0]">{t('labels.none')}</Card>
       ) : mode === 'a4' ? (
         <A4Studio places={selected} householdId={householdId} canWrite={membership.role !== 'viewer'} />
@@ -107,7 +117,10 @@ function LabelsPage() {
 
 // ── A4 (Epson) ────────────────────────────────────────────────────────────────
 
-function A4Studio({ places, householdId, canWrite }: { places: Place[]; householdId: string; canWrite: boolean }) {
+/** What a label needs: places and products both have a code, a name and a breadcrumb path. */
+type LabelItem = Pick<Place, 'id' | 'code' | 'name' | 'path'>;
+
+function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; householdId: string; canWrite: boolean }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const saved = useQuery(labelProfileQuery(householdId));
@@ -325,7 +338,7 @@ function A4Studio({ places, householdId, canWrite }: { places: Place[]; househol
 
 // ── NIIMBOT 20 × 20 mm ────────────────────────────────────────────────────────
 
-function NiimbotLabel({ place }: { place: Place }) {
+function NiimbotLabel({ place }: { place: LabelItem }) {
   const { t } = useTranslation();
   const [png, setPng] = useState<{ url: string; blob: Blob } | null>(null);
   const text = shortLabelText(place.name);
@@ -371,7 +384,7 @@ function NiimbotLabel({ place }: { place: Place }) {
   );
 }
 
-function NiimbotStudio({ places }: { places: Place[] }) {
+function NiimbotStudio({ places }: { places: LabelItem[] }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-4">

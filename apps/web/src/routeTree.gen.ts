@@ -14,12 +14,14 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotInvitedRouteImport } from './routes/not-invited'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppInsightsRouteImport } from './routes/_app/insights'
-import { Route as AppPantryRouteImport } from './routes/_app/pantry'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
 import { Route as AppThingsRouteImport } from './routes/_app/things'
 import { Route as AppMoneyIndexRouteImport } from './routes/_app/money/index'
 import { Route as AppMoneyImportRouteImport } from './routes/_app/money/import'
 import { Route as AppMoneyInboxRouteImport } from './routes/_app/money/inbox'
+import { Route as AppPantryIndexRouteImport } from './routes/_app/pantry/index'
+import { Route as AppPantryProductIdRouteImport } from './routes/_app/pantry/$productId'
+import { Route as AppPantryJournalRouteImport } from './routes/_app/pantry/journal'
 import { Route as AppPlacesIndexRouteImport } from './routes/_app/places/index'
 import { Route as AppPlacesPlaceIdRouteImport } from './routes/_app/places/$placeId'
 import { Route as AppPlacesLabelsRouteImport } from './routes/_app/places/labels'
@@ -29,6 +31,7 @@ import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/setting
 import { Route as AppSettingsCategoriesRouteImport } from './routes/_app/settings/categories'
 import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings/diagnostics'
+import { Route as AppSettingsUnitsRouteImport } from './routes/_app/settings/units'
 import { Route as AppMoneyAccountsIndexRouteImport } from './routes/_app/money/accounts/index'
 import { Route as AppMoneyAccountsAccountIdRouteImport } from './routes/_app/money/accounts/$accountId'
 import { Route as AppMoneyTxTxIdRouteImport } from './routes/_app/money/tx.$txId'
@@ -57,11 +60,6 @@ const AppInsightsRoute = AppInsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPantryRoute = AppPantryRouteImport.update({
-  id: '/pantry',
-  path: '/pantry',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppScanRoute = AppScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -85,6 +83,21 @@ const AppMoneyImportRoute = AppMoneyImportRouteImport.update({
 const AppMoneyInboxRoute = AppMoneyInboxRouteImport.update({
   id: '/money/inbox',
   path: '/money/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPantryIndexRoute = AppPantryIndexRouteImport.update({
+  id: '/pantry/',
+  path: '/pantry/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPantryProductIdRoute = AppPantryProductIdRouteImport.update({
+  id: '/pantry/$productId',
+  path: '/pantry/$productId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPantryJournalRoute = AppPantryJournalRouteImport.update({
+  id: '/pantry/journal',
+  path: '/pantry/journal',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlacesIndexRoute = AppPlacesIndexRouteImport.update({
@@ -132,6 +145,11 @@ const AppSettingsDiagnosticsRoute = AppSettingsDiagnosticsRouteImport.update({
   path: '/settings/diagnostics',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsUnitsRoute = AppSettingsUnitsRouteImport.update({
+  id: '/settings/units',
+  path: '/settings/units',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMoneyAccountsIndexRoute = AppMoneyAccountsIndexRouteImport.update({
   id: '/money/accounts/',
   path: '/money/accounts/',
@@ -154,11 +172,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/insights': typeof AppInsightsRoute
-  '/pantry': typeof AppPantryRoute
   '/scan': typeof AppScanRoute
   '/things': typeof AppThingsRoute
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
+  '/pantry/$productId': typeof AppPantryProductIdRoute
+  '/pantry/journal': typeof AppPantryJournalRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/labels': typeof AppPlacesLabelsRoute
   '/s/$code': typeof AppSCodeRoute
@@ -166,7 +185,9 @@ export interface FileRoutesByFullPath {
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/settings/units': typeof AppSettingsUnitsRoute
   '/money/': typeof AppMoneyIndexRoute
+  '/pantry/': typeof AppPantryIndexRoute
   '/places/': typeof AppPlacesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
@@ -177,12 +198,13 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/insights': typeof AppInsightsRoute
-  '/pantry': typeof AppPantryRoute
   '/scan': typeof AppScanRoute
   '/things': typeof AppThingsRoute
   '/': typeof AppIndexRoute
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
+  '/pantry/$productId': typeof AppPantryProductIdRoute
+  '/pantry/journal': typeof AppPantryJournalRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/labels': typeof AppPlacesLabelsRoute
   '/s/$code': typeof AppSCodeRoute
@@ -190,7 +212,9 @@ export interface FileRoutesByTo {
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/settings/units': typeof AppSettingsUnitsRoute
   '/money': typeof AppMoneyIndexRoute
+  '/pantry': typeof AppPantryIndexRoute
   '/places': typeof AppPlacesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
   '/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
@@ -203,12 +227,13 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/_app/insights': typeof AppInsightsRoute
-  '/_app/pantry': typeof AppPantryRoute
   '/_app/scan': typeof AppScanRoute
   '/_app/things': typeof AppThingsRoute
   '/_app/': typeof AppIndexRoute
   '/_app/money/import': typeof AppMoneyImportRoute
   '/_app/money/inbox': typeof AppMoneyInboxRoute
+  '/_app/pantry/$productId': typeof AppPantryProductIdRoute
+  '/_app/pantry/journal': typeof AppPantryJournalRoute
   '/_app/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/_app/places/labels': typeof AppPlacesLabelsRoute
   '/_app/s/$code': typeof AppSCodeRoute
@@ -216,7 +241,9 @@ export interface FileRoutesById {
   '/_app/settings/categories': typeof AppSettingsCategoriesRoute
   '/_app/settings/devices': typeof AppSettingsDevicesRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/_app/settings/units': typeof AppSettingsUnitsRoute
   '/_app/money/': typeof AppMoneyIndexRoute
+  '/_app/pantry/': typeof AppPantryIndexRoute
   '/_app/places/': typeof AppPlacesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
@@ -230,11 +257,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/insights'
-    | '/pantry'
     | '/scan'
     | '/things'
     | '/money/import'
     | '/money/inbox'
+    | '/pantry/$productId'
+    | '/pantry/journal'
     | '/places/$placeId'
     | '/places/labels'
     | '/s/$code'
@@ -242,7 +270,9 @@ export interface FileRouteTypes {
     | '/settings/categories'
     | '/settings/devices'
     | '/settings/diagnostics'
+    | '/settings/units'
     | '/money/'
+    | '/pantry/'
     | '/places/'
     | '/settings/'
     | '/money/accounts/$accountId'
@@ -253,12 +283,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/insights'
-    | '/pantry'
     | '/scan'
     | '/things'
     | '/'
     | '/money/import'
     | '/money/inbox'
+    | '/pantry/$productId'
+    | '/pantry/journal'
     | '/places/$placeId'
     | '/places/labels'
     | '/s/$code'
@@ -266,7 +297,9 @@ export interface FileRouteTypes {
     | '/settings/categories'
     | '/settings/devices'
     | '/settings/diagnostics'
+    | '/settings/units'
     | '/money'
+    | '/pantry'
     | '/places'
     | '/settings'
     | '/money/accounts/$accountId'
@@ -278,12 +311,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/_app/insights'
-    | '/_app/pantry'
     | '/_app/scan'
     | '/_app/things'
     | '/_app/'
     | '/_app/money/import'
     | '/_app/money/inbox'
+    | '/_app/pantry/$productId'
+    | '/_app/pantry/journal'
     | '/_app/places/$placeId'
     | '/_app/places/labels'
     | '/_app/s/$code'
@@ -291,7 +325,9 @@ export interface FileRouteTypes {
     | '/_app/settings/categories'
     | '/_app/settings/devices'
     | '/_app/settings/diagnostics'
+    | '/_app/settings/units'
     | '/_app/money/'
+    | '/_app/pantry/'
     | '/_app/places/'
     | '/_app/settings/'
     | '/_app/money/accounts/$accountId'
@@ -342,13 +378,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInsightsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/pantry': {
-      id: '/_app/pantry'
-      path: '/pantry'
-      fullPath: '/pantry'
-      preLoaderRoute: typeof AppPantryRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/scan': {
       id: '/_app/scan'
       path: '/scan'
@@ -382,6 +411,27 @@ declare module '@tanstack/react-router' {
       path: '/money/inbox'
       fullPath: '/money/inbox'
       preLoaderRoute: typeof AppMoneyInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pantry/': {
+      id: '/_app/pantry/'
+      path: '/pantry'
+      fullPath: '/pantry/'
+      preLoaderRoute: typeof AppPantryIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pantry/$productId': {
+      id: '/_app/pantry/$productId'
+      path: '/pantry/$productId'
+      fullPath: '/pantry/$productId'
+      preLoaderRoute: typeof AppPantryProductIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pantry/journal': {
+      id: '/_app/pantry/journal'
+      path: '/pantry/journal'
+      fullPath: '/pantry/journal'
+      preLoaderRoute: typeof AppPantryJournalRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/places/': {
@@ -447,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsDiagnosticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/units': {
+      id: '/_app/settings/units'
+      path: '/settings/units'
+      fullPath: '/settings/units'
+      preLoaderRoute: typeof AppSettingsUnitsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/money/accounts/': {
       id: '/_app/money/accounts/'
       path: '/money/accounts'
@@ -473,12 +530,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppInsightsRoute: typeof AppInsightsRoute
-  AppPantryRoute: typeof AppPantryRoute
   AppScanRoute: typeof AppScanRoute
   AppThingsRoute: typeof AppThingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppMoneyImportRoute: typeof AppMoneyImportRoute
   AppMoneyInboxRoute: typeof AppMoneyInboxRoute
+  AppPantryProductIdRoute: typeof AppPantryProductIdRoute
+  AppPantryJournalRoute: typeof AppPantryJournalRoute
   AppPlacesPlaceIdRoute: typeof AppPlacesPlaceIdRoute
   AppPlacesLabelsRoute: typeof AppPlacesLabelsRoute
   AppSCodeRoute: typeof AppSCodeRoute
@@ -486,7 +544,9 @@ interface AppRouteChildren {
   AppSettingsCategoriesRoute: typeof AppSettingsCategoriesRoute
   AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
+  AppSettingsUnitsRoute: typeof AppSettingsUnitsRoute
   AppMoneyIndexRoute: typeof AppMoneyIndexRoute
+  AppPantryIndexRoute: typeof AppPantryIndexRoute
   AppPlacesIndexRoute: typeof AppPlacesIndexRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
   AppMoneyAccountsAccountIdRoute: typeof AppMoneyAccountsAccountIdRoute
@@ -496,12 +556,13 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppInsightsRoute: AppInsightsRoute,
-  AppPantryRoute: AppPantryRoute,
   AppScanRoute: AppScanRoute,
   AppThingsRoute: AppThingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppMoneyImportRoute: AppMoneyImportRoute,
   AppMoneyInboxRoute: AppMoneyInboxRoute,
+  AppPantryProductIdRoute: AppPantryProductIdRoute,
+  AppPantryJournalRoute: AppPantryJournalRoute,
   AppPlacesPlaceIdRoute: AppPlacesPlaceIdRoute,
   AppPlacesLabelsRoute: AppPlacesLabelsRoute,
   AppSCodeRoute: AppSCodeRoute,
@@ -509,7 +570,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsCategoriesRoute: AppSettingsCategoriesRoute,
   AppSettingsDevicesRoute: AppSettingsDevicesRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
+  AppSettingsUnitsRoute: AppSettingsUnitsRoute,
   AppMoneyIndexRoute: AppMoneyIndexRoute,
+  AppPantryIndexRoute: AppPantryIndexRoute,
   AppPlacesIndexRoute: AppPlacesIndexRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
   AppMoneyAccountsAccountIdRoute: AppMoneyAccountsAccountIdRoute,

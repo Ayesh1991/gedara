@@ -2,43 +2,84 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ChevronRight, CircleAlert, Info, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ProductScanCard, UnknownBarcodeCard } from '@/components/pantry/ScanCards';
 import { ClimateChip, KindChip, PlaceArt } from '@/components/places/PlaceVisuals';
 import { placePhotosQuery, placesQuery } from '@/lib/places';
 import type { Resolved } from '@/lib/resolve';
 import { cn } from '@/lib/utils';
 
-/** The card that slides up after a scan (HUD) or pops up as a toast (USB scanner anywhere). */
-export function ScanResult({ result, onNavigate, className }: { result: Resolved; onNavigate?: () => void; className?: string }) {
-  const { t } = useTranslation();
-  const householdId = result.status === 'place' ? result.place.household_id : '';
-  const places = useQuery({ ...placesQuery(householdId), enabled: Boolean(householdId) });
-  const photos = useQuery({ ...placePhotosQuery(householdId), enabled: Boolean(householdId) });
+/**
+ * The card that slides up after a scan (HUD) or pops up as a toast (USB scanner anywhere; `compact`:
+ * no sheets inside a toast that disappears).
+ */
+export function ScanResult({
+  result,
+  onNavigate,
+  className,
+  compact,
+}: {
+  result: Resolved;
+  onNavigate?: () => void;
+  className?: string;
+  compact?: boolean;
+}) {
+  if (result.status === 'place') return <PlaceResult result={result} onNavigate={onNavigate} className={className} />;
+  if (result.status === 'product') {
+    return <ProductScanCard result={result} compact={compact} onNavigate={onNavigate} className={className} />;
+  }
+  if (result.status === 'unknownBarcode') {
+    return <UnknownBarcodeCard code={result.code} compact={compact} onNavigate={onNavigate} className={className} />;
+  }
+  return <MessageResult result={result} className={className} />;
+}
 
-  if (result.status !== 'place') {
-    const later = result.status === 'later';
-    return (
-      <div className={cn('glass-strong slide-up flex items-start gap-3 rounded-3xl p-4', className)} role="status" data-testid="scan-result">
-        {later ? (
-          <Info className="mt-0.5 h-5 w-5 shrink-0 text-info" aria-hidden />
-        ) : (
-          <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-caution" aria-hidden />
-        )}
-        <div className="min-w-0">
-          <div className="font-display font-semibold">
-            {later ? t('scan.later.title', { phase: result.phase }) : t(`scan.${result.status}.title`)}
-          </div>
-          <div className="tabular mt-0.5 truncate text-[12.5px] text-muted">
-            {result.status === 'notFound'
-              ? result.code
-              : result.status === 'invalid'
-                ? result.raw
-                : t(`scan.later.${result.parsed.kind === 'ast' ? 'asset' : 'pantry'}`)}
-          </div>
+function MessageResult({
+  result,
+  className,
+}: {
+  result: Extract<Resolved, { status: 'notFound' | 'invalid' | 'later' | 'grocy' }>;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  const later = result.status === 'later' || result.status === 'grocy';
+  return (
+    <div className={cn('glass-strong slide-up flex items-start gap-3 rounded-3xl p-4', className)} role="status" data-testid="scan-result">
+      {later ? (
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-info" aria-hidden />
+      ) : (
+        <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-caution" aria-hidden />
+      )}
+      <div className="min-w-0">
+        <div className="font-display font-semibold">
+          {result.status === 'later' ? t('scan.later.title', { phase: result.phase }) : t(`scan.${result.status}.title`)}
+        </div>
+        <div className="tabular mt-0.5 truncate text-[12.5px] text-muted">
+          {result.status === 'notFound'
+            ? result.code
+            : result.status === 'invalid'
+              ? result.raw
+              : result.status === 'grocy'
+                ? t('scan.grocy.body')
+                : t(`scan.later.${result.parsed.kind === 'ast' ? 'asset' : 'lot'}`)}
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
+function PlaceResult({
+  result,
+  onNavigate,
+  className,
+}: {
+  result: Extract<Resolved, { status: 'place' }>;
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  const householdId = result.place.household_id;
+  const places = useQuery(placesQuery(householdId));
+  const photos = useQuery(placePhotosQuery(householdId));
   const { place } = result;
   const inside = places.data?.filter((p) => p.parent_id === place.id).length;
   const crumb = place.path.split(' › ').slice(0, -1).join(' › ');
