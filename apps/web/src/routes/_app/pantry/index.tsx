@@ -18,12 +18,12 @@ import { ATTENTION, matchesFilter, stockStatuses, type StatusFilter, type StockS
 import { formatQty } from '@/lib/pantry/units';
 import { todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
+import { textParam } from '@/lib/search';
 
 const FILTERS = ['all', 'attention', 'expired', 'bbPassed', 'dueSoon', 'belowMin', 'opened', 'out', 'archived'] as const;
 type Filter = (typeof FILTERS)[number];
 
-// The router parses `?new=4792024000222` in a typed / shared URL as a number: accept both.
-const text = (max: number) => z.union([z.string(), z.number()]).transform(String).pipe(z.string().max(max));
+const text = textParam;
 
 const SearchSchema = z.object({
   q: text(80).optional(),

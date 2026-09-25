@@ -38,6 +38,8 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, 'src'),
       // Bank-SMS parsers shared with the sms-ingest Edge Function (plain TS, no imports).
       '@sms': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/sms'),
+      // Web Push helpers shared with the attention-push Edge Function (plain TS, no imports).
+      '@push': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/push'),
     },
   },
   // jsquash locates its .wasm with new URL(…, import.meta.url); pre-bundling would break that path.

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, FileUp, MessageSquareText, Plus, Search, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileUp, MessageSquareText, PiggyBank, Plus, Repeat, Search, Wallet } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -79,7 +79,15 @@ function MoneyPage() {
           <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('nav.money')}</h1>
           <p className="mt-1 text-[14.5px] text-muted">{t('money.intro')}</p>
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap gap-2.5">
+          <Link to="/money/recurring" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+            <Repeat className="h-4 w-4" aria-hidden />
+            {t('recurring.short')}
+          </Link>
+          <Link to="/money/budgets" search={{ month }} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+            <PiggyBank className="h-4 w-4" aria-hidden />
+            {t('budgets.short')}
+          </Link>
           <Link
             to="/money/inbox"
             className={buttonVariants({ variant: 'secondary', size: 'sm' })}

@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.6.0 — Phase 6 Insights & Attention
+- **Every number is a link** down to the record. Insights (`/insights`) has seven areas, and the
+  drill path is kept in the URL (`/insights/spend?from=2026-09&cat=…&sub=…&name=…`), so any view
+  can be bookmarked or opened on another device:
+  - **Cash flow**: in vs out, savings rate, budget vs actual, recurring vs other spending, balances
+    over time.
+  - **Spending**: category → sub-category → product or bill-line name → the bill lines. You can
+    also group by shop, account, "paid with", or a day × hour heatmap.
+  - **Prices**: Rs per unit over time, comparison between shops, and a **personal inflation index**
+    from your own basket (chain-linked, weighted by spend, with no CCPI).
+  - **Pantry**: bought vs used vs wasted, waste by category with spoil rate, when things run out,
+    and stock value by place.
+  - **Things**: cost vs worth now, insured vs not, cost per month, and warranty and service
+    calendars.
+  - **Utilities**: units and the real Rs per kWh / m³ from recurring bills, and how long an LP gas
+    cylinder lasts.
+  - **Places**: what each place holds and is worth, and what hasn't moved in 12 months.
+
+  A bill line opened from Insights is highlighted on its bill (`?line=`). The stock journal filters
+  by product, reason and dates.
+- **Attention** (`/attention`, the Home card and the bell's badge) comes from the database and
+  covers:
+  - food that has expired, is past best-before or is due within 5 days
+  - products below minimum or running out within 5 days
+  - recurring bills and insurance renewals that are due or overdue
+  - warranties ending within 30 days, and services due
+  - things still to enter, and bank alerts still to review
+  - budgets at 90 % or over
+
+  Items can be hidden until tomorrow, for a week, or until they change. Undo is available.
+- **Daily notification at 07:00** (Web Push) on the devices you turn it on for, in Settings ›
+  Notifications. It works on Android Chrome, laptop Edge / Chrome, and iPhone / iPad from the
+  Home-Screen app. There is a test button. The `attention-push` Edge Function, run by `pg_cron`,
+  sends one short summary and only when there is something to say. Diagnostics shows the job and
+  its last run.
+- **Recurring bills** (Money › Recurring): quick presets for CEB, water, phone, gas and insurance.
+  They repeat every n days, weeks, months or years, with reminders a chosen number of days before.
+  - **Pay** saves the expense and links it in one step, and can record the kWh / m³ used.
+  - **Already in Money** links an SMS or scanned bill.
+  - **Skip this time** is also available.
+  - Due dates are computed, so deleting a payment makes the bill due again.
+- **Budgets** (Money › Budgets): one amount a month per main category, carried over until you
+  change it, with a "usual" suggestion. Home's Budget burn card and the Spent ring now use them.
+- **Recent activity** on Home: bills added or deleted, stock actions (one entry per action),
+  services, new products and places, and the life of things. Each entry opens its record.
+- **⌘K / Ctrl+K palette** searches products (including Sinhala names and barcodes), things
+  (A-number, model, serial), places, bills, bill lines and categories, and runs commands.
+  Shortcuts: `/`, `N`, `S`, `G` then `H/M/P/T/L/I/A`, and `?`.
+- Database: migrations 40–49:
+  - `pg_trgm`, `pg_cron`, `pg_net`
+  - `recurring_rule`, `recurring_skip`, `meter_reading` and their RPCs
+  - `budget`
+  - activity triggers
+  - the attention feed
+  - `push_subscription` and `push_run`
+  - Insights views
+  - `search_all`
+  - daily cron jobs
+
 ## 0.5.0 — Phase 5 Things
 - **Things** (replaces Homebox): a photo gallery of what you own with its A-number (A-0042), where
   it is, and warranty / service / status chips. Search by name, A-number, serial, model or tag;

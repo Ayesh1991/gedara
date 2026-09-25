@@ -1,6 +1,7 @@
-import { Link, useRouterState, type LinkProps } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { Link, useNavigate, useRouterState, type LinkProps } from '@tanstack/react-router';
 import {
-  Bell,
+  Bell as BellIcon,
   ChartNoAxesColumn,
   House,
   MapPin,
@@ -12,12 +13,16 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
+import { knownItems } from '@/lib/attention';
+import { attentionQuery } from '@/lib/insights/queries';
 import type { Membership } from '@/lib/queries';
+import { createShortcutReader, isTypingTarget, newTargetFor } from '@/lib/shortcuts';
 import { initials, longDate } from '@/lib/time';
 import { Brand, EnvChip, LogoMark } from './Brand';
+import { CommandPalette } from './CommandPalette';
+import { ShortcutsHelp } from './ShortcutsHelp';
 import { WedgeListener } from './scan/WedgeListener';
 import { VersionBadge } from './VersionBadge';
 
@@ -48,24 +53,72 @@ const RAIL: NavItem[] = [
   { key: 'settings', to: '/settings', icon: Settings },
 ];
 
-function useSearchShortcut(onOpen: () => void) {
+/** ⌘K / Ctrl+K, /, N, S, G then a letter, ? (MASTER_PLAN §5.4). Letters are ignored while typing. */
+function useShortcuts(onPalette: () => void, onHelp: () => void) {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
+    const read = createShortcutReader();
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        onOpen();
+      if (e.defaultPrevented || e.repeat) return;
+      if (document.querySelector('dialog[open]') && !((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k')) return;
+      const action = read({ key: e.key, metaKey: e.metaKey, ctrlKey: e.ctrlKey, altKey: e.altKey, typing: isTypingTarget(e.target) });
+      if (!action) return;
+      e.preventDefault();
+      switch (action.type) {
+        case 'palette':
+          onPalette();
+          break;
+        case 'help':
+          onHelp();
+          break;
+        case 'scan':
+          void navigate({ to: '/scan' });
+          break;
+        case 'go':
+          void navigate({ to: action.to });
+          break;
+        case 'new': {
+          const target = newTargetFor(pathname);
+          if (target) void navigate(target as never);
+          break;
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onOpen]);
+  }, [navigate, pathname, onPalette, onHelp]);
+}
+
+/** Attention count for the bell (the same feed as Home and /attention). */
+function useAttentionCount(householdId: string): number {
+  const feed = useQuery({ ...attentionQuery(householdId), refetchOnWindowFocus: true });
+  return knownItems(feed.data ?? []).length;
+}
+
+function Bell({ count, className }: { count: number; className: string }) {
+  const { t } = useTranslation();
+  return (
+    <Link to="/attention" aria-label={count ? t('shell.attentionCount', { count }) : t('shell.notifications')} className={`relative ${className}`}>
+      <BellIcon className="h-5 w-5" strokeWidth={1.8} aria-hidden />
+      {count > 0 && (
+        <span className="tabular absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 text-[11px] font-semibold text-[#1a0508]">
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
+    </Link>
+  );
 }
 
 export function AppShell({ membership, children }: { membership: Membership; children: ReactNode }) {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const searchSoon = useCallback(() => toast(t('shell.searchSoon')), [t]);
-  useSearchShortcut(searchSoon);
+  const [palette, setPalette] = useState(false);
+  const [help, setHelp] = useState(false);
+  const openPalette = useCallback(() => setPalette(true), []);
+  const openHelp = useCallback(() => setHelp(true), []);
+  useShortcuts(openPalette, openHelp);
+  const attention = useAttentionCount(membership.household.id);
   const { timezone, locale } = membership.household;
   const city = timezone.split('/').pop()?.replace(/_/g, ' ') ?? '';
 
@@ -78,6 +131,8 @@ export function AppShell({ membership, children }: { membership: Membership; chi
   return (
     <div className="relative z-10 min-h-dvh lg:flex">
       <WedgeListener />
+      <CommandPalette open={palette} onClose={() => setPalette(false)} householdId={membership.household.id} locale={locale} />
+      <ShortcutsHelp open={help} onClose={() => setHelp(false)} />
       {/* Desktop / iPad landscape: glass rail */}
       <aside className="glass-strong hidden border-y-0 border-l-0 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-[248px] lg:shrink-0 lg:flex-col lg:gap-7 lg:px-[18px] lg:py-7">
         <div className="px-1.5">
@@ -125,11 +180,12 @@ export function AppShell({ membership, children }: { membership: Membership; chi
             <button
               type="button"
               aria-label={t('shell.searchShort')}
-              onClick={searchSoon}
+              onClick={openPalette}
               className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-line-2 bg-white/5"
             >
               <Search className="h-[19px] w-[19px]" strokeWidth={1.8} aria-hidden />
             </button>
+            <Bell count={attention} className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-line-2 bg-white/5" />
             <Link
               to="/settings"
               aria-label={t('nav.settings')}
@@ -147,21 +203,14 @@ export function AppShell({ membership, children }: { membership: Membership; chi
           </span>
           <button
             type="button"
-            onClick={searchSoon}
+            onClick={openPalette}
             className="glass flex h-[46px] w-[330px] items-center gap-2.5 rounded-[14px] px-3.5 text-left text-sm text-muted"
           >
             <Search className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden />
             <span className="flex-1">{t('shell.search')}</span>
             <kbd className="tabular rounded-md bg-white/5 px-1.5 py-0.5 text-[11px] text-[#adb5d3]">⌘K</kbd>
           </button>
-          <button
-            type="button"
-            aria-label={t('shell.notifications')}
-            onClick={() => toast(t('shell.notificationsSoon'))}
-            className="glass flex h-[46px] w-[46px] items-center justify-center rounded-[14px]"
-          >
-            <Bell className="h-5 w-5" strokeWidth={1.8} aria-hidden />
-          </button>
+          <Bell count={attention} className="glass flex h-[46px] w-[46px] items-center justify-center rounded-[14px]" />
           <Link
             to="/scan"
             className="glow-gold flex h-[46px] items-center gap-2.5 rounded-[14px] px-5 text-[15px] font-semibold hover:brightness-105"

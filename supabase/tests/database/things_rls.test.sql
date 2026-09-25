@@ -117,7 +117,7 @@ select lives_ok($$update maintenance_log set title = 'Dusted well' where id = '0
 select throws_ok($$update maintenance_log set cost = 1 where id = '00000000-0000-0000-0000-00000000fd01'$$,
   '42501', null, 'a log''s cost is fixed (it matches the ledger)');
 
-select is((select count(*)::int from activity), 2, 'owner sees A''s timeline only (TV and Fridge created)');
+select is((select count(*)::int from activity where entity_type = 'asset'), 2, 'owner sees A''s asset timeline only (TV and Fridge created)');
 select throws_ok($$insert into activity (household_id, entity_type, entity_id, verb)
   values ('00000000-0000-0000-0000-0000000fc1aa', 'asset', '00000000-0000-0000-0000-00000000ca01', 'created')$$,
   '42501', null, 'the timeline is written by triggers only');
@@ -152,7 +152,7 @@ set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000fc201","
 select is((select string_agg(name, ',') from asset), 'Radio B', 'B sees only B''s thing, untouched by A');
 select is((select count(*)::int from tag) || ' ' || (select count(*)::int from asset_tag) || ' '
           || (select count(*)::int from category_field) || ' ' || (select count(*)::int from maintenance_plan) || ' '
-          || (select count(*)::int from maintenance_log) || ' ' || (select count(*)::int from activity),
+          || (select count(*)::int from maintenance_log) || ' ' || (select count(*)::int from activity where entity_type = 'asset'),
   '1 1 1 1 1 1', 'B sees only B''s tags, links, fields, plans, logs and timeline');
 select is((select count(*)::int from v_asset) || ' ' || (select count(*)::int from v_maintenance_due) || ' '
           || (select count(*)::int from v_storage_usage),

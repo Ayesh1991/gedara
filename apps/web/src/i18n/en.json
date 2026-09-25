@@ -24,6 +24,8 @@
     "searchSoon": "Search everything with ⌘K arrives in Phase 6.",
     "notifications": "Notifications",
     "notificationsSoon": "Alerts for expiring food, bills and warranties arrive in Phase 6.",
+    "attentionCount": "{{count}} things need attention",
+    "attentionCount_one": "1 thing needs attention",
     "roleLine": "{{role}} · {{household}}",
     "roles": { "owner": "Owner", "member": "Member", "viewer": "Viewer" }
   },
@@ -89,6 +91,10 @@
     "cashFlowEmpty": "Your income and spending will draw here once bills are imported.",
     "budget": "Budget burn",
     "budgetEmpty": "Set monthly budgets per category to see how fast each one is used.",
+    "budgetEdit": "Edit",
+    "budgetSet": "Set budgets",
+    "budgetRing": "{{pct}} % of this month's budgets used",
+    "seeAll": "See all {{count}}",
     "attention": "Attention",
     "attentionEmpty": "All clear. Expiring food, bills due and warranties ending will show up here.",
     "activity": "Recent activity",
@@ -118,6 +124,7 @@
     "unitsHint": "Your own units: tin, sachet, dozen",
     "fieldsHint": "Extra fields per kind of thing (IMEI, power, author)",
     "storageHint": "How much your photos and documents take",
+    "notificationsHint": "A 07:00 summary of what needs attention, per device",
     "placesHint": "Rooms, boxes and QR labels",
     "signedInAs": "Signed in as {{email}}",
     "role": "Role: {{role}}",
@@ -158,6 +165,16 @@
     "allGreen": "All green",
     "someFailed": "{{count}} check(s) failed",
     "clearCache": "Clear cache & reload",
+    "push": {
+      "title": "Daily notification",
+      "error": "Couldn't read the notification status.",
+      "scheduled": "Scheduled every day",
+      "projectUrl": "Knows where to send (Vault project_url)",
+      "lastJob": "Last scheduled run",
+      "lastRun": "Last summary",
+      "notYet": "Not yet",
+      "runLine": "{{date}} · {{items}} items · sent {{sent}}, failed {{failed}}"
+    },
     "checks": {
       "auth": "Auth",
       "db": "Database",
@@ -168,6 +185,8 @@
     },
     "errors": {
       "timeout": "Timed out after {{ms}} ms",
+      "attentionPush": "The attention-push function didn't answer (deploy it)",
+      "pushKeys": "attention-push has no VAPID keys yet (set the secrets)",
       "noSession": "No session",
       "noHousehold": "No household membership",
       "noController": "No active service worker",
@@ -579,6 +598,7 @@
       "empty": "Nothing yet.",
       "more": "Show more",
       "undoLabel": "Undo this",
+      "filter": { "purchase": "Bought", "consume": "Used", "waste": "Wasted", "clear": "Show everything" },
       "undoneBadge": "undone",
       "reasons": {
         "purchase": "Added",
@@ -1459,5 +1479,447 @@
     "driveLater": "Plenty of room. When it gets near 70 %, large files can move to a Google Drive folder (to be set up then).",
     "nearlyFull": "Getting full: it's time to set up the Google Drive overflow for large files.",
     "loadError": "Couldn't load the storage use."
+  },
+  "insights": {
+    "intro": "Where the money goes, what things cost, how fast the pantry empties. Every number opens what it is made of.",
+    "everyNumber": "Tap any number to see the records behind it.",
+    "showAll": "Show all {{count}}",
+    "showFewer": "Show fewer",
+    "loadError": "Couldn't load this view.",
+    "none": "—",
+    "uncategorised": "No category",
+    "noShop": "No shop",
+    "noTime": "No time on the bill",
+    "path": "Where you are",
+    "period": {
+      "label": "Period",
+      "month": "This month",
+      "lastMonth": "Last month",
+      "three": "3 months",
+      "twelve": "12 months",
+      "year": "This year"
+    },
+    "areas": {
+      "cashflow": {
+        "title": "Cash flow",
+        "intro": "Money in and out, how much you keep, budgets and balances over time."
+      },
+      "spend": {
+        "title": "Spending",
+        "intro": "By category, shop, account and time of day — down to each bill line."
+      },
+      "prices": {
+        "title": "Prices",
+        "intro": "What you pay per kg, litre or piece, where it's cheapest, and your own inflation."
+      },
+      "pantry": {
+        "title": "Pantry",
+        "intro": "Bought, used and wasted; how fast things go; what's in stock where."
+      },
+      "things": {
+        "title": "Things",
+        "intro": "What your things cost and are worth now, insurance, warranties and services."
+      },
+      "utilities": {
+        "title": "Utilities",
+        "intro": "Electricity and water units, the real rate per unit, and how long a gas cylinder lasts."
+      },
+      "places": {
+        "title": "Places",
+        "intro": "What each place holds and is worth, and what hasn't moved in a year."
+      }
+    },
+    "cards": {
+      "cashflow": "Net this month",
+      "spend": "Spent in the last 12 months",
+      "prices": "Your prices since the first bill",
+      "pantry": "Used from the pantry this month",
+      "things": "What your things are worth now",
+      "utilities": "Add recurring bills with units to see trends",
+      "utilitiesLast": "Last {{name}} bill",
+      "places": "Stock and things in your places"
+    },
+    "recurringFilter": {
+      "yes": "Recurring bills",
+      "no": "Everything else"
+    },
+    "spend": {
+      "title": "Spending",
+      "byLabel": "Group spending by",
+      "by": {
+        "category": "Category",
+        "merchant": "Shop",
+        "account": "Account",
+        "kind": "Paid with",
+        "time": "Day & hour"
+      },
+      "perMonth": "Per month",
+      "empty": "Nothing spent in this period.",
+      "noTimeTotal": "Bills without a time of day:",
+      "level": {
+        "domain": "Where it went",
+        "category": "Sub-categories",
+        "item": "Items"
+      },
+      "linesCount": "{{count}} lines",
+      "linesCount_one": "1 line",
+      "records": "{{count}} bill lines",
+      "records_one": "1 bill line"
+    },
+    "cashflow": {
+      "inOut": "In and out",
+      "empty": "Income and spending will show here once bills are in Money.",
+      "net": "Kept",
+      "savingsRate": "Savings rate",
+      "savingsHint": "Kept ÷ income",
+      "budget": "Budgets · {{month}}",
+      "editBudgets": "Edit budgets",
+      "ofBudget": "of {{budget}}",
+      "noBudget": "No budget",
+      "recurring": "Recurring bills vs everything else",
+      "balances": "Balances over time",
+      "balancesEmpty": "Set up account balances in Money to see them over time."
+    },
+    "prices": {
+      "title": "Prices",
+      "noneInPeriod": "Not bought on a bill in this period.",
+      "overTime": "Rs per {{unit}} over time",
+      "oneMonth": "Bought in one month only so far — the line appears after the next purchase.",
+      "byShop": "By shop (average Rs per unit)",
+      "cheaper": "{{pct}} % cheaper than the dearest",
+      "inflation": "Your own inflation",
+      "inflationEmpty": "Needs products bought on bills in at least two months. It fills in as you import bills.",
+      "change": "{{from}} → {{to}}",
+      "basketHint": "Your basket, weighted by what you spend",
+      "movers": "Biggest price changes",
+      "products": "Products by spending",
+      "empty": "Prices appear when pantry items are bought on imported bills."
+    },
+    "pantry": {
+      "viewLabel": "Pantry view",
+      "views": {
+        "flow": "Bought vs used",
+        "waste": "Waste",
+        "velocity": "Runs out",
+        "places": "By place"
+      },
+      "flowTitle": "Bought, used and wasted",
+      "empty": "Nothing moved in the pantry in this period.",
+      "bought": "Bought",
+      "consumed": "Used",
+      "wasted": "Wasted",
+      "stockpiling": "Bought ÷ used",
+      "stockpilingHint": "Above 1 = stock is building up",
+      "consumedBy": "Used, by product",
+      "wasteTitle": "Waste (Rs)",
+      "noWaste": "Nothing wasted in this period.",
+      "spoilRate": "{{pct}} % of it wasted",
+      "velocityTitle": "When things run out",
+      "velocityEmpty": "Use stock for a while (−1 or consume) and the app learns how fast each thing goes.",
+      "days": "{{count}} days",
+      "days_one": "1 day",
+      "perDay": "{{qty}} a day",
+      "placesTitle": "Stock value by place",
+      "placesEmpty": "No stock with a price in any place yet.",
+      "lots": "{{count}} lots",
+      "lots_one": "1 lot"
+    },
+    "things": {
+      "empty": "Add things in Things to see what they're worth.",
+      "value": "Cost and value now",
+      "cost": "Paid",
+      "now": "Worth now",
+      "nowHint": "After depreciation",
+      "insured": "Insured",
+      "uninsured": "Not insured",
+      "insuredTag": "insured",
+      "perMonth": "Cost per month owned",
+      "months": "{{count}} months",
+      "months_one": "1 month",
+      "noPrices": "Add prices and purchase dates to see cost per month.",
+      "warranties": "Warranties",
+      "noWarranties": "No warranties running.",
+      "services": "Services coming up",
+      "noServices": "No service plans yet."
+    },
+    "utilities": {
+      "title": "Utilities",
+      "empty": "No utility bills paid through Recurring bills in this period.",
+      "setUp": "Set up CEB and water as recurring bills",
+      "last": "Last bill · {{date}}",
+      "units": "Units ({{unit}})",
+      "perUnit": "Rs per {{unit}}",
+      "perUnitHint": "The whole bill ÷ units: your real rate",
+      "noUnits": "Type the {{unit}} when you pay to see usage.",
+      "gas": "LP gas",
+      "gasEmpty": "Two gas purchases are needed to know how long a cylinder lasts.",
+      "gasEvery": "A cylinder lasts about"
+    },
+    "places": {
+      "value": "What each place holds",
+      "empty": "Nothing is stored in a place yet.",
+      "holds": "{{lots}} lots · {{assets}} things",
+      "stale": "Not touched in 12 months",
+      "staleEmpty": "Nothing has sat still for a year — this list fills in over time (declutter ideas).",
+      "staleCount": "{{count}} items",
+      "staleCount_one": "1 item"
+    }
+  },
+  "attention": {
+    "title": "Attention",
+    "intro": "Food to use, bills due, warranties ending, services and budgets — the same list the 7:00 notification sums up.",
+    "notifications": "Notifications",
+    "error": "Couldn't update the attention list.",
+    "hidden": "Hidden",
+    "hide": "Hide",
+    "hideFor": {
+      "tomorrow": "Hide until tomorrow",
+      "week": "Hide for a week",
+      "change": "Hide until it changes"
+    },
+    "severity": {
+      "red": "Urgent",
+      "amber": "Soon",
+      "cyan": "Coming up",
+      "violet": "To do",
+      "teal": "Good"
+    },
+    "when": {
+      "today": "today",
+      "tomorrow": "tomorrow",
+      "yesterday": "yesterday",
+      "in": "in {{count}} days",
+      "in_one": "in 1 day",
+      "ago": "{{count}} days ago",
+      "ago_one": "1 day ago"
+    },
+    "expected": "About {{amount}}",
+    "left": "{{qty}} left",
+    "budget": "{{spent}} of {{budget}}",
+    "kinds": {
+      "expired": "{{title}} has expired",
+      "best_before_passed": "{{title}} is past best-before",
+      "due_soon": "{{title}} is due {{when}}",
+      "below_min": "{{title}} is running low",
+      "runs_out": "{{title}} runs out {{when}}",
+      "bill_due": "{{title}} is due {{when}}",
+      "bill_due_overdue": "{{title}} is overdue ({{when}})",
+      "insurance_due": "{{title}} renewal is due {{when}}",
+      "insurance_due_overdue": "{{title}} renewal is overdue ({{when}})",
+      "warranty_ending": "{{title}} warranty ends {{when}}",
+      "service_due": "{{title}} service is due {{when}}",
+      "service_due_overdue": "{{title}} service is overdue ({{when}})",
+      "things_pending": "{{count}} things bought, not entered yet",
+      "things_pending_one": "1 thing bought, not entered yet",
+      "sms_review": "{{count}} bank alerts to review",
+      "sms_review_one": "1 bank alert to review",
+      "budget_over": "{{title}} is over budget",
+      "budget_near": "{{title}} budget is almost used"
+    }
+  },
+  "activity": {
+    "other": "{{name}}",
+    "more": "+ {{count}} more",
+    "transaction": {
+      "created": "Added {{name}} · {{total}}",
+      "deleted": "Deleted {{name}} · {{total}}"
+    },
+    "stock": {
+      "purchase": "Stocked {{name}}",
+      "consume": "Used {{name}}",
+      "waste": "Threw away {{name}}",
+      "open": "Opened {{name}}",
+      "moved": "Moved {{name}}",
+      "inventory": "Counted {{name}}",
+      "edit": "Changed {{name}}",
+      "undo": "Undid a change to {{name}}"
+    },
+    "asset": {
+      "created": "Added {{name}} to Things",
+      "moved": "Moved a thing to {{name}}",
+      "lent": "Lent a thing to {{name}}",
+      "returned": "Got a thing back from {{name}}",
+      "sold": "Sold a thing to {{name}}",
+      "unsold": "Took back a sale",
+      "status": "Changed a thing's status"
+    },
+    "maintenance": {
+      "logged": "Serviced: {{name}}"
+    },
+    "product": {
+      "created": "New product {{name}}"
+    },
+    "location": {
+      "created": "New place {{name}}"
+    }
+  },
+  "palette": {
+    "title": "Search and commands",
+    "go": "Go to {{place}}",
+    "newExpense": "New expense",
+    "newProduct": "New product",
+    "newThing": "New thing",
+    "scan": "Scan",
+    "searching": "Searching…",
+    "nothing": "Nothing found for “{{q}}”",
+    "types": {
+      "product": "Product",
+      "asset": "Thing",
+      "location": "Place",
+      "transaction": "Bill",
+      "line": "Bill line",
+      "category": "Category"
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "palette": "Search everything",
+    "search": "Search",
+    "new": "New (expense, product or thing — depends on the page)",
+    "scan": "Scan",
+    "home": "Go to Home",
+    "money": "Go to Money",
+    "pantry": "Go to Pantry",
+    "things": "Go to Things",
+    "places": "Go to Places",
+    "insights": "Go to Insights",
+    "attention": "Go to Attention",
+    "help": "Show these shortcuts"
+  },
+  "budgets": {
+    "short": "Budgets",
+    "title": "Budgets",
+    "intro": "One monthly amount per main category. It carries on to the next months until you change it.",
+    "prev": "Previous month",
+    "next": "Next month",
+    "totals": "{{spent}} of {{budget}} used",
+    "spent": "Spent",
+    "usual": "usually {{amount}}",
+    "since": "set in {{month}}",
+    "useUsual": "Use usual",
+    "amountFor": "Budget for {{name}}",
+    "none": "No budget",
+    "invalid": "Type an amount in rupees (or leave it empty for none).",
+    "saved": "Saved from {{month}} on",
+    "cleared": "No budget from {{month}} on",
+    "error": "Couldn't save the budget.",
+    "carryHint": "Changing a budget applies from the month shown and every month after it. Earlier months keep theirs."
+  },
+  "recurring": {
+    "short": "Recurring",
+    "title": "Recurring bills",
+    "intro": "Electricity, water, phone, gas, insurance, salary… Gedara reminds you before they're due. Nothing is paid by itself.",
+    "add": "Add recurring bill",
+    "presets": "Quick add",
+    "preset": {
+      "ceb": "CEB electricity",
+      "water": "NWSDB water",
+      "telecom": "Phone & internet",
+      "gas": "LP gas",
+      "insurance": "Insurance"
+    },
+    "emptyTitle": "No recurring bills yet",
+    "emptyBody": "Add the bills that come back every month or year. They show up in Attention a few days before they're due.",
+    "paused": "Paused",
+    "overdue": "{{count}} days overdue",
+    "overdue_one": "1 day overdue",
+    "dueToday": "Due today",
+    "dueIn": "Due in {{count}} days",
+    "dueIn_one": "Due tomorrow",
+    "usual": "Usually {{amount}}",
+    "lastPaid": "Last paid {{date}} · {{amount}}",
+    "pay": "Pay",
+    "link": "Already in Money",
+    "skip": "Skip this time",
+    "skipped": "{{name}} skipped for {{date}}",
+    "editTitle": "Edit recurring bill",
+    "addTitle": "New recurring bill",
+    "payTitle": "Pay {{name}}",
+    "payFor": "For the bill due {{date}}",
+    "amount": "Amount",
+    "unitsUsed": "Units used ({{unit}})",
+    "paidOn": "Paid on",
+    "account": "Paid from",
+    "category": "Category",
+    "paid": "{{name}} paid for {{period}}",
+    "payUndone": "Payment removed — the bill is due again",
+    "linkTitle": "Link a payment to {{name}}",
+    "linkIntro": "Pick the bill already in Money (an SMS or a scanned bill) that paid the one due {{date}}.",
+    "noCandidates": "No matching payments in the last three months.",
+    "suggested": "Probably this",
+    "recent": "Other recent payments",
+    "linked": "Linked to {{name}} for {{period}}",
+    "name": "Name",
+    "namePlaceholder": "CEB electricity",
+    "usualAmount": "Usual amount",
+    "firstDue": "First due date",
+    "repeats": "Repeats",
+    "everyN": "Every how many",
+    "everyUnit": "Days, weeks, months or years",
+    "every": {
+      "day": "every {{count}} days",
+      "day_one": "every day",
+      "week": "every {{count}} weeks",
+      "week_one": "every week",
+      "month": "every {{count}} months",
+      "month_one": "every month",
+      "year": "every {{count}} years",
+      "year_one": "every year"
+    },
+    "moreOptions": "More options",
+    "lessOptions": "Fewer options",
+    "type": "Money out or in",
+    "payee": "Paid to",
+    "trackUnits": "Track units",
+    "noUnits": "No units",
+    "notifyDays": "Remind days before",
+    "asset": "For a thing (insurance)",
+    "noAsset": "Not for a thing",
+    "active": "Active",
+    "delete": "Delete recurring bill",
+    "deleteConfirm": "Delete {{name}}? Its past payments stay in Money.",
+    "deleted": "{{name}} deleted",
+    "saved": "{{name}} saved",
+    "added": "{{name}} added",
+    "errors": {
+      "paid": "That bill is already paid for this period.",
+      "duplicate": "This payment is already in Money.",
+      "invalid": "Check the amount, date and account.",
+      "reference": "That account, category or thing isn't available.",
+      "denied": "You can't change bills here.",
+      "nameTaken": "A recurring bill with that name already exists.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "intro": "One summary each morning at 7:00 of what needs attention — only on the devices you turn it on for, and only when there is something to say.",
+    "thisDevice": "This device",
+    "iosInstall": "On iPhone and iPad, notifications work only in the Gedara app on your Home Screen.",
+    "iosSteps": "In Safari: Share → Add to Home Screen, open Gedara from there, sign in and come back here.",
+    "iosOld": "This iPhone or iPad needs iOS 16.4 or later for notifications.",
+    "unsupported": "This browser can't show notifications. The Attention list still works.",
+    "blocked": "Notifications are blocked for Gedara in this browser's settings. Allow them there, then come back.",
+    "test": "Send a test",
+    "turnOn": "Turn on notifications",
+    "turnOff": "Turn off here",
+    "privacy": "Messages go through Google / Apple / Microsoft's push service, encrypted end to end; only this device can read them.",
+    "myDevices": "Your devices",
+    "noDevices": "No devices yet.",
+    "device": "Device",
+    "thisOne": "this one",
+    "lastError": "Last try failed: {{error}}",
+    "lastOk": "Last delivered {{date}}",
+    "neverSent": "Nothing sent yet",
+    "testOne": "Send a test to {{name}}",
+    "remove": "Remove {{name}}",
+    "denied": "Notifications weren't allowed.",
+    "notConfigured": "Notifications aren't set up on the server yet.",
+    "on": "Notifications are on for this device",
+    "off": "Notifications are off for this device",
+    "error": "Something went wrong with notifications.",
+    "testSent": "Test sent to {{count}} devices",
+    "testSent_one": "Test sent",
+    "testFailed": "The test couldn't be delivered."
   }
 }
