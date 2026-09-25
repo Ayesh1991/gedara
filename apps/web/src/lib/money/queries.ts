@@ -25,7 +25,7 @@ export interface Account extends AccountRow {
 export type Line = Pick<
   Tables<'transaction_line'>,
   | 'id' | 'line_no' | 'raw_name' | 'category_id' | 'qty' | 'unit_text' | 'unit_price' | 'amount' | 'base_qty'
-  | 'price_per_base' | 'unit_id' | 'fingerprint'
+  | 'price_per_base' | 'unit_id' | 'fingerprint' | 'destiny' | 'product_id'
 >;
 export type Transaction = Pick<
   Tables<'money_transaction'>,
@@ -35,7 +35,7 @@ export type Transaction = Pick<
 > & { lines: Line[] };
 
 const LINE_COLUMNS =
-  'id, line_no, raw_name, category_id, qty, unit_text, unit_price, amount, base_qty, price_per_base, unit_id, fingerprint';
+  'id, line_no, raw_name, category_id, qty, unit_text, unit_price, amount, base_qty, price_per_base, unit_id, fingerprint, destiny, product_id';
 const TX_COLUMNS = `id, household_id, type, account_id, to_account_id, merchant_id, payee_text, occurred_on, occurred_at,
   invoice_no, subtotal, discount, total, source, fingerprint, related_id, notes, created_at,
   transaction_line (${LINE_COLUMNS})`;
@@ -263,6 +263,8 @@ export interface SavePayload {
   total: number;
   fingerprint?: string;
   lines: SaveLine[];
+  /** Editing a bill whose lines feed the pantry: change the header only. */
+  keep_lines?: boolean;
   fee?: { amount: number; category_id: string | null } | null;
 }
 
@@ -276,6 +278,10 @@ export interface ImportResult {
   fingerprint: string;
   status: 'imported' | 'duplicate';
   id: string | null;
+  /** Lots created, list items ticked and the correlation of the bill's purchases (Phase 4). */
+  lots?: number;
+  ticked?: number;
+  correlation_id?: string | null;
 }
 
 /** Sends bills in batches (the RPC takes ≤ 200); `onProgress` gets the number done so far. */
@@ -299,8 +305,12 @@ export async function importBills(
   return out;
 }
 
-export async function deleteTransaction(id: string) {
-  const { error } = await supabase.rpc('rpc_delete_transaction', { p_id: id });
+/**
+ * Deletes a transaction. A bill's pantry stock is taken back with it (GDUSE when some was used
+ * since); `keepStock` deletes the bill and leaves its lots in the pantry.
+ */
+export async function deleteTransaction(id: string, keepStock = false) {
+  const { error } = await supabase.rpc('rpc_delete_transaction', { p_id: id, p_keep_stock: keepStock });
   if (error) throw error;
 }
 
@@ -334,9 +344,12 @@ export async function updateAccount(
 /** Postgres / RPC error → i18n key suffix under money.errors. */
 export function moneyErrorKey(
   e: unknown,
-): 'duplicate' | 'invalid' | 'reference' | 'denied' | 'nameTaken' | 'reviewed' | 'generic' {
+): 'duplicate' | 'invalid' | 'reference' | 'denied' | 'nameTaken' | 'reviewed' | 'routed' | 'stockUsed' | 'unitMismatch' | 'generic' {
   const code = (e as { code?: string } | null)?.code;
   if (code === 'GDDUP') return 'duplicate';
+  if (code === 'GDRTD') return 'routed';
+  if (code === 'GDUSE') return 'stockUsed';
+  if (code === 'GDUNT') return 'unitMismatch';
   if (code === 'GDLNK') return 'reviewed';
   if (code === '23514') return 'invalid';
   if (code === '23503') return 'reference';

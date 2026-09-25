@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ClipboardCheck,
   Copy,
+  ListPlus,
   PackageOpen,
   Pencil,
   Plus,
@@ -22,6 +23,8 @@ import { CodeQr } from '@/components/places/PlaceVisuals';
 import { JournalList } from '@/components/pantry/JournalList';
 import { ProductForm } from '@/components/pantry/ProductForm';
 import { StockSheet, type StockMode } from '@/components/pantry/StockSheet';
+import { ProductSpine } from '@/components/spine/ProductSpine';
+import { useShoppingList } from '@/components/spine/useShopping';
 import {
   DueText,
   ProductArt,
@@ -55,6 +58,7 @@ import {
 } from '@/lib/pantry/queries';
 import { EXTEND_DAYS, addDays, stockStatuses } from '@/lib/pantry/status';
 import { formatQty, parseQty, type UnitMap } from '@/lib/pantry/units';
+import { addListItem, invalidateShopping } from '@/lib/spine/queries';
 import { todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
 
@@ -102,6 +106,8 @@ function ProductPage() {
   const lots = useQuery(productLotsQuery(householdId, productId));
   const journal = useQuery(journalQuery(householdId, productId, 30));
   const { run } = useStockAction(householdId);
+  const qc = useQueryClient();
+  const list = useShoppingList(householdId, false);
   const [sheet, setSheet] = useState<{ mode: StockMode; lot?: Lot | null } | null>(null);
   const [editing, setEditing] = useState(false);
 
@@ -135,6 +141,21 @@ function ProductPage() {
   const inStock = product.stock.qty > 0;
   const photo = pantry.photos.data?.get(product.id);
   const category = product.category_id ? categoryLabel(pantry.categories.data ?? [], product.category_id) : null;
+
+  async function addToList() {
+    if (!product) return;
+    try {
+      await addListItem(
+        householdId,
+        { productId: product.id, qty: product.reorder_qty ?? null, unitId: product.reorder_qty ? product.stock_unit_id : null },
+        (list.data ?? []).filter((i) => !i.done && !i.dismissed),
+      );
+      await invalidateShopping(qc, householdId);
+      toast.success(t('shopping.added', { name: product.name }));
+    } catch (e) {
+      toast.error(t(`pantry.errors.${pantryErrorKey(e)}`));
+    }
+  }
 
   function extend(lot: Lot) {
     if (!product) return;
@@ -233,6 +254,7 @@ function ProductPage() {
           {canWrite && inStock && <IconAction label={t('pantry.actions.open')} icon={PackageOpen} onClick={() => setSheet({ mode: 'open' })} />}
           {canWrite && inStock && <IconAction label={t('pantry.actions.move')} icon={ArrowRightLeft} onClick={() => setSheet({ mode: 'move' })} />}
           {canWrite && <IconAction label={t('pantry.actions.count')} icon={ClipboardCheck} onClick={() => setSheet({ mode: 'count' })} />}
+          {canWrite && <IconAction label={t('shopping.addShort')} icon={ListPlus} onClick={() => void addToList()} />}
           {canWrite && <IconAction label={t('pantry.actions.edit')} icon={Pencil} onClick={() => setEditing(true)} />}
           <IconAction
             label={t('places.label')}
@@ -297,6 +319,8 @@ function ProductPage() {
       </Section>
 
       <CodesSection product={product} units={units} householdId={householdId} canWrite={canWrite} />
+
+      <ProductSpine householdId={householdId} productId={product.id} unit={unit} canWrite={canWrite} locale={locale} today={today} />
 
       <Section
         title={t('pantry.journal.history')}

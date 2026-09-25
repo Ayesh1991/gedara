@@ -773,6 +773,71 @@ export type Database = {
           },
         ]
       }
+      product_alias: {
+        Row: {
+          alias_norm: string
+          created_at: string
+          destiny: string
+          hits: number
+          household_id: string
+          id: string
+          last_used_at: string
+          merchant_id: string | null
+          product_id: string | null
+        }
+        Insert: {
+          alias_norm: string
+          created_at?: string
+          destiny: string
+          hits?: number
+          household_id: string
+          id?: string
+          last_used_at?: string
+          merchant_id?: string | null
+          product_id?: string | null
+        }
+        Update: {
+          alias_norm?: string
+          created_at?: string
+          destiny?: string
+          hits?: number
+          household_id?: string
+          id?: string
+          last_used_at?: string
+          merchant_id?: string | null
+          product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_alias_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_alias_household_id_merchant_id_fkey"
+            columns: ["household_id", "merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchant"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_alias_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_alias_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+        ]
+      }
       product_barcode: {
         Row: {
           barcode: string
@@ -902,6 +967,109 @@ export type Database = {
           {
             foreignKeyName: "product_unit_conversion_to_unit_id_fkey"
             columns: ["to_unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopping_list_item: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dismissed: boolean
+          done: boolean
+          done_at: string | null
+          done_by: string | null
+          done_by_line: string | null
+          free_text: string | null
+          household_id: string
+          id: string
+          list: string
+          note: string | null
+          product_id: string | null
+          qty: number | null
+          source: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dismissed?: boolean
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          done_by_line?: string | null
+          free_text?: string | null
+          household_id: string
+          id?: string
+          list?: string
+          note?: string | null
+          product_id?: string | null
+          qty?: number | null
+          source?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dismissed?: boolean
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          done_by_line?: string | null
+          free_text?: string | null
+          household_id?: string
+          id?: string
+          list?: string
+          note?: string | null
+          product_id?: string | null
+          qty?: number | null
+          source?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_item_household_id_done_by_line_fkey"
+            columns: ["household_id", "done_by_line"]
+            isOneToOne: false
+            referencedRelation: "transaction_line"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_done_by_line_fkey"
+            columns: ["household_id", "done_by_line"]
+            isOneToOne: false
+            referencedRelation: "v_line_route"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_unit_id_fkey"
+            columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "unit"
             referencedColumns: ["id"]
@@ -1195,6 +1363,13 @@ export type Database = {
             referencedRelation: "transaction_line"
             referencedColumns: ["household_id", "id"]
           },
+          {
+            foreignKeyName: "stock_lot_household_id_transaction_line_id_fkey"
+            columns: ["household_id", "transaction_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_line_route"
+            referencedColumns: ["household_id", "line_id"]
+          },
         ]
       }
       stock_movement: {
@@ -1312,6 +1487,7 @@ export type Database = {
           id: string
           line_no: number
           price_per_base: number | null
+          product_id: string | null
           qty: number | null
           raw_name: string
           transaction_id: string
@@ -1329,6 +1505,7 @@ export type Database = {
           id?: string
           line_no: number
           price_per_base?: number | null
+          product_id?: string | null
           qty?: number | null
           raw_name: string
           transaction_id: string
@@ -1346,6 +1523,7 @@ export type Database = {
           id?: string
           line_no?: number
           price_per_base?: number | null
+          product_id?: string | null
           qty?: number | null
           raw_name?: string
           transaction_id?: string
@@ -1374,6 +1552,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "money_transaction"
             referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
           },
           {
             foreignKeyName: "transaction_line_unit_id_fkey"
@@ -1457,6 +1649,52 @@ export type Database = {
         }
         Relationships: []
       }
+      v_line_route: {
+        Row: {
+          destiny: string | null
+          first_lot_id: string | null
+          household_id: string | null
+          line_id: string | null
+          line_no: number | null
+          lots: number | null
+          product_id: string | null
+          product_name: string | null
+          qty_initial: number | null
+          qty_remaining: number | null
+          stock_unit_code: string | null
+          transaction_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_line_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_line_household_id_transaction_id_fkey"
+            columns: ["household_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "money_transaction"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+        ]
+      }
       v_monthly_cashflow: {
         Row: {
           bills: number | null
@@ -1473,6 +1711,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "household"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_product_price: {
+        Row: {
+          household_id: string | null
+          last_bought_on: string | null
+          last_unit_cost: number | null
+          merchant_id: string | null
+          merchant_name: string | null
+          min_unit_cost_180d: number | null
+          product_id: string | null
+          times: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_lot_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
           },
         ]
       }
@@ -1496,6 +1769,91 @@ export type Database = {
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_shopping_list: {
+        Row: {
+          below_min: boolean | null
+          best_bought_on: string | null
+          best_merchant: string | null
+          best_unit_cost: number | null
+          bought_at: string | null
+          bought_on: string | null
+          bought_transaction_id: string | null
+          created_at: string | null
+          created_by: string | null
+          dismissed: boolean | null
+          done: boolean | null
+          done_at: string | null
+          done_by: string | null
+          done_by_line: string | null
+          free_text: string | null
+          household_id: string | null
+          id: string | null
+          list: string | null
+          min_qty: number | null
+          note: string | null
+          product_id: string | null
+          product_name: string | null
+          qty: number | null
+          source: string | null
+          stock_qty: number | null
+          stock_unit_code: string | null
+          stock_unit_id: string | null
+          unit_code: string | null
+          unit_id: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_stock_unit_id_fkey"
+            columns: ["stock_unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_done_by_line_fkey"
+            columns: ["household_id", "done_by_line"]
+            isOneToOne: false
+            referencedRelation: "transaction_line"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_done_by_line_fkey"
+            columns: ["household_id", "done_by_line"]
+            isOneToOne: false
+            referencedRelation: "v_line_route"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "unit"
             referencedColumns: ["id"]
           },
         ]
@@ -1671,7 +2029,10 @@ export type Database = {
       }
       accept_pending_invites: { Args: never; Returns: number }
       rpc_consume: { Args: { p: Json }; Returns: Json }
-      rpc_delete_transaction: { Args: { p_id: string }; Returns: undefined }
+      rpc_delete_transaction: {
+        Args: { p_id: string; p_keep_stock?: boolean }
+        Returns: undefined
+      }
       rpc_import_bills: {
         Args: { p_bills: Json; p_household: string }
         Returns: Json
@@ -1683,8 +2044,13 @@ export type Database = {
       }
       rpc_open: { Args: { p: Json }; Returns: Json }
       rpc_purchase: { Args: { p: Json }; Returns: Json }
+      rpc_route_lines: {
+        Args: { p_routes: Json; p_tick?: Json; p_transaction: string }
+        Returns: Json
+      }
       rpc_save_transaction: { Args: { p: Json }; Returns: Json }
       rpc_set_lot_due: { Args: { p: Json }; Returns: Json }
+      rpc_shopping_sync: { Args: { p_household: string }; Returns: Json }
       rpc_sms_device_create: {
         Args: { p_household: string; p_name: string }
         Returns: Json

@@ -41,6 +41,8 @@ interface ProductFormProps {
   photo?: EntityPhoto | null;
   /** From a scan of an unknown barcode. */
   barcode?: string | null;
+  /** New product from a bill line: prefilled name / category / unit. */
+  initial?: { name?: string; category_id?: string | null; stock_unit_id?: string | null } | null;
   onSaved?: (p: Product | { id: string; name: string }) => void;
 }
 
@@ -65,14 +67,14 @@ const intOrNull = (s: string) => {
 };
 const str = (n: number | null | undefined) => (n === null || n === undefined ? '' : String(n));
 
-function ProductFormBody({ onClose, householdId, units, categories, products, tree, product, photo, barcode, onSaved }: ProductFormProps) {
+function ProductFormBody({ onClose, householdId, units, categories, products, tree, product, photo, barcode, initial, onSaved }: ProductFormProps) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const g = [...units.values()].find((u) => u.household_id === null && u.code === 'g');
 
-  const [name, setName] = useState(product?.name ?? '');
-  const [categoryId, setCategoryId] = useState<string | null>(product?.category_id ?? null);
-  const [stockUnit, setStockUnit] = useState(product?.stock_unit_id ?? g?.id ?? '');
+  const [name, setName] = useState(product?.name ?? initial?.name ?? '');
+  const [categoryId, setCategoryId] = useState<string | null>(product?.category_id ?? initial?.category_id ?? null);
+  const [stockUnit, setStockUnit] = useState(product?.stock_unit_id ?? initial?.stock_unit_id ?? g?.id ?? '');
   const [placeId, setPlaceId] = useState(product?.default_location_id ?? '');
   const [dueType, setDueType] = useState<DueTypeValue>((product?.due_type as DueTypeValue) ?? 'best_before');
   const [dueDays, setDueDays] = useState(str(product?.default_due_days));

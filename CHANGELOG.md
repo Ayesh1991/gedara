@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.4.0 — Phase 4 The spine
+- **One bill, one confirm** (Money › Import › Scanned bill): each line now shows where it goes:
+  **Pantry** (a lot of a product, priced from the line: "1 pack = 10 pcs · Rs 57.00 / pcs"),
+  **Things** (kept for Phase 5) or **Expense only**. Import logs the expense, creates the lots
+  (bought on the bill date, product's place and due date unless changed) and ticks the shopping
+  list, all at once, with an 8 s Undo (= delete the bill again).
+- **Product matching**: barcode printed on the bill → a bill name learned before → name similarity
+  (pre-selected in amber "check" when close; only suggested when ambiguous or in another category).
+  Lines without a match offer "New product" (prefilled) or "Not stock" right in the row; lines left
+  without a product don't block the import (they're saved as plain bill lines, "Send to pantry"
+  later); a unit the product can't convert asks "how much is 1 pcs?" and saves the pack size.
+  Importing one bill opens its page.
+- **Learning**: every confirmed line teaches its printed name ("WHITE SUGAR 1KG" → Sugar), also
+  "not stock" (bottled water). The product page lists its **names on bills** (removable) and
+  **prices by shop** (Rs per kg / L / pc, cheapest highlighted).
+- **Bill page**: each line shows where it went ("In the pantry: Sugar" links to the product;
+  "Goes to Things (Phase 5)"); **Send to pantry** routes lines of a bill that's already in Gedara
+  (SMS / manual / imported before its products existed). Editing a bill whose lines feed the pantry
+  changes the header only. Deleting a bill takes its unused stock back; if some was used, you can
+  delete it and keep the stock.
+- **Shopping list** (Pantry › List): products and free text, quantities, "have 200 g",
+  "cheapest recently Keells Rs 480 / kg", bought items with the bill they were bought on. Products
+  below their minimum are added by themselves ("low"; "Not now" hides one). Live between phones.
+  Home's Attention card and the Pantry header show how much is on it; product pages have "To list".
+- Supabase migrations 28–32: `product_alias` (+ `private.bill_name_norm`), `transaction_line.product_id`
+  + `v_line_route`, `shopping_list_item` (+ Realtime, `rpc_shopping_sync`), bill routing
+  (`rpc_import_bills` routes lines, `rpc_route_lines`, header-only edits of routed bills (GDRTD),
+  `rpc_delete_transaction(p_id, p_keep_stock)` taking stock back (GDUSE)), `v_product_price`,
+  `v_shopping_list`; `v_product_stock`'s last price skips taken-back purchases. schema_version = 32.
+- pgTAP: 48 routing assertions (lots, conversions, unit cost, dates, learning, ticks, duplicates,
+  cross-household ids, routing an existing bill, locked lines, delete / keep stock, prices by shop,
+  Σ delta invariant), 36 alias + shopping-list isolation / sync assertions. Vitest: bill-name
+  normalisation (same as SQL), matching tiers, routes, previews, summary, list order. Playwright:
+  the done-when bill (8 lots, 3 ticks, one confirm) and delete, and a shopping-list round trip, on
+  phone + iPad.
+
 ## 0.3.0 — Phase 3 Pantry core
 - **Pantry** (replaces Grocy, fresh start, no import): stock overview with search, filter chips
   (needs a look / expired / past best-before / due soon / running low / opened / out / archived),

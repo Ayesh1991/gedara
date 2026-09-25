@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { billFingerprint, lineFingerprint } from './fingerprint';
 import { sumAmounts, toCents } from './format';
 import { guessTopKey, pickCategory, type CategoryRow } from './categoriesMap';
+import type { RpcRoute } from '../spine/route';
 
 const num = z.number().finite();
 
@@ -20,6 +21,8 @@ const ItemSchema = z.object({
   price: num.nullish(),
   amount: num.nullish(),
   total: num.nullish(),
+  // EAN printed on the bill, when the scanner saw one (matches the product's barcode).
+  barcode: z.union([z.string().regex(/^[0-9A-Za-z._-]{4,64}$/), num.int().nonnegative()]).nullish(),
 });
 
 export const ScannedBillSchema = z
@@ -106,6 +109,12 @@ export interface ImportLine {
   guessed?: boolean;
   /** Preview only: added so the lines add up to the bill total. */
   synthetic?: boolean;
+  /** Preview only: the scanner printed no unit (unit_text fell back to 'pcs'). */
+  unitMissing?: boolean;
+  /** Preview only: the barcode printed on the bill. */
+  barcode?: string | null;
+  /** Where the line goes (Phase 4); absent = the category's default, nothing created. */
+  route?: RpcRoute;
 }
 
 export interface ImportBill {
@@ -122,6 +131,8 @@ export interface ImportBill {
   fingerprint: string;
   notes: string | null;
   lines: ImportLine[];
+  /** Free-text shopping-list items bought on this bill. */
+  tick_item_ids?: string[];
 }
 
 /** One scanned bill → an rpc_import_bills payload with ledger-v7 fingerprints. */
@@ -148,6 +159,8 @@ export function scannedToImport(bill: ScannedBill, categories: CategoryRow[], ac
       amount: rawAmount,
       fingerprint: lineFingerprint(fp, idx, it.name, rawAmount),
       guessed: !pick.exact,
+      unitMissing: !it.unit,
+      barcode: it.barcode == null || it.barcode === '' ? null : String(it.barcode),
     };
   });
 
@@ -193,7 +206,7 @@ export function scannedToImport(bill: ScannedBill, categories: CategoryRow[], ac
 
 /** Strip preview-only fields before sending to the database. */
 export function toRpcBill(b: ImportBill) {
-  return { ...b, lines: b.lines.map(({ guessed: _g, synthetic: _s, ...l }) => l) };
+  return { ...b, lines: b.lines.map(({ guessed: _g, synthetic: _s, unitMissing: _u, barcode: _b, ...l }) => l) };
 }
 
 export function paidByCard(method: string | null | undefined): boolean {

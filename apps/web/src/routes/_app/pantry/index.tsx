@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { History, Plus, ScanLine, Search, ShoppingBasket } from 'lucide-react';
+import { History, ListChecks, Plus, ScanLine, Search, ShoppingBasket } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -8,6 +8,7 @@ import { Money } from '@/components/money/bits';
 import { usePantry, useStockAction } from '@/components/pantry/bits';
 import { ProductActionsSheet, ProductCard } from '@/components/pantry/ProductCard';
 import { ProductForm } from '@/components/pantry/ProductForm';
+import { useShoppingList } from '@/components/spine/useShopping';
 import { StockSheet, type StockMode } from '@/components/pantry/StockSheet';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -47,6 +48,8 @@ function PantryPage() {
   const canWrite = membership.role !== 'viewer';
   const today = todayIn(timezone);
   const pantry = usePantry(householdId);
+  const list = useShoppingList(householdId, canWrite);
+  const toBuy = (list.data ?? []).filter((i) => !i.done && !i.dismissed).length;
   const { run } = useStockAction(householdId);
   const [menuFor, setMenuFor] = useState<Product | null>(null);
   const [sheet, setSheet] = useState<{ mode: StockMode; product: Product } | null>(null);
@@ -111,6 +114,11 @@ function PantryPage() {
           <p className="mt-1 text-[14.5px] text-muted">{t('pantry.intro')}</p>
         </div>
         <div className="flex gap-2.5">
+          <Link to="/pantry/list" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+            <ListChecks className="h-4 w-4" aria-hidden />
+            {t('shopping.short')}
+            {toBuy > 0 && <span className="tabular rounded-full bg-due/20 px-1.5 text-[11.5px] text-due">{toBuy}</span>}
+          </Link>
           <Link to="/pantry/journal" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <History className="h-4 w-4" aria-hidden />
             {t('pantry.journal.short')}
