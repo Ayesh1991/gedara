@@ -121,7 +121,9 @@ function ScanPage() {
                         ? h.result.place.path
                         : h.result.status === 'product'
                           ? h.result.product.name
-                          : t(`scan.short.${h.result.status}`)}
+                          : h.result.status === 'asset'
+                            ? h.result.asset.name
+                            : t(`scan.short.${h.result.status}`)}
                     </span>
                   </li>
                 ))}

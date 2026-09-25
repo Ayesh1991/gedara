@@ -16,6 +16,7 @@ import type { FontBytes } from '@/lib/labels/pdf';
 import { cellRect, layoutSheets, pageSize, type SheetProfile } from '@/lib/labels/sheet';
 import { composeSq20, encodePng1bit, rasterizeText, sq20TextArea } from '@/lib/labels/bitmap';
 import { productsQuery } from '@/lib/pantry/queries';
+import { assetsQuery } from '@/lib/things/queries';
 import { labelProfileQuery, saveLabelProfile, type Place } from '@/lib/places';
 import { rawCodeQr } from '@/lib/qr';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,8 @@ const SearchSchema = z.object({
   ids: z.string().optional(),
   /** Product ids (HL:PRD labels for jars and loose goods). */
   products: z.string().optional(),
+  /** Asset ids (HL:AST labels: the A-number under the QR, sq20-ast). */
+  assets: z.string().optional(),
   mode: z.enum(['a4', 'niimbot']).optional(),
 });
 
@@ -57,12 +60,13 @@ const stamp = () => new Date().toISOString().slice(0, 10);
 
 function LabelsPage() {
   const { t } = useTranslation();
-  const { ids = '', products: productIds = '', mode = 'a4' } = Route.useSearch();
+  const { ids = '', products: productIds = '', assets: assetIds = '', mode = 'a4' } = Route.useSearch();
   const navigate = Route.useNavigate();
   const { membership } = Route.useRouteContext();
   const householdId = membership.household.id;
   const { places, tree } = usePlaces(householdId);
   const products = useQuery({ ...productsQuery(householdId), enabled: Boolean(productIds) });
+  const assets = useQuery({ ...assetsQuery(householdId), enabled: Boolean(assetIds) });
 
   const selected = useMemo((): LabelItem[] => {
     const wanted = ids.split(',').filter(Boolean);
@@ -72,8 +76,20 @@ function LabelsPage() {
     const productItems = (products.data ?? [])
       .filter((p) => wantedProducts.has(p.id))
       .map((p) => ({ id: p.id, code: p.code, name: p.name, path: p.name }));
-    return [...placeItems, ...productItems];
-  }, [ids, productIds, tree, products.data]);
+    // A thing's small line is its A-number (sq20-ast); on A4 the A-number and where it lives.
+    const wantedAssets = new Set(assetIds.split(',').filter(Boolean));
+    const assetItems = (assets.data ?? [])
+      .filter((a) => wantedAssets.has(a.id))
+      .map((a) => ({
+        id: a.id,
+        code: a.code,
+        name: a.name,
+        path: a.name,
+        short: a.tag,
+        crumb: [a.tag, a.location_path].filter(Boolean).join(' · '),
+      }));
+    return [...placeItems, ...productItems, ...assetItems];
+  }, [ids, productIds, assetIds, tree, products.data, assets.data]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -104,7 +120,7 @@ function LabelsPage() {
         ))}
       </div>
 
-      {places.isPending || (Boolean(productIds) && products.isPending) ? null : selected.length === 0 ? (
+      {places.isPending || (Boolean(productIds) && products.isPending) || (Boolean(assetIds) && assets.isPending) ? null : selected.length === 0 ? (
         <Card className="text-[14px] text-[#a5b0d0]">{t('labels.none')}</Card>
       ) : mode === 'a4' ? (
         <A4Studio places={selected} householdId={householdId} canWrite={membership.role !== 'viewer'} />
@@ -117,8 +133,13 @@ function LabelsPage() {
 
 // ── A4 (Epson) ────────────────────────────────────────────────────────────────
 
-/** What a label needs: places and products both have a code, a name and a breadcrumb path. */
-type LabelItem = Pick<Place, 'id' | 'code' | 'name' | 'path'>;
+/** What a label needs: places, products and things all have a code, a name and a breadcrumb path. */
+type LabelItem = Pick<Place, 'id' | 'code' | 'name' | 'path'> & {
+  /** NIIMBOT text line instead of the shortened name (a thing's A-number). */
+  short?: string;
+  /** A4 second line instead of the parent path. */
+  crumb?: string;
+};
 
 function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; householdId: string; canWrite: boolean }) {
   const { t } = useTranslation();
@@ -149,7 +170,7 @@ function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; hous
         labels: places.map((p) => ({
           url: labelUrl(p.code, env.VITE_PUBLIC_BASE_URL),
           name: p.name,
-          crumb: p.path.split(' › ').slice(0, -1).join(' › '),
+          crumb: p.crumb ?? p.path.split(' › ').slice(0, -1).join(' › '),
         })),
       });
       download(pdf, `gedara-labels-${stamp()}.pdf`, 'application/pdf');
@@ -341,7 +362,7 @@ function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; hous
 function NiimbotLabel({ place }: { place: LabelItem }) {
   const { t } = useTranslation();
   const [png, setPng] = useState<{ url: string; blob: Blob } | null>(null);
-  const text = shortLabelText(place.name);
+  const text = place.short ?? shortLabelText(place.name);
 
   useEffect(() => {
     let url = '';

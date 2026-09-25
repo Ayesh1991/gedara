@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { resolveScan } from '@/lib/resolve';
 
-// A4 labels carry https://gedara.vercel.app/s/HL:LOC:… (or HL:PRD:…), so a phone's normal camera lands here
+// A4 labels carry https://gedara.vercel.app/s/HL:LOC:… (or HL:PRD:… / HL:AST:…), so a phone's normal camera lands here
 // (MASTER_PLAN §7d). Signed-out visitors go through /login?redirect=… and come back.
 export const Route = createFileRoute('/_app/s/$code')({
   loader: async ({ params }) => {
@@ -14,6 +14,9 @@ export const Route = createFileRoute('/_app/s/$code')({
     }
     if (result.status === 'product') {
       throw redirect({ to: '/pantry/$productId', params: { productId: result.product.id }, replace: true });
+    }
+    if (result.status === 'asset') {
+      throw redirect({ to: '/things/$assetId', params: { assetId: result.asset.id }, replace: true });
     }
     return result;
   },

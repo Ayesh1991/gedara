@@ -35,6 +35,7 @@ import { invalidateShopping, shoppingListQuery } from '@/lib/spine/queries';
 import { isBlocking, isUnresolved, routeProblem, toRpcRoute, unitByText, type LineRoute } from '@/lib/spine/route';
 import { billSummary, type BillSummary } from '@/lib/spine/summary';
 import { formatDay } from '@/lib/time';
+import { thingsKey } from '@/lib/things/queries';
 import { UNDO_MS } from '@/lib/undo';
 import { cn } from '@/lib/utils';
 import { AccountSelect, fieldLabel } from './bits';
@@ -250,13 +251,24 @@ export function BillImport({
       const imported = results.filter((r) => r.status === 'imported');
       const lots = imported.reduce((a, r) => a + (r.lots ?? 0), 0);
       const ticked = imported.reduce((a, r) => a + (r.ticked ?? 0), 0);
-      await Promise.all([invalidateMoney(qc, householdId), invalidatePantry(qc, householdId), invalidateShopping(qc, householdId)]);
+      // Things lines wait in "Bought, not entered yet" until their details are added.
+      const importedFps = new Set(imported.map((r) => r.fingerprint));
+      const toEnter = payload
+        .filter((b) => importedFps.has(b.fingerprint))
+        .reduce((a, b) => a + b.lines.filter((l) => (l as { route?: { destiny?: string } }).route?.destiny === 'asset').length, 0);
+      await Promise.all([
+        invalidateMoney(qc, householdId),
+        invalidatePantry(qc, householdId),
+        invalidateShopping(qc, householdId),
+        qc.invalidateQueries({ queryKey: thingsKey(householdId) }),
+      ]);
       const ids = imported.map((r) => r.id).filter((x): x is string => Boolean(x));
       toast.success(
         [
           t('money.import.done', { count: imported.length, skipped: results.length - imported.length }),
           lots ? t('spine.lotsAdded', { count: lots }) : null,
           ticked ? t('spine.ticked', { count: ticked }) : null,
+          toEnter ? t('things.toEnter', { count: toEnter }) : null,
         ]
           .filter(Boolean)
           .join(' · '),

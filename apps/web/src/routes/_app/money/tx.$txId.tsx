@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
-import { Box, ChevronLeft, Package, PackagePlus, Pencil, Trash } from 'lucide-react';
+import { Box, ChevronLeft, Package, PackagePlus, Pencil, Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -8,6 +8,9 @@ import { AccountDot, Money, TypeBadge, signedTotal } from '@/components/money/bi
 import { TransactionForm } from '@/components/money/TransactionForm';
 import { useMoneyBasics } from '@/components/money/useMoney';
 import { SendToPantry } from '@/components/spine/SendToPantry';
+import { AssetForm, initialFromLine } from '@/components/things/AssetForm';
+import { DocumentsPanel } from '@/components/things/DocumentsPanel';
+import { useThings } from '@/components/things/bits';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { categoryLabel, topOf } from '@/lib/money/categoriesMap';
@@ -22,6 +25,7 @@ import {
 } from '@/lib/money/queries';
 import { invalidatePantry } from '@/lib/pantry/queries';
 import { invalidateShopping, lineRoutesQuery } from '@/lib/spine/queries';
+import type { Asset } from '@/lib/things/queries';
 import { formatDay, todayIn } from '@/lib/time';
 import { scheduleUndoableDelete } from '@/lib/undo';
 
@@ -50,8 +54,10 @@ function TransactionPage() {
   const q = useQuery(transactionQuery(householdId, txId));
   const units = useQuery(unitsQuery);
   const routes = useQuery(lineRoutesQuery(householdId, txId));
+  const things = useThings(householdId);
   const [editing, setEditing] = useState(false);
   const [sending, setSending] = useState(false);
+  const [entering, setEntering] = useState<Line | null>(null);
 
   const back = () => (router.history.length > 1 ? router.history.back() : void navigate({ to: '/money' }));
 
@@ -82,6 +88,14 @@ function TransactionPage() {
     void invalidatePantry(qc, householdId);
     void invalidateShopping(qc, householdId);
   };
+
+  // Things bought on this bill, per line (§1: every physical thing points back to its line).
+  const assetsByLine = new Map<string, Asset[]>();
+  for (const a of things.assets.data ?? []) {
+    if (a.transaction_line_id && a.bill_id === tx.id) {
+      assetsByLine.set(a.transaction_line_id, [...(assetsByLine.get(a.transaction_line_id) ?? []), a]);
+    }
+  }
 
   // Lines that can still go to the pantry: bought items (not discounts) without stock yet.
   const unrouted = tx.type === 'expense' ? tx.lines.filter((l) => l.amount > 0 && !(routes.data?.get(l.id)?.lots ?? 0)) : [];
@@ -210,13 +224,25 @@ function TransactionPage() {
                         .filter(Boolean)
                         .join(' · ')}
                     </div>
-                    <LineDestination line={l} route={routes.data?.get(l.id)} />
+                    <LineDestination
+                      line={l}
+                      route={routes.data?.get(l.id)}
+                      assets={assetsByLine.get(l.id) ?? []}
+                      onAddThing={canWrite && tx.type === 'expense' && l.amount > 0 ? () => setEntering(l) : undefined}
+                    />
                   </div>
                   <Money value={l.amount} className="text-[14.5px]" />
                 </li>
               );
             })}
           </ul>
+        </Card>
+      )}
+
+      {tx.type !== 'transfer' && (
+        <Card className="flex flex-col gap-3">
+          <h2 className="font-display text-[17px] font-semibold">{t('things.docs.billTitle')}</h2>
+          <DocumentsPanel householdId={householdId} entityType="transaction" entityId={tx.id} canWrite={canWrite} locale={locale} />
         </Card>
       )}
 
@@ -255,7 +281,35 @@ function TransactionPage() {
         categories={categories.data}
         merchants={merchants.data ?? []}
         editing={{ tx, fee }}
+        thingsLocked={assetsByLine.size > 0}
       />
+
+      {things.categories.data && (
+        <AssetForm
+          open={Boolean(entering)}
+          onClose={() => setEntering(null)}
+          householdId={householdId}
+          locale={locale}
+          categories={things.categories.data}
+          tree={things.tree}
+          assets={things.assets.data ?? []}
+          tags={things.tags.data ?? []}
+          fields={things.fields.data ?? []}
+          initial={
+            entering
+              ? initialFromLine({
+                  line_id: entering.id,
+                  raw_name: entering.raw_name,
+                  category_id: entering.category_id,
+                  qty: entering.qty,
+                  amount: entering.amount,
+                  occurred_on: tx.occurred_on,
+                  payee_text: tx.payee_text,
+                })
+              : null
+          }
+        />
+      )}
 
       {sending && (
         <SendToPantry
@@ -269,13 +323,17 @@ function TransactionPage() {
   );
 }
 
-/** Where a line went: pantry stock (with a link), Things (Phase 5), or — for stock lines — not yet. */
+/** Where a line went: pantry stock (with a link), the thing(s) it bought, or "add to Things". */
 function LineDestination({
   line,
   route,
+  assets,
+  onAddThing,
 }: {
   line: Line;
   route: { lots: number | null; product_id: string | null; product_name: string | null } | undefined;
+  assets: Asset[];
+  onAddThing?: () => void;
 }) {
   const { t } = useTranslation();
   if (route?.lots && route.product_id) {
@@ -290,11 +348,43 @@ function LineDestination({
       </Link>
     );
   }
-  if (line.destiny === 'asset') {
+  if (assets.length > 0) {
     return (
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {assets.map((a) => (
+          <Link
+            key={a.id}
+            to="/things/$assetId"
+            params={{ assetId: a.id }}
+            className="inline-flex items-center gap-1.5 rounded-full bg-teal/15 px-2.5 py-0.5 text-[12px] font-medium text-teal"
+          >
+            <Box className="h-3.5 w-3.5" aria-hidden />
+            {t('things.inThings', { name: a.name, tag: a.tag })}
+          </Link>
+        ))}
+        {onAddThing && (
+          <button type="button" onClick={onAddThing} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] text-muted hover:text-text">
+            <Plus className="h-3.5 w-3.5" aria-hidden />
+            {t('things.addAnother')}
+          </button>
+        )}
+      </div>
+    );
+  }
+  if (line.destiny === 'asset') {
+    return onAddThing ? (
+      <button
+        type="button"
+        onClick={onAddThing}
+        className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-info/15 px-2.5 py-0.5 text-[12px] font-medium text-info"
+      >
+        <Box className="h-3.5 w-3.5" aria-hidden />
+        {t('things.addFromLine')}
+      </button>
+    ) : (
       <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] px-2.5 py-0.5 text-[12px] text-[#c5cce3]">
         <Box className="h-3.5 w-3.5" aria-hidden />
-        {t('spine.thingsLater')}
+        {t('things.notEntered')}
       </span>
     );
   }

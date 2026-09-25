@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.5.0 — Phase 5 Things
+- **Things** (replaces Homebox): a photo gallery of what you own with its A-number (A-0042), where
+  it is, and warranty / service / status chips. Search by name, A-number, serial, model or tag;
+  filters (at home, needs attention, lent, in repair, stored, sold / gone) and tag chips; totals for
+  "paid" and "worth now". Adding a thing asks 5 things (photo + name, category, place, price and
+  date, warranty); the rest is under "More details": make, model, serial, quantity, condition,
+  status, shop, useful life + salvage value (suggested per category), insured, **part of** another
+  thing, **tags**, notes and the category's own **fields** (Settings › Fields for things; starter
+  fields for Electronics, Home appliances, Furniture, Books, Tools).
+- **Bought, not entered yet**: bill lines that go to Things (appliances, electronics, furniture …)
+  wait on the Things page, Home and the bill page. "Add to Things" prefills name, price, date and
+  shop from the bill and links the thing to its line; "Not a thing" keeps the line as an expense
+  only (with Undo). Clothing, footwear and gifts no longer go to Things by default. A line with a
+  thing keeps its lines when the bill is edited; deleting the bill keeps the thing.
+- **Thing page**: value now (straight-line depreciation), cost of owning it (price + services −
+  sale) in total and per month, details and custom fields, parts, **receipts and documents** (photos
+  or PDFs up to 10 MB; the receipt of the bill it was bought on shows too), and its **history**
+  (bought → moved → lent → returned → sold). Actions: move (with its parts, or by scanning the
+  place's label), lend / got it back, **service plan** (every 6 months …, next due), **log a service
+  or repair** — the cost becomes an expense in Money (Services › Repairs & maintenance, or the
+  plan's category) or is linked to an expense already there (SMS / scanned bill), so nothing is
+  counted twice — **sell** (the income goes to Money under Income › Sale of belongings; Undo takes
+  both back) or "gave it away", split "6 chairs" into 6, delete with Undo.
+- **Labels and scanning**: asset labels on the NIIMBOT 20 mm (raw HL:AST code + A-number) and the
+  A4 sheet (URL QR + name + A-number · place); scanning a thing's label opens it (camera, USB
+  scanner, or the phone's own camera through /s/HL:AST:…).
+- Places show the things kept there; Home shows what your things are worth and, under Attention,
+  services due within 7 days, warranties ending within 30 days and things still to enter. Bills get
+  a **Receipt and documents** section. Settings › **Storage** shows how much the photos and
+  documents take (Google Drive overflow deferred until it nears 70 % of the free 1 GB).
+- Supabase migrations 33–39: `asset` (HL:AST code, never-reused A-number, bill-line link with price
+  / date / shop defaults (GDLIN), sold guard (GDSLD)), `tag` + `asset_tag` + `category_field` +
+  `attachment.title`, `maintenance_plan` + `maintenance_log` (next due follows the logs), `activity`
+  (asset timeline, written by triggers), `rpc_log_maintenance` / `rpc_delete_maintenance_log` /
+  `rpc_asset_sell` / `rpc_asset_unsell` / `rpc_asset_split` + guards on bill lines with things
+  (GDRTD) + deleting a sale's income brings the thing back, category data (clothing / footwear /
+  gifts expense only, "Sale of belongings"), views `v_asset`, `v_asset_pending_line`,
+  `v_maintenance_due`, `v_storage_usage`. schema_version = 39.
+- pgTAP: 46 isolation assertions (every new table and view, viewer read-only, codes / A-numbers /
+  sale columns / logs / timeline never client-written) and 56 behaviour assertions (bill → thing,
+  GDLIN, GDRTD, parts can't loop, service → expense create / link / delete and next due, sell /
+  unsell / delete the income, split, lend / return / move timeline, A-numbers never reused, value
+  and cost of ownership). Vitest: depreciation, months like Postgres `age()`, warranty states, field
+  templates and value checks, PDF / image sniffing. Playwright: the done-when replay (TV from a bill,
+  fridge, laptop, receipts, warranty dates, AC service → expense) plus lend, sell + Undo, label and
+  deep link, on phone + iPad.
+
 ## 0.4.0 — Phase 4 The spine
 - **One bill, one confirm** (Money › Import › Scanned bill): each line now shows where it goes:
   **Pantry** (a lot of a product, priced from the line: "1 pack = 10 pcs · Rs 57.00 / pcs"),
