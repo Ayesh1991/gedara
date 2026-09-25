@@ -423,3 +423,9 @@ verify_jwt = true
 [functions.sms-ingest]
 enabled = true
 verify_jwt = false
+
+# The daily Attention push: called by pg_cron (token checked in the database) or by a signed-in user
+# for a test message to their own devices — the handler authenticates both itself.
+[functions.attention-push]
+enabled = true
+verify_jwt = false

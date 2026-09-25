@@ -166,12 +166,29 @@ export const placeLotsQuery = (householdId: string, placeId: string) =>
     staleTime: 15 * 1000,
   });
 
-export const journalQuery = (householdId: string, productId?: string, limit = 80) =>
+function nextDay(day: string): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Insights' record level: one reason, and a household-local date range ('YYYY-MM-DD', inclusive). */
+export interface JournalFilter {
+  reason?: 'purchase' | 'consume' | 'waste';
+  from?: string;
+  to?: string;
+}
+
+export const journalQuery = (householdId: string, productId?: string, limit = 80, filter: JournalFilter = {}) =>
   queryOptions({
-    queryKey: pantryKey(householdId, 'journal', productId ?? 'all', limit),
+    queryKey: pantryKey(householdId, 'journal', productId ?? 'all', limit, filter),
     queryFn: async (): Promise<JournalRow[]> => {
       let q = supabase.from('v_stock_journal').select('*').eq('household_id', householdId);
       if (productId) q = q.eq('product_id', productId);
+      if (filter.reason) q = q.eq('reason', filter.reason);
+      // Sri Lanka is UTC+05:30 all year: local midnight → an exact instant.
+      if (filter.from) q = q.gte('created_at', `${filter.from}T00:00:00+05:30`);
+      if (filter.to) q = q.lt('created_at', `${nextDay(filter.to)}T00:00:00+05:30`);
       const { data, error } = await q.order('seq', { ascending: false }).limit(limit);
       if (error) throw error;
       return data;

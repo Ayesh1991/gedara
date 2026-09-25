@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import { CHECK_IDS, buildChecks, runCheck, type CheckId, type CheckResult } from '@/diagnostics/checks';
 import { env } from '@/lib/env';
+import { pushStatusQuery } from '@/lib/insights/queries';
 import { schemaVersionQuery } from '@/lib/queries';
 import { supabase } from '@/lib/supabase';
 import { APP_VERSION, BUILD_TIME, GIT_SHA } from '@/lib/version';
@@ -27,6 +28,7 @@ function Ms({ value }: { value: number }) {
 function DiagnosticsPage() {
   const { t } = useTranslation();
   const schema = useQuery(schemaVersionQuery);
+  const { membership } = Route.useRouteContext();
   const sw = useQuery({ queryKey: ['sw-version'], queryFn: () => getServiceWorkerVersion(), staleTime: 0 });
   // Bumping runId re-runs every check (fresh query keys, never cached).
   const [runId, setRunId] = useState(0);
@@ -131,10 +133,53 @@ function DiagnosticsPage() {
         </Button>
       </Card>
 
+      <PushStatusCard householdId={membership.household.id} />
+
       <Button className="w-full" onClick={() => void clearCacheAndReload()}>
         <RefreshCw className="h-4 w-4" aria-hidden />
         {t('diagnostics.clearCache')}
       </Button>
     </div>
+  );
+}
+
+/** The daily 07:00 Attention notification: is the job scheduled, set up, and what did its last run do? */
+function PushStatusCard({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const status = useQuery(pushStatusQuery(householdId));
+  const d = status.data;
+  const row = (ok: boolean, label: string, detail?: string) => (
+    <li className="flex items-center gap-3">
+      {ok ? <CircleCheck className="h-5 w-5 shrink-0 text-teal" aria-hidden /> : <CircleX className="h-5 w-5 shrink-0 text-red" aria-hidden />}
+      <span className="flex-1">{label}</span>
+      {detail && <span className="tabular text-right text-xs text-muted">{detail}</span>}
+    </li>
+  );
+  return (
+    <Card>
+      <CardTitle>{t('diagnostics.push.title')}</CardTitle>
+      {status.isError ? (
+        <p className="text-[14px] text-red">{t('diagnostics.push.error')}</p>
+      ) : !d ? (
+        <LoaderCircle className="h-5 w-5 animate-spin text-muted" aria-hidden />
+      ) : (
+        <ul className="flex flex-col gap-2.5 text-[14.5px]">
+          {row(d.scheduled, t('diagnostics.push.scheduled'), '07:00 Asia/Colombo')}
+          {row(d.project_url_set, t('diagnostics.push.projectUrl'))}
+          {row(
+            d.last_job === null || d.last_job.status === 'succeeded',
+            t('diagnostics.push.lastJob'),
+            d.last_job ? `${d.last_job.status} · ${new Date(d.last_job.at).toLocaleString()}` : t('diagnostics.push.notYet'),
+          )}
+          {row(
+            d.last_run === null || d.last_run.failed === 0,
+            t('diagnostics.push.lastRun'),
+            d.last_run
+              ? t('diagnostics.push.runLine', { date: d.last_run.run_on, items: d.last_run.items, sent: d.last_run.sent, failed: d.last_run.failed })
+              : t('diagnostics.push.notYet'),
+          )}
+        </ul>
+      )}
+    </Card>
   );
 }

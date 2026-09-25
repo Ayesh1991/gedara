@@ -713,9 +713,9 @@ version badge bumped, a short `CHANGELOG.md` entry.
 | **3 Pantry core** | Units + conversions, products, barcodes, lots, RPCs (purchase/consume/open/transfer/inventory/undo), stock overview, product page, journal | ~~Grocy import done~~ (dropped 2026-09-24, products entered fresh); stock value is sane; FEFO consume works across 2 lots |
 | **4 The spine** | Bill import destiny routing (stock/asset/expense), product matching + learning aliases, shopping list (manual + below-min), tick-off on import | Scan a Cargills bill → expense logged, 8 lots created, 3 list items ticked, in one confirm |
 | **5 Things** | Assets, tags, category field templates, parent/child, attachments (warranty/manual/receipt), maintenance plans + logs → ledger, lend/sell flows, asset labels | Fridge, TV, laptop entered with receipts & warranty dates; AC service logged as expense |
-| **6 Insights & Attention** | Drill-down framework, all §6 views, Attention feed, `pg_cron` jobs, Web Push, ⌘K search, floor-plan (optional) | Every number clickable to the record level |
+| **6 Insights & Attention** | Drill-down framework, all §6 views, Attention feed, `pg_cron` jobs, Web Push, ⌘K search, recurring bills + monthly budgets; ~~floor-plan (optional)~~ moved to Phase 7 and personal inflation from our own basket only (no CCPI), 2026-09-25 | Every number clickable to the record level |
 | **6b Scale Station** (after Phase 3 or 4) | `device` + `scale_reading`, jar tare, `rpc_weigh`, `device-ingest` Edge Function, Pi Python service + systemd + SQLite outbox, Realtime live card, calibration page | Lift the sugar jar, use 2 spoons, put it back → "Sugar −24 g" appears on the iPad within 2 s |
-| **7 AI & polish** | In-app scan Edge Function (optional), Open Food Facts, offline outbox, export/backup, Sinhala strings, performance pass | Lighthouse PWA ✓, works offline for scan-and-consume |
+| **7 AI & polish** | In-app scan Edge Function (optional), Open Food Facts, offline outbox, export/backup, Sinhala strings, performance pass, Places floor-plan (from Phase 6) | Lighthouse PWA ✓, works offline for scan-and-consume |
 
 **Rules for Claude Code on every phase** (put these in the repo's `CLAUDE.md`):
 1. Never edit stock or balances directly — only via RPCs / movements.

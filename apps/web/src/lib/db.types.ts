@@ -279,6 +279,13 @@ export type Database = {
             referencedColumns: ["household_id", "id"]
           },
           {
+            foreignKeyName: "asset_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
             foreignKeyName: "asset_household_id_parent_id_fkey"
             columns: ["household_id", "parent_id"]
             isOneToOne: false
@@ -318,6 +325,13 @@ export type Database = {
             columns: ["household_id", "transaction_line_id"]
             isOneToOne: false
             referencedRelation: "v_line_route"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "asset_household_id_transaction_line_id_fkey"
+            columns: ["household_id", "transaction_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_spend_line"
             referencedColumns: ["household_id", "line_id"]
           },
         ]
@@ -433,6 +447,89 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "attachment_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attention_dismissal: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hidden_until: string | null
+          household_id: string
+          id: string
+          item_key: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hidden_until?: string | null
+          household_id: string
+          id?: string
+          item_key: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hidden_until?: string | null
+          household_id?: string
+          id?: string
+          item_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attention_dismissal_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          month: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          month: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          month?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "budget_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "household"
@@ -792,6 +889,13 @@ export type Database = {
             referencedRelation: "location"
             referencedColumns: ["household_id", "id"]
           },
+          {
+            foreignKeyName: "location_household_id_parent_id_fkey"
+            columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
         ]
       }
       maintenance_log: {
@@ -1015,6 +1119,78 @@ export type Database = {
           },
         ]
       }
+      meter_reading: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          meter_value: number | null
+          read_on: string
+          recurring_id: string
+          transaction_id: string | null
+          units: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          meter_value?: number | null
+          read_on: string
+          recurring_id: string
+          transaction_id?: string | null
+          units: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          meter_value?: number | null
+          read_on?: string
+          recurring_id?: string
+          transaction_id?: string | null
+          units?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meter_reading_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meter_reading_household_id_recurring_id_fkey"
+            columns: ["household_id", "recurring_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_rule"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "meter_reading_household_id_recurring_id_fkey"
+            columns: ["household_id", "recurring_id"]
+            isOneToOne: false
+            referencedRelation: "v_recurring_due"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "meter_reading_household_id_recurring_id_fkey"
+            columns: ["household_id", "recurring_id"]
+            isOneToOne: false
+            referencedRelation: "v_utility_usage"
+            referencedColumns: ["household_id", "recurring_id"]
+          },
+          {
+            foreignKeyName: "meter_reading_household_id_transaction_id_fkey"
+            columns: ["household_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "money_transaction"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
       money_transaction: {
         Row: {
           account_id: string
@@ -1030,6 +1206,8 @@ export type Database = {
           occurred_at: string | null
           occurred_on: string
           payee_text: string | null
+          recurring_id: string | null
+          recurring_period: string | null
           related_id: string | null
           source: string
           subtotal: number | null
@@ -1052,6 +1230,8 @@ export type Database = {
           occurred_at?: string | null
           occurred_on: string
           payee_text?: string | null
+          recurring_id?: string | null
+          recurring_period?: string | null
           related_id?: string | null
           source?: string
           subtotal?: number | null
@@ -1074,6 +1254,8 @@ export type Database = {
           occurred_at?: string | null
           occurred_on?: string
           payee_text?: string | null
+          recurring_id?: string | null
+          recurring_period?: string | null
           related_id?: string | null
           source?: string
           subtotal?: number | null
@@ -1095,6 +1277,13 @@ export type Database = {
             columns: ["household_id", "account_id"]
             isOneToOne: false
             referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_month_end"
             referencedColumns: ["household_id", "account_id"]
           },
           {
@@ -1143,8 +1332,36 @@ export type Database = {
             foreignKeyName: "money_transaction_household_id_to_account_id_fkey"
             columns: ["household_id", "to_account_id"]
             isOneToOne: false
+            referencedRelation: "v_account_month_end"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "money_transaction_household_id_to_account_id_fkey"
+            columns: ["household_id", "to_account_id"]
+            isOneToOne: false
             referencedRelation: "v_sms_balance_check"
             referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "money_transaction_recurring_fkey"
+            columns: ["household_id", "recurring_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_rule"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "money_transaction_recurring_fkey"
+            columns: ["household_id", "recurring_id"]
+            isOneToOne: false
+            referencedRelation: "v_recurring_due"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "money_transaction_recurring_fkey"
+            columns: ["household_id", "recurring_id"]
+            isOneToOne: false
+            referencedRelation: "v_utility_usage"
+            referencedColumns: ["household_id", "recurring_id"]
           },
         ]
       }
@@ -1243,6 +1460,13 @@ export type Database = {
             referencedColumns: ["household_id", "id"]
           },
           {
+            foreignKeyName: "product_household_id_default_location_id_fkey"
+            columns: ["household_id", "default_location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
             foreignKeyName: "product_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
@@ -1261,6 +1485,13 @@ export type Database = {
             columns: ["household_id", "parent_id"]
             isOneToOne: false
             referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "product_household_id_parent_id_fkey"
+            columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
             referencedColumns: ["household_id", "product_id"]
           },
           {
@@ -1342,6 +1573,13 @@ export type Database = {
             referencedRelation: "v_product_stock"
             referencedColumns: ["household_id", "product_id"]
           },
+          {
+            foreignKeyName: "product_alias_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
         ]
       }
       product_barcode: {
@@ -1408,6 +1646,13 @@ export type Database = {
             referencedColumns: ["household_id", "product_id"]
           },
           {
+            foreignKeyName: "product_barcode_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
             foreignKeyName: "product_barcode_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
@@ -1471,11 +1716,301 @@ export type Database = {
             referencedColumns: ["household_id", "product_id"]
           },
           {
+            foreignKeyName: "product_unit_conversion_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
             foreignKeyName: "product_unit_conversion_to_unit_id_fkey"
             columns: ["to_unit_id"]
             isOneToOne: false
             referencedRelation: "unit"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_run: {
+        Row: {
+          created_at: string
+          failed: number
+          finished_at: string | null
+          household_id: string
+          id: string
+          items: number
+          run_on: string
+          sent: number
+        }
+        Insert: {
+          created_at?: string
+          failed?: number
+          finished_at?: string | null
+          household_id: string
+          id?: string
+          items?: number
+          run_on: string
+          sent?: number
+        }
+        Update: {
+          created_at?: string
+          failed?: number
+          finished_at?: string | null
+          household_id?: string
+          id?: string
+          items?: number
+          run_on?: string
+          sent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_run_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscription: {
+        Row: {
+          auth: string
+          created_at: string
+          enabled: boolean
+          endpoint: string
+          fail_count: number
+          household_id: string
+          id: string
+          label: string | null
+          last_error: string | null
+          last_ok_at: string | null
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          enabled?: boolean
+          endpoint: string
+          fail_count?: number
+          household_id: string
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_ok_at?: string | null
+          p256dh: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          enabled?: boolean
+          endpoint?: string
+          fail_count?: number
+          household_id?: string
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_ok_at?: string | null
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscription_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscription_household_id_user_id_fkey"
+            columns: ["household_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "household_member"
+            referencedColumns: ["household_id", "user_id"]
+          },
+        ]
+      }
+      recurring_rule: {
+        Row: {
+          account_id: string | null
+          active: boolean
+          asset_id: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          every_n: number
+          every_unit: string
+          expected_amount: number | null
+          first_due: string
+          household_id: string
+          id: string
+          name: string
+          notes: string | null
+          notify_days_before: number
+          payee_text: string | null
+          type: string
+          updated_at: string
+          usage_unit: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          active?: boolean
+          asset_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          every_n?: number
+          every_unit?: string
+          expected_amount?: number | null
+          first_due: string
+          household_id: string
+          id?: string
+          name: string
+          notes?: string | null
+          notify_days_before?: number
+          payee_text?: string | null
+          type?: string
+          updated_at?: string
+          usage_unit?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          active?: boolean
+          asset_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          every_n?: number
+          every_unit?: string
+          expected_amount?: number | null
+          first_due?: string
+          household_id?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          notify_days_before?: number
+          payee_text?: string | null
+          type?: string
+          updated_at?: string
+          usage_unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_rule_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_month_end"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_balance_check"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "v_asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_skip: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          period: string
+          rule_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          period: string
+          rule_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          period?: string
+          rule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_skip_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_skip_household_id_rule_id_fkey"
+            columns: ["household_id", "rule_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_rule"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_skip_household_id_rule_id_fkey"
+            columns: ["household_id", "rule_id"]
+            isOneToOne: false
+            referencedRelation: "v_recurring_due"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_skip_household_id_rule_id_fkey"
+            columns: ["household_id", "rule_id"]
+            isOneToOne: false
+            referencedRelation: "v_utility_usage"
+            referencedColumns: ["household_id", "recurring_id"]
           },
         ]
       }
@@ -1560,6 +2095,13 @@ export type Database = {
             referencedColumns: ["household_id", "line_id"]
           },
           {
+            foreignKeyName: "shopping_list_item_household_id_done_by_line_fkey"
+            columns: ["household_id", "done_by_line"]
+            isOneToOne: false
+            referencedRelation: "v_spend_line"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
             foreignKeyName: "shopping_list_item_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
@@ -1578,6 +2120,13 @@ export type Database = {
             columns: ["household_id", "product_id"]
             isOneToOne: false
             referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
             referencedColumns: ["household_id", "product_id"]
           },
           {
@@ -1749,6 +2298,13 @@ export type Database = {
             foreignKeyName: "sms_message_household_id_account_id_fkey"
             columns: ["household_id", "account_id"]
             isOneToOne: false
+            referencedRelation: "v_account_month_end"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "sms_message_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
             referencedRelation: "v_sms_balance_check"
             referencedColumns: ["household_id", "account_id"]
           },
@@ -1849,6 +2405,13 @@ export type Database = {
             referencedColumns: ["household_id", "id"]
           },
           {
+            foreignKeyName: "stock_lot_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
             foreignKeyName: "stock_lot_household_id_product_id_fkey"
             columns: ["household_id", "product_id"]
             isOneToOne: false
@@ -1860,6 +2423,13 @@ export type Database = {
             columns: ["household_id", "product_id"]
             isOneToOne: false
             referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
             referencedColumns: ["household_id", "product_id"]
           },
           {
@@ -1888,6 +2458,13 @@ export type Database = {
             columns: ["household_id", "transaction_line_id"]
             isOneToOne: false
             referencedRelation: "v_line_route"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_transaction_line_id_fkey"
+            columns: ["household_id", "transaction_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_spend_line"
             referencedColumns: ["household_id", "line_id"]
           },
         ]
@@ -1960,6 +2537,13 @@ export type Database = {
             referencedColumns: ["household_id", "id"]
           },
           {
+            foreignKeyName: "stock_movement_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
             foreignKeyName: "stock_movement_household_id_lot_id_fkey"
             columns: ["household_id", "lot_id"]
             isOneToOne: false
@@ -1978,6 +2562,13 @@ export type Database = {
             columns: ["household_id", "product_id"]
             isOneToOne: false
             referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
             referencedColumns: ["household_id", "product_id"]
           },
           {
@@ -2120,6 +2711,13 @@ export type Database = {
             referencedColumns: ["household_id", "product_id"]
           },
           {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
             foreignKeyName: "transaction_line_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
@@ -2200,6 +2798,48 @@ export type Database = {
           transaction_id: string | null
         }
         Relationships: []
+      }
+      v_account_month_end: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          balance: number | null
+          household_id: string | null
+          kind: string | null
+          month: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_activity: {
+        Row: {
+          actor: string | null
+          actor_name: string | null
+          at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          household_id: string | null
+          id: number | null
+          payload: Json | null
+          summary: string | null
+          verb: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_asset: {
         Row: {
@@ -2288,6 +2928,13 @@ export type Database = {
             referencedColumns: ["household_id", "id"]
           },
           {
+            foreignKeyName: "asset_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
             foreignKeyName: "asset_household_id_parent_id_fkey"
             columns: ["household_id", "parent_id"]
             isOneToOne: false
@@ -2327,6 +2974,13 @@ export type Database = {
             columns: ["household_id", "transaction_line_id"]
             isOneToOne: false
             referencedRelation: "v_line_route"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "asset_household_id_transaction_line_id_fkey"
+            columns: ["household_id", "transaction_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_spend_line"
             referencedColumns: ["household_id", "line_id"]
           },
         ]
@@ -2416,6 +3070,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_product_stock"
             referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+        ]
+      }
+      v_location_contents: {
+        Row: {
+          asset_value: number | null
+          assets: number | null
+          household_id: string | null
+          last_touched: string | null
+          location_id: string | null
+          lots: number | null
+          name: string | null
+          parent_id: string | null
+          path: string | null
+          products: number | null
+          stale_assets: number | null
+          stale_lots: number | null
+          stock_value: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_household_id_parent_id_fkey"
+            columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "location_household_id_parent_id_fkey"
+            columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
           },
         ]
       }
@@ -2522,6 +3223,59 @@ export type Database = {
             referencedRelation: "v_product_stock"
             referencedColumns: ["household_id", "product_id"]
           },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+        ]
+      }
+      v_product_price_month: {
+        Row: {
+          category_id: string | null
+          household_id: string | null
+          lots: number | null
+          merchant_id: string | null
+          merchant_name: string | null
+          month: string | null
+          product_id: string | null
+          product_name: string | null
+          qty: number | null
+          spent: number | null
+          unit_code: string | null
+          unit_cost: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_lot_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
         ]
       }
       v_product_stock: {
@@ -2541,6 +3295,125 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_product_velocity: {
+        Row: {
+          below_min: boolean | null
+          days_to_empty: number | null
+          first_used_on: string | null
+          household_id: string | null
+          last_used_on: string | null
+          min_qty: number | null
+          per_day: number | null
+          product_id: string | null
+          product_name: string | null
+          qty: number | null
+          qty_effective: number | null
+          unit_code: string | null
+          used_30: number | null
+          used_90: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_recurring_due: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          active: boolean | null
+          asset_id: string | null
+          asset_name: string | null
+          category_id: string | null
+          category_name: string | null
+          created_at: string | null
+          days_left: number | null
+          every_n: number | null
+          every_unit: string | null
+          expected_amount: number | null
+          first_due: string | null
+          household_id: string | null
+          id: string | null
+          last_amount: number | null
+          last_paid_on: string | null
+          last_period: string | null
+          last_skipped: string | null
+          last_transaction_id: string | null
+          name: string | null
+          next_due: string | null
+          notes: string | null
+          notify_days_before: number | null
+          payee_text: string | null
+          payments: number | null
+          today: string | null
+          top_category_id: string | null
+          type: string | null
+          usage_unit: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_rule_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_month_end"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_balance_check"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "v_asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "recurring_rule_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "household"
@@ -2611,6 +3484,13 @@ export type Database = {
             referencedColumns: ["household_id", "line_id"]
           },
           {
+            foreignKeyName: "shopping_list_item_household_id_done_by_line_fkey"
+            columns: ["household_id", "done_by_line"]
+            isOneToOne: false
+            referencedRelation: "v_spend_line"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
             foreignKeyName: "shopping_list_item_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
@@ -2629,6 +3509,13 @@ export type Database = {
             columns: ["household_id", "product_id"]
             isOneToOne: false
             referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "shopping_list_item_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
             referencedColumns: ["household_id", "product_id"]
           },
           {
@@ -2686,6 +3573,82 @@ export type Database = {
           },
         ]
       }
+      v_spend_line: {
+        Row: {
+          account_id: string | null
+          account_kind: string | null
+          account_name: string | null
+          amount: number | null
+          category_id: string | null
+          category_name: string | null
+          destiny: string | null
+          hour: number | null
+          household_id: string | null
+          line_id: string | null
+          line_no: number | null
+          merchant_id: string | null
+          merchant_name: string | null
+          month: string | null
+          occurred_on: string | null
+          payee_text: string | null
+          price_per_base: number | null
+          product_id: string | null
+          product_name: string | null
+          qty: number | null
+          raw_name: string | null
+          recurring_id: string | null
+          top_category_id: string | null
+          top_category_name: string | null
+          transaction_id: string | null
+          type: string | null
+          unit_text: string | null
+          weekday: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_line_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_line_household_id_transaction_id_fkey"
+            columns: ["household_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "money_transaction"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "transaction_line_product_fk"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+        ]
+      }
       v_stock: {
         Row: {
           any_opened: boolean | null
@@ -2713,6 +3676,13 @@ export type Database = {
             referencedColumns: ["household_id", "id"]
           },
           {
+            foreignKeyName: "stock_lot_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
             foreignKeyName: "stock_lot_household_id_product_id_fkey"
             columns: ["household_id", "product_id"]
             isOneToOne: false
@@ -2724,6 +3694,58 @@ export type Database = {
             columns: ["household_id", "product_id"]
             isOneToOne: false
             referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_lot_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+        ]
+      }
+      v_stock_flow_month: {
+        Row: {
+          category_id: string | null
+          flow: string | null
+          household_id: string | null
+          month: string | null
+          movements: number | null
+          product_id: string | null
+          product_name: string | null
+          qty: number | null
+          top_category_id: string | null
+          unit_code: string | null
+          value: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movement_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
             referencedColumns: ["household_id", "product_id"]
           },
         ]
@@ -2767,6 +3789,13 @@ export type Database = {
             referencedColumns: ["household_id", "id"]
           },
           {
+            foreignKeyName: "stock_movement_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
             foreignKeyName: "stock_movement_household_id_lot_id_fkey"
             columns: ["household_id", "lot_id"]
             isOneToOne: false
@@ -2785,6 +3814,13 @@ export type Database = {
             columns: ["household_id", "product_id"]
             isOneToOne: false
             referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "stock_movement_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
             referencedColumns: ["household_id", "product_id"]
           },
           {
@@ -2822,6 +3858,31 @@ export type Database = {
           },
         ]
       }
+      v_utility_usage: {
+        Row: {
+          amount: number | null
+          household_id: string | null
+          meter_value: number | null
+          occurred_on: string | null
+          per_unit: number | null
+          period: string | null
+          reading_id: string | null
+          recurring_id: string | null
+          rule_name: string | null
+          transaction_id: string | null
+          units: number | null
+          usage_unit: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_rule_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_invites_for: {
@@ -2829,6 +3890,47 @@ export type Database = {
         Returns: number
       }
       accept_pending_invites: { Args: never; Returns: number }
+      attention_feed: {
+        Args: { p_household: string }
+        Returns: {
+          amount: number
+          days_left: number
+          due_on: string
+          entity_id: string
+          entity_type: string
+          extra: Json
+          item_key: string
+          kind: string
+          qty: number
+          severity: string
+          title: string
+          unit: string
+        }[]
+      }
+      attention_push_status: { Args: { p_household: string }; Returns: Json }
+      budget_month: {
+        Args: { p_household: string; p_month: string }
+        Returns: {
+          budget: number
+          budget_from: string
+          category_id: string
+          lines: number
+          name: string
+          spent: number
+        }[]
+      }
+      insights_spend: {
+        Args: { p: Json; p_household: string }
+        Returns: {
+          amount: number
+          bills: number
+          first_on: string
+          key: string
+          label: string
+          last_on: string
+          lines: number
+        }[]
+      }
       rpc_asset_sell: { Args: { p: Json }; Returns: Json }
       rpc_asset_split: { Args: { p_asset: string }; Returns: string[] }
       rpc_asset_unsell: { Args: { p_asset: string }; Returns: undefined }
@@ -2853,6 +3955,26 @@ export type Database = {
       }
       rpc_open: { Args: { p: Json }; Returns: Json }
       rpc_purchase: { Args: { p: Json }; Returns: Json }
+      rpc_push_digest: { Args: { p_token: string }; Returns: Json }
+      rpc_push_result: {
+        Args: { p_results: Json; p_run: string; p_token: string }
+        Returns: undefined
+      }
+      rpc_push_subscribe: { Args: { p: Json }; Returns: string }
+      rpc_recurring_link: {
+        Args: {
+          p_period?: string
+          p_rule: string
+          p_transaction: string
+          p_units?: number
+        }
+        Returns: string
+      }
+      rpc_recurring_pay: { Args: { p: Json }; Returns: Json }
+      rpc_recurring_unlink: {
+        Args: { p_transaction: string }
+        Returns: undefined
+      }
       rpc_route_lines: {
         Args: { p_routes: Json; p_tick?: Json; p_transaction: string }
         Returns: Json
@@ -2892,6 +4014,19 @@ export type Database = {
       rpc_undo: { Args: { p_correlation: string }; Returns: Json }
       safe_uuid: { Args: { p: string }; Returns: string }
       schema_version: { Args: never; Returns: number }
+      search_all: {
+        Args: { p_household: string; p_limit?: number; p_q: string }
+        Returns: {
+          amount: number
+          id: string
+          occurred_on: string
+          ref_id: string
+          score: number
+          subtitle: string
+          title: string
+          type: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

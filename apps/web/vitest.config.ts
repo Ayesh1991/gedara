@@ -11,6 +11,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(import.meta.dirname, 'src'),
       '@sms': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/sms'),
+      '@push': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/push'),
     },
   },
   test: {

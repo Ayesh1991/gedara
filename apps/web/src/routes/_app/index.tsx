@@ -1,19 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronRight, CircleCheck, ListChecks, MapPin, Receipt, ShieldAlert, Wrench } from 'lucide-react';
+import { ChevronRight, CircleCheck, ListChecks, MapPin } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
 import { StatTile } from '@/components/aurora/StatTile';
+import { ActivityList } from '@/components/attention/ActivityList';
+import { AttentionRow } from '@/components/attention/AttentionRow';
+import { TargetLink } from '@/components/insights/Num';
 import { Money } from '@/components/money/bits';
 import { useShoppingList } from '@/components/spine/useShopping';
 import { Card } from '@/components/ui/card';
+import { knownItems } from '@/lib/attention';
+import { activityQuery, attentionQuery, budgetMonthQuery } from '@/lib/insights/queries';
 import { formatLKR } from '@/lib/money/format';
 import { cashflowQuery, type MonthFlow } from '@/lib/money/queries';
 import { productsQuery } from '@/lib/pantry/queries';
 import { placesQuery } from '@/lib/places';
-import { assetsQuery, pendingLinesQuery } from '@/lib/things/queries';
-import { SERVICE_SOON_DAYS, daysBetween, warrantyState } from '@/lib/things/value';
+import { assetsQuery } from '@/lib/things/queries';
 import { addMonths, dayPart, firstName, formatMonth, hourIn, todayIn } from '@/lib/time';
 
 export const Route = createFileRoute('/_app/')({
@@ -37,7 +41,7 @@ function PantryTile({ householdId }: { householdId: string }) {
   const value = inStock.reduce((s, p) => s + p.stock.value, 0);
   const has = inStock.length > 0;
   return (
-    <Link to="/pantry" className="contents">
+    <Link to="/insights/$area" params={{ area: 'pantry' }} search={{ view: 'places' }} className="contents">
       <StatTile
         empty={!has}
         label={t('home.pantryValue')}
@@ -58,7 +62,7 @@ function ThingsTile({ householdId }: { householdId: string }) {
   const value = owned.reduce((s, a) => s + (a.current_value ?? 0), 0);
   const has = owned.length > 0;
   return (
-    <Link to="/things" className="contents">
+    <Link to="/insights/$area" params={{ area: 'things' }} className="contents">
       <StatTile
         empty={!has}
         label={t('home.things')}
@@ -69,71 +73,137 @@ function ThingsTile({ householdId }: { householdId: string }) {
   );
 }
 
-/** Attention (the full feed with push comes in Phase 6): shopping list, things to enter, services and warranties. */
+/** Attention: the top of the feed from the database (the same list the 07:00 push summarises). */
 function AttentionCard({ householdId, canWrite, today }: { householdId: string; canWrite: boolean; today: string }) {
   const { t } = useTranslation();
+  // Opening Home keeps the automatic "below minimum" list items in sync (Phase 4).
   const list = useShoppingList(householdId, canWrite);
-  const open = (list.data ?? []).filter((i) => !i.done && !i.dismissed);
-  const low = open.filter((i) => i.source === 'below_min').length;
-  const pending = useQuery(pendingLinesQuery(householdId)).data ?? [];
-  const assets = (useQuery(assetsQuery(householdId)).data ?? []).filter((a) => !GONE.has(a.status));
-  const due = assets.filter((a) => a.next_due !== null && daysBetween(today, a.next_due) <= SERVICE_SOON_DAYS);
-  const ending = assets.filter((a) => warrantyState(a, today).state === 'ending');
-  const nothing = open.length === 0 && pending.length === 0 && due.length === 0 && ending.length === 0;
+  const toBuy = (list.data ?? []).filter((i) => !i.done && !i.dismissed).length;
+  const feed = useQuery({ ...attentionQuery(householdId), refetchOnWindowFocus: true });
+  const items = knownItems(feed.data ?? []);
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="font-display text-[17px] font-semibold">{t('home.attention')}</h2>
-      {open.length > 0 && (
-        <Link to="/pantry/list" className="flex items-center gap-3 rounded-2xl bg-due/[0.08] px-3.5 py-3 hover:bg-due/[0.12]">
-          <ListChecks className="h-5 w-5 shrink-0 text-due" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <div className="text-[14.5px]">{t('home.toBuy', { count: open.length })}</div>
-            {low > 0 && <div className="text-[12.5px] text-muted">{t('home.lowStock', { count: low })}</div>}
-          </div>
+      <div className="flex items-center gap-3">
+        <h2 className="flex-1 font-display text-[17px] font-semibold">{t('home.attention')}</h2>
+        {items.length > 0 && (
+          <Link to="/attention" className="text-[13px] text-accent-b hover:underline">
+            {t('home.seeAll', { count: items.length })}
+          </Link>
+        )}
+      </div>
+      {items.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {items.slice(0, 5).map((i) => (
+            <AttentionRow key={i.item_key} item={i} householdId={householdId} canWrite={canWrite} today={today} />
+          ))}
+        </ul>
+      )}
+      {toBuy > 0 && (
+        <Link to="/pantry/list" className="flex items-center gap-3 rounded-2xl bg-white/[0.04] px-3.5 py-3 hover:bg-white/[0.07]">
+          <ListChecks className="h-5 w-5 shrink-0 text-muted" aria-hidden />
+          <div className="min-w-0 flex-1 text-[14.5px]">{t('home.toBuy', { count: toBuy })}</div>
           <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
         </Link>
       )}
-      {due.length > 0 && (
-        <Link
-          to="/things"
-          search={{ filter: 'attention' }}
-          className="flex items-center gap-3 rounded-2xl bg-due/[0.08] px-3.5 py-3 hover:bg-due/[0.12]"
-        >
-          <Wrench className="h-5 w-5 shrink-0 text-due" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <div className="text-[14.5px]">{t('home.serviceDue', { count: due.length })}</div>
-            <div className="truncate text-[12.5px] text-muted">{due.map((a) => a.name).join(' · ')}</div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
-        </Link>
-      )}
-      {ending.length > 0 && (
-        <Link
-          to="/things"
-          search={{ filter: 'attention' }}
-          className="flex items-center gap-3 rounded-2xl bg-caution/[0.08] px-3.5 py-3 hover:bg-caution/[0.12]"
-        >
-          <ShieldAlert className="h-5 w-5 shrink-0 text-caution" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <div className="text-[14.5px]">{t('home.warrantyEnding', { count: ending.length })}</div>
-            <div className="truncate text-[12.5px] text-muted">{ending.map((a) => a.name).join(' · ')}</div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
-        </Link>
-      )}
-      {pending.length > 0 && (
-        <Link to="/things/pending" className="flex items-center gap-3 rounded-2xl bg-info/[0.08] px-3.5 py-3 hover:bg-info/[0.12]">
-          <Receipt className="h-5 w-5 shrink-0 text-info" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <div className="text-[14.5px]">{t('home.thingsToEnter', { count: pending.length })}</div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
-        </Link>
-      )}
-      {nothing && (
+      {feed.data && items.length === 0 && (
         <div className="flex items-center gap-3 rounded-2xl bg-teal/[0.07] px-3.5 py-3">
           <CircleCheck className="h-5 w-5 shrink-0 text-teal" aria-hidden />
           <EmptyNote>{t('home.attentionEmpty')}</EmptyNote>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/** Budget burn: this month's spending against each main category's budget. */
+function BudgetCard({ householdId, month }: { householdId: string; month: string }) {
+  const { t } = useTranslation();
+  const budgets = useQuery(budgetMonthQuery(householdId, month));
+  const rows = (budgets.data ?? [])
+    .filter((b) => b.budget !== null)
+    .sort((a, b) => b.spent / b.budget! - a.spent / a.budget!);
+  return (
+    <Card className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <h2 className="flex-1 font-display text-[17px] font-semibold">{t('home.budget')}</h2>
+        <Link to="/money/budgets" search={{ month }} className="text-[13px] text-accent-b hover:underline">
+          {rows.length ? t('home.budgetEdit') : t('home.budgetSet')}
+        </Link>
+      </div>
+      {rows.length === 0 ? (
+        <>
+          <div className="flex flex-col gap-3.5" aria-hidden>
+            {[72, 48, 88, 36].map((w) => (
+              <div key={w} className="flex flex-col gap-2">
+                <div className="h-2.5 w-24 rounded-full bg-white/[0.06]" />
+                <div className="h-2 rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-2 rounded-full opacity-30"
+                    style={{ width: `${w}%`, background: 'linear-gradient(90deg, var(--accent-a), var(--accent-b))' }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <EmptyNote>{t('home.budgetEmpty')}</EmptyNote>
+        </>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {rows.slice(0, 5).map((b) => {
+            const used = b.spent / b.budget!;
+            return (
+              <li key={b.category_id}>
+                <TargetLink
+                  target={{ to: '/insights/$area', params: { area: 'spend' }, search: { cat: b.category_id, from: month, to: month } }}
+                  className="flex flex-col gap-1.5 rounded-xl px-1 py-1.5 hover:bg-white/[0.04]"
+                >
+                  <span className="flex items-baseline gap-2 text-[14px]">
+                    <span className="min-w-0 flex-1 truncate">{b.name}</span>
+                    <span className="tabular text-[12.5px] text-muted">
+                      {formatLKR(b.spent, { whole: true })} / {formatLKR(b.budget!, { whole: true })}
+                    </span>
+                  </span>
+                  <span className="block h-2 rounded-full bg-white/[0.06]" aria-hidden>
+                    <span
+                      className={used > 1 ? 'block h-2 rounded-full bg-red' : used >= 0.9 ? 'block h-2 rounded-full bg-caution' : 'block h-2 rounded-full'}
+                      style={{
+                        width: `${Math.min(100, Math.max(2, used * 100))}%`,
+                        ...(used < 0.9 ? { background: 'linear-gradient(90deg, var(--accent-a), var(--accent-b))' } : {}),
+                      }}
+                    />
+                  </span>
+                </TargetLink>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+/** Recent activity: the household timeline (bills, stock, things, places), refreshed every minute. */
+function ActivityCard({ householdId, locale }: { householdId: string; locale: string }) {
+  const { t } = useTranslation();
+  const activity = useQuery({ ...activityQuery(householdId, 8), refetchInterval: 60_000 });
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-[17px] font-semibold">{t('home.activity')}</h2>
+        <span className="tabular flex items-center gap-1.5 text-[11px] text-teal">
+          <span className="h-[7px] w-[7px] rounded-full bg-teal shadow-[0_0_10px_var(--teal)]" />
+          {t('home.live')}
+        </span>
+      </div>
+      {activity.data && activity.data.length > 0 ? (
+        <ActivityList rows={activity.data} locale={locale} />
+      ) : (
+        <div className="flex gap-3.5">
+          <div className="flex flex-col items-center pt-1" aria-hidden>
+            <span className="h-3 w-3 rounded-full border-2 border-accent-b" />
+            <span className="w-0.5 flex-1 bg-gradient-to-b from-[var(--accent-b)] to-transparent opacity-50" />
+          </div>
+          <EmptyNote>{t('home.activityEmpty')}</EmptyNote>
         </div>
       )}
     </Card>
@@ -184,6 +254,10 @@ function Pulse() {
   const now = six.at(-1)!;
   const hasMoney = six.some((m) => m.bills > 0 || m.income > 0);
   const top = Math.max(1, ...six.map((m) => Math.max(m.income, m.spent)));
+  const budgets = useQuery(budgetMonthQuery(householdId, thisMonth));
+  const budgeted = (budgets.data ?? []).filter((b) => b.budget !== null);
+  const budgetTotal = budgeted.reduce((s, b) => s + b.budget!, 0);
+  const burn = budgetTotal > 0 ? budgeted.reduce((s, b) => s + b.spent, 0) / budgetTotal : 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -192,7 +266,7 @@ function Pulse() {
       </h1>
 
       <section aria-label={t('home.net')} className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <Link to="/money" className="contents">
+        <Link to="/insights/$area" params={{ area: 'cashflow' }} search={{ from: thisMonth }} className="contents">
           <StatTile
             highlight
             empty={!hasMoney}
@@ -202,13 +276,13 @@ function Pulse() {
             side={<Sparkline values={hasMoney ? six.map((m) => m.net) : GHOST_TREND} width={88} height={30} ghost={!hasMoney} />}
           />
         </Link>
-        <Link to="/money" className="contents">
+        <Link to="/insights/$area" params={{ area: 'spend' }} search={{ from: thisMonth }} className="contents">
           <StatTile
             empty={!hasMoney}
             label={t('home.spent')}
             value={hasMoney ? <Money value={now.spent} whole /> : 'Rs —'}
             footer={hasMoney ? t('home.billsLine', { count: now.bills }) : t('home.noMoneyYet')}
-            side={<Ring value={0} size={60} label={t('home.budget')} />}
+            side={<Ring value={burn} size={60} label={t('home.budgetRing', { pct: Math.round(burn * 100) })} />}
           />
         </Link>
         <PantryTile householdId={membership.household.id} />
@@ -266,48 +340,26 @@ function Pulse() {
           </div>
           <div className="tabular flex justify-between text-[11.5px] text-faint">
             {six.map((m) => (
-              <span key={m.month}>{formatMonth(m.month, locale, true)}</span>
+              <Link
+                key={m.month}
+                to="/insights/$area"
+                params={{ area: 'cashflow' }}
+                search={{ from: m.month }}
+                className="rounded px-1 hover:text-text"
+                title={`${formatMonth(m.month, locale)}: ${formatLKR(m.income, { whole: true })} / ${formatLKR(m.spent, { whole: true })}`}
+              >
+                {formatMonth(m.month, locale, true)}
+              </Link>
             ))}
           </div>
         </Card>
 
-        <Card className="flex flex-col gap-4">
-          <h2 className="font-display text-[17px] font-semibold">{t('home.budget')}</h2>
-          <div className="flex flex-col gap-3.5" aria-hidden>
-            {[72, 48, 88, 36].map((w) => (
-              <div key={w} className="flex flex-col gap-2">
-                <div className="h-2.5 w-24 rounded-full bg-white/[0.06]" />
-                <div className="h-2 rounded-full bg-white/[0.06]">
-                  <div
-                    className="h-2 rounded-full opacity-30"
-                    style={{ width: `${w}%`, background: 'linear-gradient(90deg, var(--accent-a), var(--accent-b))' }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-          <EmptyNote>{t('home.budgetEmpty')}</EmptyNote>
-        </Card>
+        <BudgetCard householdId={householdId} month={thisMonth} />
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <AttentionCard householdId={householdId} canWrite={membership.role !== 'viewer'} today={todayIn(timezone)} />
-        <Card className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-[17px] font-semibold">{t('home.activity')}</h2>
-            <span className="tabular flex items-center gap-1.5 text-[11px] text-teal">
-              <span className="h-[7px] w-[7px] rounded-full bg-teal shadow-[0_0_10px_var(--teal)]" />
-              {t('home.live')}
-            </span>
-          </div>
-          <div className="flex gap-3.5">
-            <div className="flex flex-col items-center pt-1" aria-hidden>
-              <span className="h-3 w-3 rounded-full border-2 border-accent-b" />
-              <span className="w-0.5 flex-1 bg-gradient-to-b from-[var(--accent-b)] to-transparent opacity-50" />
-            </div>
-            <EmptyNote>{t('home.activityEmpty')}</EmptyNote>
-          </div>
-        </Card>
+        <ActivityCard householdId={householdId} locale={locale} />
       </section>
     </div>
   );

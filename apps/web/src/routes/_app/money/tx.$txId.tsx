@@ -28,8 +28,20 @@ import { invalidateShopping, lineRoutesQuery } from '@/lib/spine/queries';
 import type { Asset } from '@/lib/things/queries';
 import { formatDay, todayIn } from '@/lib/time';
 import { scheduleUndoableDelete } from '@/lib/undo';
+import { z } from 'zod';
+import { textParam } from '@/lib/search';
+import { cn } from '@/lib/utils';
+
+/** Bring a highlighted line into view once it renders. */
+const scrollToLine = (el: HTMLLIElement | null) => el?.scrollIntoView({ block: 'center' });
+
+const SearchSchema = z.object({
+  /** The bill line an Insights number points at: scrolled to and highlighted. */
+  line: textParam(36).optional(),
+});
 
 export const Route = createFileRoute('/_app/money/tx/$txId')({
+  validateSearch: SearchSchema,
   component: TransactionPage,
 });
 
@@ -47,6 +59,7 @@ function TransactionPage() {
   const router = useRouter();
   const navigate = useNavigate();
   const { txId } = Route.useParams();
+  const { line: focusLine } = Route.useSearch();
   const { membership } = Route.useRouteContext();
   const { id: householdId, timezone, locale } = membership.household;
   const canWrite = membership.role !== 'viewer';
@@ -209,7 +222,16 @@ function TransactionPage() {
               const top = topOf(categories.data, l.category_id);
               const per = unitPrice(l, l.unit_id ? units.data?.get(l.unit_id) : undefined);
               return (
-                <li key={l.id} className="flex items-center gap-3 px-5 py-3">
+                <li
+                  key={l.id}
+                  id={`line-${l.id}`}
+                  ref={l.id === focusLine ? scrollToLine : undefined}
+                  aria-current={l.id === focusLine ? 'true' : undefined}
+                  className={cn(
+                    'flex items-center gap-3 px-5 py-3',
+                    l.id === focusLine && 'bg-[color-mix(in_srgb,var(--accent-b)_12%,transparent)] shadow-[inset_3px_0_0_var(--accent-b)]',
+                  )}
+                >
                   <span aria-hidden className="w-6 shrink-0 text-center text-[17px]">
                     {top?.icon ?? '•'}
                   </span>

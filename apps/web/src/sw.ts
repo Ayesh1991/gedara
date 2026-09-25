@@ -94,3 +94,58 @@ setCatchHandler(async ({ request }) => {
   }
   return Response.error();
 });
+
+// ── Web Push (Phase 6): the daily Attention summary from the attention-push Edge Function ─────
+// iOS requires every push to show a notification (no silent pushes), so we always show one.
+interface PushMessage {
+  title?: unknown;
+  body?: unknown;
+  url?: unknown;
+  tag?: unknown;
+  count?: unknown;
+}
+
+self.addEventListener('push', (event) => {
+  let msg: PushMessage;
+  try {
+    msg = (event.data?.json() ?? {}) as PushMessage;
+  } catch {
+    msg = { body: event.data?.text() };
+  }
+  // Only same-app paths: a notification can never send the app to another site.
+  const url = typeof msg.url === 'string' && msg.url.startsWith('/') && !msg.url.startsWith('//') ? msg.url : '/attention';
+  const count = typeof msg.count === 'number' ? msg.count : null;
+  const nav = self.navigator as WorkerNavigator & { setAppBadge?: (n: number) => Promise<void>; clearAppBadge?: () => Promise<void> };
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(typeof msg.title === 'string' ? msg.title : 'Gedara', {
+        body: typeof msg.body === 'string' ? msg.body : '',
+        tag: typeof msg.tag === 'string' ? msg.tag : 'gedara-attention',
+        icon: new URL('pwa-192x192.png', self.registration.scope).href,
+        badge: new URL('pwa-64x64.png', self.registration.scope).href,
+        data: { url },
+      }),
+      count === null
+        ? Promise.resolve()
+        : (count > 0 ? nav.setAppBadge?.(count) : nav.clearAppBadge?.())?.catch(() => undefined) ?? Promise.resolve(),
+    ]),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const path = (event.notification.data as { url?: unknown } | null)?.url;
+  const target = new URL(typeof path === 'string' ? path : '/attention', self.registration.scope).href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const mine = windows.find((w) => new URL(w.url).origin === self.location.origin);
+      if (mine) {
+        await mine.focus();
+        await mine.navigate(target).catch(() => undefined);
+        return;
+      }
+      await self.clients.openWindow(target);
+    })(),
+  );
+});

@@ -133,16 +133,22 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
       }),
 
     edge: async () => {
-      const { data, error } = await supabase.functions.invoke<{ ok: boolean; fn_version: string }>(
-        'ping',
-        { method: 'POST', body: {} },
-      );
-      if (error) throw error;
-      if (!data?.ok) throw new Error('ping returned no ok');
-      // Bank-SMS ingest (Phase 2b): its version answers a plain GET.
-      const sms = await supabase.functions.invoke<{ ok: boolean; fn_version: string }>('sms-ingest', { method: 'GET' });
+      // All three at once: each may be a cold start, and in a row they could pass the 8 s limit.
+      const [ping, sms, push] = await Promise.all([
+        supabase.functions.invoke<{ ok: boolean; fn_version: string }>('ping', { method: 'POST', body: {} }),
+        // Bank-SMS ingest (Phase 2b): its version answers a plain GET.
+        supabase.functions.invoke<{ ok: boolean; fn_version: string }>('sms-ingest', { method: 'GET' }),
+        // Daily Attention push (Phase 6): its version, and whether the VAPID keys are set.
+        supabase.functions.invoke<{ ok: boolean; fn_version: string; vapid_public_key: string | null }>('attention-push', {
+          method: 'GET',
+        }),
+      ]);
+      if (ping.error) throw ping.error;
+      if (!ping.data?.ok) throw new Error('ping returned no ok');
       if (sms.error || !sms.data?.ok) throw new CheckError('diagnostics.errors.smsIngest');
-      return `${data.fn_version} · ${sms.data.fn_version}`;
+      if (push.error || !push.data?.ok) throw new CheckError('diagnostics.errors.attentionPush');
+      if (!push.data.vapid_public_key) throw new CheckError('diagnostics.errors.pushKeys');
+      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version}`;
     },
 
     sw: async () => {

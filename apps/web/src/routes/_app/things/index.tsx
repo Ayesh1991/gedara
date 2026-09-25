@@ -16,12 +16,13 @@ import type { Asset } from '@/lib/things/queries';
 import { SERVICE_SOON_DAYS, WARRANTY_SOON_DAYS, daysBetween, warrantyState } from '@/lib/things/value';
 import { todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
+import { textParam } from '@/lib/search';
 
 const FILTERS = ['active', 'attention', 'lent', 'in_repair', 'stored', 'gone', 'all'] as const;
 type Filter = (typeof FILTERS)[number];
 
 // The router JSON-parses search values that look like numbers ("A-0042" doesn't, "42" does): accept both.
-const text = (max: number) => z.union([z.string(), z.number()]).transform(String).pipe(z.string().max(max));
+const text = textParam;
 
 const SearchSchema = z.object({
   q: text(80).optional(),
