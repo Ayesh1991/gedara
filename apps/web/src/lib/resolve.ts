@@ -9,8 +9,19 @@ export interface ScanProduct {
   code: string;
 }
 
+export interface ScanAsset {
+  id: string;
+  household_id: string;
+  name: string;
+  code: string;
+  asset_no: number;
+  status: string;
+  location_id: string | null;
+}
+
 export type Resolved =
   | { status: 'place'; place: Place }
+  | { status: 'asset'; asset: ScanAsset }
   | {
       status: 'product';
       product: ScanProduct;
@@ -26,7 +37,7 @@ export type Resolved =
   | { status: 'later'; parsed: ParsedScan; phase: number }
   | { status: 'invalid'; raw: string };
 
-const LATER_PHASE: Record<string, number> = { lot: 7, ast: 5 };
+const LATER_PHASE: Record<string, number> = { lot: 7 };
 const PRODUCT_COLUMNS = 'id, household_id, name, code';
 // Same shape the database accepts for product_barcode.barcode (migration 24).
 const BARCODE = /^[0-9A-Za-z._-]{4,64}$/;
@@ -62,6 +73,15 @@ export async function resolveScan(raw: string): Promise<Resolved> {
     const { data, error } = await supabase.from('product').select(PRODUCT_COLUMNS).eq('code', parsed.code).maybeSingle();
     if (error) throw error;
     return data ? { status: 'product', product: data, barcode: null } : { status: 'notFound', code: parsed.code };
+  }
+  if (parsed.kind === 'ast') {
+    const { data, error } = await supabase
+      .from('asset')
+      .select('id, household_id, name, code, asset_no, status, location_id')
+      .eq('code', parsed.code)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? { status: 'asset', asset: data } : { status: 'notFound', code: parsed.code };
   }
   if (parsed.kind !== 'loc') return { status: 'later', parsed, phase: LATER_PHASE[parsed.kind] ?? 7 };
 

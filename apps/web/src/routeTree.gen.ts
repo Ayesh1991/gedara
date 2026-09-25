@@ -15,7 +15,6 @@ import { Route as NotInvitedRouteImport } from './routes/not-invited'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppInsightsRouteImport } from './routes/_app/insights'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
-import { Route as AppThingsRouteImport } from './routes/_app/things'
 import { Route as AppMoneyIndexRouteImport } from './routes/_app/money/index'
 import { Route as AppMoneyImportRouteImport } from './routes/_app/money/import'
 import { Route as AppMoneyInboxRouteImport } from './routes/_app/money/inbox'
@@ -32,7 +31,12 @@ import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/setting
 import { Route as AppSettingsCategoriesRouteImport } from './routes/_app/settings/categories'
 import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings/diagnostics'
+import { Route as AppSettingsFieldsRouteImport } from './routes/_app/settings/fields'
+import { Route as AppSettingsStorageRouteImport } from './routes/_app/settings/storage'
 import { Route as AppSettingsUnitsRouteImport } from './routes/_app/settings/units'
+import { Route as AppThingsIndexRouteImport } from './routes/_app/things/index'
+import { Route as AppThingsAssetIdRouteImport } from './routes/_app/things/$assetId'
+import { Route as AppThingsPendingRouteImport } from './routes/_app/things/pending'
 import { Route as AppMoneyAccountsIndexRouteImport } from './routes/_app/money/accounts/index'
 import { Route as AppMoneyAccountsAccountIdRouteImport } from './routes/_app/money/accounts/$accountId'
 import { Route as AppMoneyTxTxIdRouteImport } from './routes/_app/money/tx.$txId'
@@ -64,11 +68,6 @@ const AppInsightsRoute = AppInsightsRouteImport.update({
 const AppScanRoute = AppScanRouteImport.update({
   id: '/scan',
   path: '/scan',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppThingsRoute = AppThingsRouteImport.update({
-  id: '/things',
-  path: '/things',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMoneyIndexRoute = AppMoneyIndexRouteImport.update({
@@ -151,9 +150,34 @@ const AppSettingsDiagnosticsRoute = AppSettingsDiagnosticsRouteImport.update({
   path: '/settings/diagnostics',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsFieldsRoute = AppSettingsFieldsRouteImport.update({
+  id: '/settings/fields',
+  path: '/settings/fields',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsStorageRoute = AppSettingsStorageRouteImport.update({
+  id: '/settings/storage',
+  path: '/settings/storage',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsUnitsRoute = AppSettingsUnitsRouteImport.update({
   id: '/settings/units',
   path: '/settings/units',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppThingsIndexRoute = AppThingsIndexRouteImport.update({
+  id: '/things/',
+  path: '/things/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppThingsAssetIdRoute = AppThingsAssetIdRouteImport.update({
+  id: '/things/$assetId',
+  path: '/things/$assetId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppThingsPendingRoute = AppThingsPendingRouteImport.update({
+  id: '/things/pending',
+  path: '/things/pending',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMoneyAccountsIndexRoute = AppMoneyAccountsIndexRouteImport.update({
@@ -179,7 +203,6 @@ export interface FileRoutesByFullPath {
   '/not-invited': typeof NotInvitedRoute
   '/insights': typeof AppInsightsRoute
   '/scan': typeof AppScanRoute
-  '/things': typeof AppThingsRoute
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
   '/pantry/$productId': typeof AppPantryProductIdRoute
@@ -192,11 +215,16 @@ export interface FileRoutesByFullPath {
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/settings/fields': typeof AppSettingsFieldsRoute
+  '/settings/storage': typeof AppSettingsStorageRoute
   '/settings/units': typeof AppSettingsUnitsRoute
+  '/things/$assetId': typeof AppThingsAssetIdRoute
+  '/things/pending': typeof AppThingsPendingRoute
   '/money/': typeof AppMoneyIndexRoute
   '/pantry/': typeof AppPantryIndexRoute
   '/places/': typeof AppPlacesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
+  '/things/': typeof AppThingsIndexRoute
   '/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/money/tx/$txId': typeof AppMoneyTxTxIdRoute
   '/money/accounts/': typeof AppMoneyAccountsIndexRoute
@@ -206,7 +234,6 @@ export interface FileRoutesByTo {
   '/not-invited': typeof NotInvitedRoute
   '/insights': typeof AppInsightsRoute
   '/scan': typeof AppScanRoute
-  '/things': typeof AppThingsRoute
   '/': typeof AppIndexRoute
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
@@ -220,11 +247,16 @@ export interface FileRoutesByTo {
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/settings/fields': typeof AppSettingsFieldsRoute
+  '/settings/storage': typeof AppSettingsStorageRoute
   '/settings/units': typeof AppSettingsUnitsRoute
+  '/things/$assetId': typeof AppThingsAssetIdRoute
+  '/things/pending': typeof AppThingsPendingRoute
   '/money': typeof AppMoneyIndexRoute
   '/pantry': typeof AppPantryIndexRoute
   '/places': typeof AppPlacesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
+  '/things': typeof AppThingsIndexRoute
   '/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/money/tx/$txId': typeof AppMoneyTxTxIdRoute
   '/money/accounts': typeof AppMoneyAccountsIndexRoute
@@ -236,7 +268,6 @@ export interface FileRoutesById {
   '/not-invited': typeof NotInvitedRoute
   '/_app/insights': typeof AppInsightsRoute
   '/_app/scan': typeof AppScanRoute
-  '/_app/things': typeof AppThingsRoute
   '/_app/': typeof AppIndexRoute
   '/_app/money/import': typeof AppMoneyImportRoute
   '/_app/money/inbox': typeof AppMoneyInboxRoute
@@ -250,11 +281,16 @@ export interface FileRoutesById {
   '/_app/settings/categories': typeof AppSettingsCategoriesRoute
   '/_app/settings/devices': typeof AppSettingsDevicesRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/_app/settings/fields': typeof AppSettingsFieldsRoute
+  '/_app/settings/storage': typeof AppSettingsStorageRoute
   '/_app/settings/units': typeof AppSettingsUnitsRoute
+  '/_app/things/$assetId': typeof AppThingsAssetIdRoute
+  '/_app/things/pending': typeof AppThingsPendingRoute
   '/_app/money/': typeof AppMoneyIndexRoute
   '/_app/pantry/': typeof AppPantryIndexRoute
   '/_app/places/': typeof AppPlacesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
+  '/_app/things/': typeof AppThingsIndexRoute
   '/_app/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/_app/money/tx/$txId': typeof AppMoneyTxTxIdRoute
   '/_app/money/accounts/': typeof AppMoneyAccountsIndexRoute
@@ -267,7 +303,6 @@ export interface FileRouteTypes {
     | '/not-invited'
     | '/insights'
     | '/scan'
-    | '/things'
     | '/money/import'
     | '/money/inbox'
     | '/pantry/$productId'
@@ -280,11 +315,16 @@ export interface FileRouteTypes {
     | '/settings/categories'
     | '/settings/devices'
     | '/settings/diagnostics'
+    | '/settings/fields'
+    | '/settings/storage'
     | '/settings/units'
+    | '/things/$assetId'
+    | '/things/pending'
     | '/money/'
     | '/pantry/'
     | '/places/'
     | '/settings/'
+    | '/things/'
     | '/money/accounts/$accountId'
     | '/money/tx/$txId'
     | '/money/accounts/'
@@ -294,7 +334,6 @@ export interface FileRouteTypes {
     | '/not-invited'
     | '/insights'
     | '/scan'
-    | '/things'
     | '/'
     | '/money/import'
     | '/money/inbox'
@@ -308,11 +347,16 @@ export interface FileRouteTypes {
     | '/settings/categories'
     | '/settings/devices'
     | '/settings/diagnostics'
+    | '/settings/fields'
+    | '/settings/storage'
     | '/settings/units'
+    | '/things/$assetId'
+    | '/things/pending'
     | '/money'
     | '/pantry'
     | '/places'
     | '/settings'
+    | '/things'
     | '/money/accounts/$accountId'
     | '/money/tx/$txId'
     | '/money/accounts'
@@ -323,7 +367,6 @@ export interface FileRouteTypes {
     | '/not-invited'
     | '/_app/insights'
     | '/_app/scan'
-    | '/_app/things'
     | '/_app/'
     | '/_app/money/import'
     | '/_app/money/inbox'
@@ -337,11 +380,16 @@ export interface FileRouteTypes {
     | '/_app/settings/categories'
     | '/_app/settings/devices'
     | '/_app/settings/diagnostics'
+    | '/_app/settings/fields'
+    | '/_app/settings/storage'
     | '/_app/settings/units'
+    | '/_app/things/$assetId'
+    | '/_app/things/pending'
     | '/_app/money/'
     | '/_app/pantry/'
     | '/_app/places/'
     | '/_app/settings/'
+    | '/_app/things/'
     | '/_app/money/accounts/$accountId'
     | '/_app/money/tx/$txId'
     | '/_app/money/accounts/'
@@ -395,13 +443,6 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/scan'
       preLoaderRoute: typeof AppScanRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/things': {
-      id: '/_app/things'
-      path: '/things'
-      fullPath: '/things'
-      preLoaderRoute: typeof AppThingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/money/': {
@@ -516,11 +557,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsDiagnosticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/fields': {
+      id: '/_app/settings/fields'
+      path: '/settings/fields'
+      fullPath: '/settings/fields'
+      preLoaderRoute: typeof AppSettingsFieldsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/storage': {
+      id: '/_app/settings/storage'
+      path: '/settings/storage'
+      fullPath: '/settings/storage'
+      preLoaderRoute: typeof AppSettingsStorageRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/units': {
       id: '/_app/settings/units'
       path: '/settings/units'
       fullPath: '/settings/units'
       preLoaderRoute: typeof AppSettingsUnitsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/things/': {
+      id: '/_app/things/'
+      path: '/things'
+      fullPath: '/things/'
+      preLoaderRoute: typeof AppThingsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/things/$assetId': {
+      id: '/_app/things/$assetId'
+      path: '/things/$assetId'
+      fullPath: '/things/$assetId'
+      preLoaderRoute: typeof AppThingsAssetIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/things/pending': {
+      id: '/_app/things/pending'
+      path: '/things/pending'
+      fullPath: '/things/pending'
+      preLoaderRoute: typeof AppThingsPendingRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/money/accounts/': {
@@ -550,7 +626,6 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppInsightsRoute: typeof AppInsightsRoute
   AppScanRoute: typeof AppScanRoute
-  AppThingsRoute: typeof AppThingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppMoneyImportRoute: typeof AppMoneyImportRoute
   AppMoneyInboxRoute: typeof AppMoneyInboxRoute
@@ -564,11 +639,16 @@ interface AppRouteChildren {
   AppSettingsCategoriesRoute: typeof AppSettingsCategoriesRoute
   AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
+  AppSettingsFieldsRoute: typeof AppSettingsFieldsRoute
+  AppSettingsStorageRoute: typeof AppSettingsStorageRoute
   AppSettingsUnitsRoute: typeof AppSettingsUnitsRoute
+  AppThingsAssetIdRoute: typeof AppThingsAssetIdRoute
+  AppThingsPendingRoute: typeof AppThingsPendingRoute
   AppMoneyIndexRoute: typeof AppMoneyIndexRoute
   AppPantryIndexRoute: typeof AppPantryIndexRoute
   AppPlacesIndexRoute: typeof AppPlacesIndexRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
+  AppThingsIndexRoute: typeof AppThingsIndexRoute
   AppMoneyAccountsAccountIdRoute: typeof AppMoneyAccountsAccountIdRoute
   AppMoneyTxTxIdRoute: typeof AppMoneyTxTxIdRoute
   AppMoneyAccountsIndexRoute: typeof AppMoneyAccountsIndexRoute
@@ -577,7 +657,6 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppInsightsRoute: AppInsightsRoute,
   AppScanRoute: AppScanRoute,
-  AppThingsRoute: AppThingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppMoneyImportRoute: AppMoneyImportRoute,
   AppMoneyInboxRoute: AppMoneyInboxRoute,
@@ -591,11 +670,16 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsCategoriesRoute: AppSettingsCategoriesRoute,
   AppSettingsDevicesRoute: AppSettingsDevicesRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
+  AppSettingsFieldsRoute: AppSettingsFieldsRoute,
+  AppSettingsStorageRoute: AppSettingsStorageRoute,
   AppSettingsUnitsRoute: AppSettingsUnitsRoute,
+  AppThingsAssetIdRoute: AppThingsAssetIdRoute,
+  AppThingsPendingRoute: AppThingsPendingRoute,
   AppMoneyIndexRoute: AppMoneyIndexRoute,
   AppPantryIndexRoute: AppPantryIndexRoute,
   AppPlacesIndexRoute: AppPlacesIndexRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
+  AppThingsIndexRoute: AppThingsIndexRoute,
   AppMoneyAccountsAccountIdRoute: AppMoneyAccountsAccountIdRoute,
   AppMoneyTxTxIdRoute: AppMoneyTxTxIdRoute,
   AppMoneyAccountsIndexRoute: AppMoneyAccountsIndexRoute,

@@ -1,5 +1,5 @@
 import { Link, createFileRoute, type LinkProps } from '@tanstack/react-router';
-import { ChevronRight, MapPin, Palette, Ruler, Shapes, Smartphone, Stethoscope, Wallet, type LucideIcon } from 'lucide-react';
+import { ChevronRight, HardDrive, ListPlus, MapPin, Palette, Ruler, Shapes, Smartphone, Stethoscope, Wallet, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -56,6 +56,7 @@ function SettingsPage() {
         title={t('categories.title')}
         hint={t('settings.categoriesHint')}
       />
+      <SettingsLink to="/settings/fields" icon={ListPlus} title={t('fields.title')} hint={t('settings.fieldsHint')} />
       <SettingsLink to="/settings/units" icon={Ruler} title={t('units.title')} hint={t('settings.unitsHint')} />
       <SettingsLink
         to="/settings/devices"
@@ -63,6 +64,7 @@ function SettingsPage() {
         title={t('devices.title')}
         hint={t('settings.devicesHint')}
       />
+      <SettingsLink to="/settings/storage" icon={HardDrive} title={t('storage.title')} hint={t('settings.storageHint')} />
       <SettingsLink
         to="/settings/appearance"
         icon={Palette}

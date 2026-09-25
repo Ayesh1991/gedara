@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronRight, CircleCheck, ListChecks, MapPin } from 'lucide-react';
+import { ChevronRight, CircleCheck, ListChecks, MapPin, Receipt, ShieldAlert, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
@@ -12,6 +12,8 @@ import { formatLKR } from '@/lib/money/format';
 import { cashflowQuery, type MonthFlow } from '@/lib/money/queries';
 import { productsQuery } from '@/lib/pantry/queries';
 import { placesQuery } from '@/lib/places';
+import { assetsQuery, pendingLinesQuery } from '@/lib/things/queries';
+import { SERVICE_SOON_DAYS, daysBetween, warrantyState } from '@/lib/things/value';
 import { addMonths, dayPart, firstName, formatMonth, hourIn, todayIn } from '@/lib/time';
 
 export const Route = createFileRoute('/_app/')({
@@ -22,15 +24,6 @@ export const Route = createFileRoute('/_app/')({
 const GHOST_TREND = [3, 4, 3.6, 5, 4.6, 6];
 const GHOST_IN = [70, 72, 71, 80, 78, 74];
 const GHOST_OUT = [50, 58, 46, 64, 55, 48];
-
-function AwaitingChip({ phase }: { phase: number }) {
-  const { t } = useTranslation();
-  return (
-    <span className="tabular whitespace-nowrap rounded-full bg-white/5 px-2 py-0.5 text-[10.5px] text-muted sm:text-[11px]">
-      {t('home.awaiting', { phase })}
-    </span>
-  );
-}
 
 function EmptyNote({ children }: { children: ReactNode }) {
   return <p className="text-[13.5px] leading-relaxed text-[#a5b0d0]">{children}</p>;
@@ -55,16 +48,42 @@ function PantryTile({ householdId }: { householdId: string }) {
   );
 }
 
-/** Attention (§4 row 7 comes in Phase 6); for now: what the shopping list says is running low. */
-function AttentionCard({ householdId, canWrite }: { householdId: string; canWrite: boolean }) {
+const GONE = new Set(['sold', 'disposed', 'lost']);
+
+/** Things: how many and what they're worth now (real rows only). */
+function ThingsTile({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const assets = useQuery(assetsQuery(householdId));
+  const owned = (assets.data ?? []).filter((a) => !GONE.has(a.status));
+  const value = owned.reduce((s, a) => s + (a.current_value ?? 0), 0);
+  const has = owned.length > 0;
+  return (
+    <Link to="/things" className="contents">
+      <StatTile
+        empty={!has}
+        label={t('home.things')}
+        value={has ? <Money value={value} whole /> : 'Rs —'}
+        footer={has ? t('home.thingsLine', { count: owned.length }) : t('home.noThingsYet')}
+      />
+    </Link>
+  );
+}
+
+/** Attention (the full feed with push comes in Phase 6): shopping list, things to enter, services and warranties. */
+function AttentionCard({ householdId, canWrite, today }: { householdId: string; canWrite: boolean; today: string }) {
   const { t } = useTranslation();
   const list = useShoppingList(householdId, canWrite);
   const open = (list.data ?? []).filter((i) => !i.done && !i.dismissed);
   const low = open.filter((i) => i.source === 'below_min').length;
+  const pending = useQuery(pendingLinesQuery(householdId)).data ?? [];
+  const assets = (useQuery(assetsQuery(householdId)).data ?? []).filter((a) => !GONE.has(a.status));
+  const due = assets.filter((a) => a.next_due !== null && daysBetween(today, a.next_due) <= SERVICE_SOON_DAYS);
+  const ending = assets.filter((a) => warrantyState(a, today).state === 'ending');
+  const nothing = open.length === 0 && pending.length === 0 && due.length === 0 && ending.length === 0;
   return (
     <Card className="flex flex-col gap-3">
       <h2 className="font-display text-[17px] font-semibold">{t('home.attention')}</h2>
-      {open.length > 0 ? (
+      {open.length > 0 && (
         <Link to="/pantry/list" className="flex items-center gap-3 rounded-2xl bg-due/[0.08] px-3.5 py-3 hover:bg-due/[0.12]">
           <ListChecks className="h-5 w-5 shrink-0 text-due" aria-hidden />
           <div className="min-w-0 flex-1">
@@ -73,7 +92,45 @@ function AttentionCard({ householdId, canWrite }: { householdId: string; canWrit
           </div>
           <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
         </Link>
-      ) : (
+      )}
+      {due.length > 0 && (
+        <Link
+          to="/things"
+          search={{ filter: 'attention' }}
+          className="flex items-center gap-3 rounded-2xl bg-due/[0.08] px-3.5 py-3 hover:bg-due/[0.12]"
+        >
+          <Wrench className="h-5 w-5 shrink-0 text-due" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <div className="text-[14.5px]">{t('home.serviceDue', { count: due.length })}</div>
+            <div className="truncate text-[12.5px] text-muted">{due.map((a) => a.name).join(' · ')}</div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
+        </Link>
+      )}
+      {ending.length > 0 && (
+        <Link
+          to="/things"
+          search={{ filter: 'attention' }}
+          className="flex items-center gap-3 rounded-2xl bg-caution/[0.08] px-3.5 py-3 hover:bg-caution/[0.12]"
+        >
+          <ShieldAlert className="h-5 w-5 shrink-0 text-caution" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <div className="text-[14.5px]">{t('home.warrantyEnding', { count: ending.length })}</div>
+            <div className="truncate text-[12.5px] text-muted">{ending.map((a) => a.name).join(' · ')}</div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
+        </Link>
+      )}
+      {pending.length > 0 && (
+        <Link to="/things/pending" className="flex items-center gap-3 rounded-2xl bg-info/[0.08] px-3.5 py-3 hover:bg-info/[0.12]">
+          <Receipt className="h-5 w-5 shrink-0 text-info" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <div className="text-[14.5px]">{t('home.thingsToEnter', { count: pending.length })}</div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
+        </Link>
+      )}
+      {nothing && (
         <div className="flex items-center gap-3 rounded-2xl bg-teal/[0.07] px-3.5 py-3">
           <CircleCheck className="h-5 w-5 shrink-0 text-teal" aria-hidden />
           <EmptyNote>{t('home.attentionEmpty')}</EmptyNote>
@@ -155,7 +212,7 @@ function Pulse() {
           />
         </Link>
         <PantryTile householdId={membership.household.id} />
-        <StatTile empty label={t('home.things')} value="—" footer={<AwaitingChip phase={5} />} />
+        <ThingsTile householdId={membership.household.id} />
       </section>
 
       <PlacesCard householdId={membership.household.id} />
@@ -234,7 +291,7 @@ function Pulse() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <AttentionCard householdId={householdId} canWrite={membership.role !== 'viewer'} />
+        <AttentionCard householdId={householdId} canWrite={membership.role !== 'viewer'} today={todayIn(timezone)} />
         <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-[17px] font-semibold">{t('home.activity')}</h2>

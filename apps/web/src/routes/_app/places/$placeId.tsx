@@ -1,10 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronRight, Copy, FolderInput, Package, Pencil, Plus, Printer, Trash } from 'lucide-react';
+import { ChevronRight, Copy, FolderInput, Pencil, Plus, Printer, Trash } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PlaceStock } from '@/components/pantry/PlaceStock';
+import { PlaceThings } from '@/components/things/PlaceThings';
 import { MoveSheet } from '@/components/places/MoveSheet';
 import { PlaceForm } from '@/components/places/PlaceForm';
 import { PlaceGrid, PlacesSkeleton, usePlaces } from '@/components/places/PlaceGrid';
@@ -28,20 +29,6 @@ function IconAction({ label, onClick, children, danger }: { label: string; onCli
       {children}
       <span>{label}</span>
     </button>
-  );
-}
-
-function ComingPanel({ icon: Icon, title, body }: { icon: typeof Package; title: string; body: string }) {
-  return (
-    <Card className="flex items-start gap-3.5">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.05]">
-        <Icon className="h-5 w-5 text-muted" aria-hidden />
-      </div>
-      <div>
-        <div className="font-display font-semibold">{title}</div>
-        <p className="mt-0.5 text-[13.5px] leading-relaxed text-[#a5b0d0]">{body}</p>
-      </div>
-    </Card>
   );
 }
 
@@ -204,7 +191,13 @@ function PlacePage() {
         canWrite={canWrite}
       />
 
-      <ComingPanel icon={Package} title={t('nav.things')} body={t('places.thingsSoon')} />
+      <PlaceThings
+        householdId={householdId}
+        placeId={place.id}
+        timezone={membership.household.timezone}
+        locale={membership.household.locale}
+        canWrite={canWrite}
+      />
 
       <PlaceForm
         open={sheet === 'edit'}

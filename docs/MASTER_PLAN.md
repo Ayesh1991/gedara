@@ -776,7 +776,7 @@ Claude Code's context). Point to specific files only if a question comes up.
 | **App users (Supabase Auth, email OTP)** | **Didula Ayeshmantha** — `ayeshmantha@gmail.com` — role `owner`<br>**Sandeepani Thennakoon** — `asithaathennakoon@gmail.com` — role `member` (full edit) |
 | A4 sticker sheet | standard A4, 6 rows × 9 columns (54), landscape by default, verify with calibration print |
 | NIIMBOT B1 roll | **20 × 20 mm** (synthetic/PET roll for kitchen jars, paper for dry storage) |
-| Google account for the Drive overflow folder (Phase 5+) | decide at Phase 5 (default `ayeshmantha@gmail.com`) |
+| Google account for the Drive overflow folder (Phase 5+) | **Deferred 2026-09-25:** all files stay in Supabase Storage until use nears ~70 % of the free 1 GB (Settings › Storage); pick the account then (default `ayeshmantha@gmail.com`) |
 
 Seed note: Phase 0 creates the household and invites both emails. Invite = a row in
 `household_invite (email, role)`; on first OTP login, a trigger adds the user to

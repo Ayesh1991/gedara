@@ -61,6 +61,8 @@ export interface TransactionFormProps {
   merchants: Array<{ id: string; name: string }>;
   initialType?: FormType;
   editing?: { tx: Transaction; fee: Transaction | null } | null;
+  /** Some lines bought things in Things: like pantry lines, they stay as they are (GDRTD). */
+  thingsLocked?: boolean;
   onSaved?: (id: string) => void;
 }
 
@@ -86,6 +88,7 @@ function FormBody({
   merchants,
   initialType = 'expense',
   editing,
+  thingsLocked = false,
   onSaved,
 }: TransactionFormProps) {
   const { t } = useTranslation();
@@ -121,8 +124,9 @@ function FormBody({
   const [categoryId, setCategoryId] = useState<string | null>(tx?.lines[0]?.category_id ?? null);
   const [busy, setBusy] = useState(false);
   const [confirmDup, setConfirmDup] = useState(false);
-  // A bill whose lines feed the pantry keeps its lines: only the header can change (GDRTD).
-  const locked = Boolean(tx?.lines.some((l) => l.product_id));
+  // A bill whose lines feed the pantry (or bought things) keeps its lines: only the header can change (GDRTD).
+  const pantryLocked = Boolean(tx?.lines.some((l) => l.product_id));
+  const locked = pantryLocked || (Boolean(tx) && thingsLocked);
 
   const kind = type === 'income' ? 'income' : 'expense';
   const linesTotal = sumAmounts(lines.map((l) => parseAmount(l.amount) ?? 0));
@@ -288,7 +292,7 @@ function FormBody({
       {locked && (
         <div className="flex flex-col gap-1 rounded-2xl border border-line-2 bg-white/[0.03] p-4">
           <Money value={-tx!.total} className="text-[24px] font-semibold" />
-          <p className="text-[13px] text-muted">{t('spine.lockedLines')}</p>
+          <p className="text-[13px] text-muted">{pantryLocked ? t('spine.lockedLines') : t('things.lockedLines')}</p>
         </div>
       )}
 
