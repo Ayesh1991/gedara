@@ -1,9 +1,11 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { CircleAlert, FileJson } from 'lucide-react';
+import { Check, CircleAlert, FileJson } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { BillRouter, effectiveRoute, previewFor } from '@/components/spine/BillRouter';
+import { categoryDestiny, useProposals, useSpineData, type RouterLine } from '@/components/spine/useSpine';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -19,6 +21,7 @@ import type { CategoryRow } from '@/lib/money/categoriesMap';
 import { formatLKR, sumAmounts } from '@/lib/money/format';
 import {
   accountForMerchant,
+  deleteTransaction,
   existingFingerprints,
   importBills,
   invalidateMoney,
@@ -27,9 +30,14 @@ import {
   rememberAccount,
   type Account,
 } from '@/lib/money/queries';
+import { invalidatePantry } from '@/lib/pantry/queries';
+import { invalidateShopping, shoppingListQuery } from '@/lib/spine/queries';
+import { isBlocking, isUnresolved, routeProblem, toRpcRoute, unitByText, type LineRoute } from '@/lib/spine/route';
+import { billSummary, type BillSummary } from '@/lib/spine/summary';
 import { formatDay } from '@/lib/time';
+import { UNDO_MS } from '@/lib/undo';
 import { cn } from '@/lib/utils';
-import { AccountSelect, CategorySelect, fieldLabel } from './bits';
+import { AccountSelect, fieldLabel } from './bits';
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 
@@ -39,7 +47,10 @@ interface Draft {
   duplicate: boolean;
 }
 
-/** Bill-scanner JSON → preview (account per bill, category per line) → one Import. */
+/**
+ * Bill-scanner JSON → preview (account per bill; per line: category and where it goes — pantry,
+ * Things or expense only) → one Import that logs the expense, creates the lots and ticks the list.
+ */
 export function BillImport({
   householdId,
   locale,
@@ -56,11 +67,17 @@ export function BillImport({
   const { t } = useTranslation();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const spine = useSpineData(householdId);
+  const list = useQuery(shoppingListQuery(householdId));
   const [text, setTextRaw] = useState('');
   const [fileError, setFileError] = useState<{ kind: 'type' | 'size' } | null>(null);
   // Per-bill edits (account, categories), valid only for the text they were made on.
   const [edited, setEdited] = useState<{ text: string; bills: ImportBill[] } | null>(null);
   const [existing, setExisting] = useState<{ text: string; fps: Set<string> } | null>(null);
+  // Per-line route changes and picked free-text list items, also per text.
+  const [overrides, setOverrides] = useState<{ text: string; routes: Record<string, LineRoute> }>({ text: '', routes: {} });
+  const [ticks, setTicks] = useState<{ text: string; byBill: Record<number, string[]> }>({ text: '', byBill: {} });
+  const [created, setCreated] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
   const setText = (next: string) => {
@@ -104,11 +121,45 @@ export function BillImport({
   }, [built, householdId, text]);
 
   const error: BillParseError | { kind: 'type' | 'size' } | null = fileError ?? (parsed && 'error' in parsed ? parsed.error : null);
-  const bills = edited?.text === text ? edited.bills : built?.map((d) => d.bill);
-  const drafts: Draft[] | null =
-    built && bills && existing?.text === text
+  const drafts: Draft[] | null = useMemo(() => {
+    const bills = edited?.text === text ? edited.bills : built?.map((d) => d.bill);
+    return built && bills && existing?.text === text
       ? built.map((d, i) => ({ scanned: d.scanned, bill: bills[i]!, duplicate: existing.fps.has(d.bill.fingerprint) }))
       : null;
+  }, [built, edited, existing, text]);
+
+  // Lines as the router sees them (only bills that will be imported).
+  const units = spine.units.data;
+  const routerLines = useMemo(
+    () =>
+      (drafts ?? []).map((d, i) =>
+        d.duplicate || !units
+          ? []
+          : d.bill.lines.map(
+              (l): RouterLine => ({
+                key: `${i}:${l.fingerprint}`,
+                raw_name: l.raw_name,
+                amount: l.amount,
+                qty: l.qty,
+                unitId: unitByText(units, l.unit_text),
+                unitMissing: Boolean(l.unitMissing),
+                synthetic: l.synthetic,
+                category_id: l.category_id,
+                barcode: l.barcode,
+              }),
+            ),
+      ),
+    [drafts, units],
+  );
+  const allLines = useMemo(() => routerLines.flat(), [routerLines]);
+  const proposals = useProposals(allLines, spine);
+  const routeOf = (l: RouterLine): LineRoute | undefined => {
+    const r = (overrides.text === text ? overrides.routes[l.key] : undefined) ?? proposals.get(l.key);
+    return r ? effectiveRoute(r, l, spine.products.data) : undefined;
+  };
+  const openItems = useMemo(() => (list.data ?? []).filter((i) => !i.done && !i.dismissed), [list.data]);
+  const openFree = openItems.filter((i) => !i.product_id);
+  const ticksFor = (i: number) => (ticks.text === text ? (ticks.byBill[i] ?? []) : []);
 
   async function readFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -136,25 +187,104 @@ export function BillImport({
     setEdited({ text, bills: drafts.map((d, j) => (j === i ? patch(d) : d).bill) });
   }
 
-  const toImport = drafts?.filter((d) => !d.duplicate) ?? [];
+  function setRoute(key: string, route: LineRoute) {
+    setOverrides((o) => ({ text, routes: { ...(o.text === text ? o.routes : {}), [key]: route } }));
+  }
+
+  function toggleTick(i: number, id: string) {
+    setTicks((tk) => {
+      const byBill = tk.text === text ? tk.byBill : {};
+      const cur = byBill[i] ?? [];
+      return { text, byBill: { ...byBill, [i]: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] } };
+    });
+  }
+
+  const toImport = drafts?.map((d, i) => ({ d, i })).filter(({ d }) => !d.duplicate) ?? [];
+  const summaries = new Map<number, BillSummary>();
+  const unresolved = new Map<number, number>();
+  let problems = 0;
+  for (const { i } of toImport) {
+    const lines = routerLines[i] ?? [];
+    const routes = lines.map(routeOf).filter((r): r is LineRoute => Boolean(r));
+    unresolved.set(i, routes.filter(isUnresolved).length);
+    summaries.set(i, billSummary(routes.filter((r) => !isUnresolved(r)), openItems, ticksFor(i), created));
+    for (const l of lines) {
+      const r = routeOf(l);
+      if (r && isBlocking(routeProblem(r, previewFor(r, l, spine)))) problems++;
+    }
+  }
+  const total = [...summaries.values()].reduce(
+    (a, s) => ({ stock: a.stock + s.stock, newProducts: a.newProducts + s.newProducts, ticked: a.ticked + s.ticked }),
+    { stock: 0, newProducts: 0, ticked: 0 },
+  );
 
   async function doImport() {
-    if (!toImport.length || busy) return;
-    if (toImport.some((d) => d.bill.lines.some((l) => !l.category_id))) {
+    if (!toImport.length || busy || !spine.ready) return;
+    if (toImport.some(({ d }) => d.bill.lines.some((l) => !l.category_id))) {
       toast.error(t('money.form.needCategory'));
+      return;
+    }
+    if (problems > 0) {
+      toast.error(t('spine.fix', { count: problems }));
       return;
     }
     setBusy(true);
     try {
-      const results = await importBills(householdId, toImport.map((d) => d.bill));
-      for (const d of toImport) {
+      const payload = toImport.map(({ d, i }) => {
+        const lines = routerLines[i] ?? [];
+        return {
+          ...d.bill,
+          tick_item_ids: ticksFor(i),
+          lines: d.bill.lines.map((l, j) => {
+            const rl = lines[j];
+            const r = rl ? routeOf(rl) : undefined;
+            // Unresolved pantry lines go in as plain lines ("Send to pantry" later).
+            return r && !isUnresolved(r) ? { ...l, route: toRpcRoute(r, categoryDestiny(categories, l.category_id), l.synthetic) } : l;
+          }),
+        };
+      });
+      const results = await importBills(householdId, payload);
+      for (const { d } of toImport) {
         if (d.bill.account_id !== suspense?.id) rememberAccount(d.bill.account_id, d.bill.payee_text);
       }
-      const imported = results.filter((r) => r.status === 'imported').length;
-      await invalidateMoney(qc, householdId);
-      toast.success(t('money.import.done', { count: imported, skipped: results.length - imported }));
-      const first = toImport[0]!.bill.occurred_on.slice(0, 7);
-      void navigate({ to: '/money', search: { month: first } });
+      const imported = results.filter((r) => r.status === 'imported');
+      const lots = imported.reduce((a, r) => a + (r.lots ?? 0), 0);
+      const ticked = imported.reduce((a, r) => a + (r.ticked ?? 0), 0);
+      await Promise.all([invalidateMoney(qc, householdId), invalidatePantry(qc, householdId), invalidateShopping(qc, householdId)]);
+      const ids = imported.map((r) => r.id).filter((x): x is string => Boolean(x));
+      toast.success(
+        [
+          t('money.import.done', { count: imported.length, skipped: results.length - imported.length }),
+          lots ? t('spine.lotsAdded', { count: lots }) : null,
+          ticked ? t('spine.ticked', { count: ticked }) : null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        {
+          duration: UNDO_MS,
+          action: ids.length
+            ? {
+                label: t('common.undo'),
+                onClick: () => {
+                  // Undo = delete the bills again (their untouched stock goes with them).
+                  Promise.all(ids.map((id) => deleteTransaction(id)))
+                    .then(() => toast(t('spine.importUndone')))
+                    .catch((e: unknown) => toast.error(t(`money.errors.${moneyErrorKey(e)}`)))
+                    .finally(() => {
+                      void invalidateMoney(qc, householdId);
+                      void invalidatePantry(qc, householdId);
+                      void invalidateShopping(qc, householdId);
+                    });
+                },
+              }
+            : undefined,
+        },
+      );
+      if (ids.length === 1) {
+        void navigate({ to: '/money/tx/$txId', params: { txId: ids[0]! } });
+      } else {
+        void navigate({ to: '/money', search: { month: toImport[0]!.d.bill.occurred_on.slice(0, 7) } });
+      }
     } catch (err) {
       toast.error(t(`money.errors.${moneyErrorKey(err)}`));
     } finally {
@@ -200,78 +330,130 @@ export function BillImport({
         )}
       </Card>
 
-      {drafts?.map((d, i) => (
-        <Card key={d.bill.fingerprint + i} className={cn('flex flex-col gap-3', d.duplicate && 'opacity-60')}>
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate font-display text-[17px] font-semibold">{d.bill.payee_text || t('money.import.noShop')}</h3>
-              <p className="tabular text-[13px] text-muted">
-                {[formatDay(d.bill.occurred_on, locale, today.slice(0, 4)), d.bill.occurred_at, d.bill.invoice_no && `#${d.bill.invoice_no}`]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="tabular text-[17px]">{formatLKR(d.bill.total)}</div>
-              {d.duplicate && (
-                <span className="tabular rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-muted">{t('money.import.already')}</span>
-              )}
-            </div>
-          </div>
-          {!d.duplicate && (
-            <>
-              <div>
-                <label className={fieldLabel} htmlFor={`bill-acc-${i}`}>
-                  {t('money.form.paidWith')}
-                  {d.scanned.payment_method ? ` (${d.scanned.payment_method})` : ''}
-                </label>
-                <AccountSelect
-                  id={`bill-acc-${i}`}
-                  accounts={choices}
-                  value={d.bill.account_id}
-                  onChange={(id) => update(i, (x) => ({ ...x, bill: { ...x.bill, account_id: id } }))}
-                />
-              </div>
-              <ul className="flex flex-col gap-2">
-                {d.bill.lines.map((l, j) => (
-                  <li key={l.fingerprint} className="flex flex-col gap-1.5 rounded-xl bg-white/[0.03] p-2.5">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className={cn('min-w-0 truncate text-[14px]', l.synthetic && 'text-muted italic')}>{l.raw_name}</span>
-                      <span className="tabular shrink-0 text-[14px]">{formatLKR(l.amount)}</span>
-                    </div>
-                    <CategorySelect
-                      kind="expense"
-                      categories={categories}
-                      value={l.category_id}
-                      className={cn('h-10 text-[14px]', l.guessed && 'border-caution/50')}
-                      onChange={(id) =>
-                        update(i, (x) => ({
-                          ...x,
-                          bill: { ...x.bill, lines: x.bill.lines.map((y, k) => (k === j ? { ...y, category_id: id, guessed: false } : y)) },
-                        }))
-                      }
-                    />
-                  </li>
-                ))}
-              </ul>
-              {d.bill.lines.some((l) => l.synthetic) && (
-                <p className="text-[12.5px] text-muted">
-                  {t('money.import.adjusted', {
-                    lines: formatLKR(sumAmounts(d.bill.lines.filter((l) => !l.synthetic).map((l) => l.amount))),
-                  })}
+      {drafts?.map((d, i) => {
+        const s = summaries.get(i);
+        const routes = new Map<string, LineRoute>();
+        for (const l of routerLines[i] ?? []) {
+          const r = routeOf(l);
+          if (r) routes.set(l.key, r);
+        }
+        return (
+          <Card key={d.bill.fingerprint + i} className={cn('flex flex-col gap-3', d.duplicate && 'opacity-60')} data-testid="import-bill">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 className="truncate font-display text-[17px] font-semibold">{d.bill.payee_text || t('money.import.noShop')}</h3>
+                <p className="tabular text-[13px] text-muted">
+                  {[formatDay(d.bill.occurred_on, locale, today.slice(0, 4)), d.bill.occurred_at, d.bill.invoice_no && `#${d.bill.invoice_no}`]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </p>
-              )}
-            </>
-          )}
-        </Card>
-      ))}
+              </div>
+              <div className="text-right">
+                <div className="tabular text-[17px]">{formatLKR(d.bill.total)}</div>
+                {d.duplicate && (
+                  <span className="tabular rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-muted">{t('money.import.already')}</span>
+                )}
+              </div>
+            </div>
+            {!d.duplicate && (
+              <>
+                <div>
+                  <label className={fieldLabel} htmlFor={`bill-acc-${i}`}>
+                    {t('money.form.paidWith')}
+                    {d.scanned.payment_method ? ` (${d.scanned.payment_method})` : ''}
+                  </label>
+                  <AccountSelect
+                    id={`bill-acc-${i}`}
+                    accounts={choices}
+                    value={d.bill.account_id}
+                    onChange={(id) => update(i, (x) => ({ ...x, bill: { ...x.bill, account_id: id } }))}
+                  />
+                </div>
+                {spine.ready ? (
+                  <BillRouter
+                    lines={routerLines[i] ?? []}
+                    routes={routes}
+                    data={spine}
+                    onRoute={setRoute}
+                    onCreated={(id) => setCreated((c) => new Set(c).add(id))}
+                    onCategory={(key, id) => {
+                      const j = (routerLines[i] ?? []).findIndex((l) => l.key === key);
+                      update(i, (x) => ({
+                        ...x,
+                        bill: { ...x.bill, lines: x.bill.lines.map((y, k) => (k === j ? { ...y, category_id: id, guessed: false } : y)) },
+                      }));
+                    }}
+                  />
+                ) : (
+                  <div className="glass h-32 animate-pulse rounded-2xl" aria-hidden />
+                )}
+                {d.bill.lines.some((l) => l.synthetic) && (
+                  <p className="text-[12.5px] text-muted">
+                    {t('money.import.adjusted', {
+                      lines: formatLKR(sumAmounts(d.bill.lines.filter((l) => !l.synthetic).map((l) => l.amount))),
+                    })}
+                  </p>
+                )}
+                {openFree.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <span className={fieldLabel}>{t('spine.alsoBought')}</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {openFree.map((it) => {
+                        const on = ticksFor(i).includes(it.id!);
+                        return (
+                          <button
+                            key={it.id}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => toggleTick(i, it.id!)}
+                            className={cn(
+                              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px]',
+                              on ? 'border-transparent bg-teal/15 text-teal' : 'border-line-2 text-[#c5cce3]',
+                            )}
+                          >
+                            {on && <Check className="h-3.5 w-3.5" aria-hidden />}
+                            {it.free_text}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {s && (
+                  <p className="tabular text-[13px] text-muted" data-testid="bill-summary">
+                    {t('spine.billSummary', { stock: s.stock, ticked: s.ticked })}
+                    {s.newProducts > 0 && ` · ${t('spine.newProducts', { count: s.newProducts })}`}
+                  </p>
+                )}
+                {(unresolved.get(i) ?? 0) > 0 && (
+                  <p className="text-[12.5px] text-caution">{t('spine.unresolved', { count: unresolved.get(i) })}</p>
+                )}
+              </>
+            )}
+          </Card>
+        );
+      })}
 
       {drafts && (
-        <Button variant="primary" disabled={busy || toImport.length === 0} onClick={() => void doImport()}>
-          {toImport.length === 0
-            ? t('money.import.nothingNew')
-            : t('money.import.importBills', { count: toImport.length, total: formatLKR(sumAmounts(toImport.map((d) => d.bill.total))) })}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button
+            variant="primary"
+            disabled={busy || toImport.length === 0 || !spine.ready || problems > 0}
+            onClick={() => void doImport()}
+          >
+            {toImport.length === 0
+              ? t('money.import.nothingNew')
+              : problems > 0
+                ? t('spine.fix', { count: problems })
+                : t('money.import.importBills', {
+                    count: toImport.length,
+                    total: formatLKR(sumAmounts(toImport.map(({ d }) => d.bill.total))),
+                  })}
+          </Button>
+          {toImport.length > 0 && problems === 0 && (total.stock > 0 || total.ticked > 0) && (
+            <p className="text-center text-[12.5px] text-muted">{t('spine.oneConfirm', { stock: total.stock, ticked: total.ticked })}</p>
+          )}
+        </div>
       )}
     </div>
   );

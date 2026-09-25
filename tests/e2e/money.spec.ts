@@ -137,9 +137,12 @@ test('money: accounts, expense, transfer with fee, balances, undo, bill import',
   await expect(page.getByRole('heading', { name: shop })).toBeVisible();
   await expect(page.getByText(/one line was added for the discount/)).toBeVisible();
   await page.getByLabel(/^Paid with/).selectOption({ label: card });
+  // Phase 4: grocery lines without a product don't block the import; they stay plain bill lines.
+  await expect(page.getByText(/2 pantry lines have no product yet/)).toBeVisible();
   await page.getByRole('button', { name: /^Import 1 bill/ }).click();
-  await expect(page).toHaveURL(/\/money\?/);
-  await page.getByRole('link', { name: new RegExp(shop) }).click();
+  // One bill → its page (Phase 4).
+  await expect(page).toHaveURL(/\/money\/tx\//);
+  await expect(page.getByRole('heading', { name: shop })).toBeVisible();
   await expect(page.getByText('LKR 400.00 / kg')).toBeVisible(); // Rs 200 for 0.5 kg
   await expect(page.getByText('LKR 1,450.00 / pack')).toBeVisible();
   await expect(page.getByText('Bill discount / rounding')).toBeVisible();

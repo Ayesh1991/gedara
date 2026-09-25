@@ -1,12 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft, Pencil, Trash } from 'lucide-react';
+import { Box, ChevronLeft, Package, PackagePlus, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AccountDot, Money, TypeBadge, signedTotal } from '@/components/money/bits';
 import { TransactionForm } from '@/components/money/TransactionForm';
 import { useMoneyBasics } from '@/components/money/useMoney';
+import { SendToPantry } from '@/components/spine/SendToPantry';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { categoryLabel, topOf } from '@/lib/money/categoriesMap';
@@ -19,6 +20,8 @@ import {
   unitsQuery,
   type Line,
 } from '@/lib/money/queries';
+import { invalidatePantry } from '@/lib/pantry/queries';
+import { invalidateShopping, lineRoutesQuery } from '@/lib/spine/queries';
 import { formatDay, todayIn } from '@/lib/time';
 import { scheduleUndoableDelete } from '@/lib/undo';
 
@@ -46,7 +49,9 @@ function TransactionPage() {
   const { accounts, categories, merchants } = useMoneyBasics(householdId);
   const q = useQuery(transactionQuery(householdId, txId));
   const units = useQuery(unitsQuery);
+  const routes = useQuery(lineRoutesQuery(householdId, txId));
   const [editing, setEditing] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const back = () => (router.history.length > 1 ? router.history.back() : void navigate({ to: '/money' }));
 
@@ -72,17 +77,42 @@ function TransactionPage() {
       ? t('money.list.transfer', { from: account?.name ?? '?', to: to?.name ?? '?' })
       : tx.payee_text || tx.lines[0]?.raw_name || t(`money.types.${tx.type as 'expense'}`);
 
+  const refreshAll = () => {
+    void invalidateMoney(qc, householdId);
+    void invalidatePantry(qc, householdId);
+    void invalidateShopping(qc, householdId);
+  };
+
+  // Lines that can still go to the pantry: bought items (not discounts) without stock yet.
+  const unrouted = tx.type === 'expense' ? tx.lines.filter((l) => l.amount > 0 && !(routes.data?.get(l.id)?.lots ?? 0)) : [];
+
   function remove() {
+    const id = tx!.id;
     const { undo, ms } = scheduleUndoableDelete({
-      id: tx!.id,
+      id,
       hide: () => {
-        qc.removeQueries({ queryKey: ['money', householdId, 'tx', tx!.id] });
+        qc.removeQueries({ queryKey: ['money', householdId, 'tx', id] });
         void invalidateMoney(qc, householdId);
         back();
       },
-      commit: () => deleteTransaction(tx!.id),
-      restore: () => void invalidateMoney(qc, householdId),
-      onError: (e) => toast.error(t(`money.errors.${moneyErrorKey(e)}`)),
+      // The bill's pantry stock goes with it, unless some has been used (GDUSE) → offer to keep it.
+      commit: () => deleteTransaction(id),
+      restore: refreshAll,
+      onError: (e) => {
+        if (moneyErrorKey(e) !== 'stockUsed') return void toast.error(t(`money.errors.${moneyErrorKey(e)}`));
+        toast.error(t('money.errors.stockUsed'), {
+          duration: 15_000,
+          action: {
+            label: t('spine.deleteKeepStock'),
+            onClick: () => {
+              deleteTransaction(id, true)
+                .then(() => toast.success(t('money.detail.deleted', { amount: formatLKR(tx!.total) })))
+                .catch((err: unknown) => toast.error(t(`money.errors.${moneyErrorKey(err)}`)))
+                .finally(refreshAll);
+            },
+          },
+        });
+      },
     });
     toast(t('money.detail.deleted', { amount: formatLKR(tx!.total) }), {
       duration: ms,
@@ -180,6 +210,7 @@ function TransactionPage() {
                         .filter(Boolean)
                         .join(' · ')}
                     </div>
+                    <LineDestination line={l} route={routes.data?.get(l.id)} />
                   </div>
                   <Money value={l.amount} className="text-[14.5px]" />
                 </li>
@@ -187,6 +218,13 @@ function TransactionPage() {
             })}
           </ul>
         </Card>
+      )}
+
+      {canWrite && unrouted.some((l) => l.destiny === 'stock' || l.destiny === null) && (
+        <Button onClick={() => setSending(true)} className="self-start">
+          <PackagePlus className="h-4 w-4" aria-hidden />
+          {t('spine.sendToPantry')}
+        </Button>
       )}
 
       <p className="tabular px-1 text-[11.5px] break-all text-faint">
@@ -218,6 +256,47 @@ function TransactionPage() {
         merchants={merchants.data ?? []}
         editing={{ tx, fee }}
       />
+
+      {sending && (
+        <SendToPantry
+          householdId={householdId}
+          transactionId={tx.id}
+          lines={unrouted}
+          onClose={() => setSending(false)}
+        />
+      )}
     </div>
   );
+}
+
+/** Where a line went: pantry stock (with a link), Things (Phase 5), or — for stock lines — not yet. */
+function LineDestination({
+  line,
+  route,
+}: {
+  line: Line;
+  route: { lots: number | null; product_id: string | null; product_name: string | null } | undefined;
+}) {
+  const { t } = useTranslation();
+  if (route?.lots && route.product_id) {
+    return (
+      <Link
+        to="/pantry/$productId"
+        params={{ productId: route.product_id }}
+        className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-teal/15 px-2.5 py-0.5 text-[12px] font-medium text-teal"
+      >
+        <Package className="h-3.5 w-3.5" aria-hidden />
+        {t('spine.inPantry', { name: route.product_name ?? '' })}
+      </Link>
+    );
+  }
+  if (line.destiny === 'asset') {
+    return (
+      <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] px-2.5 py-0.5 text-[12px] text-[#c5cce3]">
+        <Box className="h-3.5 w-3.5" aria-hidden />
+        {t('spine.thingsLater')}
+      </span>
+    );
+  }
+  return null;
 }

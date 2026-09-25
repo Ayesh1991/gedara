@@ -22,6 +22,7 @@ import { Route as AppMoneyInboxRouteImport } from './routes/_app/money/inbox'
 import { Route as AppPantryIndexRouteImport } from './routes/_app/pantry/index'
 import { Route as AppPantryProductIdRouteImport } from './routes/_app/pantry/$productId'
 import { Route as AppPantryJournalRouteImport } from './routes/_app/pantry/journal'
+import { Route as AppPantryListRouteImport } from './routes/_app/pantry/list'
 import { Route as AppPlacesIndexRouteImport } from './routes/_app/places/index'
 import { Route as AppPlacesPlaceIdRouteImport } from './routes/_app/places/$placeId'
 import { Route as AppPlacesLabelsRouteImport } from './routes/_app/places/labels'
@@ -98,6 +99,11 @@ const AppPantryProductIdRoute = AppPantryProductIdRouteImport.update({
 const AppPantryJournalRoute = AppPantryJournalRouteImport.update({
   id: '/pantry/journal',
   path: '/pantry/journal',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPantryListRoute = AppPantryListRouteImport.update({
+  id: '/pantry/list',
+  path: '/pantry/list',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlacesIndexRoute = AppPlacesIndexRouteImport.update({
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/money/inbox': typeof AppMoneyInboxRoute
   '/pantry/$productId': typeof AppPantryProductIdRoute
   '/pantry/journal': typeof AppPantryJournalRoute
+  '/pantry/list': typeof AppPantryListRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/labels': typeof AppPlacesLabelsRoute
   '/s/$code': typeof AppSCodeRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/money/inbox': typeof AppMoneyInboxRoute
   '/pantry/$productId': typeof AppPantryProductIdRoute
   '/pantry/journal': typeof AppPantryJournalRoute
+  '/pantry/list': typeof AppPantryListRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/labels': typeof AppPlacesLabelsRoute
   '/s/$code': typeof AppSCodeRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/_app/money/inbox': typeof AppMoneyInboxRoute
   '/_app/pantry/$productId': typeof AppPantryProductIdRoute
   '/_app/pantry/journal': typeof AppPantryJournalRoute
+  '/_app/pantry/list': typeof AppPantryListRoute
   '/_app/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/_app/places/labels': typeof AppPlacesLabelsRoute
   '/_app/s/$code': typeof AppSCodeRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/money/inbox'
     | '/pantry/$productId'
     | '/pantry/journal'
+    | '/pantry/list'
     | '/places/$placeId'
     | '/places/labels'
     | '/s/$code'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/money/inbox'
     | '/pantry/$productId'
     | '/pantry/journal'
+    | '/pantry/list'
     | '/places/$placeId'
     | '/places/labels'
     | '/s/$code'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/_app/money/inbox'
     | '/_app/pantry/$productId'
     | '/_app/pantry/journal'
+    | '/_app/pantry/list'
     | '/_app/places/$placeId'
     | '/_app/places/labels'
     | '/_app/s/$code'
@@ -434,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPantryJournalRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pantry/list': {
+      id: '/_app/pantry/list'
+      path: '/pantry/list'
+      fullPath: '/pantry/list'
+      preLoaderRoute: typeof AppPantryListRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/places/': {
       id: '/_app/places/'
       path: '/places'
@@ -537,6 +556,7 @@ interface AppRouteChildren {
   AppMoneyInboxRoute: typeof AppMoneyInboxRoute
   AppPantryProductIdRoute: typeof AppPantryProductIdRoute
   AppPantryJournalRoute: typeof AppPantryJournalRoute
+  AppPantryListRoute: typeof AppPantryListRoute
   AppPlacesPlaceIdRoute: typeof AppPlacesPlaceIdRoute
   AppPlacesLabelsRoute: typeof AppPlacesLabelsRoute
   AppSCodeRoute: typeof AppSCodeRoute
@@ -563,6 +583,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMoneyInboxRoute: AppMoneyInboxRoute,
   AppPantryProductIdRoute: AppPantryProductIdRoute,
   AppPantryJournalRoute: AppPantryJournalRoute,
+  AppPantryListRoute: AppPantryListRoute,
   AppPlacesPlaceIdRoute: AppPlacesPlaceIdRoute,
   AppPlacesLabelsRoute: AppPlacesLabelsRoute,
   AppSCodeRoute: AppSCodeRoute,

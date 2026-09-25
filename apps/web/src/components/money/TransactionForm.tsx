@@ -23,7 +23,7 @@ import {
 } from '@/lib/money/queries';
 import { timeNowIn, todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import { AccountSelect, CategorySelect, fieldLabel } from './bits';
+import { AccountSelect, CategorySelect, Money, fieldLabel } from './bits';
 
 type FormType = 'expense' | 'income' | 'transfer';
 
@@ -121,6 +121,8 @@ function FormBody({
   const [categoryId, setCategoryId] = useState<string | null>(tx?.lines[0]?.category_id ?? null);
   const [busy, setBusy] = useState(false);
   const [confirmDup, setConfirmDup] = useState(false);
+  // A bill whose lines feed the pantry keeps its lines: only the header can change (GDRTD).
+  const locked = Boolean(tx?.lines.some((l) => l.product_id));
 
   const kind = type === 'income' ? 'income' : 'expense';
   const linesTotal = sumAmounts(lines.map((l) => parseAmount(l.amount) ?? 0));
@@ -144,7 +146,7 @@ function FormBody({
   }
 
   function buildPayload(repeat: number): SavePayload | null {
-    const total = split ? linesTotal : parseAmount(amount);
+    const total = locked ? tx!.total : split ? linesTotal : parseAmount(amount);
     if (total === null || total <= 0) {
       toast.error(t('money.form.needAmount'));
       return null;
@@ -164,7 +166,7 @@ function FormBody({
       manualFingerprint({ type, date, time: occurredAt, accountId, payee, total }, repeat);
 
     let saveLines: SaveLine[] = [];
-    if (type !== 'transfer') {
+    if (type !== 'transfer' && !locked) {
       const source: LineState[] = split
         ? lines.filter((l) => l.name.trim() || parseAmount(l.amount))
         : [
@@ -217,6 +219,7 @@ function FormBody({
       total,
       fingerprint: fp,
       lines: saveLines,
+      keep_lines: locked || undefined,
       fee: feeAmount ? { amount: feeAmount, category_id: bankFees?.id ?? null } : null,
     };
   }
@@ -282,7 +285,14 @@ function FormBody({
         </div>
       )}
 
-      {!split && (
+      {locked && (
+        <div className="flex flex-col gap-1 rounded-2xl border border-line-2 bg-white/[0.03] p-4">
+          <Money value={-tx!.total} className="text-[24px] font-semibold" />
+          <p className="text-[13px] text-muted">{t('spine.lockedLines')}</p>
+        </div>
+      )}
+
+      {!split && !locked && (
         <div>
           <label htmlFor="money-amount" className={fieldLabel}>
             {t('money.form.amount')}
@@ -304,7 +314,7 @@ function FormBody({
         </div>
       )}
 
-      {type !== 'transfer' && !split && (
+      {type !== 'transfer' && !split && !locked && (
         <div>
           {type === 'expense' && !tx && quick.length > 0 && (
             <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1" aria-label={t('money.form.quick')}>
@@ -412,7 +422,7 @@ function FormBody({
         </div>
       )}
 
-      {split && (
+      {split && !locked && (
         <fieldset className="flex flex-col gap-3 rounded-2xl border border-line-2 p-3">
           <legend className="px-1 text-[13px] font-medium text-muted">{t('money.form.lines')}</legend>
           {lines.map((l, i) => (
@@ -472,7 +482,7 @@ function FormBody({
       <details className="group rounded-2xl border border-line-2 px-4 py-3" open={Boolean(tx?.invoice_no || tx?.notes)}>
         <summary className="cursor-pointer text-[14px] font-medium text-muted">{t('money.form.more')}</summary>
         <div className="mt-3 flex flex-col gap-3">
-          {type !== 'transfer' && !split && (
+          {type !== 'transfer' && !split && !locked && (
             <Button size="sm" className="self-start" onClick={startSplit}>
               {t('money.form.split')}
             </Button>

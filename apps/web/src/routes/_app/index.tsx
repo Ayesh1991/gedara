@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronRight, CircleCheck, MapPin } from 'lucide-react';
+import { ChevronRight, CircleCheck, ListChecks, MapPin } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
 import { StatTile } from '@/components/aurora/StatTile';
 import { Money } from '@/components/money/bits';
+import { useShoppingList } from '@/components/spine/useShopping';
 import { Card } from '@/components/ui/card';
 import { formatLKR } from '@/lib/money/format';
 import { cashflowQuery, type MonthFlow } from '@/lib/money/queries';
@@ -51,6 +52,34 @@ function PantryTile({ householdId }: { householdId: string }) {
         footer={has ? t('home.pantryLine', { count: inStock.length }) : t('home.noPantryYet')}
       />
     </Link>
+  );
+}
+
+/** Attention (§4 row 7 comes in Phase 6); for now: what the shopping list says is running low. */
+function AttentionCard({ householdId, canWrite }: { householdId: string; canWrite: boolean }) {
+  const { t } = useTranslation();
+  const list = useShoppingList(householdId, canWrite);
+  const open = (list.data ?? []).filter((i) => !i.done && !i.dismissed);
+  const low = open.filter((i) => i.source === 'below_min').length;
+  return (
+    <Card className="flex flex-col gap-3">
+      <h2 className="font-display text-[17px] font-semibold">{t('home.attention')}</h2>
+      {open.length > 0 ? (
+        <Link to="/pantry/list" className="flex items-center gap-3 rounded-2xl bg-due/[0.08] px-3.5 py-3 hover:bg-due/[0.12]">
+          <ListChecks className="h-5 w-5 shrink-0 text-due" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <div className="text-[14.5px]">{t('home.toBuy', { count: open.length })}</div>
+            {low > 0 && <div className="text-[12.5px] text-muted">{t('home.lowStock', { count: low })}</div>}
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
+        </Link>
+      ) : (
+        <div className="flex items-center gap-3 rounded-2xl bg-teal/[0.07] px-3.5 py-3">
+          <CircleCheck className="h-5 w-5 shrink-0 text-teal" aria-hidden />
+          <EmptyNote>{t('home.attentionEmpty')}</EmptyNote>
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -205,13 +234,7 @@ function Pulse() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col gap-3">
-          <h2 className="font-display text-[17px] font-semibold">{t('home.attention')}</h2>
-          <div className="flex items-center gap-3 rounded-2xl bg-teal/[0.07] px-3.5 py-3">
-            <CircleCheck className="h-5 w-5 shrink-0 text-teal" aria-hidden />
-            <EmptyNote>{t('home.attentionEmpty')}</EmptyNote>
-          </div>
-        </Card>
+        <AttentionCard householdId={householdId} canWrite={membership.role !== 'viewer'} />
         <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-[17px] font-semibold">{t('home.activity')}</h2>
