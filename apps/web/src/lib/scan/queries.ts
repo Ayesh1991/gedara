@@ -51,9 +51,16 @@ export function folderIdFrom(input: string): string | null {
 }
 
 export async function setDriveFolder(householdId: string, folderId: string) {
-  const { error } = await supabase
+  // Not an upsert: that would also SET household_id, which clients may not update (column grant).
+  const { data: existing, error: readError } = await supabase
     .from('drive_source')
-    .upsert({ household_id: householdId, folder_id: folderId }, { onConflict: 'household_id' });
+    .select('household_id')
+    .eq('household_id', householdId)
+    .maybeSingle();
+  if (readError) throw readError;
+  const { error } = existing
+    ? await supabase.from('drive_source').update({ folder_id: folderId }).eq('household_id', householdId)
+    : await supabase.from('drive_source').insert({ household_id: householdId, folder_id: folderId });
   if (error) throw error;
 }
 
