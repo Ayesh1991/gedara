@@ -3,6 +3,7 @@
 // RPCs of migration 26 (CLAUDE.md rule 1).
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
+import { newOpBase, outbox, type StockAction } from '../offline';
 import { entityPhotosQuery } from '../photos';
 import type { Json, Tables, TablesInsert, TablesUpdate } from '../db.types';
 import type { Conversion, Unit, UnitMap } from './units';
@@ -204,6 +205,9 @@ export const productPhotosQuery = (householdId: string) =>
 
 export interface StockResult {
   correlation_id: string | null;
+  /** Saved on the device (offline / no connection): it syncs later; Undo = take it out of the queue. */
+  queued?: boolean;
+  op_id?: string;
   lot_id?: string;
   qty?: number;
   cost?: number;
@@ -211,14 +215,18 @@ export interface StockResult {
   delta?: number;
 }
 
-type RpcName = 'rpc_purchase' | 'rpc_consume' | 'rpc_open' | 'rpc_transfer' | 'rpc_inventory' | 'rpc_set_lot_due';
+type RpcName = 'rpc_purchase' | 'rpc_inventory' | 'rpc_set_lot_due';
 
 async function stockRpc(name: RpcName, p: Record<string, unknown>): Promise<StockResult> {
   // Drop undefined keys: the RPCs treat a present key (even null) as "given".
   const body = Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined));
   const { data, error } = await supabase.rpc(name, { p: body as Json });
   if (error) throw error;
-  const r = data as Record<string, unknown>;
+  return toStockResult(data);
+}
+
+function toStockResult(data: unknown): StockResult {
+  const r = (data ?? {}) as Record<string, unknown>;
   const num = (v: unknown) => (v === undefined || v === null ? undefined : Number(v));
   return {
     correlation_id: (r.correlation_id as string | null) ?? null,
@@ -279,9 +287,25 @@ export interface InventoryInput extends Base {
 }
 
 export const purchase = (p: PurchaseInput) => stockRpc('rpc_purchase', { ...p });
-export const consume = (p: ConsumeInput) => stockRpc('rpc_consume', { ...p });
-export const openStock = (p: OpenInput) => stockRpc('rpc_open', { ...p });
-export const transfer = (p: TransferInput) => stockRpc('rpc_transfer', { ...p });
+/**
+ * Use / open / move go through the outbox (offline-safe): an op id is fixed now, so a retry or a
+ * replay never takes the stock twice (rpc_stock_op, migration 50). A refusal while online throws
+ * the database error, exactly like a direct RPC call.
+ */
+async function stockOp(action: StockAction, p: Record<string, unknown>, label: string): Promise<StockResult> {
+  const op = { ...newOpBase(String(p.household_id), label), kind: 'stock' as const, action, payload: p };
+  const out = await outbox.submit(op);
+  if (out.status === 'done') return toStockResult(out.result);
+  if (out.status === 'queued') return { correlation_id: null, queued: true, op_id: op.op_id };
+  throw Object.assign(new Error(out.error.message), {
+    code: out.error.code,
+    details: out.error.available === null ? undefined : String(out.error.available),
+  });
+}
+
+export const consume = (p: ConsumeInput, label = '') => stockOp('consume', { ...p }, label);
+export const openStock = (p: OpenInput, label = '') => stockOp('open', { ...p }, label);
+export const transfer = (p: TransferInput, label = '') => stockOp('transfer', { ...p }, label);
 export const inventory = (p: InventoryInput) => stockRpc('rpc_inventory', { ...p });
 export const setLotDue = (p: Base & { lot_id: string; due_date: string | null }) => stockRpc('rpc_set_lot_due', { ...p });
 

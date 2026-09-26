@@ -54,12 +54,12 @@ describe('pre-paint script in index.html', () => {
 
 describe('prefs', () => {
   it('parses valid prefs', () => {
-    expect(parsePrefs({ theme: 'nebula', motion: 'off', updatedAt: 5 })).toEqual({ theme: 'nebula', motion: 'off', updatedAt: 5 });
+    expect(parsePrefs({ theme: 'nebula', motion: 'off', swipe: true, lang: 'si', updatedAt: 5 })).toEqual({ theme: 'nebula', motion: 'off', swipe: true, lang: 'si', updatedAt: 5 });
   });
 
   it('falls back field by field on unknown values', () => {
-    expect(parsePrefs({ theme: 'hotpink', motion: 'off' })).toEqual({ theme: 'aurora', motion: 'off', updatedAt: 0 });
-    expect(parsePrefs({ theme: 'lagoon', motion: 42, updatedAt: -1 })).toEqual({ theme: 'lagoon', motion: 'system', updatedAt: 0 });
+    expect(parsePrefs({ theme: 'hotpink', motion: 'off' })).toEqual({ theme: 'aurora', motion: 'off', swipe: false, lang: 'en', updatedAt: 0 });
+    expect(parsePrefs({ theme: 'lagoon', motion: 42, updatedAt: -1 })).toEqual({ theme: 'lagoon', motion: 'system', swipe: false, lang: 'en', updatedAt: 0 });
   });
 
   it('falls back entirely on garbage', () => {
@@ -69,7 +69,7 @@ describe('prefs', () => {
   });
 
   it('reconciles devices: newer wins, an interrupted save is pushed again', () => {
-    const at = (theme: 'aurora' | 'nebula', updatedAt: number) => ({ theme, motion: 'system' as const, updatedAt });
+    const at = (theme: 'aurora' | 'nebula', updatedAt: number) => ({ theme, motion: 'system' as const, swipe: false, lang: 'en' as const, updatedAt });
     // another device changed it later → adopt
     expect(reconcile(at('aurora', 10), at('nebula', 20))).toEqual({ adopt: at('nebula', 20), push: false });
     // this device changed it later (save lost to a reload) → push ours

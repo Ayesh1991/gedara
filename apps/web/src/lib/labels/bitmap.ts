@@ -51,6 +51,28 @@ export function composeSq20(qr: QrMatrix, text: Bitmap | null): Bitmap {
   return out;
 }
 
+// 10 × 10 mm for small items (Phase 7): 80 × 80 dots, the same version-1 raw-code QR at 3 dots per
+// module (63 dots ≈ 7.9 mm, modules ≈ 0.375 mm) centred with a quiet zone of more than 2 modules,
+// and no text (there is no room). Scans in Gedara or with the USB scanner, not with a phone camera app.
+export const SQ10_DOTS = 80;
+export const SQ10_MODULE_DOTS = 3;
+
+export function composeSq10(qr: QrMatrix): Bitmap {
+  const out = blankBitmap(SQ10_DOTS, SQ10_DOTS);
+  const qrDots = qr.size * SQ10_MODULE_DOTS;
+  const x0 = Math.floor((SQ10_DOTS - qrDots) / 2);
+  for (let r = 0; r < qr.size; r++) {
+    for (let c = 0; c < qr.size; c++) {
+      if (!qr.dark(r, c)) continue;
+      for (let dy = 0; dy < SQ10_MODULE_DOTS; dy++) {
+        const row = (x0 + r * SQ10_MODULE_DOTS + dy) * SQ10_DOTS;
+        out.bits.fill(1, row + x0 + c * SQ10_MODULE_DOTS, row + x0 + (c + 1) * SQ10_MODULE_DOTS);
+      }
+    }
+  }
+  return out;
+}
+
 /** Space left under the QR for the text line. */
 export function sq20TextArea(qrSize = 21) {
   return { width: SQ20_DOTS - 8, height: SQ20_DOTS - QR_TOP - qrSize * SQ20_MODULE_DOTS - 6 };

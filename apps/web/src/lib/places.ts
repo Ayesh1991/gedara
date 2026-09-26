@@ -154,6 +154,8 @@ export function placeErrorKey(e: unknown): 'hasChildren' | 'cycle' | 'denied' | 
 // ── Label printer profile ─────────────────────────────────────────────────────
 
 export const PROFILE_NAME = 'Epson L3110';
+/** Small raw-code labels (10 mm) on their own sticker paper: a second saved grid. */
+export const MINI_PROFILE_NAME = 'Epson L3110 mini';
 
 const ProfileRow = z.object({
   id: z.string(),
@@ -176,18 +178,18 @@ export interface SavedProfile {
   profile: SheetProfile;
 }
 
-export const labelProfileQuery = (householdId: string) =>
+export const labelProfileQuery = (householdId: string, name = PROFILE_NAME, fallback: SheetProfile = DEFAULT_PROFILE) =>
   queryOptions({
-    queryKey: ['label-profile', householdId],
+    queryKey: ['label-profile', householdId, name],
     queryFn: async (): Promise<SavedProfile> => {
       const { data, error } = await supabase
         .from('label_profile')
         .select('*')
         .eq('household_id', householdId)
-        .eq('name', PROFILE_NAME)
+        .eq('name', name)
         .maybeSingle();
       if (error) throw error;
-      if (!data) return { id: null, profile: DEFAULT_PROFILE };
+      if (!data) return { id: null, profile: fallback };
       const r = ProfileRow.parse(data);
       return {
         id: r.id,
@@ -210,7 +212,7 @@ export const labelProfileQuery = (householdId: string) =>
     staleTime: 10 * 60 * 1000,
   });
 
-export async function saveLabelProfile(householdId: string, saved: SavedProfile, p: SheetProfile) {
+export async function saveLabelProfile(householdId: string, saved: SavedProfile, p: SheetProfile, name = PROFILE_NAME) {
   const cols = {
     orientation: p.orientation,
     rows: p.rows,
@@ -228,6 +230,6 @@ export async function saveLabelProfile(householdId: string, saved: SavedProfile,
   // Not an upsert: that would also try to SET household_id/name, which clients may not update.
   const { error } = saved.id
     ? await supabase.from('label_profile').update(cols).eq('id', saved.id)
-    : await supabase.from('label_profile').insert({ household_id: householdId, name: PROFILE_NAME, ...cols });
+    : await supabase.from('label_profile').insert({ household_id: householdId, name, ...cols });
   if (error) throw error;
 }

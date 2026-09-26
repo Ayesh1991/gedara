@@ -46,6 +46,8 @@ export function ProductScanCard({
   const today = todayIn(timezone);
 
   const product = pantry.products.data?.find((p) => p.id === result.product.id);
+  // A lot label (HL:LOT) was scanned: Use takes from that very pack.
+  const lot = result.lot ?? null;
   const unit = product ? pantry.units.data?.get(product.stock_unit_id) : undefined;
   // One scan of a barcode means its pack (e.g. 1 pack); a Gedara label means the quick amount.
   const step = result.barcode
@@ -80,7 +82,11 @@ export function ProductScanCard({
   function use() {
     if (!product) return;
     void run(
-      () => consume({ household_id: householdId, product_id: product.id, qty: step.qty, unit_id: step.unitId }),
+      (label) =>
+        consume(
+          { household_id: householdId, product_id: product.id, qty: step.qty, unit_id: step.unitId, lot_id: lot?.id ?? undefined },
+          label,
+        ),
       (r) => t('pantry.done.used', { qty: formatQty(r.qty ?? stockStep ?? step.qty, unit), name: product.name }),
       unit,
     );
@@ -100,7 +106,14 @@ export function ProductScanCard({
               <DueText dueType={product.due_type} due={product.stock.nextDue} today={today} locale={locale} className="text-[12.5px]" />
             )}
           </div>
-          <div className="tabular text-[11.5px] text-accent-b">{result.barcode?.code ?? result.product.code}</div>
+          {lot && (
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[12.5px] text-muted" data-testid="scan-lot">
+              <span>{t('pantry.scan.thisPack')}</span>
+              <Qty qty={lot.qty_remaining} unit={unit} />
+              {product && <DueText dueType={product.due_type} due={lot.due_date} today={today} locale={locale} />}
+            </div>
+          )}
+          <div className="tabular text-[11.5px] text-accent-b">{result.barcode?.code ?? lot?.code ?? result.product.code}</div>
         </div>
       </div>
       {statuses.length > 0 && (
@@ -113,7 +126,7 @@ export function ProductScanCard({
       <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
         {canWrite && product ? (
           <>
-            <Button size="sm" className="h-11" disabled={product.stock.qty <= 0} onClick={use}>
+            <Button size="sm" className="h-11" disabled={product.stock.qty <= 0 || (lot !== null && lot.qty_remaining <= 0)} onClick={use}>
               <Minus className="h-4 w-4" aria-hidden />
               {t('pantry.scan.use', { qty: stepText })}
             </Button>

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { usePlaces } from '@/components/places/PlaceGrid';
 import { categoriesQuery } from '@/lib/money/queries';
 import { formatLKR } from '@/lib/money/format';
+import { outbox } from '@/lib/offline';
 import {
   availableQty,
   barcodesQuery,
@@ -46,7 +47,9 @@ export function usePantry(householdId: string) {
     places,
     tree,
     ready: units.isSuccess && products.isSuccess && conversions.isSuccess,
-    error: units.isError || products.isError || conversions.isError,
+    // Only an error when there is nothing to show: a failed background refresh (flaky or no network)
+    // keeps the saved data on screen.
+    error: (units.isError && !units.data) || (products.isError && !products.data) || (conversions.isError && !conversions.data),
   };
 }
 
@@ -68,10 +71,42 @@ export function useStockAction(householdId: string) {
   );
 
   const run = useCallback(
-    async (action: () => Promise<StockResult>, message: (r: StockResult) => string, unit?: Unit): Promise<StockResult | null> => {
+    async (
+      action: (label: string) => Promise<StockResult>,
+      message: (r: StockResult) => string,
+      unit?: Unit,
+    ): Promise<StockResult | null> => {
       try {
-        const r = await action();
-        await invalidatePantry(qc, householdId);
+        // The label is what the queue shows if this has to wait for the network.
+        const r = await action(message({ correlation_id: null }));
+        // Queued (offline): say so at once — a refresh can't run now and must not hold up the message.
+        if (!r.queued) await invalidatePantry(qc, householdId);
+        if (r.queued && r.op_id) {
+          const opId = r.op_id;
+          toast(message(r), {
+            description: t('offline.queued'),
+            duration: UNDO_MS,
+            action: {
+              label: t('common.undo'),
+              onClick: () => {
+                void (async () => {
+                  if (await outbox.remove(opId)) return toast(t('pantry.done.undone'));
+                  // It synced in the meantime: undo it on the server like any other action.
+                  const synced = outbox.resultOf(opId) as { correlation_id?: string } | undefined;
+                  if (!synced?.correlation_id) return;
+                  try {
+                    await undoStock(synced.correlation_id);
+                    await invalidatePantry(qc, householdId);
+                    toast(t('pantry.done.undone'));
+                  } catch (e) {
+                    reportError(e);
+                  }
+                })();
+              },
+            },
+          });
+          return r;
+        }
         const correlation = r.correlation_id;
         toast.success(message(r), {
           duration: UNDO_MS,

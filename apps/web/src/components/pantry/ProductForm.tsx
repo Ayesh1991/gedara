@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { ImageError } from '@/lib/images';
-import type { CategoryRow } from '@/lib/money/categoriesMap';
+import { guessTopKey, pickCategory as pickCategoryFor, type CategoryRow } from '@/lib/money/categoriesMap';
+import { lookupOff, offPhoto, type OffInfo } from '@/lib/off';
 import {
   DUE_TYPES,
   addBarcode,
@@ -96,6 +97,41 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
   const [busy, setBusy] = useState(false);
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => () => (preview ? URL.revokeObjectURL(preview) : undefined), [preview]);
+
+  // An unknown retail barcode: ask Open Food Facts once (online only) and prefill what it knows.
+  const [off, setOff] = useState<OffInfo | null>(null);
+  useEffect(() => {
+    if (product || initial?.name || !barcode) return;
+    let alive = true;
+    void lookupOff(barcode).then((info) => {
+      if (!alive || !info) return;
+      setOff(info);
+      setName((n) => n || info.name);
+      const pick = pickCategoryFor(categories, guessTopKey(info.name), info.name);
+      if (pick.categoryId) pickCategory(pick.categoryId);
+      const unit = (code: string) => [...units.values()].find((u) => u.household_id === null && u.code.toLowerCase() === code);
+      const base = info.pack ? unit(info.pack.unit) : undefined;
+      const pack = unit('pack');
+      if (info.pack && base) {
+        setStockUnit(base.id);
+        if (info.pack.unit !== 'pcs' && pack) {
+          setPurchaseUnit(pack.id);
+          setPackFactor(String(info.pack.qty));
+        }
+      }
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per opened form
+  }, []);
+
+  async function takeOffPhoto() {
+    if (!off?.imageUrl) return;
+    const f = await offPhoto(off.imageUrl);
+    if (f) setFile(f);
+    else toast.error(t('pantry.product.offPhotoFailed'));
+  }
 
   const unitList = useMemo(() => sortedUnits(units), [units]);
   const places = useMemo(
@@ -223,6 +259,16 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
           placeholder={t('pantry.product.namePlaceholder')}
           onChange={(e) => setName(e.target.value)}
         />
+        {off && (
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[12.5px] text-info" data-testid="off-hint">
+            {t('pantry.product.fromOff')}
+            {off.imageUrl && !file && (
+              <button type="button" className="text-accent-b underline-offset-2 hover:underline" onClick={() => void takeOffPhoto()}>
+                {t('pantry.product.useOffPhoto')}
+              </button>
+            )}
+          </p>
+        )}
       </div>
 
       <div>

@@ -11,12 +11,16 @@ export type MotionMode = (typeof MOTION_MODES)[number];
 export const PrefsSchema = z.object({
   theme: z.enum(THEME_IDS).catch(DEFAULT_THEME),
   motion: z.enum(MOTION_MODES).catch('system'),
+  /** Swipe on pantry cards (Phase 7): off until the person turns it on. */
+  swipe: z.boolean().catch(false),
+  /** UI language (Phase 7): English or Sinhala. */
+  lang: z.enum(['en', 'si']).catch('en'),
   /** ms since epoch of the last change; the newer side wins when devices disagree. 0 = never set. */
   updatedAt: z.number().int().nonnegative().catch(0),
 });
 export type Prefs = z.infer<typeof PrefsSchema>;
 
-export const DEFAULT_PREFS: Prefs = { theme: DEFAULT_THEME, motion: 'system', updatedAt: 0 };
+export const DEFAULT_PREFS: Prefs = { theme: DEFAULT_THEME, motion: 'system', swipe: false, lang: 'en', updatedAt: 0 };
 
 export function parsePrefs(raw: unknown): Prefs {
   if (!raw || typeof raw !== 'object') return DEFAULT_PREFS;

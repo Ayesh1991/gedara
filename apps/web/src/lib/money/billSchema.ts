@@ -1,91 +1,24 @@
-// Bill-scanner JSON (reference/bill-scanner/samples/prompt.md) → validated bills → rpc_import_bills
-// payloads. External JSON is never trusted (CLAUDE.md rule 6): the text is sniffed before parsing,
-// every bill goes through Zod, and ledger v7's tolerated aliases (store / quantity / price / item
-// total) are accepted so older files still import.
-import { z } from 'zod';
-import { billFingerprint, lineFingerprint } from './fingerprint';
+// Bill-scanner JSON → validated bills → rpc_import_bills payloads. The Zod schemas, the text
+// sniffing and the fingerprints are shared with the drive-scan Edge Function (@scan), so a bill
+// read from Drive and the same bill pasted here get the same id.
+import { scannedBillFingerprint, type ScannedBill } from '@scan/schema.ts';
+import { lineFingerprint } from './fingerprint';
 import { sumAmounts, toCents } from './format';
 import { guessTopKey, pickCategory, type CategoryRow } from './categoriesMap';
 import type { RpcRoute } from '../spine/route';
 
-const num = z.number().finite();
-
-const ItemSchema = z.object({
-  name: z.string().max(200).nullish(),
-  category: z.string().max(40).nullish(),
-  subcategory: z.string().max(60).nullish(),
-  qty: num.nullish(),
-  quantity: num.nullish(),
-  unit: z.string().max(24).nullish(),
-  unit_price: num.nullish(),
-  price: num.nullish(),
-  amount: num.nullish(),
-  total: num.nullish(),
-  // EAN printed on the bill, when the scanner saw one (matches the product's barcode).
-  barcode: z.union([z.string().regex(/^[0-9A-Za-z._-]{4,64}$/), num.int().nonnegative()]).nullish(),
-});
-
-export const ScannedBillSchema = z
-  .object({
-    shop: z.string().max(120).nullish(),
-    store: z.string().max(120).nullish(),
-    branch: z.string().max(120).nullish(),
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}/, 'date must be YYYY-MM-DD'),
-    time: z.string().regex(/^\d{1,2}:\d{2}$/, 'time must be HH:MM').nullish(),
-    // Kept exactly as scanned (string, or a number if the scanner dropped the quotes): it is part
-    // of the fingerprint.
-    invoice_no: z.union([z.string().max(60), num]).nullish(),
-    currency: z.string().max(8).nullish(),
-    payment_method: z.string().max(60).nullish(),
-    items: z.array(ItemSchema).min(1, 'a bill needs at least one item').max(300),
-    sub_total: num.nullish(),
-    discount: num.nullish(),
-    rounding: num.nullish(),
-    total: num.nullish(),
-    notes: z.string().max(2000).nullish(),
-  })
-  .refine((b) => !b.currency || b.currency.toUpperCase() === 'LKR', { message: 'only LKR bills can be imported' });
-
-export type ScannedBill = z.infer<typeof ScannedBillSchema>;
-
-export type BillParseError =
-  | { kind: 'empty' }
-  | { kind: 'html' }
-  | { kind: 'json'; message: string }
-  | { kind: 'shape'; index: number; message: string };
-
-/**
- * Text (pasted, or a file's contents) → bills. Accepts one bill, an array of bills, and JSON wrapped
- * in a ```json fence. Rejects HTML (e.g. a Google Doc saved where a .json file was expected).
- */
-export function parseBillText(text: string): { bills: ScannedBill[] } | { error: BillParseError } {
-  let t = text.replace(/^\uFEFF/, '').trim();
-  const fence = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(t);
-  if (fence) t = fence[1]!.trim();
-  if (!t) return { error: { kind: 'empty' } };
-  if (t.startsWith('<')) return { error: { kind: 'html' } };
-  if (!t.startsWith('{') && !t.startsWith('[')) return { error: { kind: 'json', message: 'not JSON' } };
-  let raw: unknown;
-  try {
-    raw = JSON.parse(t);
-  } catch (e) {
-    return { error: { kind: 'json', message: (e as Error).message } };
-  }
-  const list = Array.isArray(raw) ? raw : [raw];
-  if (list.length === 0) return { error: { kind: 'empty' } };
-  if (list.length > 200) return { error: { kind: 'shape', index: 200, message: 'at most 200 bills at a time' } };
-  const bills: ScannedBill[] = [];
-  for (const [index, b] of list.entries()) {
-    const r = ScannedBillSchema.safeParse(b);
-    if (!r.success) {
-      const issue = r.error.issues[0];
-      const where = issue?.path.length ? `${issue.path.join('.')}: ` : '';
-      return { error: { kind: 'shape', index, message: where + (issue?.message ?? 'invalid bill') } };
-    }
-    bills.push(r.data);
-  }
-  return { bills };
-}
+export {
+  ScannedBillSchema,
+  parseBillText,
+  parseScanText,
+  scannedBillFingerprint,
+  type BillParseError,
+  type RatingPlateDoc,
+  type ScanParse,
+  type ScannedBill,
+  type ThingDoc,
+  type WarrantyDoc,
+} from '@scan/schema.ts';
 
 /** Files: trust the content, not the name; allow the MIME types a .json can arrive with. */
 export const BILL_FILE_TYPES = ['application/json', 'text/json', 'text/plain', ''];
@@ -138,13 +71,7 @@ export interface ImportBill {
 /** One scanned bill → an rpc_import_bills payload with ledger-v7 fingerprints. */
 export function scannedToImport(bill: ScannedBill, categories: CategoryRow[], accountId: string): ImportBill {
   const shop = bill.shop || bill.store || '';
-  const fp = billFingerprint({
-    invoice_no: bill.invoice_no as string | null | undefined,
-    date: bill.date,
-    time: bill.time,
-    shop,
-    total: bill.total,
-  });
+  const fp = scannedBillFingerprint(bill);
   const lines: ImportLine[] = bill.items.map((it, idx) => {
     const rawAmount = it.amount ?? it.total ?? 0;
     const key = guessTopKey(it.name, it.category);

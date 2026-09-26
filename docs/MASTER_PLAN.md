@@ -521,7 +521,7 @@ data for everything else.
 
 1. **Keep the Claude "Bill Scanner" project** exactly as today (zero cost). Import = paste / drop
    JSON. Validate with a Zod schema; reject Google-Doc-wrapped JSON gracefully (lesson §4 of handover).
-2. **In-app scan (Phase 7, optional):** Edge Function `scan-document` → Claude API vision with the
+2. **In-app scan (Phase 7, optional) — replaced 2026-09-25:** the claude.ai project stays the scanner; it saves JSON to Drive and Gedara reads the folder (`drive-scan`, see `docs/bill-scanner-project.md`). Original idea: Edge Function `scan-document` → Claude API vision with the
    same system prompt as the Bill Scanner project → returns the same JSON. Works for bills,
    product labels (expiry, manufacturer), warranty cards, appliance rating plates (model/serial →
    pre-fills an asset). API key stays server-side; cost is roughly cents per scan — set a monthly
@@ -715,7 +715,7 @@ version badge bumped, a short `CHANGELOG.md` entry.
 | **5 Things** | Assets, tags, category field templates, parent/child, attachments (warranty/manual/receipt), maintenance plans + logs → ledger, lend/sell flows, asset labels | Fridge, TV, laptop entered with receipts & warranty dates; AC service logged as expense |
 | **6 Insights & Attention** | Drill-down framework, all §6 views, Attention feed, `pg_cron` jobs, Web Push, ⌘K search, recurring bills + monthly budgets; ~~floor-plan (optional)~~ moved to Phase 7 and personal inflation from our own basket only (no CCPI), 2026-09-25 | Every number clickable to the record level |
 | **6b Scale Station** (after Phase 3 or 4) | `device` + `scale_reading`, jar tare, `rpc_weigh`, `device-ingest` Edge Function, Pi Python service + systemd + SQLite outbox, Realtime live card, calibration page | Lift the sugar jar, use 2 spoons, put it back → "Sugar −24 g" appears on the iPad within 2 s |
-| **7 AI & polish** | In-app scan Edge Function (optional), Open Food Facts, offline outbox, export/backup, Sinhala strings, performance pass, Places floor-plan (from Phase 6) | Lighthouse PWA ✓, works offline for scan-and-consume |
+| **7 AI & polish** | ~~In-app scan Edge Function (optional)~~ → the claude.ai Bill Scanner's Drive folder read by `drive-scan` (bills, warranty cards, rating plates; no Claude API, 2026-09-25), Open Food Facts, offline outbox, export/backup, Sinhala strings, performance pass, Places floor-plan (from Phase 6), HL:LOT + 10 mm labels, opt-in swipe | Lighthouse PWA ✓ (now `scripts/pwa-check.mjs`: Lighthouse 12 has no PWA category), works offline for scan-and-consume |
 
 **Rules for Claude Code on every phase** (put these in the repo's `CLAUDE.md`):
 1. Never edit stock or balances directly — only via RPCs / movements.

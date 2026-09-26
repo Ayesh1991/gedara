@@ -58,19 +58,22 @@ export function BillImport({
   today,
   accounts,
   categories,
+  initialText,
 }: {
   householdId: string;
   locale: string;
   today: string;
   accounts: Account[];
   categories: CategoryRow[];
+  /** A file opened from the Drive inbox or shared from another app (Android share target). */
+  initialText?: string;
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const spine = useSpineData(householdId);
   const list = useQuery(shoppingListQuery(householdId));
-  const [text, setTextRaw] = useState('');
+  const [text, setTextRaw] = useState(initialText ?? '');
   const [fileError, setFileError] = useState<{ kind: 'type' | 'size' } | null>(null);
   // Per-bill edits (account, categories), valid only for the text they were made on.
   const [edited, setEdited] = useState<{ text: string; bills: ImportBill[] } | null>(null);

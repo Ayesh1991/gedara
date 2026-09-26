@@ -9,6 +9,7 @@ import { ActivityList } from '@/components/attention/ActivityList';
 import { AttentionRow } from '@/components/attention/AttentionRow';
 import { TargetLink } from '@/components/insights/Num';
 import { Money } from '@/components/money/bits';
+import { useDriveSync } from '@/components/scan/useDriveSync';
 import { useShoppingList } from '@/components/spine/useShopping';
 import { Card } from '@/components/ui/card';
 import { knownItems } from '@/lib/attention';
@@ -17,6 +18,7 @@ import { formatLKR } from '@/lib/money/format';
 import { cashflowQuery, type MonthFlow } from '@/lib/money/queries';
 import { productsQuery } from '@/lib/pantry/queries';
 import { placesQuery } from '@/lib/places';
+import { driveSourceQuery } from '@/lib/scan/queries';
 import { assetsQuery } from '@/lib/things/queries';
 import { addMonths, dayPart, firstName, formatMonth, hourIn, todayIn } from '@/lib/time';
 
@@ -78,6 +80,9 @@ function AttentionCard({ householdId, canWrite, today }: { householdId: string; 
   const { t } = useTranslation();
   // Opening Home keeps the automatic "below minimum" list items in sync (Phase 4).
   const list = useShoppingList(householdId, canWrite);
+  // New scans in the Bill Scanner's Drive folder show up as "N scanned files to import".
+  const drive = useQuery({ ...driveSourceQuery(householdId), enabled: canWrite });
+  useDriveSync(householdId, canWrite && Boolean(drive.data));
   const toBuy = (list.data ?? []).filter((i) => !i.done && !i.dismissed).length;
   const feed = useQuery({ ...attentionQuery(householdId), refetchOnWindowFocus: true });
   const items = knownItems(feed.data ?? []);

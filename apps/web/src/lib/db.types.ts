@@ -651,6 +651,117 @@ export type Database = {
           },
         ]
       }
+      drive_source: {
+        Row: {
+          folder_id: string
+          household_id: string
+          last_error: string | null
+          last_sync_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          folder_id: string
+          household_id: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          folder_id?: string
+          household_id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drive_source_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: true
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      export_run: {
+        Row: {
+          bytes: number | null
+          counts: Json
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          with_files: boolean
+        }
+        Insert: {
+          bytes?: number | null
+          counts?: Json
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          with_files?: boolean
+        }
+        Update: {
+          bytes?: number | null
+          counts?: Json
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          with_files?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_run_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floor_plan: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          name: string
+          sort: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          name: string
+          sort?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          name?: string
+          sort?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plan_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household: {
         Row: {
           created_at: string
@@ -828,6 +939,7 @@ export type Database = {
           code: string
           created_at: string
           created_by: string | null
+          floor_plan_id: string | null
           household_id: string
           id: string
           kind: string | null
@@ -845,6 +957,7 @@ export type Database = {
           code: string
           created_at?: string
           created_by?: string | null
+          floor_plan_id?: string | null
           household_id: string
           id?: string
           kind?: string | null
@@ -862,6 +975,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string | null
+          floor_plan_id?: string | null
           household_id?: string
           id?: string
           kind?: string | null
@@ -875,6 +989,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "location_floor_plan_fk"
+            columns: ["household_id", "floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plan"
+            referencedColumns: ["household_id", "id"]
+          },
           {
             foreignKeyName: "location_household_id_fkey"
             columns: ["household_id"]
@@ -2014,6 +2135,82 @@ export type Database = {
           },
         ]
       }
+      scan_file: {
+        Row: {
+          asset_id: string | null
+          bill_fps: string[]
+          doc_type: string | null
+          drive_file_id: string
+          household_id: string
+          id: string
+          ignored_at: string | null
+          ignored_by: string | null
+          mime: string
+          modified_at: string
+          name: string
+          parse_error: string | null
+          payload: Json | null
+          seen_at: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          bill_fps?: string[]
+          doc_type?: string | null
+          drive_file_id: string
+          household_id: string
+          id?: string
+          ignored_at?: string | null
+          ignored_by?: string | null
+          mime: string
+          modified_at: string
+          name: string
+          parse_error?: string | null
+          payload?: Json | null
+          seen_at?: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          bill_fps?: string[]
+          doc_type?: string | null
+          drive_file_id?: string
+          household_id?: string
+          id?: string
+          ignored_at?: string | null
+          ignored_by?: string | null
+          mime?: string
+          modified_at?: string
+          name?: string
+          parse_error?: string | null
+          payload?: Json | null
+          seen_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_file_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "scan_file_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "v_asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "scan_file_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopping_list_item: {
         Row: {
           created_at: string
@@ -2333,6 +2530,7 @@ export type Database = {
       }
       stock_lot: {
         Row: {
+          code: string | null
           created_at: string
           created_by: string | null
           due_date: string | null
@@ -2352,6 +2550,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          code?: string | null
           created_at?: string
           created_by?: string | null
           due_date?: string | null
@@ -2371,6 +2570,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          code?: string | null
           created_at?: string
           created_by?: string | null
           due_date?: string | null
@@ -2584,6 +2784,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_stock_journal"
             referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
+      stock_op: {
+        Row: {
+          action: string
+          actor: string | null
+          client_at: string | null
+          correlation_id: string
+          created_at: string
+          household_id: string
+          op_id: string
+          result: Json
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          client_at?: string | null
+          correlation_id: string
+          created_at?: string
+          household_id: string
+          op_id: string
+          result: Json
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          client_at?: string | null
+          correlation_id?: string
+          created_at?: string
+          household_id?: string
+          op_id?: string
+          result?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_op_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3421,6 +3662,49 @@ export type Database = {
           },
         ]
       }
+      v_scan_file: {
+        Row: {
+          asset_id: string | null
+          bill_fps: string[] | null
+          bills_imported: number | null
+          bills_total: number | null
+          doc_type: string | null
+          drive_file_id: string | null
+          household_id: string | null
+          id: string | null
+          ignored_at: string | null
+          mime: string | null
+          modified_at: string | null
+          name: string | null
+          parse_error: string | null
+          payload: Json | null
+          seen_at: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_file_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "scan_file_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "v_asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "scan_file_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_shopping_list: {
         Row: {
           below_min: boolean | null
@@ -3943,12 +4227,22 @@ export type Database = {
         Args: { p_id: string; p_keep_stock?: boolean }
         Returns: undefined
       }
+      rpc_export_done: {
+        Args: {
+          p_bytes: number
+          p_counts: Json
+          p_household: string
+          p_with_files: boolean
+        }
+        Returns: string
+      }
       rpc_import_bills: {
         Args: { p_bills: Json; p_household: string }
         Returns: Json
       }
       rpc_inventory: { Args: { p: Json }; Returns: Json }
       rpc_log_maintenance: { Args: { p: Json }; Returns: Json }
+      rpc_lot_code: { Args: { p_lot: string }; Returns: string }
       rpc_move_transactions: {
         Args: { p_account: string; p_ids: string[] }
         Returns: number
@@ -3980,8 +4274,28 @@ export type Database = {
         Returns: Json
       }
       rpc_save_transaction: { Args: { p: Json }; Returns: Json }
+      rpc_scan_file_asset: {
+        Args: { p_asset: string; p_file: string }
+        Returns: undefined
+      }
+      rpc_scan_file_ignore: {
+        Args: { p_file: string; p_ignored: boolean }
+        Returns: undefined
+      }
+      rpc_scan_files_upsert: {
+        Args: { p_error?: string; p_files: Json; p_household: string }
+        Returns: number
+      }
+      rpc_scan_sync_begin: {
+        Args: { p_force?: boolean; p_household: string }
+        Returns: Json
+      }
       rpc_set_lot_due: { Args: { p: Json }; Returns: Json }
       rpc_shopping_sync: { Args: { p_household: string }; Returns: Json }
+      rpc_shopping_tick: {
+        Args: { p_at?: string; p_done: boolean; p_item: string }
+        Returns: string
+      }
       rpc_sms_device_create: {
         Args: { p_household: string; p_name: string }
         Returns: Json
@@ -4010,6 +4324,15 @@ export type Database = {
       }
       rpc_sms_post: { Args: { p: Json; p_sms_ids: string[] }; Returns: Json }
       rpc_sms_unlink: { Args: { p_ids: string[] }; Returns: number }
+      rpc_stock_op: {
+        Args: {
+          p: Json
+          p_action: string
+          p_client_at?: string
+          p_op_id: string
+        }
+        Returns: Json
+      }
       rpc_transfer: { Args: { p: Json }; Returns: Json }
       rpc_undo: { Args: { p_correlation: string }; Returns: Json }
       safe_uuid: { Args: { p: string }; Returns: string }

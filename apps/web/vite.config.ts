@@ -40,6 +40,10 @@ export default defineConfig({
       '@sms': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/sms'),
       // Web Push helpers shared with the attention-push Edge Function (plain TS, no imports).
       '@push': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/push'),
+      // Scanner-JSON schemas + ledger-v7 fingerprints shared with the drive-scan Edge Function. They
+      // import zod, which must resolve to the app's copy from outside apps/web (Deno maps it itself).
+      '@scan': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scan'),
+      zod: path.resolve(import.meta.dirname, 'node_modules/zod'),
     },
   },
   // jsquash locates its .wasm with new URL(…, import.meta.url); pre-bundling would break that path.
@@ -56,7 +60,7 @@ export default defineConfig({
       injectRegister: false,
       injectManifest: {
         // The list only warms the NetworkFirst cache on install; nothing is served cache-first.
-        globPatterns: ['index.html', 'assets/*.{js,css}', '*.{png,svg,ico}'],
+        globPatterns: ['index.html', 'assets/*.{js,css}', 'assets/zxing_reader-*.wasm', '*.{png,svg,ico}'],
         // The label-PDF builder (pdf-lib + fontkit, ~1 MB) is only for the Labels screen: fetched on use.
         globIgnores: ['assets/pdf-*.js'],
         buildPlugins: {
@@ -85,6 +89,19 @@ export default defineConfig({
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
           { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // Android: "Share → Gedara" from the Claude app (a bill's JSON text or a .json file). The
+        // service worker takes the POST, keeps the text for one read and opens Money › Import.
+        share_target: {
+          action: '/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url',
+            files: [{ name: 'files', accept: ['application/json', 'text/plain', '.json', '.txt'] }],
+          },
+        },
       },
       devOptions: { enabled: false },
     }),

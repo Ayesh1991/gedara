@@ -19,19 +19,29 @@ const INDEX_URL = new URL('index.html', self.registration.scope).href;
 
 // Build-time list of shell files. Used only to warm the offline cache on install —
 // nothing is ever served from it while the network works.
-const SHELL_URLS = self.__WB_MANIFEST.map((e) =>
-  new URL(typeof e === 'string' ? e : e.url, self.registration.scope).href,
-);
+// De-duplicated: the plugin lists the manifest icons a second time, and Cache.addAll() rejects the
+// WHOLE list on a duplicate — which silently left the offline cache empty until Phase 7.
+const SHELL_URLS = [
+  ...new Set(self.__WB_MANIFEST.map((e) => new URL(typeof e === 'string' ? e : e.url, self.registration.scope).href)),
+];
 
 void self.skipWaiting();
 clientsClaim();
 
+// One file at a time: Cache.addAll() is all-or-nothing, so a single slow or failed request would
+// leave the whole offline shell empty. Files already cached (same hashed URL) are skipped.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches
-      .open(SHELL_CACHE)
-      .then((cache) => cache.addAll(SHELL_URLS))
-      .catch(() => undefined),
+    caches.open(SHELL_CACHE).then(async (cache) => {
+      const queue = [...SHELL_URLS];
+      const worker = async () => {
+        for (let url = queue.shift(); url; url = queue.shift()) {
+          if (await cache.match(url, { ignoreVary: true })) continue;
+          await cache.add(url).catch(() => cache.add(url).catch(() => undefined));
+        }
+      };
+      await Promise.all(Array.from({ length: 6 }, worker));
+    }),
   );
 });
 
@@ -42,7 +52,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((k) => k.startsWith('gedara-') && k !== SHELL_CACHE && k !== MEDIA_CACHE)
+            .filter((k) => k.startsWith('gedara-') && k !== SHELL_CACHE && k !== MEDIA_CACHE && k !== SHARE_CACHE)
             .map((k) => caches.delete(k)),
         ),
       ),
@@ -61,20 +71,25 @@ self.addEventListener('message', (event) => {
 registerRoute(({ url }) => url.hostname.endsWith('.supabase.co'), new NetworkOnly());
 
 // App HTML: network first with no timeout, so a slow link never shows an old shell.
-registerRoute(({ request }) => request.mode === 'navigate', new NetworkFirst({ cacheName: SHELL_CACHE }));
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new NetworkFirst({ cacheName: SHELL_CACHE, matchOptions: { ignoreVary: true } }),
+);
 
 // Hashed JS/CSS: network first; a timeout is safe because a hashed URL never changes content.
 registerRoute(
   ({ request, url }) =>
     url.origin === self.location.origin &&
     (request.destination === 'script' || request.destination === 'style' || request.destination === 'worker'),
-  new NetworkFirst({ cacheName: SHELL_CACHE, networkTimeoutSeconds: 4 }),
+  // ignoreVary: lazy route chunks are fetched with an Origin header; a server that answers with
+  // `Vary: Origin` (vite preview) would otherwise make the warmed copy unmatchable offline.
+  new NetworkFirst({ cacheName: SHELL_CACHE, networkTimeoutSeconds: 4, matchOptions: { ignoreVary: true } }),
 );
 
 // Scanner / image-encoder WASM (hashed, same origin): network first, cached for offline scanning.
 registerRoute(
   ({ url }) => url.origin === self.location.origin && url.pathname.endsWith('.wasm'),
-  new NetworkFirst({ cacheName: SHELL_CACHE, networkTimeoutSeconds: 4 }),
+  new NetworkFirst({ cacheName: SHELL_CACHE, networkTimeoutSeconds: 4, matchOptions: { ignoreVary: true } }),
 );
 
 // Images and fonts: stale-while-revalidate (MASTER_PLAN §2).
@@ -86,10 +101,34 @@ registerRoute(
   }),
 );
 
+// Android share target (manifest share_target): keep the shared text for ONE read by Money › Import
+// and open it there. Bill data never goes into a URL. Capped at 2 MB; only text / JSON files.
+const SHARE_CACHE = 'gedara-share';
+const SHARE_KEY = new URL('/__shared-text', self.registration.scope).href;
+const SHARE_MAX = 2 * 1024 * 1024;
+registerRoute(
+  ({ url, request }) => url.origin === self.location.origin && url.pathname === '/share-target' && request.method === 'POST',
+  async ({ request }) => {
+    let text: string;
+    try {
+      const form = await request.formData();
+      const file = form.getAll('files').find((f): f is File => f instanceof File && f.size > 0 && f.size <= SHARE_MAX);
+      if (file && /^(application\/json|text\/plain|)$/.test(file.type)) text = await file.text();
+      else text = [form.get('text'), form.get('url')].filter((v): v is string => typeof v === 'string').join(' ');
+    } catch {
+      text = '';
+    }
+    const cache = await caches.open(SHARE_CACHE);
+    await cache.put(SHARE_KEY, new Response(text.slice(0, SHARE_MAX), { headers: { 'Content-Type': 'text/plain' } }));
+    return Response.redirect(new URL(`/money/import?tab=bill&shared=${Date.now()}`, self.registration.scope).href, 303);
+  },
+  'POST',
+);
+
 // Offline and the page was never visited: fall back to the cached shell (SPA router takes over).
 setCatchHandler(async ({ request }) => {
   if (request.mode === 'navigate') {
-    const shell = await caches.match(INDEX_URL, { cacheName: SHELL_CACHE });
+    const shell = await caches.match(INDEX_URL, { cacheName: SHELL_CACHE, ignoreVary: true });
     if (shell) return shell;
   }
   return Response.error();

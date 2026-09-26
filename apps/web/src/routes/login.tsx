@@ -86,7 +86,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="pt-safe pb-safe relative z-10 flex min-h-dvh flex-col items-center px-5 sm:justify-center">
+    <main className="pt-safe pb-safe relative z-10 flex min-h-dvh flex-col items-center px-5 sm:justify-center">
       <div className="mt-16 flex w-full max-w-sm flex-col items-center gap-10 sm:mt-0">
         <div className="flex flex-col items-center gap-4">
           <LogoMark size={76} />
@@ -195,6 +195,6 @@ function LoginPage() {
           <VersionBadge linked={false} />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

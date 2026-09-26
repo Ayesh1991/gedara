@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
+import { isAuthRetryableFetchError, type Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
 // role is a CHECK-constrained text column, so generated types say string; narrow it here.
@@ -15,8 +16,27 @@ export interface Membership {
 }
 
 export async function getSession() {
-  const { data } = await supabase.auth.getSession();
-  return data.session;
+  const { data, error } = await supabase.auth.getSession();
+  if (data.session) return data.session;
+  // Offline with an expired access token: the refresh can't reach the server, but the saved
+  // session is still there. Keep the person in (offline mode); the next online request refreshes it.
+  if (error && isAuthRetryableFetchError(error)) return storedSession();
+  return null;
+}
+
+/** The session supabase-js keeps in localStorage (`sb-<ref>-auth-token`), read without the network. */
+function storedSession(): Session | null {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !/^sb-[a-z0-9]+-auth-token$/.test(k)) continue;
+      const s = JSON.parse(localStorage.getItem(k) ?? 'null') as Session | null;
+      if (s?.user?.id && s.refresh_token) return s;
+    }
+  } catch {
+    // storage blocked
+  }
+  return null;
 }
 
 /** The signed-in user's household (null = signed in but not invited anywhere). */

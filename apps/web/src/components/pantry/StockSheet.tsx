@@ -161,7 +161,7 @@ function StockSheetBody({ onClose, mode, product, householdId, timezone, units, 
     const base = { household_id: householdId };
     const q = (r: StockResult) => formatQty(r.qty ?? stockQty ?? 0, stockUnit);
     const name = product.name;
-    let action: () => Promise<StockResult>;
+    let action: (label: string) => Promise<StockResult>;
     let message: (r: StockResult) => string;
     switch (mode) {
       case 'add':
@@ -180,7 +180,7 @@ function StockSheetBody({ onClose, mode, product, householdId, timezone, units, 
         break;
       case 'use':
       case 'waste':
-        action = () =>
+        action = (label) =>
           consume({
             ...base,
             product_id: product.id,
@@ -188,26 +188,26 @@ function StockSheetBody({ onClose, mode, product, householdId, timezone, units, 
             location_id: place || null,
             lot_id: lotId || null,
             reason: mode === 'waste' ? 'waste' : 'consume',
-          });
+          }, label);
         message = (r) => t(mode === 'waste' ? 'pantry.done.wasted' : 'pantry.done.used', { qty: q(r), name });
         break;
       case 'open':
-        action = () =>
+        action = (label) =>
           openStock({
             ...base,
             ...(lotId ? { lot_id: lotId } : { product_id: product.id }),
             ...(whole ? {} : { qty: qty!, unit_id: unitId }),
-          });
+          }, label);
         message = (r) => t('pantry.done.opened', { qty: q(r), name });
         break;
       case 'move':
-        action = () =>
+        action = (label) =>
           transfer({
             ...base,
             to_location_id: toPlace,
             ...(lotId ? { lot_id: lotId } : { product_id: product.id, from_location_id: place || null }),
             ...(whole ? {} : { qty: qty!, unit_id: unitId }),
-          });
+          }, label);
         message = (r) => t('pantry.done.moved', { qty: q(r), name, place: tree.byId.get(toPlace)?.name ?? '' });
         break;
       case 'count':

@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.7.0 — Phase 7 AI & polish
+- **Works offline for scan-and-consume.**
+  - The app starts with no signal: the service worker serves the app, and the products, barcodes,
+    places, shopping list and membership are saved on the phone (IndexedDB, up to 7 days).
+  - Scanning a product or place label or a known barcode works offline, and so do use, −1, open,
+    move and waste, and shopping-list ticks. They wait in an **outbox** on the phone and sync in
+    order when it's back online.
+  - Every stock action now carries an id made when you tap (`rpc_stock_op`), so a retry or replay
+    never takes stock twice.
+  - If the other phone got there first (e.g. it used the last one), the action is **parked** in
+    "Couldn't sync" on Pantry with "Use what's left" / "Discard". Nothing changes silently.
+  - An older offline tick never overrides a newer change.
+  - An offline banner shows the count, the Pantry tab shows a badge, and Diagnostics shows the queue.
+  - Fixed a Phase 0 bug: the service worker's offline warm-up had never run (duplicate icon URLs
+    made `Cache.addAll` reject everything). It now caches file by file with a retry, and matches
+    cached files even when a server sends `Vary: Origin`.
+  - Offline start is reliable: the saved catalogue is restored before routing begins, saved data
+    survives failed refreshes, and it is always refreshed once the screen opens (so a reload never
+    shows yesterday's stock as current).
+  - An action queued behind another that is waiting for the network is never dropped: if it's
+    refused later, it goes to "Couldn't sync".
+- **Scanned files from Google Drive** (Money › Import › From Drive).
+  - The claude.ai Bill Scanner project keeps saving JSON into your Drive folder. The `drive-scan`
+    Edge Function reads that folder with a read-only Google service account, Zod-validates each
+    file (Google Docs are read as text), and lists it here.
+  - Bills open in the usual import review. Warranty cards and appliance rating plates fill in a
+    new or existing thing, matched by serial number, then model.
+  - Home shows "N scanned files to import", and so does the 07:00 summary.
+  - New instructions for the claude.ai project are in `docs/bill-scanner-project.md`.
+  - **Android: Share → Gedara** from the Claude app opens the shared JSON in Import.
+- **Open Food Facts**: a new barcode's product form is prefilled with name, brand, pack size,
+  a category guess and an optional photo. You're asked to check it.
+- **Labels**:
+  - HL:LOT labels for one pack or freezer bag ("EXP 26-10"). Scanning one uses that very pack.
+  - **Mini 10 mm** labels (raw-code QR only) for small items, as NIIMBOT PNGs or an A4 mini sheet
+    with its own saved grid.
+- **Swipe on pantry cards** (off until you turn it on in Settings › Appearance):
+  - right = use the usual amount
+  - left = use all
+  - hold = more actions
+  All three have the 8 s Undo.
+- **Places floor plan**: a picture per floor with rooms pinned on it. Drag the pins, or move them
+  with the arrow keys. Tap a pin to open the room.
+- **Export & backup** (Settings › Export): one zip with every table as JSON and CSV, plus photos
+  and documents. Home reminds you when the last backup is over a month old.
+- **Sinhala (සිංහල)**: every screen is translated. The language is chosen per person in Settings ›
+  Appearance and synced across devices, and the Noto Sans Sinhala font is loaded only when Sinhala
+  text is on screen. Dates follow the language; amounts stay Rs (en-LK).
+- **Checks**:
+  - `scripts/pwa-check.mjs` stands in for Lighthouse's removed PWA audit: 24/24 on a local build,
+    including offline start.
+  - Lighthouse: performance 83 on a local build, the same as v0.6.0 built the same way;
+    accessibility 100 (the login page now has a main landmark); best practices 100.
+- Migrations 50–55: `stock_op`, `shopping_tick`, `lot_code`, `floor_plan`, `scan_inbox`,
+  `export_attention`. Edge Functions: `drive-scan-1` (new) and `attention-push-2` (new Attention kinds).
+
 ## 0.6.0 — Phase 6 Insights & Attention
 - **Every number is a link** down to the record. Insights (`/insights`) has seven areas, and the
   drill path is kept in the URL (`/insights/spend?from=2026-09&cat=…&sub=…&name=…`), so any view

@@ -429,3 +429,9 @@ verify_jwt = false
 [functions.attention-push]
 enabled = true
 verify_jwt = false
+
+# Scanned files from the claude.ai Bill Scanner's Drive folder (Phase 7): signed-in users only; the
+# handler reads Drive with a read-only service account and stores under the user's own rights.
+[functions.drive-scan]
+enabled = true
+verify_jwt = true
