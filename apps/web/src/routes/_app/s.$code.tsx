@@ -27,8 +27,7 @@ function UnknownLabel() {
   const { t } = useTranslation();
   const result = Route.useLoaderData();
   const { code } = Route.useParams();
-  const title =
-    result.status === 'later' ? t('scan.later.title', { phase: result.phase }) : t(`scan.${result.status}.title`);
+  const title = t(`scan.${result.status}.title`);
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 pt-6">
       <Card className="flex flex-col items-center gap-3 px-6 py-8 text-center">

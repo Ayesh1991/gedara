@@ -11,6 +11,7 @@ import {
   Pencil,
   Plus,
   Printer,
+  Tag,
   Trash2,
   UtensilsCrossed,
   X,
@@ -284,6 +285,7 @@ function ProductPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 text-[12.5px] text-muted">
                   <span>{l.location_id ? pantry.tree.byId.get(l.location_id)?.path : t('pantry.form.noPlace')}</span>
+                  {l.code && <span className="tabular text-accent-b">{l.code}</span>}
                   {l.purchased_on && <span className="tabular">{t('pantry.lots.bought', { date: l.purchased_on })}</span>}
                 </div>
                 {canWrite && (
@@ -310,6 +312,14 @@ function ProductPage() {
                         </Button>
                       </>
                     )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void navigate({ to: '/places/labels', search: { lots: l.id, mode: 'niimbot' } })}
+                    >
+                      <Tag className="h-4 w-4" aria-hidden />
+                      {t('pantry.actions.lotLabel')}
+                    </Button>
                   </div>
                 )}
               </li>

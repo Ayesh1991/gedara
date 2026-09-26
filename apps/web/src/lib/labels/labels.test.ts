@@ -86,3 +86,37 @@ describe('NIIMBOT 20 × 20 mm bitmap', () => {
     expect(png[25]).toBe(0); // grayscale
   });
 });
+
+describe('10 mm labels (Phase 7)', () => {
+  it('puts a version-1 raw-code QR at 3 dots per module on an 80-dot label with a quiet zone', async () => {
+    const { SQ10_DOTS, composeSq10 } = await import('./bitmap');
+    const bm = composeSq10(rawCodeQr('HL:LOT:7K2P9Q'));
+    expect(bm.width).toBe(SQ10_DOTS);
+    expect(bm.height).toBe(SQ10_DOTS);
+    // 21 × 3 = 63 dots, centred: offset 8 → quiet zone of 8 dots (> 2 modules) on every side.
+    expect(bm.bits[8 * SQ10_DOTS + 8]).toBe(1);
+    expect(bm.bits[7 * SQ10_DOTS + 8]).toBe(0);
+    expect(bm.bits[8 * SQ10_DOTS + 7]).toBe(0);
+    expect(bm.bits[(8 + 62) * SQ10_DOTS + 8]).toBe(1);
+    expect(bm.bits[(8 + 63) * SQ10_DOTS + 8]).toBe(0);
+  });
+
+  it('builds a mini A4 sheet with raw codes only', async () => {
+    const { MINI_PROFILE } = await import('./sheet');
+    expect(qrSizeFor(MINI_PROFILE, true)).toBe(10);
+    const pdf = await buildSheetPdf({
+      profile: MINI_PROFILE,
+      mini: true,
+      labels: [{ url: 'https://x/s/HL:LOC:7K2P9Q', name: 'Box', crumb: '', code: 'HL:LOC:7K2P9Q' }],
+    });
+    expect(new TextDecoder().decode(pdf.slice(0, 5))).toBe('%PDF-');
+  });
+
+  it('writes a lot label date as EXP / BB YY-MM', async () => {
+    const { lotDueText } = await import('../pantry/lotText');
+    expect(lotDueText('2026-10-03', 'expiry')).toBe('EXP 26-10');
+    expect(lotDueText('2027-01-31', 'best_before')).toBe('BB 27-01');
+    expect(lotDueText(null, 'expiry')).toBeNull();
+    expect(lotDueText('2026-10-03', 'none')).toBeNull();
+  });
+});

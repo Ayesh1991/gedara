@@ -21,6 +21,7 @@ import type { EntityPhoto } from '@/lib/photos';
 import { cn } from '@/lib/utils';
 import { DueText, ProductArt, Qty, StatusChip, UnitPrice } from './bits';
 import type { StockMode } from './StockSheet';
+import { useSwipe } from './useSwipe';
 
 export function ProductCard({
   product,
@@ -32,6 +33,9 @@ export function ProductCard({
   canWrite,
   onQuickUse,
   onMore,
+  onUseAll,
+  swipe = false,
+  motion = true,
 }: {
   product: Product;
   unit: Unit | undefined;
@@ -42,13 +46,32 @@ export function ProductCard({
   canWrite: boolean;
   onQuickUse: () => void;
   onMore: () => void;
+  /** Swipe left (opt-in): use everything. */
+  onUseAll?: () => void;
+  /** Swipe right = use the quick amount, left = use all, long-press = the ⋯ menu (Settings › Appearance). */
+  swipe?: boolean;
+  motion?: boolean;
 }) {
   const { t } = useTranslation();
   const inStock = product.stock.qty > 0;
-  return (
+  const gesture = useSwipe({
+    enabled: swipe && canWrite,
+    allow: { right: inStock, left: inStock && Boolean(onUseAll) },
+    onRight: onQuickUse,
+    onLeft: () => onUseAll?.(),
+    onLongPress: onMore,
+  });
+  const card = (
     <div
-      className={cn('glass flex items-center gap-3 rounded-[var(--r)] p-3', product.archived && 'opacity-60')}
+      className={cn(
+        'glass flex items-center gap-3 rounded-[var(--r)] p-3',
+        product.archived && 'opacity-60',
+        swipe && canWrite && 'touch-pan-y select-none',
+        motion && !gesture.dragging && 'transition-transform duration-200',
+      )}
+      style={gesture.offset ? { transform: `translateX(${gesture.offset}px)` } : undefined}
       data-testid="product-card"
+      {...gesture.handlers}
     >
       <Link
         to="/pantry/$productId"
@@ -103,6 +126,23 @@ export function ProductCard({
       )}
     </div>
   );
+  if (!swipe || !canWrite) return card;
+  // What the swipe will do shows underneath as the card moves.
+  return (
+    <div className="relative overflow-hidden rounded-[var(--r)]">
+      <div aria-hidden className="absolute inset-0 flex items-center justify-between px-5 text-[13px] font-semibold">
+        <span className={cn('flex items-center gap-1.5 text-teal transition-opacity', gesture.offset > 0 ? 'opacity-100' : 'opacity-0')}>
+          <Minus className="h-4 w-4" />
+          {t('pantry.swipe.useQuick', { qty: `${product.quick_consume_qty} ${unit?.code ?? ''}`.trim() })}
+        </span>
+        <span className={cn('flex items-center gap-1.5 text-caution transition-opacity', gesture.offset < 0 ? 'opacity-100' : 'opacity-0')}>
+          {t('pantry.swipe.useAll')}
+          <Trash2 className="h-4 w-4" />
+        </span>
+      </div>
+      {card}
+    </div>
+  );
 }
 
 const ACTIONS: Array<{ mode: StockMode; icon: LucideIcon; needsStock: boolean }> = [
@@ -114,7 +154,7 @@ const ACTIONS: Array<{ mode: StockMode; icon: LucideIcon; needsStock: boolean }>
   { mode: 'waste', icon: Trash2, needsStock: true },
 ];
 
-/** The ⋯ menu: every stock action for one product (long-press / swipe come in Phase 7). */
+/** The ⋯ menu: every stock action for one product (also opened by a long-press when swipe is on). */
 export function ProductActionsSheet({
   product,
   open,

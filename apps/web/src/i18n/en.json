@@ -1,4 +1,113 @@
 {
+  "export": {
+    "title": "Export & backup",
+    "intro": "Everything in Gedara in one zip file that you keep: all your data as JSON and as spreadsheets (CSV), plus your photos and receipts.",
+    "last": "Last backup: {{when}} ({{size}})",
+    "never": "No backup yet.",
+    "withFiles": "Include photos, receipts and manuals",
+    "withFilesHint": "Makes the file bigger. Without them you still get every record.",
+    "download": "Make a backup",
+    "progress": {
+      "tables": "Reading data {{done}} of {{total}}…",
+      "files": "Adding files {{done}} of {{total}}…",
+      "zip": "Finishing…"
+    },
+    "done": "Backup saved ({{size}})",
+    "failed": "The backup couldn't be made. Nothing was saved; try again.",
+    "keepSafe": "Keep it somewhere other than this phone: your PC, a USB drive or your own Google Drive. Home reminds you when the last one is over a month old."
+  },
+  "plan": {
+    "short": "Floor plan",
+    "title": "Floor plan",
+    "intro": "A picture of each floor with your rooms pinned on it. Tap a pin to open the room.",
+    "floors": "Floors",
+    "emptyTitle": "No floor plan yet",
+    "emptyBody": "Add a floor, then a photo or a sketch of it (a phone photo of a drawing is fine), and pin your rooms where they are.",
+    "addFloor": "Add a floor",
+    "floorName": "Floor name",
+    "floorPlaceholder": "Ground floor",
+    "save": "Save",
+    "rename": "Rename",
+    "deleteFloor": "Delete this floor",
+    "confirmDelete": "Delete the floor \u201c{{name}}\u201d? Its pins come off; the places themselves stay.",
+    "noPicture": "This floor has no picture yet. A photo of a plan or a hand-drawn sketch works well.",
+    "addPicture": "Add a picture",
+    "replacePicture": "Replace the picture",
+    "edit": "Edit pins",
+    "done": "Done",
+    "editHint": "Drag a pin to where the room is. On a keyboard, focus a pin and use the arrow keys (Shift for bigger steps).",
+    "pinPlace": "Pin a place on this floor…",
+    "pin": "Pin it",
+    "unpin": "Take {{name}} off the plan",
+    "movePin": "Move the pin for {{name}}",
+    "errors": {
+      "save": "Couldn't save the floor plan.",
+      "image": "That picture couldn't be read. Try a JPG or PNG."
+    }
+  },
+  "scanInbox": {
+    "tab": "From Drive",
+    "connectTitle": "Connect the Bill Scanner folder",
+    "connectBody": "Your claude.ai Bill Scanner project saves each scan as a file in a Google Drive folder. Paste that folder's link here once, and new scans show up in this list, ready to check and import.",
+    "folderLink": "Drive folder link",
+    "connect": "Connect",
+    "ownerOnly": "Only the household owner can connect the Drive folder.",
+    "lastChecked": "Last checked {{when}}",
+    "neverChecked": "Not checked yet",
+    "checkNow": "Check now",
+    "checked": "{{count}} new files",
+    "checked_one": "1 new file",
+    "checkedRecently": "Checked a moment ago. Try again in 30 seconds.",
+    "emptyTitle": "Nothing waiting",
+    "emptyBody": "Scan a bill, warranty card or rating plate in your claude.ai Bill Scanner project. It appears here as soon as it's saved to the Drive folder.",
+    "bills": "{{done}} of {{count}} bills imported",
+    "bills_one": "{{done}} of 1 bill imported",
+    "kind": { "bill": "Bill", "warranty": "Warranty card", "rating_plate": "Rating plate", "null": "File" },
+    "status": { "waiting": "Waiting", "imported": "Done", "ignored": "Ignored", "error": "Couldn't read" },
+    "done": "Done and ignored ({{count}})",
+    "open": "Open",
+    "ignore": "Ignore",
+    "showAgain": "Show again",
+    "back": "Back to scanned files",
+    "details": "Details",
+    "whichThing": "Which thing is this about?",
+    "aNewThing": "A new thing",
+    "newThing": "Add as a new thing",
+    "fillIn": "Fill in {{name}}",
+    "thingSaved": "Saved to Things",
+    "errors": {
+      "not_configured": "The Drive reader isn't set up on the server yet (Google service-account secrets).",
+      "google_auth": "Google didn't accept the Drive reader's key. Set the secrets again.",
+      "folder_not_shared": "The Drive folder isn't shared with the Drive reader. Share it as Viewer with the service account's email.",
+      "drive_list": "Drive didn't answer properly. Try again later.",
+      "forbidden": "You can't import in this household.",
+      "network": "No connection to Gedara. Try again when you're online.",
+      "generic": "Something went wrong with the scanned files."
+    }
+  },
+  "offline": {
+    "banner": "You're offline. Scanning, using, opening, moving and ticking the list still work and sync later.",
+    "waiting": "{{count}} actions waiting to sync",
+    "waiting_one": "1 action waiting to sync",
+    "queuedCount": "{{count}} waiting",
+    "queued": "Saved on this phone. It syncs when you're back online.",
+    "tickQueued": "Ticked on this phone. It syncs when you're back online.",
+    "syncNow": "Sync now",
+    "synced": "{{count}} offline actions synced",
+    "synced_one": "1 offline action synced",
+    "staleTicks": "{{count}} ticks were older than a change on the other phone and were skipped.",
+    "staleTicks_one": "1 tick was older than a change on the other phone and was skipped.",
+    "parked": "{{count}} actions couldn't sync",
+    "parked_one": "1 action couldn't sync",
+    "review": "Review",
+    "couldntSync": "Couldn't sync",
+    "couldntSyncHint": "These were done offline, but things changed before they reached Gedara (for example, the other phone used the last one). Nothing was changed. Decide what to do:",
+    "useWhatsLeft": "Use what's left",
+    "discard": "Discard",
+    "anAction": "A pantry action",
+    "seeJournal": "See what happened in the journal",
+    "alreadySent": "It had already synced."
+  },
   "app": {
     "name": "Gedara",
     "subtitle": "ගෙදර",
@@ -124,6 +233,7 @@
     "unitsHint": "Your own units: tin, sachet, dozen",
     "fieldsHint": "Extra fields per kind of thing (IMEI, power, author)",
     "storageHint": "How much your photos and documents take",
+    "exportHint": "One zip with all your data and photos, to keep yourself",
     "notificationsHint": "A 07:00 summary of what needs attention, per device",
     "placesHint": "Rooms, boxes and QR labels",
     "signedInAs": "Signed in as {{email}}",
@@ -140,6 +250,10 @@
     "motion": "Motion",
     "motionHint": "Aurora drift, counting numbers and page transitions.",
     "motionModes": { "system": "Follow device", "on": "On", "off": "Off" },
+    "language": "Language",
+    "languageHint": "Just for you on every device. Amounts stay in Rs; numbers stay the same.",
+    "swipe": "Swipe on pantry cards",
+    "swipeHint": "Swipe right to use the usual amount, swipe left to use it all, and hold for more actions. You can always undo for 8 seconds. The buttons still work.",
     "synced": "Saved to your account, so it follows you to every device.",
     "saveFailed": "Couldn't save your theme to your account: {{message}}",
     "themes": {
@@ -160,6 +274,8 @@
     "schemaVersion": "DB schema",
     "swVersion": "Service worker",
     "swNone": "not active",
+    "outbox": "Offline queue (this device)",
+    "outboxValue": "{{queued}} waiting · {{parked}} couldn't sync",
     "test": "Test connection",
     "testing": "Testing…",
     "allGreen": "All green",
@@ -187,6 +303,8 @@
       "timeout": "Timed out after {{ms}} ms",
       "attentionPush": "The attention-push function didn't answer (deploy it)",
       "pushKeys": "attention-push has no VAPID keys yet (set the secrets)",
+      "driveScan": "The drive-scan function didn't answer. Deploy it (Phase 7).",
+      "driveKeys": "drive-scan runs, but the Google Drive reader secrets aren't set. Run scripts/drive-secrets.mjs.",
       "noSession": "No session",
       "noHousehold": "No household membership",
       "noController": "No active service worker",
@@ -334,15 +452,14 @@
       "title": "Old Grocy label",
       "body": "Grocy labels aren't used in Gedara. Print a new label from the product page."
     },
-    "later": {
-      "title": "Arrives in Phase {{phase}}",
-      "lot": "Labels for single jars and freezer bags come later.",
-      "asset": "Asset labels arrive with Things in Phase 5."
+    "offline": {
+      "title": "Needs a connection",
+      "body": "You're offline and this label isn't saved on the phone. Scan it again when you're back online."
     },
     "short": {
       "notFound": "Unknown code",
       "invalid": "Not a Gedara label",
-      "later": "Not in this phase yet",
+      "offline": "Needs a connection",
       "unknownBarcode": "New barcode",
       "grocy": "Old Grocy label",
       "place": ""
@@ -355,6 +472,9 @@
     }
   },
   "labels": {
+    "style": "Label size",
+    "styles": { "normal": "Normal", "mini": "Mini 10 mm" },
+    "miniHint": "Mini labels hold only the raw code (no name, no web link), so scan them with Gedara's scanner or the USB scanner, not the phone's camera app. NIIMBOT: the 20 mm roll is the smallest, so print on it and trim, or print the A4 mini sheet.",
     "title": "Labels",
     "count": "{{count}} labels",
     "count_one": "1 label",
@@ -401,6 +521,7 @@
     "niimbotHint": "Download a label and print it from the NIIMBOT app on a 20 × 20 mm label, without scaling. Each one is a sharp 1-bit image at the printer's 203 dpi. Printing straight from Gedara comes with the Pi station (Phase 6b)."
   },
   "pantry": {
+    "swipe": { "useQuick": "Use {{qty}}", "useAll": "Use all" },
     "intro": "Food and supplies: what you have, where it is, and what to use first.",
     "newProduct": "New product",
     "addFirst": "Add your first product",
@@ -457,6 +578,7 @@
       "expires": "Expires"
     },
     "actions": {
+      "lotLabel": "Label",
       "add": "Add stock",
       "use": "Use",
       "waste": "Waste",
@@ -552,6 +674,9 @@
       "editTitle": "Edit {{name}}",
       "name": "Name",
       "namePlaceholder": "e.g. Sugar",
+      "fromOff": "Filled in from Open Food Facts. Please check it.",
+      "useOffPhoto": "Use their photo",
+      "offPhotoFailed": "Couldn't get that photo.",
       "category": "Category",
       "defaultsFrom": "Settings copied from {{name}}.",
       "stockUnit": "Counted in",
@@ -618,6 +743,7 @@
     },
     "scan": {
       "use": "Use {{qty}}",
+      "thisPack": "This pack:",
       "add": "Add {{qty}}"
     }
   },
@@ -1713,6 +1839,10 @@
       "things_pending_one": "1 thing bought, not entered yet",
       "sms_review": "{{count}} bank alerts to review",
       "sms_review_one": "1 bank alert to review",
+      "scan_waiting": "{{count}} scanned files to import",
+      "scan_waiting_one": "1 scanned file to import",
+      "backup_due": "Your last backup is over a month old",
+      "backup_never": "Make your first backup of Gedara",
       "budget_over": "{{title}} is over budget",
       "budget_near": "{{title}} budget is almost used"
     }

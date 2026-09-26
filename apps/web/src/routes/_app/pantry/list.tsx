@@ -18,6 +18,7 @@ import {
   clearDone,
   deleteListItem,
   invalidateShopping,
+  tickListItem,
   updateListItem,
   type ListItem,
 } from '@/lib/spine/queries';
@@ -68,8 +69,9 @@ function ShoppingListPage() {
 
   async function tick(item: ListItem, value: boolean) {
     try {
-      await updateListItem(item.id!, { done: value });
-      await refresh();
+      const how = await tickListItem(qc, householdId, item, value, itemName(item));
+      if (how === 'queued') toast(t('offline.tickQueued'));
+      else await refresh();
     } catch (err) {
       fail(err);
     }
@@ -118,7 +120,7 @@ function ShoppingListPage() {
         </form>
       )}
 
-      {list.isError ? (
+      {list.isError && !list.data ? (
         <Card className="text-[14px] text-red">{t('shopping.loadError')}</Card>
       ) : list.isPending ? (
         <div className="glass h-40 animate-pulse rounded-[var(--r)]" aria-hidden />

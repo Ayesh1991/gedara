@@ -3,7 +3,9 @@ import {
   BellOff,
   ChevronRight,
   CircleAlert,
+  CloudDownload,
   Clock,
+  HardDriveDownload,
   MessageSquareText,
   PiggyBank,
   Receipt,
@@ -36,6 +38,8 @@ const ICON: Record<AttentionKind, LucideIcon> = {
   service_due: Wrench,
   things_pending: Receipt,
   sms_review: MessageSquareText,
+  scan_waiting: CloudDownload,
+  backup_due: HardDriveDownload,
   budget_over: PiggyBank,
   budget_near: PiggyBank,
 };
@@ -73,6 +77,10 @@ export function useAttentionText() {
         return t('attention.kinds.things_pending', { count: Number(i.qty ?? 0) });
       case 'sms_review':
         return t('attention.kinds.sms_review', { count: Number(i.qty ?? 0) });
+      case 'scan_waiting':
+        return t('attention.kinds.scan_waiting', { count: Number(i.qty ?? 0) });
+      case 'backup_due':
+        return t(i.extra.last_at ? 'attention.kinds.backup_due' : 'attention.kinds.backup_never');
       case 'bill_due':
       case 'insurance_due':
       case 'service_due':

@@ -33,3 +33,28 @@ describe('i18n', () => {
     expect(typeof lookup(en, key)).toBe('string');
   });
 });
+
+describe('Sinhala (si.json)', () => {
+  function flat(obj: unknown, prefix = ''): Record<string, string> {
+    return Object.entries(obj as Record<string, unknown>).reduce<Record<string, string>>((acc, [k, v]) => {
+      const key = prefix ? `${prefix}.${k}` : k;
+      return typeof v === 'string' ? { ...acc, [key]: v } : { ...acc, ...flat(v, key) };
+    }, {});
+  }
+  const enFlat = flat(en);
+  const siFlat = flat(JSON.parse(readFileSync(path.resolve(import.meta.dirname, 'si.json'), 'utf8')));
+  const placeholders = (s: string) => [...s.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]).sort();
+
+  it('translates every English string (nothing falls back to English)', () => {
+    expect(Object.keys(enFlat).filter((k) => !(k in siFlat))).toEqual([]);
+  });
+
+  it('has no keys English does not have', () => {
+    expect(Object.keys(siFlat).filter((k) => !(k in enFlat))).toEqual([]);
+  });
+
+  it('keeps every {{placeholder}}', () => {
+    const wrong = Object.keys(siFlat).filter((k) => k in enFlat && placeholders(siFlat[k]!).join() !== placeholders(enFlat[k]!).join());
+    expect(wrong).toEqual([]);
+  });
+});

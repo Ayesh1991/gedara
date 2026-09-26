@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { StatTile } from '@/components/aurora/StatTile';
 import { Money } from '@/components/money/bits';
+import { CouldntSync } from '@/components/offline/OfflineSync';
 import { usePantry, useStockAction } from '@/components/pantry/bits';
 import { ProductActionsSheet, ProductCard } from '@/components/pantry/ProductCard';
 import { ProductForm } from '@/components/pantry/ProductForm';
@@ -18,6 +19,7 @@ import { ATTENTION, matchesFilter, stockStatuses, type StatusFilter, type StockS
 import { formatQty } from '@/lib/pantry/units';
 import { todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/theme/ThemeProvider';
 import { textParam } from '@/lib/search';
 
 const FILTERS = ['all', 'attention', 'expired', 'bbPassed', 'dueSoon', 'belowMin', 'opened', 'out', 'archived'] as const;
@@ -51,6 +53,7 @@ function PantryPage() {
   const list = useShoppingList(householdId, canWrite);
   const toBuy = (list.data ?? []).filter((i) => !i.done && !i.dismissed).length;
   const { run } = useStockAction(householdId);
+  const { prefs, motion } = useTheme();
   const [menuFor, setMenuFor] = useState<Product | null>(null);
   const [sheet, setSheet] = useState<{ mode: StockMode; product: Product } | null>(null);
   const filter: Filter = search.filter ?? 'all';
@@ -95,10 +98,19 @@ function PantryPage() {
       });
   }, [rows, filter, search.q]);
 
+  function consumeAll(p: Product) {
+    const unit = pantry.units.data?.get(p.stock_unit_id);
+    void run(
+      (label) => consume({ household_id: householdId, product_id: p.id, all: true }, label),
+      (r) => t('pantry.done.used', { qty: formatQty(r.qty ?? p.stock.qty, unit), name: p.name }),
+      unit,
+    );
+  }
+
   function quickUse(p: Product) {
     const unit = pantry.units.data?.get(p.stock_unit_id);
     void run(
-      () => consume({ household_id: householdId, product_id: p.id, qty: p.quick_consume_qty }),
+      (label) => consume({ household_id: householdId, product_id: p.id, qty: p.quick_consume_qty }, label),
       (r) => t('pantry.done.used', { qty: formatQty(r.qty ?? p.quick_consume_qty, unit), name: p.name }),
       unit,
     );
@@ -131,6 +143,8 @@ function PantryPage() {
           )}
         </div>
       </div>
+
+      <CouldntSync householdId={householdId} />
 
       {pantry.error ? (
         <Card className="text-[14px] text-red">{t('pantry.loadError')}</Card>
@@ -240,6 +254,9 @@ function PantryPage() {
                   canWrite={canWrite}
                   onQuickUse={() => quickUse(product)}
                   onMore={() => setMenuFor(product)}
+                  onUseAll={() => consumeAll(product)}
+                  swipe={prefs.swipe}
+                  motion={motion}
                 />
               ))}
             </div>

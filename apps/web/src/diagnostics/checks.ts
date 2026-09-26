@@ -133,8 +133,8 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
       }),
 
     edge: async () => {
-      // All three at once: each may be a cold start, and in a row they could pass the 8 s limit.
-      const [ping, sms, push] = await Promise.all([
+      // All at once: each may be a cold start, and in a row they could pass the 8 s limit.
+      const [ping, sms, push, drive] = await Promise.all([
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('ping', { method: 'POST', body: {} }),
         // Bank-SMS ingest (Phase 2b): its version answers a plain GET.
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('sms-ingest', { method: 'GET' }),
@@ -142,13 +142,17 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
         supabase.functions.invoke<{ ok: boolean; fn_version: string; vapid_public_key: string | null }>('attention-push', {
           method: 'GET',
         }),
+        // Scanner files from Drive (Phase 7): its version, and whether the Google secrets are set.
+        supabase.functions.invoke<{ ok: boolean; fn_version: string; configured: boolean }>('drive-scan', { method: 'GET' }),
       ]);
       if (ping.error) throw ping.error;
       if (!ping.data?.ok) throw new Error('ping returned no ok');
       if (sms.error || !sms.data?.ok) throw new CheckError('diagnostics.errors.smsIngest');
       if (push.error || !push.data?.ok) throw new CheckError('diagnostics.errors.attentionPush');
       if (!push.data.vapid_public_key) throw new CheckError('diagnostics.errors.pushKeys');
-      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version}`;
+      if (drive.error || !drive.data?.ok) throw new CheckError('diagnostics.errors.driveScan');
+      if (!drive.data.configured) throw new CheckError('diagnostics.errors.driveKeys');
+      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version} · ${drive.data.fn_version}`;
     },
 
     sw: async () => {

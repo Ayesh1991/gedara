@@ -12,6 +12,10 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, 'src'),
       '@sms': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/sms'),
       '@push': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/push'),
+      // Scanner-JSON schemas + ledger-v7 fingerprints shared with the drive-scan Edge Function. They
+      // import zod, which must resolve to the app's copy from outside apps/web (Deno maps it itself).
+      '@scan': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scan'),
+      zod: path.resolve(import.meta.dirname, 'node_modules/zod'),
     },
   },
   test: {

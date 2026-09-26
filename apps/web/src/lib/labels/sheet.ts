@@ -32,6 +32,26 @@ export const DEFAULT_PROFILE: SheetProfile = {
   qrMm: 24,
 };
 
+/**
+ * "Mini" A4 sheets for small items (Phase 7): a 10 mm raw-code QR per cell and no text, so a label
+ * fits a spice jar lid or a component drawer. Kept as its own saved profile (the grid of small
+ * sticker paper differs from the 6 × 9 sheet). Portrait, 13 × 19 cells of ≈ 15 mm.
+ */
+export const MINI_PROFILE: SheetProfile = {
+  orientation: 'portrait',
+  rows: 19,
+  cols: 13,
+  marginTop: 7,
+  marginRight: 7,
+  marginBottom: 7,
+  marginLeft: 7,
+  gutterX: 0,
+  gutterY: 0,
+  offsetX: 0,
+  offsetY: 0,
+  qrMm: 10,
+};
+
 export interface Rect {
   x: number; // from the left edge, mm
   y: number; // from the TOP edge, mm
@@ -86,8 +106,9 @@ export function layoutSheets<T>(p: SheetProfile, items: T[], startRow = 0, start
   });
 }
 
-/** QR edge length that fits the cell with room for two text lines below. */
-export function qrSizeFor(p: SheetProfile): number {
+/** QR edge length that fits the cell with room for two text lines below (mini: QR only, ≥ 1 mm quiet zone). */
+export function qrSizeFor(p: SheetProfile, mini = false): number {
   const { w, h } = cellSize(p);
+  if (mini) return Math.max(6, Math.min(p.qrMm, w - 2, h - 2));
   return Math.max(8, Math.min(p.qrMm, w - 3, h - 9));
 }

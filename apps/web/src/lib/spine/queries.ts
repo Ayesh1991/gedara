@@ -2,6 +2,7 @@
 // routing an existing bill, and the shopping list. List items are written directly (RLS + column
 // grants); routing and ticking-by-bill only happen in the RPCs of migration 31.
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import { newOpBase, outbox } from '../offline';
 import { supabase } from '../supabase';
 import type { Json, Tables } from '../db.types';
 import { pantryKey } from '../pantry/queries';
@@ -103,6 +104,32 @@ export const shoppingListQuery = (householdId: string) =>
     },
     staleTime: 15 * 1000,
   });
+
+/**
+ * Ticks / unticks an item through the offline outbox (rpc_shopping_tick, migration 51): shown at
+ * once (optimistic), sent now or when the phone is back online; an older offline tick never
+ * overrides a newer change from the other phone. Returns how it went.
+ */
+export async function tickListItem(
+  qc: QueryClient,
+  householdId: string,
+  item: ListItem,
+  done: boolean,
+  label: string,
+): Promise<'done' | 'queued'> {
+  const key = shoppingKey(householdId);
+  await qc.cancelQueries({ queryKey: key });
+  const before = qc.getQueryData<ListItem[]>(key);
+  qc.setQueryData<ListItem[]>(key, (old) =>
+    old?.map((i) => (i.id === item.id ? { ...i, done, done_at: done ? new Date().toISOString() : null } : i)),
+  );
+  const out = await outbox.submit({ ...newOpBase(householdId, label), kind: 'tick', item_id: item.id!, done });
+  if (out.status === 'refused') {
+    qc.setQueryData(key, before);
+    throw Object.assign(new Error(out.error.message), { code: out.error.code });
+  }
+  return out.status;
+}
 
 /** Adds below-minimum products / removes ones that are fine again. Returns how many changed. */
 export async function syncShopping(householdId: string): Promise<{ added: number; removed: number }> {

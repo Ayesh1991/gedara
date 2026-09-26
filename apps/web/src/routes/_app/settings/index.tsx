@@ -1,5 +1,5 @@
 import { Link, createFileRoute, type LinkProps } from '@tanstack/react-router';
-import { BellRing, ChevronRight, HardDrive, ListPlus, MapPin, Palette, Ruler, Shapes, Smartphone, Stethoscope, Wallet, type LucideIcon } from 'lucide-react';
+import { BellRing, ChevronRight, HardDrive, HardDriveDownload, ListPlus, MapPin, Palette, Ruler, Shapes, Smartphone, Stethoscope, Wallet, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -71,6 +71,7 @@ function SettingsPage() {
         hint={t('settings.devicesHint')}
       />
       <SettingsLink to="/settings/storage" icon={HardDrive} title={t('storage.title')} hint={t('settings.storageHint')} />
+      <SettingsLink to="/settings/export" icon={HardDriveDownload} title={t('export.title')} hint={t('settings.exportHint')} />
       <SettingsLink
         to="/settings/appearance"
         icon={Palette}

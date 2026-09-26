@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import i18n from '@/i18n';
+import i18n, { setLanguage } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import {
   applyPrefs,
@@ -70,6 +70,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
     return () => data.subscription.unsubscribe();
   }, []);
+
+  // The UI language follows the prefs (also when another device changed it).
+  useEffect(() => {
+    void setLanguage(prefs.lang).catch(() => undefined);
+  }, [prefs.lang]);
 
   // Apply + store locally at once; save to the account in the background.
   const setPrefs = useCallback(

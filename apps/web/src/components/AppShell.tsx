@@ -22,6 +22,7 @@ import { createShortcutReader, isTypingTarget, newTargetFor } from '@/lib/shortc
 import { initials, longDate } from '@/lib/time';
 import { Brand, EnvChip, LogoMark } from './Brand';
 import { CommandPalette } from './CommandPalette';
+import { OfflineBanner, OfflineSync, useOutbox } from './offline/OfflineSync';
 import { ShortcutsHelp } from './ShortcutsHelp';
 import { WedgeListener } from './scan/WedgeListener';
 import { VersionBadge } from './VersionBadge';
@@ -110,6 +111,21 @@ function Bell({ count, className }: { count: number; className: string }) {
   );
 }
 
+/** Actions waiting to sync (or parked) show as a small count on the Pantry tab. */
+function OutboxDot() {
+  const { t } = useTranslation();
+  const n = useOutbox().length;
+  if (!n) return null;
+  return (
+    <span
+      className="tabular absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-b px-1 text-[10px] font-semibold text-[#05070f]"
+      aria-label={t('offline.queuedCount', { count: n })}
+    >
+      {n}
+    </span>
+  );
+}
+
 export function AppShell({ membership, children }: { membership: Membership; children: ReactNode }) {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -131,6 +147,7 @@ export function AppShell({ membership, children }: { membership: Membership; chi
   return (
     <div className="relative z-10 min-h-dvh lg:flex">
       <WedgeListener />
+      <OfflineSync householdId={membership.household.id} />
       <CommandPalette open={palette} onClose={() => setPalette(false)} householdId={membership.household.id} locale={locale} />
       <ShortcutsHelp open={help} onClose={() => setHelp(false)} />
       {/* Desktop / iPad landscape: glass rail */}
@@ -221,6 +238,7 @@ export function AppShell({ membership, children }: { membership: Membership; chi
         </div>
 
         <main className="mx-auto w-full max-w-[1180px] flex-1 px-4 pt-5 pb-[calc(var(--nav-h)+env(safe-area-inset-bottom)+2.5rem)] lg:px-9 lg:pt-6 lg:pb-10">
+          <OfflineBanner />
           <div key={pathname} className="page-enter">
             {children}
           </div>
@@ -252,7 +270,10 @@ export function AppShell({ membership, children }: { membership: Membership; chi
                     activeOptions={{ exact: item.to === '/' }}
                     className="group flex flex-col items-center gap-1 text-[11px] text-muted data-[status=active]:text-text"
                   >
-                    <item.icon className="h-[22px] w-[22px]" strokeWidth={1.8} aria-hidden />
+                    <span className="relative">
+                      <item.icon className="h-[22px] w-[22px]" strokeWidth={1.8} aria-hidden />
+                      {item.key === 'pantry' && <OutboxDot />}
+                    </span>
                     {t(`nav.${item.key}`)}
                     <span className="h-1 w-1 rounded-full group-data-[status=active]:bg-accent-b group-data-[status=active]:shadow-[0_0_8px_var(--accent-b)]" />
                   </Link>

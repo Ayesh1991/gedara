@@ -41,11 +41,11 @@ function MessageResult({
   result,
   className,
 }: {
-  result: Extract<Resolved, { status: 'notFound' | 'invalid' | 'later' | 'grocy' }>;
+  result: Extract<Resolved, { status: 'notFound' | 'invalid' | 'offline' | 'grocy' }>;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const later = result.status === 'later' || result.status === 'grocy';
+  const later = result.status === 'offline' || result.status === 'grocy';
   return (
     <div className={cn('glass-strong slide-up flex items-start gap-3 rounded-3xl p-4', className)} role="status" data-testid="scan-result">
       {later ? (
@@ -55,7 +55,7 @@ function MessageResult({
       )}
       <div className="min-w-0">
         <div className="font-display font-semibold">
-          {result.status === 'later' ? t('scan.later.title', { phase: result.phase }) : t(`scan.${result.status}.title`)}
+          {t(`scan.${result.status}.title`)}
         </div>
         <div className="tabular mt-0.5 truncate text-[12.5px] text-muted">
           {result.status === 'notFound'
@@ -64,7 +64,7 @@ function MessageResult({
               ? result.raw
               : result.status === 'grocy'
                 ? t('scan.grocy.body')
-                : t('scan.later.lot')}
+                : t('scan.offline.body')}
         </div>
       </div>
     </div>

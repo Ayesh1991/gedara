@@ -13,11 +13,12 @@ import { Card } from '@/components/ui/card';
 import { labelUrl, shortLabelText } from '@/lib/codes';
 import { env } from '@/lib/env';
 import type { FontBytes } from '@/lib/labels/pdf';
-import { cellRect, layoutSheets, pageSize, type SheetProfile } from '@/lib/labels/sheet';
-import { composeSq20, encodePng1bit, rasterizeText, sq20TextArea } from '@/lib/labels/bitmap';
+import { DEFAULT_PROFILE, MINI_PROFILE, cellRect, layoutSheets, pageSize, qrSizeFor, type SheetProfile } from '@/lib/labels/sheet';
+import { SQ10_DOTS, composeSq10, composeSq20, encodePng1bit, rasterizeText, sq20TextArea } from '@/lib/labels/bitmap';
+import { lotDueText, lotLabelsQuery } from '@/lib/pantry/lotLabels';
 import { productsQuery } from '@/lib/pantry/queries';
 import { assetsQuery } from '@/lib/things/queries';
-import { labelProfileQuery, saveLabelProfile, type Place } from '@/lib/places';
+import { MINI_PROFILE_NAME, PROFILE_NAME, labelProfileQuery, saveLabelProfile, type Place } from '@/lib/places';
 import { rawCodeQr } from '@/lib/qr';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +28,11 @@ const SearchSchema = z.object({
   products: z.string().optional(),
   /** Asset ids (HL:AST labels: the A-number under the QR, sq20-ast). */
   assets: z.string().optional(),
+  /** Lot ids (HL:LOT labels: one freezer bag / repacked pack, its due date under the QR, sq20-lot). */
+  lots: z.string().optional(),
   mode: z.enum(['a4', 'niimbot']).optional(),
+  /** mini = 10 mm raw-code QR, no text (small items). */
+  style: z.enum(['normal', 'mini']).optional(),
 });
 
 export const Route = createFileRoute('/_app/places/labels')({
@@ -60,13 +65,15 @@ const stamp = () => new Date().toISOString().slice(0, 10);
 
 function LabelsPage() {
   const { t } = useTranslation();
-  const { ids = '', products: productIds = '', assets: assetIds = '', mode = 'a4' } = Route.useSearch();
+  const { ids = '', products: productIds = '', assets: assetIds = '', lots: lotIds = '', mode = 'a4', style = 'normal' } = Route.useSearch();
+  const mini = style === 'mini';
   const navigate = Route.useNavigate();
   const { membership } = Route.useRouteContext();
   const householdId = membership.household.id;
   const { places, tree } = usePlaces(householdId);
   const products = useQuery({ ...productsQuery(householdId), enabled: Boolean(productIds) });
   const assets = useQuery({ ...assetsQuery(householdId), enabled: Boolean(assetIds) });
+  const lots = useQuery({ ...lotLabelsQuery(lotIds.split(',').filter(Boolean)), enabled: Boolean(lotIds) });
 
   const selected = useMemo((): LabelItem[] => {
     const wanted = ids.split(',').filter(Boolean);
@@ -88,8 +95,17 @@ function LabelsPage() {
         short: a.tag,
         crumb: [a.tag, a.location_path].filter(Boolean).join(' · '),
       }));
-    return [...placeItems, ...productItems, ...assetItems];
-  }, [ids, productIds, assetIds, tree, products.data, assets.data]);
+    // A lot's small line is its date ("EXP 26-10" / "BB 26-10"), as on a freezer bag (sq20-lot).
+    const lotItems = (lots.data ?? []).map((l) => ({
+      id: l.id,
+      code: l.code,
+      name: l.name,
+      path: l.name,
+      short: lotDueText(l.due_date, l.due_type) ?? shortLabelText(l.name),
+      crumb: [l.name, lotDueText(l.due_date, l.due_type)].filter(Boolean).join(' · '),
+    }));
+    return [...placeItems, ...productItems, ...assetItems, ...lotItems];
+  }, [ids, productIds, assetIds, tree, products.data, assets.data, lots.data]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -120,12 +136,31 @@ function LabelsPage() {
         ))}
       </div>
 
-      {places.isPending || (Boolean(productIds) && products.isPending) || (Boolean(assetIds) && assets.isPending) ? null : selected.length === 0 ? (
+      <div role="tablist" aria-label={t('labels.style')} className="glass inline-flex self-start rounded-2xl p-1">
+        {(['normal', 'mini'] as const).map((m) => (
+          <button
+            key={m}
+            role="tab"
+            type="button"
+            aria-selected={style === m}
+            onClick={() => void navigate({ search: (s) => ({ ...s, style: m }), replace: true })}
+            className={cn('h-10 rounded-xl px-4 text-[14px] font-medium transition-colors', style === m ? 'accent-pill text-text' : 'text-muted')}
+          >
+            {t(`labels.styles.${m}`)}
+          </button>
+        ))}
+      </div>
+      {mini && <Card className="text-[13.5px] leading-relaxed text-[#a5b0d0]">{t('labels.miniHint')}</Card>}
+
+      {places.isPending ||
+      (Boolean(productIds) && products.isPending) ||
+      (Boolean(assetIds) && assets.isPending) ||
+      (Boolean(lotIds) && lots.isPending) ? null : selected.length === 0 ? (
         <Card className="text-[14px] text-[#a5b0d0]">{t('labels.none')}</Card>
       ) : mode === 'a4' ? (
-        <A4Studio places={selected} householdId={householdId} canWrite={membership.role !== 'viewer'} />
+        <A4Studio key={style} places={selected} householdId={householdId} canWrite={membership.role !== 'viewer'} mini={mini} />
       ) : (
-        <NiimbotStudio places={selected} />
+        <NiimbotStudio places={selected} mini={mini} />
       )}
     </div>
   );
@@ -141,10 +176,11 @@ type LabelItem = Pick<Place, 'id' | 'code' | 'name' | 'path'> & {
   crumb?: string;
 };
 
-function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; householdId: string; canWrite: boolean }) {
+function A4Studio({ places, householdId, canWrite, mini }: { places: LabelItem[]; householdId: string; canWrite: boolean; mini: boolean }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const saved = useQuery(labelProfileQuery(householdId));
+  const profileName = mini ? MINI_PROFILE_NAME : PROFILE_NAME;
+  const saved = useQuery(labelProfileQuery(householdId, profileName, mini ? MINI_PROFILE : DEFAULT_PROFILE));
   const [draft, setDraft] = useState<SheetProfile | null>(null);
   const profile = draft ?? saved.data?.profile;
   const [start, setStart] = useState({ row: 0, col: 0 });
@@ -155,6 +191,7 @@ function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; hous
   const placed = layoutSheets(profile, places, start.row, start.col);
   const sheets = (placed.at(-1)?.page ?? 0) + 1;
   const firstIndex = start.row * profile.cols + start.col;
+  const qrMm = qrSizeFor(profile, true);
   const set = (patch: Partial<SheetProfile>) => setDraft({ ...profile, ...patch });
 
   async function makePdf() {
@@ -167,7 +204,9 @@ function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; hous
         startRow: start.row,
         startCol: start.col,
         fonts: await loadFonts(),
+        mini,
         labels: places.map((p) => ({
+          code: p.code,
           url: labelUrl(p.code, env.VITE_PUBLIC_BASE_URL),
           name: p.name,
           crumb: p.crumb ?? p.path.split(' › ').slice(0, -1).join(' › '),
@@ -191,8 +230,8 @@ function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; hous
   async function save() {
     if (!profile || !saved.data) return;
     try {
-      await saveLabelProfile(householdId, saved.data, profile);
-      await qc.invalidateQueries({ queryKey: labelProfileQuery(householdId).queryKey });
+      await saveLabelProfile(householdId, saved.data, profile, profileName);
+      await qc.invalidateQueries({ queryKey: labelProfileQuery(householdId, profileName).queryKey });
       setDraft(null);
       toast.success(t('labels.saved'));
     } catch {
@@ -274,7 +313,10 @@ function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; hous
                   strokeWidth={label ? 0.5 : 0.3}
                   strokeDasharray={used ? '1 1' : undefined}
                 />
-                {label && (
+                {label && mini && (
+                  <rect x={r.x + (r.w - qrMm) / 2} y={r.y + (r.h - qrMm) / 2} width={qrMm} height={qrMm} fill="#1b1f2d" rx={0.4} />
+                )}
+                {label && !mini && (
                   <>
                     <rect
                       x={r.x + (r.w - Math.min(profile.qrMm, r.w - 3)) / 2}
@@ -359,7 +401,7 @@ function A4Studio({ places, householdId, canWrite }: { places: LabelItem[]; hous
 
 // ── NIIMBOT 20 × 20 mm ────────────────────────────────────────────────────────
 
-function NiimbotLabel({ place }: { place: LabelItem }) {
+function NiimbotLabel({ place, mini }: { place: LabelItem; mini: boolean }) {
   const { t } = useTranslation();
   const [png, setPng] = useState<{ url: string; blob: Blob } | null>(null);
   const text = place.short ?? shortLabelText(place.name);
@@ -370,7 +412,9 @@ function NiimbotLabel({ place }: { place: LabelItem }) {
     void (async () => {
       await document.fonts.load('700 30px "Space Grotesk"').catch(() => undefined);
       const area = sq20TextArea();
-      const bm = composeSq20(rawCodeQr(place.code), text ? rasterizeText(text, area.width, area.height) : null);
+      const bm = mini
+        ? composeSq10(rawCodeQr(place.code))
+        : composeSq20(rawCodeQr(place.code), text ? rasterizeText(text, area.width, area.height) : null);
       const blob = new Blob([(await encodePng1bit(bm)) as BlobPart], { type: 'image/png' });
       if (cancelled) return;
       url = URL.createObjectURL(blob);
@@ -380,11 +424,14 @@ function NiimbotLabel({ place }: { place: LabelItem }) {
       cancelled = true;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [place.code, text]);
+  }, [place.code, text, mini]);
 
   return (
     <li className="glass flex flex-col items-center gap-2.5 rounded-[22px] p-3.5">
-      <div className="flex aspect-square w-full max-w-[160px] items-center justify-center rounded-xl bg-white p-1.5">
+      <div
+        className="flex aspect-square w-full items-center justify-center rounded-xl bg-white p-1.5"
+        style={{ maxWidth: mini ? SQ10_DOTS * 1.25 : 160 }}
+      >
         {png && <img src={png.url} alt={place.code} className="h-full w-full [image-rendering:pixelated]" />}
       </div>
       <div className="w-full min-w-0 text-center">
@@ -396,7 +443,7 @@ function NiimbotLabel({ place }: { place: LabelItem }) {
         variant="secondary"
         className="w-full"
         disabled={!png}
-        onClick={() => png && download(png.blob, `${place.code.replace(/:/g, '-')}.png`, 'image/png')}
+        onClick={() => png && download(png.blob, `${place.code.replace(/:/g, '-')}${mini ? '-10mm' : ''}.png`, 'image/png')}
       >
         <Download className="h-4 w-4" aria-hidden />
         {t('labels.png')}
@@ -405,14 +452,14 @@ function NiimbotLabel({ place }: { place: LabelItem }) {
   );
 }
 
-function NiimbotStudio({ places }: { places: LabelItem[] }) {
+function NiimbotStudio({ places, mini }: { places: LabelItem[]; mini: boolean }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-4">
       <Card className="text-[13.5px] leading-relaxed text-[#a5b0d0]">{t('labels.niimbotHint')}</Card>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {places.map((p) => (
-          <NiimbotLabel key={p.id} place={p} />
+          <NiimbotLabel key={p.id} place={p} mini={mini} />
         ))}
       </ul>
     </div>

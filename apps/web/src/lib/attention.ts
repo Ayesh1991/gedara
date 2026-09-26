@@ -14,6 +14,8 @@ export const ATTENTION_KINDS = [
   'service_due',
   'things_pending',
   'sms_review',
+  'scan_waiting',
+  'backup_due',
   'budget_over',
   'budget_near',
 ] as const;
@@ -73,6 +75,10 @@ export function attentionTarget(i: AttentionItem): Target {
       return { to: '/things/pending' };
     case 'sms_review':
       return { to: '/money/inbox' };
+    case 'scan_waiting':
+      return { to: '/money/import', search: { tab: 'drive' } };
+    case 'backup_due':
+      return { to: '/settings/export' };
     case 'budget_over':
     case 'budget_near': {
       const month = typeof i.extra.month === 'string' ? i.extra.month : undefined;

@@ -8,6 +8,13 @@ import { MOTION_MODES, type MotionMode } from '@/theme/prefs';
 import { THEME_IDS, THEMES, type ThemeId } from '@/theme/themes';
 import { useTheme } from '@/theme/ThemeProvider';
 
+type Lang = 'en' | 'si';
+// Each language is named in itself, so anyone can find their own.
+const LANGS: Array<{ id: Lang; label: string }> = [
+  { id: 'en', label: 'English' },
+  { id: 'si', label: 'සිංහල' },
+];
+
 export const Route = createFileRoute('/_app/settings/appearance')({
   component: AppearancePage,
 });
@@ -46,6 +53,11 @@ function AppearancePage() {
   const { prefs, setPrefs } = useTheme();
   const themeKeys = useRadioKeys<ThemeId>(THEME_IDS, prefs.theme, (theme) => setPrefs({ theme }));
   const motionKeys = useRadioKeys<MotionMode>(MOTION_MODES, prefs.motion, (motion) => setPrefs({ motion }));
+  const langKeys = useRadioKeys<Lang>(
+    LANGS.map((l) => l.id),
+    prefs.lang,
+    (lang) => setPrefs({ lang }),
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -132,6 +144,65 @@ function AppearancePage() {
             );
           })}
         </div>
+      </Card>
+
+      <Card className="flex flex-col gap-4">
+        <div className="space-y-1">
+          <h2 id="lang-label" className="font-display text-[17px] font-semibold">
+            {t('appearance.language')}
+          </h2>
+          <p className="text-[13.5px] text-[#a5b0d0]">{t('appearance.languageHint')}</p>
+        </div>
+        <div role="radiogroup" aria-labelledby="lang-label" className="grid grid-cols-2 gap-1 rounded-2xl border border-line bg-white/[0.04] p-1">
+          {LANGS.map((l, i) => {
+            const selected = prefs.lang === l.id;
+            return (
+              <button
+                key={l.id}
+                ref={(el) => {
+                  langKeys.refs.current[i] = el;
+                }}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                tabIndex={selected ? 0 : -1}
+                lang={l.id}
+                data-lang-option={l.id}
+                onClick={() => setPrefs({ lang: l.id })}
+                onKeyDown={langKeys.onKeyDown}
+                className={cn('h-11 rounded-xl text-sm transition-colors', selected ? 'accent-pill text-text' : 'text-muted hover:text-text')}
+              >
+                {l.label}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card className="flex items-start gap-4">
+        <div className="min-w-0 flex-1 space-y-1">
+          <h2 id="swipe-label" className="font-display text-[17px] font-semibold">
+            {t('appearance.swipe')}
+          </h2>
+          <p className="text-[13.5px] leading-relaxed text-[#a5b0d0]">{t('appearance.swipeHint')}</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={prefs.swipe}
+          aria-labelledby="swipe-label"
+          data-testid="swipe-switch"
+          onClick={() => setPrefs({ swipe: !prefs.swipe })}
+          className={cn(
+            'relative mt-1 h-8 w-14 shrink-0 rounded-full border transition-colors',
+            prefs.swipe ? 'border-accent-a bg-[color-mix(in_srgb,var(--accent-a)_45%,transparent)]' : 'border-line-2 bg-white/5',
+          )}
+        >
+          <span
+            aria-hidden
+            className={cn('absolute top-1 h-[22px] w-[22px] rounded-full bg-text transition-[left]', prefs.swipe ? 'left-[28px]' : 'left-1')}
+          />
+        </button>
       </Card>
 
       <p className="text-center text-xs text-muted">{t('appearance.synced')}</p>

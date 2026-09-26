@@ -5,7 +5,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { compressPhoto } from './images';
 import { supabase } from './supabase';
 
-export type PhotoEntity = 'location' | 'product' | 'asset';
+export type PhotoEntity = 'location' | 'product' | 'asset' | 'floor_plan';
 
 export interface EntityPhoto {
   attachmentId: string;

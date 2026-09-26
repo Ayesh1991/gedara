@@ -29,12 +29,14 @@ import { Route as AppPantryListRouteImport } from './routes/_app/pantry/list'
 import { Route as AppPlacesIndexRouteImport } from './routes/_app/places/index'
 import { Route as AppPlacesPlaceIdRouteImport } from './routes/_app/places/$placeId'
 import { Route as AppPlacesLabelsRouteImport } from './routes/_app/places/labels'
+import { Route as AppPlacesPlanRouteImport } from './routes/_app/places/plan'
 import { Route as AppSCodeRouteImport } from './routes/_app/s.$code'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings/appearance'
 import { Route as AppSettingsCategoriesRouteImport } from './routes/_app/settings/categories'
 import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings/diagnostics'
+import { Route as AppSettingsExportRouteImport } from './routes/_app/settings/export'
 import { Route as AppSettingsFieldsRouteImport } from './routes/_app/settings/fields'
 import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings/notifications'
 import { Route as AppSettingsStorageRouteImport } from './routes/_app/settings/storage'
@@ -145,6 +147,11 @@ const AppPlacesLabelsRoute = AppPlacesLabelsRouteImport.update({
   path: '/places/labels',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPlacesPlanRoute = AppPlacesPlanRouteImport.update({
+  id: '/places/plan',
+  path: '/places/plan',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSCodeRoute = AppSCodeRouteImport.update({
   id: '/s/$code',
   path: '/s/$code',
@@ -173,6 +180,11 @@ const AppSettingsDevicesRoute = AppSettingsDevicesRouteImport.update({
 const AppSettingsDiagnosticsRoute = AppSettingsDiagnosticsRouteImport.update({
   id: '/settings/diagnostics',
   path: '/settings/diagnostics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsExportRoute = AppSettingsExportRouteImport.update({
+  id: '/settings/export',
+  path: '/settings/export',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsFieldsRoute = AppSettingsFieldsRouteImport.update({
@@ -244,11 +256,13 @@ export interface FileRoutesByFullPath {
   '/pantry/list': typeof AppPantryListRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/labels': typeof AppPlacesLabelsRoute
+  '/places/plan': typeof AppPlacesPlanRoute
   '/s/$code': typeof AppSCodeRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/settings/export': typeof AppSettingsExportRoute
   '/settings/fields': typeof AppSettingsFieldsRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/storage': typeof AppSettingsStorageRoute
@@ -281,11 +295,13 @@ export interface FileRoutesByTo {
   '/pantry/list': typeof AppPantryListRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/labels': typeof AppPlacesLabelsRoute
+  '/places/plan': typeof AppPlacesPlanRoute
   '/s/$code': typeof AppSCodeRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/settings/export': typeof AppSettingsExportRoute
   '/settings/fields': typeof AppSettingsFieldsRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/storage': typeof AppSettingsStorageRoute
@@ -320,11 +336,13 @@ export interface FileRoutesById {
   '/_app/pantry/list': typeof AppPantryListRoute
   '/_app/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/_app/places/labels': typeof AppPlacesLabelsRoute
+  '/_app/places/plan': typeof AppPlacesPlanRoute
   '/_app/s/$code': typeof AppSCodeRoute
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/categories': typeof AppSettingsCategoriesRoute
   '/_app/settings/devices': typeof AppSettingsDevicesRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
+  '/_app/settings/export': typeof AppSettingsExportRoute
   '/_app/settings/fields': typeof AppSettingsFieldsRoute
   '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
   '/_app/settings/storage': typeof AppSettingsStorageRoute
@@ -359,11 +377,13 @@ export interface FileRouteTypes {
     | '/pantry/list'
     | '/places/$placeId'
     | '/places/labels'
+    | '/places/plan'
     | '/s/$code'
     | '/settings/appearance'
     | '/settings/categories'
     | '/settings/devices'
     | '/settings/diagnostics'
+    | '/settings/export'
     | '/settings/fields'
     | '/settings/notifications'
     | '/settings/storage'
@@ -396,11 +416,13 @@ export interface FileRouteTypes {
     | '/pantry/list'
     | '/places/$placeId'
     | '/places/labels'
+    | '/places/plan'
     | '/s/$code'
     | '/settings/appearance'
     | '/settings/categories'
     | '/settings/devices'
     | '/settings/diagnostics'
+    | '/settings/export'
     | '/settings/fields'
     | '/settings/notifications'
     | '/settings/storage'
@@ -434,11 +456,13 @@ export interface FileRouteTypes {
     | '/_app/pantry/list'
     | '/_app/places/$placeId'
     | '/_app/places/labels'
+    | '/_app/places/plan'
     | '/_app/s/$code'
     | '/_app/settings/appearance'
     | '/_app/settings/categories'
     | '/_app/settings/devices'
     | '/_app/settings/diagnostics'
+    | '/_app/settings/export'
     | '/_app/settings/fields'
     | '/_app/settings/notifications'
     | '/_app/settings/storage'
@@ -604,6 +628,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlacesLabelsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/places/plan': {
+      id: '/_app/places/plan'
+      path: '/places/plan'
+      fullPath: '/places/plan'
+      preLoaderRoute: typeof AppPlacesPlanRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/s/$code': {
       id: '/_app/s/$code'
       path: '/s/$code'
@@ -644,6 +675,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/diagnostics'
       fullPath: '/settings/diagnostics'
       preLoaderRoute: typeof AppSettingsDiagnosticsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/export': {
+      id: '/_app/settings/export'
+      path: '/settings/export'
+      fullPath: '/settings/export'
+      preLoaderRoute: typeof AppSettingsExportRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/fields': {
@@ -733,11 +771,13 @@ interface AppRouteChildren {
   AppPantryListRoute: typeof AppPantryListRoute
   AppPlacesPlaceIdRoute: typeof AppPlacesPlaceIdRoute
   AppPlacesLabelsRoute: typeof AppPlacesLabelsRoute
+  AppPlacesPlanRoute: typeof AppPlacesPlanRoute
   AppSCodeRoute: typeof AppSCodeRoute
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsCategoriesRoute: typeof AppSettingsCategoriesRoute
   AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
+  AppSettingsExportRoute: typeof AppSettingsExportRoute
   AppSettingsFieldsRoute: typeof AppSettingsFieldsRoute
   AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
   AppSettingsStorageRoute: typeof AppSettingsStorageRoute
@@ -769,11 +809,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppPantryListRoute: AppPantryListRoute,
   AppPlacesPlaceIdRoute: AppPlacesPlaceIdRoute,
   AppPlacesLabelsRoute: AppPlacesLabelsRoute,
+  AppPlacesPlanRoute: AppPlacesPlanRoute,
   AppSCodeRoute: AppSCodeRoute,
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsCategoriesRoute: AppSettingsCategoriesRoute,
   AppSettingsDevicesRoute: AppSettingsDevicesRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
+  AppSettingsExportRoute: AppSettingsExportRoute,
   AppSettingsFieldsRoute: AppSettingsFieldsRoute,
   AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
   AppSettingsStorageRoute: AppSettingsStorageRoute,

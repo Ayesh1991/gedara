@@ -1,6 +1,6 @@
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
-import { darkRuns, urlQr } from '../qr';
+import { darkRuns, rawCodeQr, urlQr, type QrMatrix } from '../qr';
 import { cellRect, layoutSheets, pageSize, qrSizeFor, type Rect, type SheetProfile } from './sheet';
 
 // A4 label + calibration PDFs (pdf-lib, loaded only on the Labels screen).
@@ -13,6 +13,28 @@ export interface SheetLabel {
   url: string;
   name: string;
   crumb: string;
+  /** The raw code (HL:LOC:…): what a mini label holds instead of the URL. */
+  code?: string;
+}
+
+function drawQr(page: PDFPage, pageH: number, m: QrMatrix, x: number, y: number, sizeMm: number) {
+  const mod = sizeMm / m.size;
+  for (const run of darkRuns(m)) {
+    page.drawRectangle({
+      x: (x + run.col * mod) * PT,
+      y: (pageH - (y + (run.row + 1) * mod)) * PT,
+      // A hair of overlap so adjacent runs never leave a white seam in the printer driver.
+      width: run.len * mod * PT + 0.05,
+      height: mod * PT + 0.05,
+      color: rgb(0, 0, 0),
+    });
+  }
+}
+
+/** Mini label: the raw-code QR centred in the cell, no text. */
+function drawMiniCell(page: PDFPage, pageH: number, rect: Rect, label: SheetLabel, qrMm: number) {
+  if (!label.code) return;
+  drawQr(page, pageH, rawCodeQr(label.code), rect.x + (rect.w - qrMm) / 2, rect.y + (rect.h - qrMm) / 2, qrMm);
 }
 
 /** Keep only characters the embedded font can draw (Sinhala etc. would print as boxes). */
@@ -29,20 +51,9 @@ function fit(font: PDFFont, text: string, size: number, maxW: number): string {
 }
 
 function drawCell(page: PDFPage, pageH: number, rect: Rect, label: SheetLabel, qrMm: number, fonts: Fonts) {
-  const m = urlQr(label.url);
-  const mod = qrMm / m.size;
   const qx = rect.x + (rect.w - qrMm) / 2;
   const qy = rect.y + 1.5;
-  for (const run of darkRuns(m)) {
-    page.drawRectangle({
-      x: (qx + run.col * mod) * PT,
-      y: (pageH - (qy + (run.row + 1) * mod)) * PT,
-      // A hair of overlap so adjacent runs never leave a white seam in the printer driver.
-      width: run.len * mod * PT + 0.05,
-      height: mod * PT + 0.05,
-      color: rgb(0, 0, 0),
-    });
-  }
+  drawQr(page, pageH, urlQr(label.url), qx, qy, qrMm);
   const textW = (rect.w - 2) * PT;
   const cx = (rect.x + rect.w / 2) * PT;
   const nameY = qy + qrMm + 3.2;
@@ -96,6 +107,8 @@ export async function buildSheetPdf(opts: {
   startRow?: number;
   startCol?: number;
   fonts?: FontBytes;
+  /** Mini sheet: raw-code QR only (10 mm labels). */
+  mini?: boolean;
 }): Promise<Uint8Array> {
   const { profile } = opts;
   const doc = await PDFDocument.create();
@@ -103,11 +116,12 @@ export async function buildSheetPdf(opts: {
   doc.setCreator('Gedara');
   const fonts = await embedFonts(doc, opts.fonts);
   const size = pageSize(profile);
-  const qrMm = qrSizeFor(profile);
+  const qrMm = qrSizeFor(profile, opts.mini);
   const pages: PDFPage[] = [];
   for (const pl of layoutSheets(profile, opts.labels, opts.startRow, opts.startCol)) {
     while (pages.length <= pl.page) pages.push(doc.addPage([size.w * PT, size.h * PT]));
-    drawCell(pages[pl.page]!, size.h, pl.rect, pl.item, qrMm, fonts);
+    if (opts.mini) drawMiniCell(pages[pl.page]!, size.h, pl.rect, pl.item, qrMm);
+    else drawCell(pages[pl.page]!, size.h, pl.rect, pl.item, qrMm, fonts);
   }
   return doc.save();
 }

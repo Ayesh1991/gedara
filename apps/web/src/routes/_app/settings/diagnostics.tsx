@@ -4,6 +4,7 @@ import { CircleCheck, CircleX, LoaderCircle, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { useOutbox } from '@/components/offline/OfflineSync';
 import { Card, CardTitle } from '@/components/ui/card';
 import { CHECK_IDS, buildChecks, runCheck, type CheckId, type CheckResult } from '@/diagnostics/checks';
 import { env } from '@/lib/env';
@@ -61,6 +62,8 @@ function DiagnosticsPage() {
   const running = done.length < CHECK_IDS.length;
   const failed = done.filter((r) => !r.ok).length;
   const swVersion = sw.isPending ? undefined : (sw.data ?? null);
+  // The offline outbox on THIS device (lesson from the ledger: always show the queue length).
+  const outboxOps = useOutbox();
 
   const versionRows: Array<[string, string]> = [
     [t('diagnostics.appVersion'), `v${APP_VERSION}`],
@@ -71,6 +74,13 @@ function DiagnosticsPage() {
     [
       t('diagnostics.swVersion'),
       swVersion === undefined ? t('common.loading') : swVersion ? `v${swVersion}` : t('diagnostics.swNone'),
+    ],
+    [
+      t('diagnostics.outbox'),
+      t('diagnostics.outboxValue', {
+        queued: outboxOps.filter((o) => o.state === 'queued').length,
+        parked: outboxOps.filter((o) => o.state === 'parked').length,
+      }),
     ],
   ];
 

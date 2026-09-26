@@ -46,6 +46,14 @@ export interface AssetInitial {
   quantity?: number;
   /** Shown as "From the bill: …". */
   bill?: { payee: string | null; date: string | null; amount: number } | null;
+  // From a scanned warranty card / rating plate (Phase 7). With an existing thing they only fill
+  // fields that are still empty.
+  warranty_until?: string | null;
+  lifetime_warranty?: boolean;
+  maker?: string | null;
+  model?: string | null;
+  serial?: string | null;
+  description?: string | null;
 }
 
 /** A bill line → the asset form's prefill: its name, category, price and the bill's date and shop. */
@@ -140,25 +148,25 @@ function AssetFormBody({
   const [placeId, setPlaceId] = useState(src?.location_id ?? initial?.location_id ?? '');
   const [price, setPrice] = useState(str(src?.purchase_price ?? initial?.purchase_price));
   const [boughtOn, setBoughtOn] = useState(src?.purchased_on ?? initial?.purchased_on ?? '');
-  const [warranty, setWarranty] = useState(src?.warranty_until ?? '');
+  const [warranty, setWarranty] = useState(src?.warranty_until ?? initial?.warranty_until ?? '');
   // More details
   const [quantity, setQuantity] = useState(str(src?.quantity ?? initial?.quantity ?? 1));
-  const [maker, setMaker] = useState(src?.manufacturer ?? '');
-  const [model, setModel] = useState(src?.model_no ?? '');
-  const [serial, setSerial] = useState(src?.serial_no ?? '');
+  const [maker, setMaker] = useState(src?.manufacturer || initial?.maker || '');
+  const [model, setModel] = useState(src?.model_no || initial?.model || '');
+  const [serial, setSerial] = useState(src?.serial_no || initial?.serial || '');
   const [condition, setCondition] = useState(src?.condition ?? '');
   const [status, setStatus] = useState(src?.status ?? 'in_use');
-  const [vendor, setVendor] = useState(src?.vendor ?? initial?.vendor ?? '');
+  const [vendor, setVendor] = useState(src?.vendor || initial?.vendor || '');
   const [life, setLife] = useState(str(src?.useful_life_months));
   const [salvage, setSalvage] = useState(str(src?.salvage_value));
-  const [lifetime, setLifetime] = useState(src?.lifetime_warranty ?? false);
+  const [lifetime, setLifetime] = useState(src?.lifetime_warranty || initial?.lifetime_warranty || false);
   const [warrantyNotes, setWarrantyNotes] = useState(src?.warranty_notes ?? '');
   const [insured, setInsured] = useState(src?.insured ?? false);
   const [insuranceNotes, setInsuranceNotes] = useState(src?.insurance_notes ?? '');
   const [parentId, setParentId] = useState(src?.parent_id ?? initial?.parent_id ?? '');
   const [tagIds, setTagIds] = useState<string[]>(src?.tag_ids ?? []);
   const [newTag, setNewTag] = useState('');
-  const [description, setDescription] = useState(src?.description ?? '');
+  const [description, setDescription] = useState(src?.description || initial?.description || '');
   const previousCustom = (src?.custom ?? {}) as Record<string, unknown>;
   const [custom, setCustom] = useState<Record<string, string | boolean>>(() =>
     Object.fromEntries(Object.entries(previousCustom).map(([k, v]) => [k, formValue(v)])),
@@ -384,7 +392,7 @@ function AssetFormBody({
         </div>
       </div>
 
-      <details className="glass rounded-2xl px-4 py-3">
+      <details className="glass rounded-2xl px-4 py-3" open={Boolean(initial?.maker || initial?.model || initial?.serial) || undefined}>
         <summary className="cursor-pointer text-[14px] font-medium">{t('things.form.more')}</summary>
         <div className="mt-4 flex flex-col gap-4">
           {templates.length > 0 && (
