@@ -1,9 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ImagePlus, Trash } from 'lucide-react';
+import { Trash } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/money/bits';
+import { PhotoPicker } from '@/components/photos/PhotoControls';
+import { ScanField } from '@/components/scan/ScanField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -43,7 +45,7 @@ interface ProductFormProps {
   /** From a scan of an unknown barcode. */
   barcode?: string | null;
   /** New product from a bill line: prefilled name / category / unit. */
-  initial?: { name?: string; category_id?: string | null; stock_unit_id?: string | null } | null;
+  initial?: { name?: string; category_id?: string | null; stock_unit_id?: string | null; default_location_id?: string | null } | null;
   onSaved?: (p: Product | { id: string; name: string }) => void;
 }
 
@@ -76,7 +78,7 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
   const [name, setName] = useState(product?.name ?? initial?.name ?? '');
   const [categoryId, setCategoryId] = useState<string | null>(product?.category_id ?? initial?.category_id ?? null);
   const [stockUnit, setStockUnit] = useState(product?.stock_unit_id ?? initial?.stock_unit_id ?? g?.id ?? '');
-  const [placeId, setPlaceId] = useState(product?.default_location_id ?? '');
+  const [placeId, setPlaceId] = useState(product?.default_location_id ?? initial?.default_location_id ?? '');
   const [dueType, setDueType] = useState<DueTypeValue>((product?.due_type as DueTypeValue) ?? 'best_before');
   const [dueDays, setDueDays] = useState(str(product?.default_due_days));
   // More details
@@ -437,7 +439,7 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
               <label htmlFor="product-barcode" className={fieldLabel}>
                 {t('pantry.product.barcode')}
               </label>
-              <Input id="product-barcode" inputMode="numeric" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} className="tabular" />
+              <ScanField id="product-barcode" inputMode="numeric" autoComplete="off" value={code} onChange={setCode} />
             </div>
           )}
 
@@ -455,36 +457,18 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-white/[0.04]">
-              {photoUrl && <img src={photoUrl} alt="" className="h-full w-full object-cover" />}
-            </div>
-            <label className="glass inline-flex h-11 cursor-pointer items-center gap-2 rounded-[14px] px-4 text-[14px]">
-              <ImagePlus className="h-4 w-4" aria-hidden />
-              {t('pantry.product.photo')}
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => {
-                  setFile(e.target.files?.[0] ?? null);
-                  setDropPhoto(false);
-                }}
-              />
-            </label>
-            {(photo || file) && !dropPhoto && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setFile(null);
-                  setDropPhoto(true);
-                }}
-              >
-                {t('places.removePhoto')}
-              </Button>
-            )}
-          </div>
+          <PhotoPicker
+            previewUrl={photoUrl}
+            onPick={(f) => {
+              setFile(f);
+              setDropPhoto(false);
+            }}
+            onRemove={() => {
+              setFile(null);
+              setDropPhoto(true);
+            }}
+            canRemove={Boolean((photo || file) && !dropPhoto)}
+          />
         </div>
       </details>
 

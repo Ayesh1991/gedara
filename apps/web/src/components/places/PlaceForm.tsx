@@ -1,9 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ImagePlus, Trash } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { PhotoPicker } from '@/components/photos/PhotoControls';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { ImageError } from '@/lib/images';
@@ -37,6 +37,8 @@ interface PlaceFormProps {
   place?: Place | null;
   photo?: PlacePhoto | null;
   defaultParentId?: string | null;
+  /** A new place's kind ("New box" from a blank label). */
+  defaultKind?: PlaceKind | null;
   onSaved?: (p: Place) => void;
 }
 
@@ -51,12 +53,12 @@ export function PlaceForm(props: PlaceFormProps) {
   );
 }
 
-function PlaceFormBody({ onClose, householdId, tree, place, photo, defaultParentId, onSaved }: PlaceFormProps) {
+function PlaceFormBody({ onClose, householdId, tree, place, photo, defaultParentId, defaultKind, onSaved }: PlaceFormProps) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [name, setName] = useState(place?.name ?? '');
   const [kind, setKind] = useState<PlaceKind | null>(
-    (place?.kind as PlaceKind | null) ?? (place ? null : defaultParentId ? 'container' : 'room'),
+    (place?.kind as PlaceKind | null) ?? (place ? null : (defaultKind ?? (defaultParentId ? 'container' : 'room'))),
   );
   const [parentId, setParentId] = useState<string | null>(place ? place.parent_id : (defaultParentId ?? null));
   const [climate, setClimate] = useState<Climate | null>((place?.climate as Climate | null) ?? null);
@@ -169,39 +171,19 @@ function PlaceFormBody({ onClose, householdId, tree, place, photo, defaultParent
 
       <div>
         <span className={fieldLabel}>{t('places.fields.photo')}</span>
-        <div className="flex items-center gap-3">
-          <label className="glass flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl">
-            {showPhoto ? (
-              <img src={showPhoto} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <ImagePlus className="h-6 w-6 text-muted" aria-hidden />
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              aria-label={t('places.fields.photo')}
-              onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null);
-                setDropPhoto(false);
-              }}
-            />
-          </label>
-          <div className="flex-1 text-[13px] leading-snug text-muted">{t('places.fields.photoHint')}</div>
-          {(file || (photo && !dropPhoto)) && (
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label={t('places.removePhoto')}
-              onClick={() => {
-                setFile(null);
-                setDropPhoto(true);
-              }}
-            >
-              <Trash className="h-[18px] w-[18px]" aria-hidden />
-            </Button>
-          )}
-        </div>
+        <PhotoPicker
+          previewUrl={showPhoto ?? null}
+          onPick={(f) => {
+            setFile(f);
+            setDropPhoto(false);
+          }}
+          onRemove={() => {
+            setFile(null);
+            setDropPhoto(true);
+          }}
+          canRemove={Boolean(file || (photo && !dropPhoto))}
+          hint={t('places.fields.photoHint')}
+        />
       </div>
 
       <details className="group rounded-2xl border border-line bg-white/[0.02] px-4 py-3">

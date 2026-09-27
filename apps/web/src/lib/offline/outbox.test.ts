@@ -158,3 +158,40 @@ describe('classifyError', () => {
     expect(classifyError(new Error('aborted')).type).toBe('transient');
   });
 });
+
+describe('move ops (Phase 7b)', () => {
+  it('queue offline like stock ops and replay in order', async () => {
+    const { box, state } = setup(() => ok);
+    state.online = false;
+    const move = { ...newOpBase('h1', 'Drill → Box 3'), kind: 'move' as const, item: 'asset' as const, item_id: 'a1', to: 'l3' };
+    expect((await box.submit(move)).status).toBe('queued');
+    expect((await box.submit(stockOp('b'))).status).toBe('queued');
+    state.online = true;
+    await box.flush();
+    expect(state.sent).toEqual(['Drill → Box 3', 'b']);
+  });
+
+  it('a queued move refused because the item moved again is parked with the reason', async () => {
+    const newer: SendResult = { type: 'refused', error: { code: 'GDMVC', message: 'moved again', available: null, detail: 'newer' } };
+    const { box, state } = setup(() => newer);
+    state.online = false;
+    await box.submit({ ...newOpBase('h1', 'Drill → Box 3'), kind: 'move', item: 'asset', item_id: 'a1', to: 'l3' });
+    state.online = true;
+    const report = await box.flush();
+    expect(report.parked).toHaveLength(1);
+    expect(box.list()[0]).toMatchObject({ state: 'parked', error: { code: 'GDMVC', detail: 'newer' } });
+  });
+});
+
+describe('classifyError details', () => {
+  it('keeps a text detail (GDMVC newer / moved) but not the GDSTK number', () => {
+    expect(classifyError({ code: 'GDMVC', message: 'x', details: 'moved' })).toEqual({
+      type: 'refused',
+      error: { code: 'GDMVC', message: 'x', available: null, detail: 'moved' },
+    });
+    expect(classifyError({ code: 'GDSTK', message: 'x', details: '3' })).toEqual({
+      type: 'refused',
+      error: { code: 'GDSTK', message: 'x', available: 3 },
+    });
+  });
+});

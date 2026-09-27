@@ -6,8 +6,9 @@
 export const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const CODE_BODY = /^[0-9A-HJKMNP-TV-Z]{6}$/;
 
-export type CodeKind = 'loc' | 'prd' | 'ast' | 'lot';
-const PREFIX_TO_KIND: Record<string, CodeKind> = { LOC: 'loc', PRD: 'prd', AST: 'ast', LOT: 'lot' };
+/** `tag` = a blank label (Phase 7b): printed first, becomes a place / thing / product on its first scan. */
+export type CodeKind = 'loc' | 'prd' | 'ast' | 'lot' | 'tag';
+const PREFIX_TO_KIND: Record<string, CodeKind> = { LOC: 'loc', PRD: 'prd', AST: 'ast', LOT: 'lot', TAG: 'tag' };
 
 export type ParsedScan =
   | { kind: CodeKind; code: string }
@@ -56,6 +57,12 @@ export function parseScan(input: string): ParsedScan {
 
   if (/^\d{8,14}$/.test(upper) && validGtin(upper)) return { kind: 'ean', digits: upper };
   return { kind: 'unknown', raw };
+}
+
+/** A retail barcode as the barcode fields store it: GTIN digits, else the trimmed text. */
+export function barcodeText(raw: string): string {
+  const parsed = parseScan(raw);
+  return parsed.kind === 'ean' ? parsed.digits : raw.trim();
 }
 
 /** URL printed on A4 labels. `base` is VITE_PUBLIC_BASE_URL (no custom domain, §7d). */

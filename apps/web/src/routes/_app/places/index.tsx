@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ListChecks, Map as MapIcon, MapPin, Plus, Printer, X } from 'lucide-react';
+import { ListChecks, Map as MapIcon, MapPin, Plus, Printer, Tag, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PlaceForm } from '@/components/places/PlaceForm';
@@ -44,10 +44,14 @@ function PlacesPage() {
           <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('nav.places')}</h1>
           <p className="mt-1 text-[14.5px] text-muted">{t('places.intro')}</p>
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap gap-2.5">
           <Link to="/places/plan" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <MapIcon className="h-4 w-4" aria-hidden />
             {t('plan.short')}
+          </Link>
+          <Link to="/places/blank-labels" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+            <Tag className="h-4 w-4" aria-hidden />
+            {t('blank.short')}
           </Link>
           {total > 0 && (
             <Button

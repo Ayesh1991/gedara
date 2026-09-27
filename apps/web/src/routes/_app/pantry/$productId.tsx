@@ -23,7 +23,10 @@ import { toast } from 'sonner';
 import { CodeQr } from '@/components/places/PlaceVisuals';
 import { JournalList } from '@/components/pantry/JournalList';
 import { ProductForm } from '@/components/pantry/ProductForm';
+import { PhotoEditButton } from '@/components/photos/PhotoControls';
+import { ExtraLabels } from '@/components/scan/ExtraLabels';
 import { StockSheet, type StockMode } from '@/components/pantry/StockSheet';
+import { ScanField } from '@/components/scan/ScanField';
 import { ProductSpine } from '@/components/spine/ProductSpine';
 import { useShoppingList } from '@/components/spine/useShopping';
 import {
@@ -50,6 +53,7 @@ import {
   journalQuery,
   pantryErrorKey,
   productLotsQuery,
+  productPhotosKey,
   removeBarcode,
   removeConversion,
   saveConversion,
@@ -178,6 +182,15 @@ function ProductPage() {
         <div className="grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[280px]">
             <ProductArt product={product} photo={photo} className="text-[40px]" />
+            {canWrite && (
+              <PhotoEditButton
+                householdId={householdId}
+                entityType="product"
+                entityId={product.id}
+                photo={photo}
+                queryKey={productPhotosKey(householdId)}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-4 p-5 lg:p-6">
             <div>
@@ -238,6 +251,7 @@ function ProductPage() {
                 </button>
               </div>
             </div>
+            <ExtraLabels householdId={householdId} target={{ kind: 'product', id: product.id }} canWrite={canWrite} />
 
             {canWrite && (
               <Button variant="primary" className="mt-auto w-full" onClick={() => setSheet({ mode: 'add' })}>
@@ -409,14 +423,19 @@ function CodesSection({ product, units, householdId, canWrite }: { product: Prod
     }
   }
 
-  function submitCode(e: FormEvent) {
-    e.preventDefault();
+  // A scan (camera or USB + Enter) adds at once with the quantity and unit chosen next to it.
+  function addCode(value: string) {
     const qty = parseQty(codeQty);
-    if (!code.trim() || !qty) return;
+    if (!value.trim() || !qty) return;
     void act(
-      () => addBarcode(householdId, product.id, code, codeUnit === product.stock_unit_id ? null : codeUnit, qty),
+      () => addBarcode(householdId, product.id, value, codeUnit === product.stock_unit_id ? null : codeUnit, qty),
       () => setCode(''),
     );
+  }
+
+  function submitCode(e: FormEvent) {
+    e.preventDefault();
+    addCode(code);
   }
 
   function submitPack(e: FormEvent) {
@@ -461,14 +480,17 @@ function CodesSection({ product, units, householdId, canWrite }: { product: Prod
           )}
           {canWrite && (
             <form onSubmit={submitCode} className="mt-2.5 grid grid-cols-[4.5rem_minmax(0,1fr)_auto] gap-1.5 sm:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,8rem)_auto]">
-              <Input
+              <ScanField
                 aria-label={t('pantry.codes.barcode')}
                 placeholder={t('pantry.codes.barcodePlaceholder')}
                 inputMode="numeric"
                 autoComplete="off"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="tabular col-span-3 h-11 px-3 text-[15px] sm:col-span-1"
+                onChange={setCode}
+                onScan={(v) => addCode(v)}
+                className="col-span-3 sm:col-span-1"
+                inputClassName="h-11 px-3 text-[15px]"
+                buttonClassName="h-11 w-11"
               />
               <Input
                 aria-label={t('pantry.form.qty')}

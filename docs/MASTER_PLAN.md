@@ -417,6 +417,7 @@ create table app_meta (key text primary key, value text);   -- schema_version fo
 | `HL:PRD:` | product without an EAN (loose rice, resistors) | `HL:PRD:3MX81A` |
 | `HL:AST:` | asset | `HL:AST:A0042` |
 | `HL:LOT:` | a specific batch (optional, for freezer bags / jars you refill) | `HL:LOT:9QW2` |
+| `HL:TAG:` | a blank label printed before its item exists (Phase 7b); on first scan it becomes a place, thing or product, next to that item's own code | `HL:TAG:4H8M2C` |
 | raw digits | EAN/UPC → `product_barcode` | `4792024000222` |
 | `grcy:p:…` | legacy Grocycodes already printed | map during Grocy import so old labels keep working |
 
@@ -644,6 +645,11 @@ expiry and warranty live in the app and appear when the label is scanned.
 
 Thermal labels fade with heat and sunlight (roughly 1–2 years). Use NIIMBOT's synthetic/PET label
 rolls for kitchen jars and anything near the stove, and paper labels for dry storage.
+**Blank sheets (Phase 7b):** "Print blank labels" makes N new sheets of never-used `HL:TAG` codes
+(A4 6 × 9 with the saved grid + calibration, A4 mini 10 mm, NIIMBOT 20 / 10 mm), numbered per
+household ("Sheet 7"); a sheet can be reprinted with the same codes (also only its unused
+labels, in their own cells). Codes never repeat and are never reused; a lost label is retired.
+
 Print jobs are queued in a `print_job` table (`device_id, template, payload jsonb, status`) so the
 Pi picks them up even if it was offline when you pressed Print.
 
@@ -716,6 +722,7 @@ version badge bumped, a short `CHANGELOG.md` entry.
 | **6 Insights & Attention** | Drill-down framework, all §6 views, Attention feed, `pg_cron` jobs, Web Push, ⌘K search, recurring bills + monthly budgets; ~~floor-plan (optional)~~ moved to Phase 7 and personal inflation from our own basket only (no CCPI), 2026-09-25 | Every number clickable to the record level |
 | **6b Scale Station** (after Phase 3 or 4) | `device` + `scale_reading`, jar tare, `rpc_weigh`, `device-ingest` Edge Function, Pi Python service + systemd + SQLite outbox, Realtime live card, calibration page | Lift the sugar jar, use 2 spoons, put it back → "Sugar −24 g" appears on the iPad within 2 s |
 | **7 AI & polish** | ~~In-app scan Edge Function (optional)~~ → the claude.ai Bill Scanner's Drive folder read by `drive-scan` (bills, warranty cards, rating plates; no Claude API, 2026-09-25), Open Food Facts, offline outbox, export/backup, Sinhala strings, performance pass, Places floor-plan (from Phase 6), HL:LOT + 10 mm labels, opt-in swipe | Lighthouse PWA ✓ (now `scripts/pwa-check.mjs`: Lighthouse 12 has no PWA category), works offline for scan-and-consume |
+| **7b Scan & photo everywhere** (v0.7.1, 2026-09-27) | Camera button on barcode fields, photos from camera or gallery in place, Quick add (scan first), Put in a place / Fill this box (both directions, offline via `rpc_move`), blank label sheets (`HL:TAG`, print first, assign on first scan) | Scan a blank label → "New box" → Fill this box with 3 scans, on phone and iPad, camera and USB scanner |
 
 **Rules for Claude Code on every phase** (put these in the repo's `CLAUDE.md`):
 1. Never edit stock or balances directly — only via RPCs / movements.

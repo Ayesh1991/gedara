@@ -1,7 +1,7 @@
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import { darkRuns, rawCodeQr, urlQr, type QrMatrix } from '../qr';
-import { cellRect, layoutSheets, pageSize, qrSizeFor, type Rect, type SheetProfile } from './sheet';
+import { cellRect, layoutSheets, layoutSlots, pageSize, qrSizeFor, type Placement, type Rect, type SheetProfile } from './sheet';
 
 // A4 label + calibration PDFs (pdf-lib, loaded only on the Labels screen).
 
@@ -15,6 +15,8 @@ export interface SheetLabel {
   crumb: string;
   /** The raw code (HL:LOC:…): what a mini label holds instead of the URL. */
   code?: string;
+  /** Blank sheets: the label's fixed cell on its sheet (row by row). */
+  slot?: number;
 }
 
 function drawQr(page: PDFPage, pageH: number, m: QrMatrix, x: number, y: number, sizeMm: number) {
@@ -109,6 +111,8 @@ export async function buildSheetPdf(opts: {
   fonts?: FontBytes;
   /** Mini sheet: raw-code QR only (10 mm labels). */
   mini?: boolean;
+  /** Blank sheets (Phase 7b): each group is one sheet, every label printed in its own `slot`. */
+  sheets?: SheetLabel[][];
 }): Promise<Uint8Array> {
   const { profile } = opts;
   const doc = await PDFDocument.create();
@@ -118,10 +122,23 @@ export async function buildSheetPdf(opts: {
   const size = pageSize(profile);
   const qrMm = qrSizeFor(profile, opts.mini);
   const pages: PDFPage[] = [];
-  for (const pl of layoutSheets(profile, opts.labels, opts.startRow, opts.startCol)) {
-    while (pages.length <= pl.page) pages.push(doc.addPage([size.w * PT, size.h * PT]));
-    if (opts.mini) drawMiniCell(pages[pl.page]!, size.h, pl.rect, pl.item, qrMm);
-    else drawCell(pages[pl.page]!, size.h, pl.rect, pl.item, qrMm, fonts);
+  const draw = (pl: Placement<SheetLabel>, offset: number) => {
+    const n = offset + pl.page;
+    while (pages.length <= n) pages.push(doc.addPage([size.w * PT, size.h * PT]));
+    if (opts.mini) drawMiniCell(pages[n]!, size.h, pl.rect, pl.item, qrMm);
+    else drawCell(pages[n]!, size.h, pl.rect, pl.item, qrMm, fonts);
+  };
+  if (opts.sheets) {
+    // Each blank sheet starts on a new page, even when only a few of its labels are reprinted.
+    for (const group of opts.sheets) {
+      const offset = pages.length;
+      const placed = layoutSlots(profile, group.map((l) => ({ ...l, slot: l.slot ?? 0 })));
+      const span = Math.max(1, ...placed.map((pl) => pl.page + 1));
+      while (pages.length < offset + span) pages.push(doc.addPage([size.w * PT, size.h * PT]));
+      for (const pl of placed) draw(pl, offset);
+    }
+  } else {
+    for (const pl of layoutSheets(profile, opts.labels, opts.startRow, opts.startCol)) draw(pl, 0);
   }
   return doc.save();
 }

@@ -30,8 +30,47 @@ describe('resolveFromCatalogue (offline scans)', () => {
     expect(resolve('HL:LOC:ABCDEF')).toMatchObject({ status: 'place', place: { id: 'l1' } });
     expect(resolve('HL:LOC:ZZZZZZ')).toEqual({ status: 'notFound', code: 'HL:LOC:ZZZZZZ' });
   });
-  it('things and lots need the network', () => {
+  it('things and lots need the network when the phone saved no things', () => {
     expect(resolve('HL:AST:ABCDEF')).toMatchObject({ status: 'offline' });
     expect(resolve('HL:LOT:ABCDEF')).toMatchObject({ status: 'offline' });
+  });
+});
+
+describe('resolveFromCatalogue: things and blank labels (Phase 7b)', () => {
+  const drill = { id: 'a1', household_id: 'h1', name: 'Drill', code: 'HL:AST:DR1110', asset_no: 42, status: 'stored', location_id: 'l1', serial_no: 'x' };
+  const tag = (code: string, t: Partial<{ location_id: string; asset_id: string; product_id: string; retired_at: string }>) => ({
+    code,
+    location_id: null,
+    asset_id: null,
+    product_id: null,
+    retired_at: null,
+    ...t,
+  });
+  const full: Catalogue = {
+    ...cat,
+    assets: [drill],
+    tags: [
+      tag('HL:TAG:AAAAAA', { location_id: 'l1' }),
+      tag('HL:TAG:BBBBBB', { asset_id: 'a1' }),
+      tag('HL:TAG:CCCCCC', { product_id: 'p1' }),
+      tag('HL:TAG:DDDDDD', { retired_at: '2026-09-27T00:00:00Z' }),
+    ],
+  };
+  const r = (raw: string) => resolveFromCatalogue(parseScan(raw), full);
+
+  it('a saved thing resolves offline (only the scan fields)', () => {
+    expect(r('HL:AST:DR1110')).toEqual({
+      status: 'asset',
+      asset: { id: 'a1', household_id: 'h1', name: 'Drill', code: 'HL:AST:DR1110', asset_no: 42, status: 'stored', location_id: 'l1' },
+    });
+  });
+  it('an assigned blank label opens its place / thing / product, saying which label was scanned', () => {
+    expect(r('https://gedara.vercel.app/s/HL:TAG:AAAAAA')).toMatchObject({ status: 'place', place: { id: 'l1' }, via: 'HL:TAG:AAAAAA' });
+    expect(r('HL:TAG:BBBBBB')).toMatchObject({ status: 'asset', asset: { id: 'a1' }, via: 'HL:TAG:BBBBBB' });
+    expect(r('HL:TAG:CCCCCC')).toMatchObject({ status: 'product', product: { id: 'p1' }, barcode: null, via: 'HL:TAG:CCCCCC' });
+  });
+  it('blank, retired or unknown labels need the network (only the database knows)', () => {
+    expect(r('HL:TAG:DDDDDD')).toMatchObject({ status: 'offline' });
+    expect(r('HL:TAG:EEEEEE')).toMatchObject({ status: 'offline' });
   });
 });

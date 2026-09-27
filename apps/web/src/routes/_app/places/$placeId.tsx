@@ -1,10 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronRight, Copy, FolderInput, Pencil, Plus, Printer, Trash } from 'lucide-react';
+import { ChevronRight, Copy, FolderInput, PackagePlus, Pencil, Plus, Printer, Trash } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PlaceStock } from '@/components/pantry/PlaceStock';
+import { PhotoEditButton } from '@/components/photos/PhotoControls';
+import { ExtraLabels } from '@/components/scan/ExtraLabels';
 import { PlaceThings } from '@/components/things/PlaceThings';
 import { MoveSheet } from '@/components/places/MoveSheet';
 import { PlaceForm } from '@/components/places/PlaceForm';
@@ -12,7 +14,7 @@ import { PlaceGrid, PlacesSkeleton, usePlaces } from '@/components/places/PlaceG
 import { ClimateChip, CodeQr, KindChip, PlaceArt } from '@/components/places/PlaceVisuals';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { placeErrorKey, scheduleDelete } from '@/lib/places';
+import { placeErrorKey, placePhotosKey, scheduleDelete } from '@/lib/places';
 import { ancestors, childrenOf, descendants } from '@/lib/tree';
 
 export const Route = createFileRoute('/_app/places/$placeId')({
@@ -99,6 +101,15 @@ function PlacePage() {
           <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[300px]">
             <PlaceArt name={place.name} kind={place.kind} photo={photo} size="hero" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(5,7,15,0.7)] via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-[rgba(5,7,15,0.35)]" />
+            {canWrite && (
+              <PhotoEditButton
+                householdId={householdId}
+                entityType="location"
+                entityId={place.id}
+                photo={photo}
+                queryKey={placePhotosKey(householdId)}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-4 p-5 lg:p-6">
             <div>
@@ -125,6 +136,7 @@ function PlacePage() {
                 </button>
               </div>
             </div>
+            <ExtraLabels householdId={householdId} target={{ kind: 'location', id: place.id }} canWrite={canWrite} />
             {place.notes && <p className="text-[14px] leading-relaxed whitespace-pre-line text-[#c5cce3]">{place.notes}</p>}
             {canWrite && (
               <Button variant="primary" className="mt-auto w-full" onClick={() => setSheet('add')}>
@@ -145,6 +157,11 @@ function PlacePage() {
         {canWrite && (
           <IconAction label={t('places.move')} onClick={() => setSheet('move')}>
             <FolderInput className="h-[18px] w-[18px]" aria-hidden />
+          </IconAction>
+        )}
+        {canWrite && (
+          <IconAction label={t('scan.fill.short')} onClick={() => void navigate({ to: '/scan', search: { fill: place.id } })}>
+            <PackagePlus className="h-[18px] w-[18px]" aria-hidden />
           </IconAction>
         )}
         <IconAction

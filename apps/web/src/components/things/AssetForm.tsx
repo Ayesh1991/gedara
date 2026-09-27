@@ -1,9 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ImagePlus, Plus, Receipt } from 'lucide-react';
+import { Plus, Receipt } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CategorySelect, Money } from '@/components/money/bits';
+import { PhotoPicker } from '@/components/photos/PhotoControls';
+import { ScanField } from '@/components/scan/ScanField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -87,7 +89,7 @@ interface AssetFormProps {
   asset?: Asset | null;
   photo?: EntityPhoto | null;
   initial?: AssetInitial | null;
-  onSaved?: (id: string) => void;
+  onSaved?: (id: string, name: string) => void;
 }
 
 export function AssetForm(props: AssetFormProps) {
@@ -260,7 +262,7 @@ function AssetFormBody({
         toast.error(reason instanceof ImageError ? t(`places.photoErrors.${reason.reason}`) : t(`things.errors.${thingsErrorKey(reason)}`));
       }
       toast.success(t(src ? 'things.form.saved' : 'things.form.created', { name: saved.name, tag: assetTag(saved.asset_no) }));
-      onSaved?.(saved.id);
+      onSaved?.(saved.id, saved.name);
       onClose();
     } catch (err) {
       toast.error(t(`things.errors.${thingsErrorKey(err)}`));
@@ -287,26 +289,6 @@ function AssetFormBody({
       )}
 
       <div className="flex items-end gap-3">
-        <label className="relative h-[72px] w-[72px] shrink-0 cursor-pointer overflow-hidden rounded-2xl bg-white/[0.04]">
-          {photoUrl ? (
-            <img src={photoUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-[11px] text-muted">
-              <ImagePlus className="h-5 w-5" aria-hidden />
-              {t('things.form.photo')}
-            </span>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            aria-label={t('things.form.photo')}
-            onChange={(e) => {
-              setFile(e.target.files?.[0] ?? null);
-              setDropPhoto(false);
-            }}
-          />
-        </label>
         <div className="min-w-0 flex-1">
           <label htmlFor="asset-name" className={fieldLabel}>
             {t('things.form.name')}
@@ -322,18 +304,18 @@ function AssetFormBody({
           />
         </div>
       </div>
-      {(photo || file) && !dropPhoto && (
-        <button
-          type="button"
-          className="-mt-2 self-start text-[12.5px] text-muted underline"
-          onClick={() => {
-            setFile(null);
-            setDropPhoto(true);
-          }}
-        >
-          {t('places.removePhoto')}
-        </button>
-      )}
+      <PhotoPicker
+        previewUrl={photoUrl}
+        onPick={(f) => {
+          setFile(f);
+          setDropPhoto(false);
+        }}
+        onRemove={() => {
+          setFile(null);
+          setDropPhoto(true);
+        }}
+        canRemove={Boolean((photo || file) && !dropPhoto)}
+      />
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div>
@@ -428,7 +410,15 @@ function AssetFormBody({
               <label htmlFor="asset-serial" className={fieldLabel}>
                 {t('things.form.serial')}
               </label>
-              <Input id="asset-serial" value={serial} maxLength={120} autoComplete="off" onChange={(e) => setSerial(e.target.value)} className="tabular" />
+              <ScanField
+                id="asset-serial"
+                value={serial}
+                maxLength={120}
+                autoComplete="off"
+                onChange={setSerial}
+                normalise={(raw) => raw.trim().slice(0, 120)}
+                cameraLabel={t('things.form.scanSerial')}
+              />
             </div>
             <div>
               <label htmlFor="asset-qty" className={fieldLabel}>

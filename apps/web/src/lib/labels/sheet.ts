@@ -106,6 +106,22 @@ export function layoutSheets<T>(p: SheetProfile, items: T[], startRow = 0, start
   });
 }
 
+/**
+ * Blank sheets (Phase 7b): every label has a fixed slot on its sheet, so a reprint — also "only the
+ * unused ones" — puts each code back in its own cell. A slot beyond one page (a sheet made with a
+ * bigger grid than the current profile) continues on the next page.
+ */
+export function layoutSlots<T extends { slot: number }>(p: SheetProfile, items: T[]): Placement<T>[] {
+  const perPage = p.rows * p.cols;
+  return items.map((item) => {
+    const page = Math.floor(item.slot / perPage);
+    const inPage = item.slot % perPage;
+    const row = Math.floor(inPage / p.cols);
+    const col = inPage % p.cols;
+    return { item, page, row, col, rect: cellRect(p, row, col) };
+  });
+}
+
 /** QR edge length that fits the cell with room for two text lines below (mini: QR only, ≥ 1 mm quiet zone). */
 export function qrSizeFor(p: SheetProfile, mini = false): number {
   const { w, h } = cellSize(p);

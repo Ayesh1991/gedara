@@ -11,9 +11,12 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { attentionKey } from '@/lib/insights/queries';
-import { newOpBase, outbox, type QueuedOp, type StockOp } from '@/lib/offline';
+import { moveErrorKey } from '@/lib/moves';
+import { newOpBase, outbox, type MoveOp, type QueuedOp, type StockOp } from '@/lib/offline';
 import { invalidatePantry, pantryErrorKey } from '@/lib/pantry/queries';
+import { invalidatePlaces } from '@/lib/places';
 import { invalidateShopping } from '@/lib/spine/queries';
+import { invalidateThings } from '@/lib/things/queries';
 
 const RETRY_MS = 30_000;
 
@@ -48,10 +51,12 @@ export function OfflineSync({ householdId }: { householdId: string }) {
       const report = await outbox.flush();
       if (!alive) return;
       if (report.sent.length) {
+        const moved = report.sent.some((o) => o.kind === 'move');
         void Promise.all([
           invalidatePantry(qc, householdId),
           invalidateShopping(qc, householdId),
           qc.invalidateQueries({ queryKey: attentionKey(householdId) }),
+          ...(moved ? [invalidatePlaces(qc, householdId), invalidateThings(qc, householdId)] : []),
         ]);
         const stale = report.sent.filter((o) => o.kind === 'tick' && report.results.get(o.op_id) === 'stale').length;
         toast.success(t('offline.synced', { count: report.sent.length }), {
@@ -140,6 +145,15 @@ export function CouldntSync({ householdId }: { householdId: string }) {
   const parked = useOutbox().filter((o) => o.state === 'parked' && o.household_id === householdId);
   if (!parked.length) return null;
 
+  /** "Move anyway": the same move again, forced, with a NEW op id (Phase 7b). */
+  async function moveAnyway(op: MoveOp) {
+    await outbox.remove(op.op_id);
+    const again: MoveOp = { ...op, ...newOpBase(op.household_id, op.label), force: true, error: undefined };
+    const out = await outbox.submit(again);
+    if (out.status === 'refused') toast.error(t(`moves.errors.${moveErrorKey(out.error)}`));
+    await Promise.all([invalidatePlaces(qc, householdId), invalidateThings(qc, householdId)]);
+  }
+
   async function retryLeft(op: StockOp, again: StockOp) {
     await outbox.remove(op.op_id);
     const out = await outbox.submit(again);
@@ -161,12 +175,17 @@ export function CouldntSync({ householdId }: { householdId: string }) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[14px] font-medium">{op.label || t('offline.anAction')}</div>
                 <div className="text-[12.5px] text-caution">
-                  {op.error ? t(`pantry.errors.${pantryErrorKey(op.error)}`) : ''}
+                  {!op.error ? '' : op.kind === 'move' ? t(`moves.errors.${moveErrorKey(op.error)}`) : t(`pantry.errors.${pantryErrorKey(op.error)}`)}
                 </div>
               </div>
               {left && op.kind === 'stock' && (
                 <Button size="sm" onClick={() => void retryLeft(op, left)}>
                   {t('offline.useWhatsLeft')}
+                </Button>
+              )}
+              {op.kind === 'move' && op.error?.code === 'GDMVC' && (
+                <Button size="sm" onClick={() => void moveAnyway(op)}>
+                  {t('moves.moveAnyway')}
                 </Button>
               )}
               <Button size="sm" variant="ghost" onClick={() => void outbox.remove(op.op_id)}>
