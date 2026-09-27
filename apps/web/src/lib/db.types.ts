@@ -159,6 +159,7 @@ export type Database = {
           location_id: string | null
           manufacturer: string | null
           model_no: string | null
+          moved_at: string | null
           name: string
           parent_id: string | null
           purchase_price: number | null
@@ -198,6 +199,7 @@ export type Database = {
           location_id?: string | null
           manufacturer?: string | null
           model_no?: string | null
+          moved_at?: string | null
           name: string
           parent_id?: string | null
           purchase_price?: number | null
@@ -237,6 +239,7 @@ export type Database = {
           location_id?: string | null
           manufacturer?: string | null
           model_no?: string | null
+          moved_at?: string | null
           name?: string
           parent_id?: string | null
           purchase_price?: number | null
@@ -933,6 +936,166 @@ export type Database = {
           },
         ]
       }
+      label_sheet: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          format: string
+          household_id: string
+          id: string
+          last_printed_at: string | null
+          print_count: number
+          sheet_no: number
+          slots: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          format: string
+          household_id: string
+          id?: string
+          last_printed_at?: string | null
+          print_count?: number
+          sheet_no: number
+          slots: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          format?: string
+          household_id?: string
+          id?: string
+          last_printed_at?: string | null
+          print_count?: number
+          sheet_no?: number
+          slots?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "label_sheet_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      label_tag: {
+        Row: {
+          asset_id: string | null
+          assigned_at: string | null
+          assigned_by: string | null
+          code: string
+          created_at: string
+          household_id: string
+          id: string
+          location_id: string | null
+          product_id: string | null
+          retired_at: string | null
+          sheet_id: string
+          slot: number
+        }
+        Insert: {
+          asset_id?: string | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          code: string
+          created_at?: string
+          household_id: string
+          id?: string
+          location_id?: string | null
+          product_id?: string | null
+          retired_at?: string | null
+          sheet_id: string
+          slot: number
+        }
+        Update: {
+          asset_id?: string | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          code?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          location_id?: string | null
+          product_id?: string | null
+          retired_at?: string | null
+          sheet_id?: string
+          slot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "label_tag_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "v_asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_sheet_id_fkey"
+            columns: ["household_id", "sheet_id"]
+            isOneToOne: false
+            referencedRelation: "label_sheet"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "label_tag_household_id_sheet_id_fkey"
+            columns: ["household_id", "sheet_id"]
+            isOneToOne: false
+            referencedRelation: "v_label_sheet"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
       location: {
         Row: {
           climate: string | null
@@ -945,6 +1108,7 @@ export type Database = {
           kind: string | null
           map_x: number | null
           map_y: number | null
+          moved_at: string | null
           name: string
           notes: string | null
           parent_id: string | null
@@ -963,6 +1127,7 @@ export type Database = {
           kind?: string | null
           map_x?: number | null
           map_y?: number | null
+          moved_at?: string | null
           name: string
           notes?: string | null
           parent_id?: string | null
@@ -981,6 +1146,7 @@ export type Database = {
           kind?: string | null
           map_x?: number | null
           map_y?: number | null
+          moved_at?: string | null
           name?: string
           notes?: string | null
           parent_id?: string | null
@@ -1483,6 +1649,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_utility_usage"
             referencedColumns: ["household_id", "recurring_id"]
+          },
+        ]
+      }
+      move_op: {
+        Row: {
+          actor: string | null
+          client_at: string | null
+          created_at: string
+          from_id: string | null
+          household_id: string
+          item_id: string
+          kind: string
+          op_id: string
+          result: Json
+          to_id: string | null
+        }
+        Insert: {
+          actor?: string | null
+          client_at?: string | null
+          created_at?: string
+          from_id?: string | null
+          household_id: string
+          item_id: string
+          kind: string
+          op_id: string
+          result: Json
+          to_id?: string | null
+        }
+        Update: {
+          actor?: string | null
+          client_at?: string | null
+          created_at?: string
+          from_id?: string | null
+          household_id?: string
+          item_id?: string
+          kind?: string
+          op_id?: string
+          result?: Json
+          to_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "move_op_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3268,6 +3481,30 @@ export type Database = {
           },
         ]
       }
+      v_label_sheet: {
+        Row: {
+          created_at: string | null
+          format: string | null
+          household_id: string | null
+          id: string | null
+          last_printed_at: string | null
+          print_count: number | null
+          retired: number | null
+          sheet_no: number | null
+          slots: number | null
+          unused: number | null
+          used: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "label_sheet_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_line_route: {
         Row: {
           destiny: string | null
@@ -4241,8 +4478,30 @@ export type Database = {
         Returns: Json
       }
       rpc_inventory: { Args: { p: Json }; Returns: Json }
+      rpc_label_printed: { Args: { p_sheet: string }; Returns: undefined }
+      rpc_label_sheets: {
+        Args: {
+          p_count: number
+          p_format: string
+          p_household: string
+          p_slots: number
+        }
+        Returns: Json
+      }
       rpc_log_maintenance: { Args: { p: Json }; Returns: Json }
       rpc_lot_code: { Args: { p_lot: string }; Returns: string }
+      rpc_move: {
+        Args: {
+          p_client_at?: string
+          p_expect?: Json
+          p_force?: boolean
+          p_id: string
+          p_kind: string
+          p_op_id: string
+          p_to: string
+        }
+        Returns: Json
+      }
       rpc_move_transactions: {
         Args: { p_account: string; p_ids: string[] }
         Returns: number
@@ -4333,6 +4592,15 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_tag_assign: {
+        Args: { p_code: string; p_id: string; p_kind: string }
+        Returns: Json
+      }
+      rpc_tag_detach: {
+        Args: { p_code: string; p_expect_id: string }
+        Returns: undefined
+      }
+      rpc_tag_retire: { Args: { p_code: string }; Returns: undefined }
       rpc_transfer: { Args: { p: Json }; Returns: Json }
       rpc_undo: { Args: { p_correlation: string }; Returns: Json }
       safe_uuid: { Args: { p: string }; Returns: string }

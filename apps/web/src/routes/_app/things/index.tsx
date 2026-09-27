@@ -1,11 +1,12 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronRight, Package, Plus, Printer, Receipt, Search } from 'lucide-react';
+import { ChevronRight, Package, Plus, Printer, Receipt, ScanLine, Search } from 'lucide-react';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { EmptyState } from '@/components/aurora/EmptyState';
 import { StatTile } from '@/components/aurora/StatTile';
 import { Money } from '@/components/money/bits';
+import { CouldntSync } from '@/components/offline/OfflineSync';
 import { AssetForm } from '@/components/things/AssetForm';
 import { AssetCard } from '@/components/things/AssetViews';
 import { useThings } from '@/components/things/bits';
@@ -108,7 +109,7 @@ function ThingsPage() {
           <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('nav.things')}</h1>
           <p className="mt-1 text-[14.5px] text-muted">{t('things.intro')}</p>
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap gap-2.5">
           {shown.length > 0 && (
             <Link
               to="/places/labels"
@@ -120,6 +121,12 @@ function ThingsPage() {
             </Link>
           )}
           {canWrite && (
+            <Link to="/scan" search={{ add: 'thing' }} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+              <ScanLine className="h-4 w-4" aria-hidden />
+              {t('scan.modes.addMany')}
+            </Link>
+          )}
+          {canWrite && (
             <Button variant="primary" size="sm" onClick={() => setSearch({ new: '1' })}>
               <Plus className="h-4 w-4" aria-hidden />
               {t('things.add')}
@@ -127,6 +134,8 @@ function ThingsPage() {
           )}
         </div>
       </div>
+
+      <CouldntSync householdId={householdId} />
 
       {pending.length > 0 && (
         <Link

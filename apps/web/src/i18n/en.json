@@ -416,6 +416,109 @@
     }
   },
   "scan": {
+    "sheet": {
+      "title": "Scan a barcode",
+      "hint": "Point the camera at the barcode, or use the USB scanner.",
+      "open": "Scan with the camera"
+    },
+    "modes": {
+      "done": "Done",
+      "quickAdd": "Quick add",
+      "addProducts": "Add products",
+      "addThings": "Add things",
+      "addMany": "Add many"
+    },
+    "put": {
+      "start": "Put in a place",
+      "title": "Put {{name}} in a place",
+      "hint": "Scan the label of the box, shelf or room.",
+      "thisItem": "this item",
+      "label": "{{name}} → {{place}}",
+      "movedStock": "{{qty}} of {{name}} → {{place}}",
+      "undone": "Moved back",
+      "samePlace": "That's the same place.",
+      "notAPlace": "That isn't a place label. Scan a box, shelf or room.",
+      "alreadyThere": "It's all there already.",
+      "allOfIt": "All of it",
+      "howMuch": "How much?",
+      "howMuchLabel": "Move",
+      "allPlaceholder": "all",
+      "doneText": "{{name}} is now in {{place}}.",
+      "noStock": "{{name}} has no stock to move.",
+      "makeUsual": "Make this its usual place",
+      "usualSet": "Usual place saved"
+    },
+    "fill": {
+      "start": "Fill this box",
+      "short": "Fill",
+      "title": "Filling {{place}}",
+      "hint": "Scan each item to put it in · {{count}} so far",
+      "empty": "Scan things, products or other boxes to put them in here.",
+      "thisBox": "That's this box",
+      "noStock": "No stock to move",
+      "newHere": "Added here",
+      "undoRow": "Undo {{name}}"
+    },
+    "add": {
+      "title": {
+        "thing": "Add things",
+        "product": "Add products"
+      },
+      "hint": {
+        "thing": "Scan a blank label or a serial-number barcode, then fill in the form.",
+        "product": "Scan a barcode or a blank label, then fill in the form."
+      },
+      "byHand": "No code — add by hand",
+      "switch": {
+        "thing": "Add products instead",
+        "product": "Add things instead"
+      },
+      "added": "Added now ({{count}})",
+      "empty": {
+        "thing": "Things you add appear here.",
+        "product": "Products you add appear here."
+      },
+      "saved": "{{name}} saved",
+      "removed": "{{name}} removed",
+      "cantRemove": "Couldn't undo that. Open it to delete it."
+    },
+    "claim": {
+      "title": "New label — what is this?",
+      "notNow": "Not now",
+      "modeTitle": "New label",
+      "what": "What is this?",
+      "aPlace": "A place",
+      "aThing": "A thing",
+      "aProduct": "A pantry product",
+      "newKind": "New {{kind}}",
+      "existingPlace": "An existing place",
+      "newThing": "New thing",
+      "existingThing": "An existing thing",
+      "newProduct": "New product",
+      "existingProduct": "An existing product",
+      "search": "Search",
+      "nothing": "Nothing matches.",
+      "pick": {
+        "location": "Choose a place",
+        "asset": "Choose a thing",
+        "product": "Choose a product"
+      },
+      "assigned": "This label now opens {{name}}",
+      "detached": "The label is blank again",
+      "nowOpens": "This label now opens {{name}}.",
+      "needsInternet": "Giving a label its meaning needs an internet connection.",
+      "errors": {
+        "assigned": "This label already means something. Detach it first on its item's page.",
+        "retired": "This label was retired and can't be used.",
+        "changed": "The label means something else now.",
+        "unknown": "Unknown label.",
+        "denied": "You can't change labels in this household.",
+        "generic": "Couldn't save the label. Try again."
+      }
+    },
+    "retiredTag": {
+      "title": "Retired label"
+    },
     "aim": "Point the camera at a Gedara label. It stays open, so you can scan one label after another.",
     "startCamera": "Start camera",
     "retryCamera": "Try again",
@@ -457,6 +560,8 @@
       "body": "You're offline and this label isn't saved on the phone. Scan it again when you're back online."
     },
     "short": {
+      "blankTag": "Blank label",
+      "retiredTag": "Retired label",
       "notFound": "Unknown code",
       "invalid": "Not a Gedara label",
       "offline": "Needs a connection",
@@ -1133,6 +1238,7 @@
     "revokedCount_one": "1 removed phone"
   },
   "spine": {
+    "scanBarcode": "Scan the pack's barcode",
     "destiny": {
       "stock": "Pantry",
       "asset": "Things",
@@ -1347,6 +1453,7 @@
       "explain": "Worth now = price minus straight-line depreciation over its useful life (down to the salvage value). Cost of owning it = price + services and repairs − what it sold for."
     },
     "form": {
+      "scanSerial": "Scan the serial number",
       "newTitle": "New thing",
       "editTitle": "Edit {{name}}",
       "fromBill": "From the bill: {{shop}} · {{date}}",
@@ -2051,5 +2158,81 @@
     "testSent": "Test sent to {{count}} devices",
     "testSent_one": "Test sent",
     "testFailed": "The test couldn't be delivered."
+  },
+  "photo": {
+    "add": "Add a photo",
+    "edit": "Change photo",
+    "take": "Take a photo",
+    "gallery": "Choose from gallery",
+    "takeTitle": "Take a photo",
+    "snap": "Take photo",
+    "noCamera": "No camera available. Choose a photo from the gallery instead.",
+    "needsInternet": "Photos need an internet connection. Try again when you're online.",
+    "added": "Photo added",
+    "replaced": "Photo replaced",
+    "removed": "Photo removed",
+    "removeFailed": "Couldn't remove the photo."
+  },
+  "moves": {
+    "moveAnyway": "Move anyway",
+    "errors": {
+      "newer": "It was moved again after this (on another phone, or later).",
+      "moved": "It isn't where you left it any more, so Undo didn't move it.",
+      "cycle": "A place can't go inside itself or one of its own boxes.",
+      "unknown": "That item or place doesn't exist any more.",
+      "denied": "You can't move things in this household.",
+      "generic": "Couldn't move it. Try again."
+    }
+  },
+  "blank": {
+    "title": "Blank labels",
+    "short": "Blank labels",
+    "linkHint": "Print new codes now, say what they are when you first scan them.",
+    "intro": "Print sheets of new, never-used labels. Stick one on a box, jar or thing, then scan it: Gedara asks what it is, and from then on that label opens it.",
+    "testWarning": "This is the test app (staging). Labels printed here say TEST and never work in the real app. Print real labels from gedara.vercel.app.",
+    "testOk": "I understand: print test labels",
+    "printNew": "Print new labels",
+    "format": "Label type",
+    "formats": {
+      "a4": "A4 sheet",
+      "a4mini": "A4 mini · 10 mm",
+      "sq20": "NIIMBOT 20 mm",
+      "sq10": "NIIMBOT 10 mm"
+    },
+    "batch": "Labels per batch",
+    "howMany": "How many sheets",
+    "fewer": "Fewer sheets",
+    "more": "More sheets",
+    "total": "{{count}} new codes",
+    "total_one": "{{count}} new code",
+    "printButton": "Print {{count}} new sheets",
+    "printButton_one": "Print {{count}} new sheet",
+    "making": "Making codes…",
+    "made": "Sheets {{from}}–{{to}} made",
+    "made_one": "Sheet {{from}} made",
+    "a4Hint": "Uses your saved A4 grid and calibration (Labels › A4). The phone's normal camera opens these labels too.",
+    "niimbotHint": "Downloads a zip with one PNG per label, to print from the NIIMBOT app. These open in Gedara or with the USB scanner.",
+    "sheets": "Your blank sheets",
+    "noSheets": "No blank sheets yet.",
+    "sheetName": "Sheet {{n}}",
+    "counts": "{{unused}} unused · {{used}} used · {{retired}} retired",
+    "reprint": "Print again",
+    "reprintUnused": "Only unused",
+    "noneUnused": "No unused labels left on this sheet.",
+    "state": {
+      "blank": "unused",
+      "used": "in use",
+      "retired": "retired"
+    },
+    "detach": "Detach",
+    "detached": "{{code}} is blank again",
+    "retire": "Retire",
+    "retireHint": "Retire a label that was thrown away or lost: it never opens anything again, and its code is never reused.",
+    "extraLabels": "Extra labels ({{count}})",
+    "errors": {
+      "grid": "Check the A4 grid in Labels first (at most 300 labels a sheet).",
+      "denied": "You can't make labels in this household.",
+      "make": "Couldn't make the sheets. Try again."
+    }
   }
 }

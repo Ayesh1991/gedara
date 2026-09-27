@@ -19,6 +19,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Money } from '@/components/money/bits';
+import { PhotoEditButton } from '@/components/photos/PhotoControls';
+import { ExtraLabels } from '@/components/scan/ExtraLabels';
 import { CodeQr } from '@/components/places/PlaceVisuals';
 import { AssetForm } from '@/components/things/AssetForm';
 import { AssetTimeline, DueChip, ValueLine } from '@/components/things/AssetViews';
@@ -32,6 +34,7 @@ import { removeEntityPhoto } from '@/lib/photos';
 import { displayValue, fieldsFor } from '@/lib/things/fields';
 import {
   activityQuery,
+  assetPhotosKey,
   deleteAsset,
   deleteLog,
   invalidateThings,
@@ -160,6 +163,15 @@ function AssetPage() {
         <div className="grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[300px]">
             <AssetArt name={asset.name} photo={photo} className="text-[44px]" />
+            {canWrite && (
+              <PhotoEditButton
+                householdId={householdId}
+                entityType="asset"
+                entityId={asset.id}
+                photo={photo}
+                queryKey={assetPhotosKey(householdId)}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-4 p-5 lg:p-6">
             <div>
@@ -238,6 +250,7 @@ function AssetPage() {
                 </button>
               </div>
             </div>
+            <ExtraLabels householdId={householdId} target={{ kind: 'asset', id: asset.id }} canWrite={canWrite} />
 
             {canWrite && !gone && (
               <Button

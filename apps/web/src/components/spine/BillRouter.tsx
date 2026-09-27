@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/money/bits';
 import { ProductForm } from '@/components/pantry/ProductForm';
+import { ScanButton } from '@/components/scan/ScanField';
 import { UnitOptions, fieldLabel, selectClass } from '@/components/pantry/bits';
 import { Button } from '@/components/ui/button';
+import { barcodeText } from '@/lib/codes';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { formatLKR } from '@/lib/money/format';
@@ -78,6 +80,12 @@ export function BillRouter({
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const [creating, setCreating] = useState<RouterLine | null>(null);
+  // A barcode scanned in the picker that no product has yet: the new product gets it.
+  const [creatingCode, setCreatingCode] = useState<string | null>(null);
+  const startNew = (l: RouterLine, code?: string) => {
+    setCreatingCode(code ?? null);
+    setCreating(l);
+  };
   const openLine = lines.find((l) => l.key === open) ?? null;
 
   return (
@@ -94,7 +102,7 @@ export function BillRouter({
               data={data}
               onOpen={() => setOpen(l.key)}
               onRoute={(r) => onRoute(l.key, r)}
-              onNew={() => setCreating(l)}
+              onNew={() => startNew(l)}
             />
           );
         })}
@@ -108,7 +116,7 @@ export function BillRouter({
           onClose={() => setOpen(null)}
           onRoute={(r) => onRoute(openLine.key, r)}
           onCategory={onCategory ? (id) => onCategory(openLine.key, id) : undefined}
-          onNew={() => setCreating(openLine)}
+          onNew={(code) => startNew(openLine, code)}
         />
       )}
 
@@ -121,6 +129,7 @@ export function BillRouter({
           categories={data.categories.data}
           products={data.products.data}
           tree={data.tree}
+          barcode={creatingCode}
           initial={{ name: tidyName(creating.raw_name), category_id: creating.category_id, stock_unit_id: guessStockUnit(creating, data.units.data) }}
           onSaved={(p) => {
             if (!p.id) return;
@@ -271,7 +280,7 @@ function LineRouteSheet({
   onClose: () => void;
   onRoute: (r: LineRoute) => void;
   onCategory?: (id: string | null) => void;
-  onNew: () => void;
+  onNew: (barcode?: string) => void;
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -507,11 +516,19 @@ function ProductPicker({
   route: LineRoute;
   data: SpineData;
   onPick: (p: Product) => void;
-  onNew: () => void;
+  onNew: (barcode?: string) => void;
 }) {
   const { t } = useTranslation();
   const [q, setQ] = useState('');
   const active = useMemo(() => (data.products.data ?? []).filter((p) => !p.archived), [data.products.data]);
+  // Scan the pack's barcode: the product that has it is picked; an unknown one starts a new product.
+  function scanned(raw: string) {
+    const code = barcodeText(raw);
+    const hit = (data.barcodes.data ?? []).find((b) => b.barcode === code);
+    const product = hit && active.find((p) => p.id === hit.product_id);
+    if (product) onPick(product);
+    else onNew(code);
+  }
   const shown = useMemo(() => {
     const query = q.trim();
     if (!query) {
@@ -540,16 +557,19 @@ function ProductPicker({
       <label htmlFor="route-product-search" className={fieldLabel}>
         {t('spine.pickProduct')}
       </label>
-      <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
-        <Input
-          id="route-product-search"
-          className="pl-10"
-          placeholder={t('spine.searchProducts')}
-          value={q}
-          autoComplete="off"
-          onChange={(e) => setQ(e.target.value)}
-        />
+      <div className="flex gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+          <Input
+            id="route-product-search"
+            className="pl-10"
+            placeholder={t('spine.searchProducts')}
+            value={q}
+            autoComplete="off"
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+        <ScanButton onScan={scanned} label={t('spine.scanBarcode')} />
       </div>
       <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto" aria-label={t('spine.pickProduct')}>
         {shown.map((p) => (
@@ -571,7 +591,7 @@ function ProductPicker({
         ))}
         {shown.length === 0 && <li className="px-3 py-2 text-[13.5px] text-muted">{t('spine.noProducts')}</li>}
       </ul>
-      <Button onClick={onNew}>
+      <Button onClick={() => onNew()}>
         <Plus className="h-4 w-4" aria-hidden />
         {t('spine.newProductNamed', { name: tidyName(line.raw_name) })}
       </Button>

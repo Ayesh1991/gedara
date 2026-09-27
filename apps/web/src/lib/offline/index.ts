@@ -51,6 +51,22 @@ async function send(op: QueuedOp): Promise<SendResult> {
       if (error) return classifyError(error);
       return { type: 'ok', result: data };
     }
+    if (op.kind === 'move') {
+      const { data, error } = await supabase
+        .rpc('rpc_move', {
+          p_op_id: op.op_id,
+          p_kind: op.item,
+          p_id: op.item_id,
+          // PostgREST needs the key present to pick the function; null = no place.
+          p_to: op.to as string,
+          p_client_at: op.immediate ? undefined : op.client_at,
+          p_force: op.force ?? false,
+          p_expect: op.expect_from === undefined ? undefined : ({ from: op.expect_from } as Json),
+        })
+        .abortSignal(signal);
+      if (error) return classifyError(error);
+      return { type: 'ok', result: data };
+    }
     const { data, error } = await supabase
       .rpc('rpc_shopping_tick', { p_item: op.item_id, p_done: op.done, p_at: op.immediate ? undefined : op.client_at })
       .abortSignal(signal);

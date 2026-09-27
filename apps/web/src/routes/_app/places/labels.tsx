@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronLeft, Crosshair, Download, Minus, Plus, Save } from 'lucide-react';
+import { ChevronLeft, Crosshair, Download, Minus, Plus, Save, Tag } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -117,6 +117,18 @@ function LabelsPage() {
         <h1 className="mt-1 font-display text-[30px] font-semibold tracking-tight">{t('labels.title')}</h1>
         <p className="tabular mt-1 text-[14px] text-muted">{t('labels.count', { count: selected.length })}</p>
       </div>
+
+      <Link
+        to="/places/blank-labels"
+        className="glass flex items-center gap-3 self-start rounded-2xl px-4 py-3 text-[14px] transition-colors hover:bg-white/[0.04]"
+        data-testid="blank-labels-link"
+      >
+        <Tag className="h-4 w-4 text-accent-b" aria-hidden />
+        <span>
+          <span className="font-medium">{t('blank.title')}</span>
+          <span className="block text-[12.5px] text-muted">{t('blank.linkHint')}</span>
+        </span>
+      </Link>
 
       <div role="tablist" aria-label={t('labels.printer')} className="glass inline-flex self-start rounded-2xl p-1">
         {(['a4', 'niimbot'] as const).map((m) => (

@@ -11,13 +11,17 @@ export const OFFLINE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const KEY = 'query-cache';
 const PANTRY_PARTS = new Set(['units', 'products', 'conversions', 'barcodes']);
 
-/** Membership, pantry units/products/conversions/barcodes, places, the shopping list. (Not money
+/** Membership, pantry units/products/conversions/barcodes, places, things, assigned labels, the
+ *  shopping list. (Not money
  *  categories: forms that pick one must never start from an old copy, and scan-and-use doesn't need them.) */
 export function shouldPersist(key: QueryKey): boolean {
   const [a, , c] = key;
   if (a === 'membership') return key.length === 1;
   if (a === 'pantry') return key.length === 3 && typeof c === 'string' && PANTRY_PARTS.has(c);
   if (a === 'places' || a === 'shopping') return key.length === 2;
+  // Phase 7b: things and assigned labels, so their labels scan (and "Fill this box" works) offline.
+  if (a === 'things') return key.length === 3 && c === 'assets';
+  if (a === 'labels') return key.length === 3 && c === 'tags';
   return false;
 }
 
@@ -66,7 +70,7 @@ const options = (queryClient: QueryClient) => ({
 /** Restore the saved catalogue (bounded wait: a slow IndexedDB must not delay the first paint much). */
 export async function restoreOfflineCache(queryClient: QueryClient): Promise<void> {
   // Kept queries must outlive their last observer, or they'd be garbage-collected and dropped.
-  for (const k of [['membership'], ['pantry'], ['places'], ['shopping']]) {
+  for (const k of [['membership'], ['pantry'], ['places'], ['shopping'], ['things'], ['labels']]) {
     queryClient.setQueryDefaults(k, { gcTime: OFFLINE_MAX_AGE });
   }
   try {

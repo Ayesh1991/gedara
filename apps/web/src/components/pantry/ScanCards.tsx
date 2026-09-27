@@ -4,6 +4,7 @@ import { Barcode, ChevronRight, Minus, Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { PutAwayLink } from '@/components/scan/PutAwayLinks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -160,6 +161,7 @@ export function ProductScanCard({
           <ChevronRight className="h-[18px] w-[18px]" aria-hidden />
         </Link>
       </div>
+      {canWrite && product && product.stock.qty > 0 && <PutAwayLink kind="product" id={product.id} onNavigate={onNavigate} />}
       {adding && product && pantry.units.data && pantry.conversions.data && (
         <StockSheet
           open

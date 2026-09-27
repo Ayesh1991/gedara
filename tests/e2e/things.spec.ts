@@ -114,7 +114,7 @@ async function addThing(page: Page, name: string, price: string, warranty: strin
   await form.getByLabel('Price (Rs)').fill(price);
   await form.getByLabel('Bought on').fill(colomboDate(-30));
   await form.getByLabel('Warranty until').fill(warranty);
-  if (photo) await form.getByLabel('Photo', { exact: true }).setInputFiles(PNG);
+  if (photo) await form.getByTestId('photo-gallery-input').setInputFiles(PNG);
   await form.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page).toHaveURL(/\/things\/[0-9a-f-]{36}$/);
   await expect(page.getByTestId('asset-name')).toContainText(name);

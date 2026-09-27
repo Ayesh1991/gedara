@@ -24,6 +24,11 @@ describe('parseScan', () => {
     });
   });
 
+  it('reads blank labels (HL:TAG), raw and in the A4 URL form', () => {
+    expect(parseScan('hl:tag:7k2p9q')).toEqual({ kind: 'tag', code: 'HL:TAG:7K2P9Q' });
+    expect(parseScan('https://gedara.vercel.app/s/HL:TAG:7K2P9Q')).toEqual({ kind: 'tag', code: 'HL:TAG:7K2P9Q' });
+  });
+
   it('rejects bad bodies and unknown prefixes', () => {
     expect(parseScan('HL:LOC:7K2P9').kind).toBe('unknown');
     expect(parseScan('HL:LOC:7K2P9U').kind).toBe('unknown');

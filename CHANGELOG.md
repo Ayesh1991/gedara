@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.7.1 — Phase 7b Scan & photo everywhere
+- **Camera button on every barcode field**: product page › Barcodes (a scan adds it at once),
+  the new-product form, bill line → product (a known barcode picks its product, an unknown one
+  starts a new product with it), and a thing's serial number. The USB scanner still types into the
+  field; its Enter fills the field instead of submitting the form.
+- **Photos from the camera or the gallery, in place**: a pencil on the big photo of a place,
+  product and thing (Take a photo / Choose from gallery / Remove), saved at once. The three forms
+  offer the same two choices. Laptops take the photo from the webcam in a sheet. Same WebP
+  1600 px + 320 px thumb pipeline (rule 9).
+- **Quick add** (Scan › Add products / Add things, "Add many" on Pantry and Things): scan, paste
+  or type a code → the form opens prefilled (barcode + Open Food Facts, a serial number, or a
+  blank label) → save → ready for the next scan. Undo for 8 s removes it again.
+- **Put in a place** from any scan card: scan the thing / product / place, tap "Put in a place",
+  scan the box. A product moves all its stock by default ("How much?" to move part); with no stock
+  it offers "Make this its usual place". Undo for 8 s.
+- **Fill this box** (scan card, place page, or right after a new box label): every thing,
+  product or place scanned goes into the box, with a running list and Undo per row. Camera, USB
+  scanner and typed codes all work.
+- **Offline**: moves of things and places join the outbox (`rpc_move`, idempotent). If the item
+  was moved again on another phone after your offline tap, the move is parked ("Move anyway" /
+  "Discard"). Things and assigned labels are now in the offline catalogue, so they scan offline.
+- **Blank labels** (Places › Blank labels): print sheets of new, never-used `HL:TAG` codes (A4
+  6 × 9 URL QR with your saved grid and calibration, A4 mini 10 mm, NIIMBOT 20 / 10 mm PNGs),
+  numbered "Sheet 7", 1–10 sheets at a time. Reprint a sheet with the same codes, or only its
+  unused labels in their own cells. Codes never repeat and are never reused.
+  - Scan a blank label (in Gedara or with the phone's camera) → "New label — what is this?": a
+    new box / shelf / drawer / furniture / room, an existing place, a new or existing thing, or a
+    product. From then on the label opens that item, next to its own code ("Extra labels").
+  - Undo for 8 s, "Detach" any time (the same sticker is blank again), "Retire" a lost label for
+    good. The sheet page shows every label's state.
+  - On preview/staging every blank label prints "TEST" and needs an extra confirmation.
+- Migrations 56 `label_blank`, 57 `label_blank_rpcs`, 58 `move_op`; schema_version 58.
+
 ## 0.7.0 — Phase 7 AI & polish
 - **Works offline for scan-and-consume.**
   - The app starts with no signal: the service worker serves the app, and the products, barcodes,

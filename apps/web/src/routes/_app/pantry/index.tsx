@@ -125,7 +125,7 @@ function PantryPage() {
           <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('nav.pantry')}</h1>
           <p className="mt-1 text-[14.5px] text-muted">{t('pantry.intro')}</p>
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap gap-2.5">
           <Link to="/pantry/list" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <ListChecks className="h-4 w-4" aria-hidden />
             {t('shopping.short')}
@@ -135,6 +135,12 @@ function PantryPage() {
             <History className="h-4 w-4" aria-hidden />
             {t('pantry.journal.short')}
           </Link>
+          {canWrite && (
+            <Link to="/scan" search={{ add: 'product' }} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+              <ScanLine className="h-4 w-4" aria-hidden />
+              {t('scan.modes.addMany')}
+            </Link>
+          )}
           {canWrite && (
             <Button variant="primary" size="sm" onClick={() => setSearch({ new: '1' })}>
               <Plus className="h-4 w-4" aria-hidden />

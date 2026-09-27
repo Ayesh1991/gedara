@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ChevronRight, CircleAlert, Info, Printer } from 'lucide-react';
+import { ChevronRight, CircleAlert, Info, Printer, Tag } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProductScanCard, UnknownBarcodeCard } from '@/components/pantry/ScanCards';
 import { ClimateChip, KindChip, PlaceArt } from '@/components/places/PlaceVisuals';
@@ -9,7 +10,10 @@ import { placePhotosQuery, placesQuery } from '@/lib/places';
 import { assetPhotosQuery } from '@/lib/things/queries';
 import { assetTag } from '@/lib/things/value';
 import type { Resolved } from '@/lib/resolve';
+import { membershipQuery } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { ClaimPanel, ClaimedCard, type Claimed } from './ClaimPanel';
+import { FillLink, PutAwayLink } from './PutAwayLinks';
 
 /**
  * The card that slides up after a scan (HUD) or pops up as a toast (USB scanner anywhere; `compact`:
@@ -34,14 +38,68 @@ export function ScanResult({
   if (result.status === 'unknownBarcode') {
     return <UnknownBarcodeCard code={result.code} compact={compact} onNavigate={onNavigate} className={className} />;
   }
+  if (result.status === 'blankTag') return <BlankTagResult result={result} compact={compact} onNavigate={onNavigate} className={className} />;
   return <MessageResult result={result} className={className} />;
+}
+
+/** A blank label: say what it is right here (HUD), or open the claim on the Scan screen (USB toast). */
+function BlankTagResult({
+  result,
+  compact,
+  onNavigate,
+  className,
+}: {
+  result: Extract<Resolved, { status: 'blankTag' }>;
+  compact?: boolean;
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  const membership = useQuery(membershipQuery);
+  const [claimed, setClaimed] = useState<Claimed | null>(null);
+  const householdId = membership.data?.household.id;
+  if (claimed) return <ClaimedCard claimed={claimed} />;
+  if (compact || !householdId || membership.data?.role === 'viewer') {
+    return (
+      <div className={cn('glass-strong slide-up flex flex-col gap-3 rounded-3xl p-4', className)} role="status" data-testid="scan-result">
+        <div className="flex items-start gap-3">
+          <Tag className="mt-0.5 h-5 w-5 shrink-0 text-accent-b" aria-hidden />
+          <div className="min-w-0">
+            <div className="font-display font-semibold">{t('scan.claim.title')}</div>
+            <div className="tabular truncate text-[12.5px] text-muted">{result.code}</div>
+          </div>
+        </div>
+        {householdId && membership.data?.role !== 'viewer' && (
+          <Link
+            to="/scan"
+            search={{ claim: result.code }}
+            onClick={onNavigate}
+            className="accent-pill flex h-11 items-center justify-center gap-1.5 rounded-[14px] font-display text-[15px] font-semibold"
+          >
+            {t('scan.claim.what')}
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </Link>
+        )}
+      </div>
+    );
+  }
+  return (
+    <ClaimPanel
+      householdId={householdId}
+      code={result.code}
+      sheetNo={result.sheetNo}
+      slot={result.slot}
+      onClaimed={setClaimed}
+      className={className}
+    />
+  );
 }
 
 function MessageResult({
   result,
   className,
 }: {
-  result: Extract<Resolved, { status: 'notFound' | 'invalid' | 'offline' | 'grocy' }>;
+  result: Extract<Resolved, { status: 'notFound' | 'invalid' | 'offline' | 'grocy' | 'retiredTag' }>;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -58,7 +116,7 @@ function MessageResult({
           {t(`scan.${result.status}.title`)}
         </div>
         <div className="tabular mt-0.5 truncate text-[12.5px] text-muted">
-          {result.status === 'notFound'
+          {result.status === 'notFound' || result.status === 'retiredTag'
             ? result.code
             : result.status === 'invalid'
               ? result.raw
@@ -97,7 +155,7 @@ function PlaceResult({
         <div className="min-w-0 flex-1">
           {crumb && <div className="truncate text-[12px] text-muted">{crumb}</div>}
           <div className="truncate font-display text-[18px] font-semibold">{place.name}</div>
-          <div className="tabular text-[11.5px] text-accent-b">{place.code}</div>
+          <div className="tabular text-[11.5px] text-accent-b">{result.via ?? place.code}</div>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -107,6 +165,7 @@ function PlaceResult({
           <span className="tabular text-[12.5px] text-muted">{t('places.insideCount', { count: inside })}</span>
         )}
       </div>
+      <FillLink placeId={place.id} onNavigate={onNavigate} />
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <Link
           to="/places/$placeId"
@@ -159,6 +218,7 @@ function AssetResult({
         </div>
         <StatusBadge status={asset.status} />
       </div>
+      <PutAwayLink kind="asset" id={asset.id} onNavigate={onNavigate} />
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <Link
           to="/things/$assetId"

@@ -1,5 +1,5 @@
-// Offline outbox (MASTER_PLAN §9 Phase 7): stock actions (use / open / move / waste) and shopping
-// ticks are queued on the device and sent in order. Every op gets its id when the button is tapped
+// Offline outbox (MASTER_PLAN §9 Phase 7): stock actions (use / open / move / waste), shopping
+// ticks and (Phase 7b) things / places put into places are queued on the device and sent in order. Every op gets its id when the button is tapped
 // (`crypto.randomUUID()`), and the database remembers ids it has done (`rpc_stock_op`, migration 50),
 // so sending the same op twice — a retry after a timeout, a replay after a reload — never takes the
 // stock twice. Ticks are naturally idempotent and "newest change wins" (`rpc_shopping_tick`).
@@ -19,6 +19,8 @@ export interface OpError {
   message: string;
   /** GDSTK: how much there actually was (stock units). */
   available: number | null;
+  /** The database's detail text (GDMVC: 'newer' | 'moved'). */
+  detail?: string;
 }
 
 interface OpBase {
@@ -43,7 +45,19 @@ export interface TickOp extends OpBase {
   item_id: string;
   done: boolean;
 }
-export type QueuedOp = StockOp | TickOp;
+/** Phase 7b: a thing or a place put into a place (`rpc_move`, idempotent by op id). */
+export interface MoveOp extends OpBase {
+  kind: 'move';
+  item: 'asset' | 'location';
+  item_id: string;
+  /** Destination place; null = no place (thing) / top level (place). */
+  to: string | null;
+  /** "Move anyway" after it was parked because the item moved again since the tap (GDMVC). */
+  force?: boolean;
+  /** Undo: only move back while the item is still here (omitted = no check). */
+  expect_from?: string | null;
+}
+export type QueuedOp = StockOp | TickOp | MoveOp;
 
 export type SendResult =
   | { type: 'ok'; result: unknown }
@@ -205,7 +219,9 @@ export function classifyError(e: unknown): SendResult {
   const message = typeof err.message === 'string' ? err.message : String(e);
   if (/^[0-9A-Z]{5}$/.test(code)) {
     const n = typeof err.details === 'string' ? Number(err.details) : NaN;
-    return { type: 'refused', error: { code, message, available: Number.isFinite(n) ? n : null } };
+    // Text details (GDMVC 'newer' …); a number is the GDSTK quantity above.
+    const detail = typeof err.details === 'string' && err.details && !Number.isFinite(n) ? err.details : undefined;
+    return { type: 'refused', error: { code, message, available: Number.isFinite(n) ? n : null, ...(detail ? { detail } : {}) } };
   }
   return { type: 'transient', message: message || 'network' };
 }
