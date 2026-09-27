@@ -2358,6 +2358,7 @@ export type Database = {
           id: string
           ignored_at: string | null
           ignored_by: string | null
+          imported_at: string | null
           mime: string
           modified_at: string
           name: string
@@ -2375,6 +2376,7 @@ export type Database = {
           id?: string
           ignored_at?: string | null
           ignored_by?: string | null
+          imported_at?: string | null
           mime: string
           modified_at: string
           name: string
@@ -2392,6 +2394,7 @@ export type Database = {
           id?: string
           ignored_at?: string | null
           ignored_by?: string | null
+          imported_at?: string | null
           mime?: string
           modified_at?: string
           name?: string
@@ -3910,6 +3913,7 @@ export type Database = {
           household_id: string | null
           id: string | null
           ignored_at: string | null
+          imported_at: string | null
           mime: string | null
           modified_at: string | null
           name: string | null
@@ -4535,6 +4539,10 @@ export type Database = {
       rpc_save_transaction: { Args: { p: Json }; Returns: Json }
       rpc_scan_file_asset: {
         Args: { p_asset: string; p_file: string }
+        Returns: undefined
+      }
+      rpc_scan_file_done: {
+        Args: { p_done?: boolean; p_file: string }
         Returns: undefined
       }
       rpc_scan_file_ignore: {

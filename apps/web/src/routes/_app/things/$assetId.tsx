@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { Money } from '@/components/money/bits';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
 import { ExtraLabels } from '@/components/scan/ExtraLabels';
+import { AddLabelButton, ScanPlaceButton } from '@/components/scan/InstantScan';
 import { CodeQr } from '@/components/places/PlaceVisuals';
 import { AssetForm } from '@/components/things/AssetForm';
 import { AssetTimeline, DueChip, ValueLine } from '@/components/things/AssetViews';
@@ -213,14 +214,26 @@ function AssetPage() {
               />
               <div className="col-span-2">
                 <dt className="text-[12px] text-muted">{t('things.value.place')}</dt>
-                <dd className="mt-0.5 text-[15px]">
-                  {asset.location_id ? (
-                    <Link to="/places/$placeId" params={{ placeId: asset.location_id }} className="text-accent-b">
-                      {asset.location_path}
-                    </Link>
-                  ) : (
-                    <span className="text-muted">{t('things.noPlace')}</span>
+                <dd className="mt-0.5 flex items-center gap-2 text-[15px]">
+                  <span className="min-w-0 flex-1">
+                    {asset.location_id ? (
+                      <Link to="/places/$placeId" params={{ placeId: asset.location_id }} className="text-accent-b">
+                        {asset.location_path}
+                      </Link>
+                    ) : (
+                      <span className="text-muted">{t('things.noPlace')}</span>
+                    )}
+                  </span>
+                  {canWrite && !gone && (
+                    <ScanPlaceButton
+                      householdId={householdId}
+                      target={{ kind: 'asset', id: asset.id }}
+                      name={asset.name}
+                      currentPlaceId={asset.location_id}
+                    />
                   )}
+                </dd>
+                <dd>
                   {asset.parent_id && (
                     <span className="block text-[13px] text-muted">
                       {t('things.partOf')}{' '}
@@ -248,6 +261,7 @@ function AssetPage() {
                   <Copy className="h-3.5 w-3.5" aria-hidden />
                   {t('places.copyCode')}
                 </button>
+                {canWrite && <AddLabelButton householdId={householdId} target={{ kind: 'asset', id: asset.id }} name={asset.name} className="ml-3" />}
               </div>
             </div>
             <ExtraLabels householdId={householdId} target={{ kind: 'asset', id: asset.id }} canWrite={canWrite} />

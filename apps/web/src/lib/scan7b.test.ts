@@ -3,6 +3,7 @@ import { barcodeText } from './codes';
 import { DEFAULT_PROFILE, MINI_PROFILE, layoutSlots } from './labels/sheet';
 import { blankLabelText, tagState, tagTarget } from './labels/tags';
 import { moveErrorKey } from './moveErrors';
+import { shouldAutoStart } from './scanner';
 
 describe('blank labels', () => {
   const blank = { location_id: null, asset_id: null, product_id: null, retired_at: null };
@@ -52,5 +53,16 @@ describe('barcodeText (camera / USB into a barcode field)', () => {
   it('keeps GTIN digits and trims anything else', () => {
     expect(barcodeText(' 4792024000222\n')).toBe('4792024000222');
     expect(barcodeText('  SHOP-123 ')).toBe('SHOP-123');
+  });
+});
+
+describe('shouldAutoStart (Phase 7c)', () => {
+  it('only phones/tablets that already allowed the camera', async () => {
+    const run = (coarse: boolean, state: PermissionState | null) => shouldAutoStart({ coarse, permission: async () => state });
+    expect(await run(true, 'granted')).toBe(true);
+    expect(await run(true, 'prompt')).toBe(false);
+    expect(await run(true, 'denied')).toBe(false);
+    expect(await run(true, null)).toBe(false);
+    expect(await run(false, 'granted')).toBe(false);
   });
 });

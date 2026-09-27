@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { PlaceStock } from '@/components/pantry/PlaceStock';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
 import { ExtraLabels } from '@/components/scan/ExtraLabels';
+import { AddLabelButton, ScanPlaceButton } from '@/components/scan/InstantScan';
 import { PlaceThings } from '@/components/things/PlaceThings';
 import { MoveSheet } from '@/components/places/MoveSheet';
 import { PlaceForm } from '@/components/places/PlaceForm';
@@ -118,6 +119,26 @@ function PlacePage() {
                 <KindChip kind={place.kind} />
                 <ClimateChip climate={place.climate} />
               </div>
+              <div className="mt-2.5 flex items-center gap-2 text-[14px]">
+                <span className="text-muted">{t('places.inside')}:</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {place.parent_id ? (
+                    <Link to="/places/$placeId" params={{ placeId: place.parent_id }} className="text-accent-b">
+                      {place.path.split(' › ').slice(0, -1).join(' › ')}
+                    </Link>
+                  ) : (
+                    <span className="text-muted">{t('places.topLevel')}</span>
+                  )}
+                </span>
+                {canWrite && (
+                  <ScanPlaceButton
+                    householdId={householdId}
+                    target={{ kind: 'location', id: place.id }}
+                    name={place.name}
+                    currentPlaceId={place.parent_id}
+                  />
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-3.5 rounded-2xl border border-line bg-white/[0.03] p-3">
               <CodeQr code={place.code} className="h-[72px] w-[72px] shrink-0 p-1" />
@@ -134,6 +155,7 @@ function PlacePage() {
                   <Copy className="h-3.5 w-3.5" aria-hidden />
                   {t('places.copyCode')}
                 </button>
+                {canWrite && <AddLabelButton householdId={householdId} target={{ kind: 'location', id: place.id }} name={place.name} className="ml-3" />}
               </div>
             </div>
             <ExtraLabels householdId={householdId} target={{ kind: 'location', id: place.id }} canWrite={canWrite} />
