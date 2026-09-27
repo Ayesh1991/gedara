@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { BillImport } from '@/components/money/BillImport';
 import { SheetImport } from '@/components/money/SheetImport';
+import { SmsScreenshotPaste, isBankSmsText } from '@/components/money/BankSmsReview';
 import { SmsBackupImport } from '@/components/money/SmsBackupImport';
 import { DriveInbox } from '@/components/scan/DriveInbox';
 import { useSharedText } from '@/components/scan/useSharedText';
@@ -22,9 +23,13 @@ export const Route = createFileRoute('/_app/money/import')({
 function ImportPage() {
   const { t } = useTranslation();
   const navigate = useNavigate({ from: '/money/import' });
-  const { tab = 'bill', shared } = Route.useSearch();
+  const search = Route.useSearch();
   // Text shared from another app (Android share sheet → the service worker keeps it for one read).
+  const shared = search.shared;
   const sharedText = useSharedText(shared);
+  // A bank SMS screenshot (Phase 7c) opens the Bank SMS tab; everything else the bill import.
+  const sharedSms = isBankSmsText(sharedText);
+  const tab = sharedSms ? 'sms' : (search.tab ?? 'bill');
   const { membership } = Route.useRouteContext();
   const { id: householdId, locale, timezone } = membership.household;
   const { accounts, categories } = useMoneyBasics(householdId);
@@ -66,7 +71,10 @@ function ImportPage() {
           isOwner={membership.role === 'owner'}
         />
       ) : tab === 'sms' ? (
-        <SmsBackupImport householdId={householdId} />
+        <div className="flex flex-col gap-5">
+          <SmsScreenshotPaste key={sharedSms ? `shared-${shared}` : 'blank'} householdId={householdId} initialText={sharedSms ? sharedText : undefined} />
+          <SmsBackupImport householdId={householdId} />
+        </div>
       ) : tab === 'bill' ? (
         <BillImport
           householdId={householdId}
@@ -74,8 +82,8 @@ function ImportPage() {
           today={todayIn(timezone)}
           accounts={accounts.data}
           categories={categories.data}
-          key={sharedText ? `shared-${shared}` : 'blank'}
-          initialText={sharedText}
+          key={sharedText && !sharedSms ? `shared-${shared}` : 'blank'}
+          initialText={sharedSms ? undefined : sharedText}
         />
       ) : (
         <SheetImport householdId={householdId} locale={locale} accounts={accounts.data} categories={categories.data} />

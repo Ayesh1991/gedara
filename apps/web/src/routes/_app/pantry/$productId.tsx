@@ -25,6 +25,7 @@ import { JournalList } from '@/components/pantry/JournalList';
 import { ProductForm } from '@/components/pantry/ProductForm';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
 import { ExtraLabels } from '@/components/scan/ExtraLabels';
+import { AddLabelButton, ScanPlaceButton } from '@/components/scan/InstantScan';
 import { StockSheet, type StockMode } from '@/components/pantry/StockSheet';
 import { ScanField } from '@/components/scan/ScanField';
 import { ProductSpine } from '@/components/spine/ProductSpine';
@@ -145,6 +146,7 @@ function ProductPage() {
   );
   const inStock = product.stock.qty > 0;
   const photo = pantry.photos.data?.get(product.id);
+  const usualPlace = product.default_location_id ? pantry.places.data?.find((p) => p.id === product.default_location_id) : undefined;
   const category = product.category_id ? categoryLabel(pantry.categories.data ?? [], product.category_id) : null;
 
   async function addToList() {
@@ -223,6 +225,28 @@ function ProductPage() {
                 </dd>
               </div>
               <div className="col-span-2">
+                <dt className="text-[12px] text-muted">{t('pantry.product.place')}</dt>
+                <dd className="mt-0.5 flex items-center gap-2 text-[15px]">
+                  <span className="min-w-0 flex-1 truncate">
+                    {usualPlace ? (
+                      <Link to="/places/$placeId" params={{ placeId: usualPlace.id }} className="text-accent-b">
+                        {usualPlace.path}
+                      </Link>
+                    ) : (
+                      <span className="text-muted">{t('pantry.product.noUsualPlace')}</span>
+                    )}
+                  </span>
+                  {canWrite && (
+                    <ScanPlaceButton
+                      householdId={householdId}
+                      target={{ kind: 'product', id: product.id }}
+                      name={product.name}
+                      currentPlaceId={product.default_location_id}
+                    />
+                  )}
+                </dd>
+              </div>
+              <div className="col-span-2">
                 <dt className="text-[12px] text-muted">{t('pantry.product.price')}</dt>
                 <dd className="mt-0.5 text-[15px]">
                   {product.stock.lastUnitCost !== null ? (
@@ -249,6 +273,7 @@ function ProductPage() {
                   <Copy className="h-3.5 w-3.5" aria-hidden />
                   {t('places.copyCode')}
                 </button>
+                {canWrite && <AddLabelButton householdId={householdId} target={{ kind: 'product', id: product.id }} name={product.name} className="ml-3" />}
               </div>
             </div>
             <ExtraLabels householdId={householdId} target={{ kind: 'product', id: product.id }} canWrite={canWrite} />

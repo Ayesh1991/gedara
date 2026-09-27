@@ -2,18 +2,19 @@
 // 54, drive-scan). Bills open in the normal import flow; warranty cards and rating plates fill in a
 // thing. Nothing is saved without a person confirming it.
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, CircleAlert, CloudDownload, FileJson, FolderSync, ReceiptText, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, CircleAlert, CloudDownload, FileJson, FolderSync, MessageSquareText, ReceiptText, ShieldCheck } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/aurora/EmptyState';
+import { BankSmsReview } from '@/components/money/BankSmsReview';
 import { BillImport } from '@/components/money/BillImport';
 import { AssetForm } from '@/components/things/AssetForm';
 import { useThings } from '@/components/things/bits';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import type { ThingDoc } from '@/lib/money/billSchema';
+import type { BankSmsDoc, ThingDoc } from '@/lib/money/billSchema';
 import type { CategoryRow } from '@/lib/money/categoriesMap';
 import type { Account } from '@/lib/money/queries';
 import { docPrefill, matchThing } from '@/lib/scan/docs';
@@ -38,8 +39,9 @@ const KNOWN_ERRORS = ['not_configured', 'google_auth', 'folder_not_shared', 'dri
 type ScanError = (typeof KNOWN_ERRORS)[number] | 'generic';
 const errorKey = (e: string | null | undefined): ScanError =>
   (KNOWN_ERRORS as readonly string[]).includes(e ?? '') ? (e as ScanError) : 'generic';
-type Kind = 'bill' | 'warranty' | 'rating_plate' | 'null';
-const kindKey = (d: string | null | undefined): Kind => (d === 'bill' || d === 'warranty' || d === 'rating_plate' ? d : 'null');
+type Kind = 'bill' | 'warranty' | 'rating_plate' | 'bank_sms' | 'null';
+const kindKey = (d: string | null | undefined): Kind =>
+  d === 'bill' || d === 'warranty' || d === 'rating_plate' || d === 'bank_sms' ? d : 'null';
 
 export function DriveInbox({
   householdId,
@@ -112,6 +114,15 @@ export function DriveInbox({
             categories={categories}
             initialText={JSON.stringify(open.payload)}
           />
+        ) : open.doc_type === 'bank_sms' ? (
+          <BankSmsReview
+            key={open.id}
+            householdId={householdId}
+            docs={open.payload as unknown as BankSmsDoc[]}
+            fileTime={new Date(open.modified_at ?? open.seen_at ?? '1970-01-01')}
+            fileId={open.id ?? undefined}
+            onDone={back}
+          />
         ) : (
           <ThingDocs file={open} householdId={householdId} locale={locale} onDone={back} />
         )}
@@ -174,7 +185,7 @@ export function DriveInbox({
 
 function FileRow({ file, locale, today, onOpen, onIgnore }: { file: ScanFile; locale: string; today: string; onOpen: () => void; onIgnore: () => void }) {
   const { t } = useTranslation();
-  const Icon = file.doc_type === 'bill' ? ReceiptText : file.doc_type ? ShieldCheck : FileJson;
+  const Icon = file.doc_type === 'bill' ? ReceiptText : file.doc_type === 'bank_sms' ? MessageSquareText : file.doc_type ? ShieldCheck : FileJson;
   const error = file.status === 'error';
   return (
     <li className="glass flex flex-wrap items-center gap-3 rounded-2xl px-3.5 py-3" data-testid="scan-file">

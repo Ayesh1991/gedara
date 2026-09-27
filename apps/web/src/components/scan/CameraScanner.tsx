@@ -108,6 +108,8 @@ export function CameraScanner({
     const auto = autoStart ? setTimeout(() => void start(), 0) : undefined;
     const onHide = () => {
       if (document.visibilityState === 'hidden') stop();
+      // Back to the app: a camera that started by itself starts again by itself.
+      else if (autoStart && !streamRef.current) void start();
     };
     document.addEventListener('visibilitychange', onHide);
     return () => {

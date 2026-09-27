@@ -8,10 +8,12 @@ import { guessTopKey, pickCategory, type CategoryRow } from './categoriesMap';
 import type { RpcRoute } from '../spine/route';
 
 export {
+  BankSmsSchema,
   ScannedBillSchema,
   parseBillText,
   parseScanText,
   scannedBillFingerprint,
+  type BankSmsDoc,
   type BillParseError,
   type RatingPlateDoc,
   type ScanParse,

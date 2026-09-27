@@ -93,3 +93,9 @@ export async function linkScanFileAsset(id: string, assetId: string) {
   const { error } = await supabase.rpc('rpc_scan_file_asset', { p_file: id, p_asset: assetId });
   if (error) throw error;
 }
+
+/** A bank SMS screenshot's alerts are in the inbox (Phase 7c, migration 59); false = take it back. */
+export async function markScanFileDone(id: string, done = true) {
+  const { error } = await supabase.rpc('rpc_scan_file_done', { p_file: id, p_done: done });
+  if (error) throw error;
+}

@@ -1,5 +1,5 @@
 import { Camera, Usb } from 'lucide-react';
-import { useState, type ComponentProps } from 'react';
+import { useRef, useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -10,7 +10,8 @@ import { useScanCapture } from './WedgeListener';
 
 /**
  * The phone camera in a sheet: the first read is handed over and the sheet closes. The USB scanner
- * works too while it is open (same result, same place).
+ * works too while it is open (same result, same place). An `onScan` that returns (or resolves to)
+ * `false` keeps the sheet open for another try (e.g. "that's not a place label").
  */
 export function ScanSheet({
   open,
@@ -18,17 +19,31 @@ export function ScanSheet({
   onScan,
   title,
   hint,
+  message,
 }: {
   open: boolean;
   onClose: () => void;
-  onScan: (text: string) => void;
+  onScan: (text: string) => boolean | void | Promise<boolean | void>;
   title?: string;
   hint?: string;
+  /** Why the last scan didn't fit (shown in the sheet: a toast would sit under the open dialog). */
+  message?: string | null;
 }) {
   const { t } = useTranslation();
+  const busy = useRef(false);
   const take = (text: string) => {
-    onClose();
-    onScan(text);
+    if (busy.current) return;
+    const r = onScan(text);
+    if (!(r instanceof Promise)) {
+      if (r !== false) onClose();
+      return;
+    }
+    busy.current = true;
+    void r
+      .then((ok) => ok !== false && onClose())
+      .finally(() => {
+        busy.current = false;
+      });
   };
   useScanCapture(take, open);
   return (
@@ -36,6 +51,11 @@ export function ScanSheet({
       {open && (
         <div className="flex flex-col gap-3" data-testid="scan-sheet">
           <CameraScanner onDetect={take} autoStart compact className="aspect-square w-full sm:aspect-[4/3]" />
+          {message && (
+            <p role="alert" className="rounded-xl border border-caution/40 bg-caution/10 px-3 py-2 text-[13.5px] text-caution" data-testid="scan-sheet-message">
+              {message}
+            </p>
+          )}
           <p className="flex items-center gap-2 text-[13px] text-muted">
             <Usb className="h-4 w-4 shrink-0" aria-hidden />
             {hint ?? t('scan.sheet.hint')}

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Barcode, ChevronRight, Minus, Plus } from 'lucide-react';
+import { Barcode, ChevronRight, Minus, PackageOpen, Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { PutAwayLink } from '@/components/scan/PutAwayLinks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
-import { addBarcode, consume, invalidatePantry, pantryErrorKey } from '@/lib/pantry/queries';
+import { addBarcode, consume, invalidatePantry, openStock, pantryErrorKey } from '@/lib/pantry/queries';
 import { stockStatuses } from '@/lib/pantry/status';
 import { formatQty, parseQty, toStockQty, usableUnits } from '@/lib/pantry/units';
 import { membershipQuery } from '@/lib/queries';
@@ -93,6 +93,31 @@ export function ProductScanCard({
     );
   }
 
+  // Opened (Phase 7c): this pack is open now. rpc_open brings its due date forward to
+  // today + "use within N days after opening" when the product has that rule (never later than the
+  // pack's own date).
+  const unopened = product ? (lot ? (lot.opened_at ? 0 : lot.qty_remaining) : product.stock.qty - product.stock.qtyOpened) : 0;
+  function markOpened() {
+    if (!product) return;
+    const days = product.due_days_after_open;
+    void run(
+      (label) =>
+        openStock(
+          lot
+            ? { household_id: householdId, lot_id: lot.id }
+            : { household_id: householdId, product_id: product.id, qty: step.qty, unit_id: step.unitId },
+          label,
+        ),
+      (r) => {
+        const qty = formatQty(r.qty ?? stockStep ?? step.qty, unit);
+        return days !== null && days !== undefined
+          ? t('pantry.scan.openedUseBy', { qty, name: product.name, count: days })
+          : t('pantry.scan.openedNoRule', { qty, name: product.name });
+      },
+      unit,
+    );
+  }
+
   return (
     <div className={cn('glass-strong slide-up flex flex-col gap-3 rounded-3xl p-3.5', className)} role="status" data-testid="scan-result">
       <div className="flex items-center gap-3.5">
@@ -161,7 +186,15 @@ export function ProductScanCard({
           <ChevronRight className="h-[18px] w-[18px]" aria-hidden />
         </Link>
       </div>
-      {canWrite && product && product.stock.qty > 0 && <PutAwayLink kind="product" id={product.id} onNavigate={onNavigate} />}
+      {canWrite && product && product.stock.qty > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          <Button size="sm" className="h-11" disabled={unopened <= 0} onClick={markOpened}>
+            <PackageOpen className="h-4 w-4" aria-hidden />
+            {t('pantry.scan.opened')}
+          </Button>
+          <PutAwayLink kind="product" id={product.id} onNavigate={onNavigate} />
+        </div>
+      )}
       {adding && product && pantry.units.data && pantry.conversions.data && (
         <StockSheet
           open

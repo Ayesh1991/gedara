@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { membershipQuery } from '@/lib/queries';
 import { resolveScan, type Resolved } from '@/lib/resolve';
+import { shouldAutoStart } from '@/lib/scanner';
 
 // Modes (Phase 7b): ?add=thing|product · ?put=<kind>:<id> · ?fill=<placeId> · ?claim=<HL:TAG code>.
 // Bad values are dropped (plain Scan screen) rather than showing an error page.
@@ -48,6 +49,15 @@ function ScanPage() {
   const [code, setCode] = useState('');
   const [live, setLive] = useState(false);
   const [bannerEl, setBannerEl] = useState<HTMLDivElement | null>(null);
+  // Phones/tablets that already allowed the camera start it with the screen (no "Start camera" tap).
+  const [autoStart, setAutoStart] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void shouldAutoStart().then((yes) => alive && setAutoStart(yes));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const put = parsePut(search.put);
   const mode = !canWrite ? null : search.claim ? 'claim' : put ? 'put' : search.fill ? 'fill' : search.add ? 'add' : null;
@@ -142,6 +152,7 @@ function ScanPage() {
           <CameraScanner
             onDetect={handle}
             onRunningChange={setLive}
+            autoStart={autoStart}
             className={
               mode
                 ? 'aspect-[4/3] max-h-[42dvh] w-full lg:max-h-none'

@@ -247,7 +247,7 @@ function PantryPage() {
           {shown.length === 0 ? (
             <Card className="text-center text-[14.5px] text-muted">{t('pantry.noMatches')}</Card>
           ) : (
-            <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-2.5 md:grid-cols-2 xl:grid-cols-3">
               {shown.map(({ product, statuses }) => (
                 <ProductCard
                   key={product.id}

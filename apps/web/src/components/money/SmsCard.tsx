@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { ArrowLeftRight, CircleAlert, Link2, MessageSquareText, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -208,7 +209,11 @@ export function SmsCard({
         <p className="flex items-start gap-2 rounded-xl bg-caution/10 px-3 py-2 text-[13px] text-caution">
           <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>
-            {t('money.inbox.gap', { expected: item.gap.expected.toFixed(2), reported: item.gap.reported.toFixed(2) })}
+            {t('money.inbox.gap', { expected: item.gap.expected.toFixed(2), reported: item.gap.reported.toFixed(2) })}{' '}
+            {/* Phase 7c: a missed alert can come back from a backup file or a screenshot. */}
+            <Link to="/money/import" search={{ tab: 'sms' }} className="font-medium underline underline-offset-2">
+              {t('money.inbox.addMissed')}
+            </Link>
           </span>
         </p>
       )}

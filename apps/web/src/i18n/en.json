@@ -62,7 +62,7 @@
     "emptyBody": "Scan a bill, warranty card or rating plate in your claude.ai Bill Scanner project. It appears here as soon as it's saved to the Drive folder.",
     "bills": "{{done}} of {{count}} bills imported",
     "bills_one": "{{done}} of 1 bill imported",
-    "kind": { "bill": "Bill", "warranty": "Warranty card", "rating_plate": "Rating plate", "null": "File" },
+    "kind": { "bill": "Bill", "warranty": "Warranty card", "rating_plate": "Rating plate", "bank_sms": "Bank SMS screenshot", "null": "File" },
     "status": { "waiting": "Waiting", "imported": "Done", "ignored": "Ignored", "error": "Couldn't read" },
     "done": "Done and ignored ({{count}})",
     "open": "Open",
@@ -416,6 +416,21 @@
     }
   },
   "scan": {
+    "instant": {
+      "scanPlace": "Scan where {{name}} is kept",
+      "placeTitle": "Where is {{name}}?",
+      "placeHint": "Scan the label of the box, shelf or room. The USB scanner works too.",
+      "notAPlace": "That isn't a place label. Scan a box, shelf or room label.",
+      "alreadyThere": "It's already in {{place}}.",
+      "usualPlace": "{{name}} is usually kept in {{place}}",
+      "addLabel": "Add label",
+      "labelTitle": "Add a label to {{name}}",
+      "labelHint": "Scan a blank Gedara label (from Places › Blank labels). The USB scanner works too.",
+      "notBlank": "That isn't a blank Gedara label.",
+      "alreadyOpens": "That label already opens {{name}}. Detach it there first.",
+      "alreadyThis": "That label already opens this.",
+      "labelAdded": "Label added: it now opens {{name}} too"
+    },
     "sheet": {
       "title": "Scan a barcode",
       "hint": "Point the camera at the barcode, or use the USB scanner.",
@@ -775,6 +790,7 @@
       "add": "Add"
     },
     "product": {
+      "noUsualPlace": "Not set",
       "newTitle": "New product",
       "editTitle": "Edit {{name}}",
       "name": "Name",
@@ -847,6 +863,10 @@
       "empty": "No stock is kept here yet."
     },
     "scan": {
+      "opened": "Opened",
+      "openedUseBy": "Opened {{qty}} of {{name}} · use within {{count}} days",
+      "openedUseBy_one": "Opened {{qty}} of {{name}} · use within {{count}} day",
+      "openedNoRule": "Opened {{qty}} of {{name}}. Set “use within … days after opening” on the product to get a date.",
       "use": "Use {{qty}}",
       "thisPack": "This pack:",
       "add": "Add {{qty}}"
@@ -1132,6 +1152,7 @@
       "unitMismatch": "A quantity is in a unit the product can't convert. Add its pack size and try again."
     },
     "inbox": {
+      "addMissed": "Add a missed SMS",
       "title": "Bank alerts",
       "short": "Alerts",
       "linkLabel": "Bank alerts, {{count}} to review",
@@ -2234,5 +2255,35 @@
       "denied": "You can't make labels in this household.",
       "make": "Couldn't make the sheets. Try again."
     }
+  },
+  "smsShot": {
+    "intro": "Alerts copied from a screenshot by the Bill Scanner. Check each day and time; alerts that already reached Gedara are left out. They go to the SMS inbox, where you review them as usual.",
+    "include": "Add this alert",
+    "balance": "balance after {{amount}}",
+    "date": "Day",
+    "time": "Time",
+    "checkDate": "Check the day",
+    "already": "Already in Gedara",
+    "left": {
+      "otp": "Left out: a code / OTP",
+      "sender": "Left out: not one of your banks",
+      "noDate": "Left out: needs a day",
+      "other": "Left out: not a bank alert"
+    },
+    "add": "Add {{count}} alerts to the SMS inbox",
+    "add_one": "Add {{count}} alert to the SMS inbox",
+    "adding": "Adding…",
+    "added": "{{count}} alerts added",
+    "added_one": "{{count}} alert added",
+    "duplicates": "{{count}} were already there",
+    "addedLong": "{{count}} alerts are in the SMS inbox. Review them there to fix the balance.",
+    "addedLong_one": "{{count}} alert is in the SMS inbox. Review it there to fix the balance.",
+    "review": "Open the SMS inbox",
+    "failed": "Couldn't add the alerts. Check your connection and try again.",
+    "pasteTitle": "Missed alerts from a screenshot",
+    "pasteHint": "Screenshot the bank's SMS thread and give it to the Bill Scanner on claude.ai. Its file shows up under From Drive; or paste its JSON here.",
+    "pasteLabel": "Bill Scanner JSON",
+    "read": "Read",
+    "notSms": "This isn't a bank SMS screenshot (doc_type bank_sms)."
   }
 }

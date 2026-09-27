@@ -58,7 +58,7 @@ export function PlaceStock({
           {t('pantry.place.empty')}
         </Card>
       ) : (
-        <ul className="grid gap-2 md:grid-cols-2">
+        <ul className="grid grid-cols-[minmax(0,1fr)] gap-2 md:grid-cols-2">
           {rows.map(({ product, qty, nextDue, opened }) => (
             <li key={product.id} className="glass flex items-center gap-3 rounded-2xl p-2.5">
               <Link to="/pantry/$productId" params={{ productId: product.id }} className="flex min-w-0 flex-1 items-center gap-3">

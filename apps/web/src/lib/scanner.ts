@@ -88,6 +88,28 @@ export function cameraError(e: unknown): CameraError {
   return 'unavailable';
 }
 
+/**
+ * Phones and tablets open the camera with the Scan screen (Phase 7c) once the camera was allowed
+ * for this site; laptops (USB scanner) and a first visit still wait for a tap, which the browser's
+ * permission prompt needs anyway.
+ */
+export async function shouldAutoStart(
+  env: { coarse: boolean; permission: () => Promise<PermissionState | null> } = {
+    coarse: typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true,
+    permission: async () => {
+      try {
+        const s = await navigator.permissions?.query({ name: 'camera' as PermissionName });
+        return s?.state ?? null;
+      } catch {
+        return null; // Firefox / older Safari: no 'camera' permission query
+      }
+    },
+  },
+): Promise<boolean> {
+  if (!env.coarse) return false;
+  return (await env.permission()) === 'granted';
+}
+
 export async function openRearCamera(): Promise<MediaStream> {
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
     throw new DOMException('insecure', 'SecurityError');

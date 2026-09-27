@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.7.2 — Phase 7c Scan polish + missed bank SMS
+- **The camera starts by itself** on the Scan tab on phones and tablets once the camera was
+  allowed for the site (laptops with the USB scanner keep the button). It starts again when you
+  come back to the app.
+- **Opened** on a product's scan card: marks one pack (the barcode's pack, or the label's usual
+  amount, or that very lot) as opened. With "use within N days after opening" set on the product, its
+  date moves to today + N (never later than the pack's own date). Undo for 8 s. Works offline.
+- **Scan where it's kept, in one step**: a small scan icon next to a thing's "Kept in", a place's
+  "Inside" and a product's new "Usually kept in" line. Scan the place label (camera or USB scanner)
+  and it's saved at once, with Undo. A wrong label is explained inside the scanner, which stays open.
+- **Add label** on every place, thing and product page: scan a blank label and it opens the item
+  too, next to its own code. A label that already opens something else is refused with its name.
+- **Missed bank SMS from a screenshot**: screenshot the bank's SMS thread and give it to the claude.ai
+  Bill Scanner (new `bank_sms` section in `docs/bill-scanner-project.md`). The file appears under
+  Money › Import › From Drive (or paste its JSON under Bank SMS, or share it from Android). Each alert
+  gets its day from "Friday" / "Yesterday" / a date, is parsed like a forwarded alert, and alerts that
+  already reached Gedara (same bank, amount and balance after) are left out. The rest go to the SMS
+  inbox for the usual review. The inbox's "balance doesn't follow" warning links here.
+- Fixed (from 0.7.1): the backup zip now includes the blank-label and move tables.
+- Migration 59 `scan_bank_sms`; schema_version 59. `drive-scan` redeployed with the new document kind.
+
 ## 0.7.1 — Phase 7b Scan & photo everywhere
 - **Camera button on every barcode field**: product page › Barcodes (a scan adds it at once),
   the new-product form, bill line → product (a known barcode picks its product, an unknown one

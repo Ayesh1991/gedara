@@ -1,10 +1,11 @@
-# Bill Scanner — claude.ai project instructions (Phase 7)
+# Bill Scanner — claude.ai project instructions (Phase 7, updated 7c)
 
 This replaces `reference/bill-scanner/samples/prompt.md` (kept unchanged as a reference). What's new:
 - **warranty cards** and **appliance rating plates**, not only bills
 - a `barcode` field per bill line
 - a `doc_type` field
 - the file rules Gedara's Drive reader expects
+- (Phase 7c) **screenshots of a bank's SMS thread**, for alerts the phone didn't forward
 
 **How to update the project:** on claude.ai open **Projects › Bill Scanner › Project instructions**, delete the
 old text, paste everything below the line, and click **Save**. The Google Drive connector must stay
@@ -17,12 +18,14 @@ more photos. Each photo is one of these:
 - a **shop receipt or utility bill**, mostly from Sri Lanka, in LKR (Rs)
 - a **warranty card**
 - an **appliance rating plate**: the sticker on the back or inside of a fridge, TV, washing machine and so on
+- a **screenshot of a bank's SMS thread** (BOC, Sampath, People's Bank, Seylan), when a bank alert
+  didn't reach Gedara
 
 Read each photo carefully with vision. Return clean, structured JSON that Gedara can import, then save it to Google Drive.
 
 ## Output rules (all document types)
 
-1. Decide what each photo is: `"doc_type": "bill"`, `"warranty"` or `"rating_plate"`.
+1. Decide what each photo is: `"doc_type": "bill"`, `"warranty"`, `"rating_plate"` or `"bank_sms"`.
 2. Return **one JSON code block only**, with no commentary before it. After the code block you may add
    a one-line summary (e.g. "Cargills — 2 items — Rs 595.00").
 3. Several photos of the **same kind** go into one **JSON array** in one code block. If I upload
@@ -33,8 +36,8 @@ Read each photo carefully with vision. Return clean, structured JSON that Gedara
 5. Dates are always `YYYY-MM-DD`, times `HH:MM` (24 h). Amounts are plain numbers (no "Rs", no commas).
 6. **Save to Google Drive** with the Google Drive tool, into my folder **"Home Ledger Bills"**:
    - The file content is **only the JSON** (exactly the code block's content, without the ``` fences).
-   - File name: `bill_YYYY-MM-DD_shop.json`, `warranty_YYYY-MM-DD_maker-model.json` or
-     `plate_maker-model.json` (lower-case, no spaces).
+   - File name: `bill_YYYY-MM-DD_shop.json`, `warranty_YYYY-MM-DD_maker-model.json`,
+     `plate_maker-model.json` or `sms_YYYY-MM-DD_bank.json` (lower-case, no spaces).
    - Save it as a plain `.json` / text file if the tool allows. If it can only make a Google Doc,
      that's fine too (Gedara reads Docs as text).
    - Never put two different kinds in one file. Never edit or overwrite an older file.
@@ -160,3 +163,45 @@ Extra rules for bills:
 
 - `manufactured`: use `YYYY`, `YYYY-MM` or `YYYY-MM-DD`, as precise as the plate shows.
 - `power_w` is the rated power in watts (convert kW × 1000). `capacity` is as printed (litres, kg, inches …).
+
+## Bank SMS screenshots — `"doc_type": "bank_sms"`
+
+A screenshot of the SMS thread of one bank. Gedara adds these alerts to its SMS review inbox, where
+I check each one before anything reaches the ledger. **Copy, don't interpret.**
+
+```json
+{
+  "doc_type": "bank_sms",
+  "sender": "BOC",
+  "captured_on": "2026-09-27",
+  "messages": [
+    {
+      "sender": "BOC",
+      "date": null,
+      "day_label": "Friday",
+      "time": "13:11",
+      "body": "ATM Withdrawal Rs 10000.00 From A/C No XXXXXXXXXX319. Balance available Rs 282466.53 - Thank you for banking with BOC"
+    }
+  ],
+  "notes": ""
+}
+```
+
+- One object per screenshot; several screenshots of the same thread → a JSON array. Oldest first,
+  in the order shown.
+- `sender`: the thread's name as shown at the top (e.g. `BOC`, `SAMPCCTXN`, `PeoplesCard`, `Seylan Bank`).
+- `body`: the **exact** text of each message bubble, letter for letter, digits and masked account
+  numbers as shown (`XXXXXXXXXX319`), on one line (join line breaks with a space). Don't fix spelling,
+  don't round amounts, don't add or remove words. If part of a bubble is cut off at the edge of the
+  screenshot, skip that bubble and say so in `notes`.
+- `day_label`: the day header above the message **exactly as shown** ("Today", "Yesterday", "Friday",
+  "12 Sep" …). A message without its own header belongs to the header above it: repeat that label.
+- `date`: `YYYY-MM-DD` only when the screenshot shows the full date or I tell you the date; otherwise `null`.
+- `time`: the message's time as shown, `HH:MM` 24 h (convert "1:11 PM" → `13:11`).
+- `captured_on`: the day the screenshot was taken, if I tell you or it is visible; otherwise `null`.
+- **Never copy OTP, PIN, password or verification-code messages**, even if they are in the
+  screenshot. Leave them out and write e.g. "1 OTP message left out" in `notes`.
+- Skip the phone's status bar, "Sender can't accept replies" notices and anything that isn't a bank
+  message.
+- File name: `sms_<captured_on or today>_<bank>.json`, e.g. `sms_2026-09-27_boc.json`.
+

@@ -1,5 +1,5 @@
 // JSON from the claude.ai "Bill Scanner" project (docs/bill-scanner-project.md): bills, warranty
-// cards and appliance rating plates. Shared by the drive-scan Edge Function (Deno maps `zod` to
+// cards, appliance rating plates and (Phase 7c) screenshots of a bank's SMS thread. Shared by the drive-scan Edge Function (Deno maps `zod` to
 // npm:zod in its deno.json) and the web app (`@scan/schema`). External JSON is never trusted
 // (CLAUDE.md rule 6): the text is sniffed before parsing and every document goes through Zod.
 // Bills also accept ledger v7's aliases (store / quantity / price / item total) so older files import.
@@ -87,8 +87,30 @@ export const RatingPlateSchema = z.object({
 });
 export type RatingPlateDoc = z.infer<typeof RatingPlateSchema>;
 
+/**
+ * A screenshot of a bank's SMS thread (Phase 7c), for alerts the phone's forwarder missed. Each
+ * alert is copied exactly; its day is a date when the screenshot shows one, else the label as shown
+ * ("Friday", "Yesterday", "12 Sep"), counted back from `captured_on` by the app.
+ */
+export const BankSmsMessageSchema = z.object({
+  sender: text(60),
+  body: z.string().trim().min(1).max(2000),
+  date: day.nullish(),
+  day_label: text(40),
+  time: z.string().regex(/^\d{1,2}:\d{2}$/, 'time must be HH:MM').nullish(),
+});
+export const BankSmsSchema = z.object({
+  doc_type: z.literal('bank_sms'),
+  sender: text(60),
+  captured_on: day.nullish(),
+  messages: z.array(BankSmsMessageSchema).min(1, 'no messages').max(200),
+  notes: text(2000),
+});
+export type BankSmsMessage = z.infer<typeof BankSmsMessageSchema>;
+export type BankSmsDoc = z.infer<typeof BankSmsSchema>;
+
 export type ThingDoc = WarrantyDoc | RatingPlateDoc;
-export type DocType = 'bill' | 'warranty' | 'rating_plate';
+export type DocType = 'bill' | 'warranty' | 'rating_plate' | 'bank_sms';
 
 export type BillParseError =
   | { kind: 'empty' }
@@ -99,6 +121,7 @@ export type BillParseError =
 export type ScanParse =
   | { kind: 'bill'; bills: ScannedBill[] }
   | { kind: 'warranty' | 'rating_plate'; docs: ThingDoc[] }
+  | { kind: 'bank_sms'; docs: BankSmsDoc[] }
   | { error: BillParseError };
 
 /** The ```json fence, BOM, HTML (a Google Doc saved as a web page) — then JSON.parse. */
@@ -135,6 +158,16 @@ export function parseScanText(input: string): ScanParse {
 
   const typeOf = (d: unknown) => (d && typeof d === 'object' ? (d as { doc_type?: unknown }).doc_type : undefined);
   const first = typeOf(list[0]);
+  if (first === 'bank_sms') {
+    const docs: BankSmsDoc[] = [];
+    for (const [index, d] of list.entries()) {
+      if (typeOf(d) !== first) return { error: { kind: 'shape', index, message: 'doc_type: all documents in a file must be the same kind' } };
+      const r = BankSmsSchema.safeParse(d);
+      if (!r.success) return firstIssue(index, r.error);
+      docs.push(r.data);
+    }
+    return { kind: first, docs };
+  }
   if (first === 'warranty' || first === 'rating_plate') {
     const schema = first === 'warranty' ? WarrantySchema : RatingPlateSchema;
     const docs: ThingDoc[] = [];
