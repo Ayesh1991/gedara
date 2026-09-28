@@ -50,8 +50,10 @@ export type Resolved =
   | { status: 'blankTag'; code: string; sheetNo: number | null; slot: number }
   /** A blank label that was thrown away / lost: it never opens anything again. */
   | { status: 'retiredTag'; code: string }
-  /** A retail barcode no product knows yet: offer "new product" / "add to a product". */
+  /** A retail barcode no product knows yet: offer "new product" / "new thing" / "add to a product". */
   | { status: 'unknownBarcode'; code: string }
+  /** Several Things share this barcode (copies of a book): pick one, or scan its own QR label. */
+  | { status: 'assetChoice'; code: string; assets: ScanAsset[] }
   /** An old Grocy label (grcy:…): Grocy isn't imported, so these don't point at anything. */
   | { status: 'grocy'; raw: string }
   | { status: 'notFound'; code: string }
@@ -81,6 +83,7 @@ function catalogue(): Catalogue | null {
     barcodes: qc.getQueryData<Catalogue['barcodes']>(['pantry', hh, 'barcodes']) ?? [],
     places: qc.getQueryData<Place[]>(['places', hh]) ?? [],
     assets: qc.getQueryData<ScanAsset[]>(['things', hh, 'assets']) ?? [],
+    assetBarcodes: qc.getQueryData<Catalogue['assetBarcodes']>(['things', hh, 'barcodes']) ?? [],
     tags: qc.getQueryData<LabelTag[]>(['labels', hh, 'tags']) ?? [],
   };
 }
@@ -100,11 +103,23 @@ async function byBarcode(code: string): Promise<Resolved | null> {
     .eq('barcode', code)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
+  if (!data) return byThingBarcode(code);
   const product = await supabase.from('product').select(PRODUCT_COLUMNS).eq('id', data.product_id).maybeSingle();
   if (product.error) throw product.error;
   if (!product.data) return null;
   return { status: 'product', product: product.data, barcode: { code: data.barcode, unitId: data.unit_id, qty: data.qty } };
+}
+
+/** Phase 7e: Things carry retail barcodes too (a book's ISBN); copies may share one. */
+async function byThingBarcode(code: string): Promise<Resolved | null> {
+  const { data, error } = await supabase.from('asset_barcode').select('asset_id').eq('barcode', code).limit(20);
+  if (error) throw error;
+  if (!data.length) return null;
+  const ids = [...new Set(data.map((r) => r.asset_id))];
+  const { data: assets, error: aErr } = await supabase.from('asset').select(ASSET_COLUMNS).in('id', ids).order('asset_no');
+  if (aErr) throw aErr;
+  if (!assets.length) return null;
+  return assets.length === 1 ? { status: 'asset', asset: assets[0]! } : { status: 'assetChoice', code, assets };
 }
 
 async function resolveOnline(parsed: ParsedScan): Promise<Resolved> {

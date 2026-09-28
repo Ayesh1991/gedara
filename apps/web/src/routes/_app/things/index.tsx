@@ -31,6 +31,8 @@ const SearchSchema = z.object({
   tag: z.string().uuid().optional(),
   /** Open "New thing" (`?new=1` arrives as the number 1 from a typed URL). */
   new: z.union([z.string(), z.number()]).transform(String).pipe(z.literal('1')).optional(),
+  /** A scanned retail barcode for the new thing (a book's ISBN; digits can arrive as a number). */
+  barcode: z.union([z.string(), z.number()]).transform(String).pipe(z.string().regex(/^[0-9A-Za-z._-]{4,64}$/)).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_app/things/')({
@@ -289,7 +291,7 @@ function ThingsPage() {
             const created = createdRef.current;
             createdRef.current = null;
             if (created) void navigate({ to: '/things/$assetId', params: { assetId: created } });
-            else setSearch({ new: undefined });
+            else setSearch({ new: undefined, barcode: undefined });
           }}
           householdId={householdId}
           locale={locale}
@@ -298,6 +300,7 @@ function ThingsPage() {
           assets={assets}
           tags={things.tags.data ?? []}
           fields={things.fields.data ?? []}
+          initial={search.barcode ? { barcode: search.barcode } : null}
           onSaved={(id) => {
             createdRef.current = id;
           }}

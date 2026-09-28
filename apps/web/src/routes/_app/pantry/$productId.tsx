@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CodeQr } from '@/components/places/PlaceVisuals';
 import { JournalList } from '@/components/pantry/JournalList';
+import { MoveToThingButton, isThingCategory } from '@/components/pantry/MoveToThings';
 import { ProductForm } from '@/components/pantry/ProductForm';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
 import { ExtraLabels } from '@/components/scan/ExtraLabels';
@@ -366,6 +367,10 @@ function ProductPage() {
           </ul>
         )}
       </Section>
+
+      {canWrite && product.stock.qty <= 0 && isThingCategory(pantry.categories.data ?? [], product.category_id) && (
+        <MoveToThingButton householdId={householdId} product={product} />
+      )}
 
       <CodesSection product={product} units={units} householdId={householdId} canWrite={canWrite} />
 

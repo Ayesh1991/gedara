@@ -249,16 +249,26 @@ export function UnknownBarcodeCard({
             <Plus className="h-4 w-4" aria-hidden />
             {t('scan.unknownBarcode.create')}
           </Link>
+          {/* A book, a tool, an appliance: kept, not used up (Phase 7e). */}
+          <Link
+            to="/things"
+            search={{ new: '1', barcode: code }}
+            onClick={onNavigate}
+            className="glass flex h-11 items-center justify-center gap-1.5 rounded-[14px] font-display text-[14px] font-semibold"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            {t('scan.unknownBarcode.createThing')}
+          </Link>
           {compact ? (
             <Link
               to="/scan"
               onClick={onNavigate}
-              className="glass flex h-11 items-center justify-center rounded-[14px] text-[14px]"
+              className="glass col-span-2 flex h-11 items-center justify-center rounded-[14px] text-[14px]"
             >
               {t('scan.unknownBarcode.link')}
             </Link>
           ) : (
-            <Button size="sm" className="h-11" onClick={() => setLinking(true)}>
+            <Button size="sm" className="col-span-2 h-11" onClick={() => setLinking(true)}>
               {t('scan.unknownBarcode.link')}
             </Button>
           )}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/money/bits';
+import { SaveAsThing } from '@/components/things/SaveAsThing';
 import { PhotoPicker } from '@/components/photos/PhotoControls';
 import { ScanField } from '@/components/scan/ScanField';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ import type { Place } from '@/lib/places';
 import type { Tree } from '@/lib/tree';
 import { cn } from '@/lib/utils';
 import { UnitOptions, fieldLabel, selectClass, sortedUnits } from './bits';
+import { isThingCategory } from './MoveToThings';
 
 interface ProductFormProps {
   open: boolean;
@@ -47,6 +49,8 @@ interface ProductFormProps {
   /** New product from a bill line: prefilled name / category / unit. */
   initial?: { name?: string; category_id?: string | null; stock_unit_id?: string | null; default_location_id?: string | null } | null;
   onSaved?: (p: Product | { id: string; name: string }) => void;
+  /** Saved as a Thing instead (a Things category was picked). */
+  onThing?: (id: string) => void;
 }
 
 /** Create or edit a product: ≤ 5 visible fields (§5.4); the rest under "More details". */
@@ -70,7 +74,7 @@ const intOrNull = (s: string) => {
 };
 const str = (n: number | null | undefined) => (n === null || n === undefined ? '' : String(n));
 
-function ProductFormBody({ onClose, householdId, units, categories, products, tree, product, photo, barcode, initial, onSaved }: ProductFormProps) {
+function ProductFormBody({ onClose, householdId, units, categories, products, tree, product, photo, barcode, initial, onSaved, onThing }: ProductFormProps) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const g = [...units.values()].find((u) => u.household_id === null && u.code === 'g');
@@ -97,6 +101,7 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
   const [touched, setTouched] = useState(Boolean(product));
   const [copiedFrom, setCopiedFrom] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [asThing, setAsThing] = useState(false);
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => () => (preview ? URL.revokeObjectURL(preview) : undefined), [preview]);
 
@@ -247,6 +252,7 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
   const photoUrl = preview ?? (dropPhoto ? null : (photo?.thumbUrl ?? null));
 
   return (
+    <>
     <form onSubmit={submit} className="flex flex-col gap-4">
       <div>
         <label htmlFor="product-name" className={fieldLabel}>
@@ -279,6 +285,15 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
         </label>
         <CategorySelect id="product-category" categories={categories} value={categoryId} onChange={pickCategory} kind="expense" />
         {copiedFrom && <p className="mt-1.5 text-[12.5px] text-muted">{t('pantry.product.defaultsFrom', { name: copiedFrom })}</p>}
+        {/* Phase 7e: a book / tool / appliance is kept, not used up — it belongs in Things. */}
+        {!product && isThingCategory(categories, categoryId) && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-info/40 bg-info/10 px-3 py-2 text-[13px]" data-testid="thing-category-hint">
+            <span className="min-w-0 flex-1">{t('pantry.product.thingCategory')}</span>
+            <Button type="button" size="sm" variant="accent" onClick={() => setAsThing(true)}>
+              {t('pantry.product.saveAsThing')}
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -488,5 +503,21 @@ function ProductFormBody({ onClose, householdId, units, categories, products, tr
         </div>
       )}
     </form>
+      {asThing && (
+        <SaveAsThing
+          householdId={householdId}
+          name={name}
+          categoryId={categoryId}
+          barcode={code.trim() || null}
+          onClose={() => setAsThing(false)}
+          onSaved={(id, thingName) => {
+            setAsThing(false);
+            toast.success(t('pantry.product.savedAsThing', { name: thingName }));
+            onThing?.(id);
+            onClose();
+          }}
+        />
+      )}
+    </>
   );
 }

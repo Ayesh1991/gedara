@@ -6,6 +6,7 @@ import { usePlaces } from '@/components/places/PlaceGrid';
 import { accountsQuery, categoriesQuery } from '@/lib/money/queries';
 import type { EntityPhoto } from '@/lib/photos';
 import {
+  assetBarcodesQuery,
   assetPhotosQuery,
   assetsQuery,
   fieldsQuery,
@@ -21,6 +22,8 @@ export { fieldLabel, selectClass } from '@/components/money/bits';
 /** Everything the Things screens share. */
 export function useThings(householdId: string) {
   const assets = useQuery(assetsQuery(householdId));
+  // Phase 7e: loaded with the list so a book's ISBN also scans offline (saved catalogue).
+  useQuery(assetBarcodesQuery(householdId));
   const photos = useQuery(assetPhotosQuery(householdId));
   const pending = useQuery(pendingLinesQuery(householdId));
   const tags = useQuery(tagsQuery(householdId));

@@ -39,7 +39,51 @@ export function ScanResult({
     return <UnknownBarcodeCard code={result.code} compact={compact} onNavigate={onNavigate} className={className} />;
   }
   if (result.status === 'blankTag') return <BlankTagResult result={result} compact={compact} onNavigate={onNavigate} className={className} />;
+  if (result.status === 'assetChoice') return <AssetChoiceResult result={result} onNavigate={onNavigate} className={className} />;
   return <MessageResult result={result} className={className} />;
+}
+
+/** Copies of one book share an ISBN (Phase 7e): pick the copy (its own QR label opens it directly). */
+function AssetChoiceResult({
+  result,
+  onNavigate,
+  className,
+}: {
+  result: Extract<Resolved, { status: 'assetChoice' }>;
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  const places = useQuery(placesQuery(result.assets[0]!.household_id));
+  return (
+    <div className={cn('glass-strong slide-up flex flex-col gap-2.5 rounded-3xl p-4', className)} role="status" data-testid="scan-result">
+      <div>
+        <div className="font-display font-semibold">{t('scan.copies.title', { count: result.assets.length })}</div>
+        <div className="text-[12.5px] text-muted">{t('scan.copies.hint')}</div>
+      </div>
+      <ul className="flex flex-col gap-1.5">
+        {result.assets.map((a) => (
+          <li key={a.id}>
+            <Link
+              to="/things/$assetId"
+              params={{ assetId: a.id }}
+              onClick={onNavigate}
+              className="flex min-h-11 items-center gap-2.5 rounded-xl bg-white/[0.04] px-3 py-2 hover:bg-white/[0.07]"
+            >
+              <span className="tabular shrink-0 text-[12px] text-accent-b">{assetTag(a.asset_no)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px]">{a.name}</span>
+                <span className="block truncate text-[12px] text-muted">
+                  {(a.location_id && places.data?.find((p) => p.id === a.location_id)?.path) || t('things.noPlace')}
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 /** A blank label: say what it is right here (HUD), or open the claim on the Scan screen (USB toast). */

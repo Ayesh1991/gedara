@@ -220,6 +220,50 @@ export async function deleteAsset(id: string) {
   if (error) throw error;
 }
 
+// ── Barcodes on Things (Phase 7e, migration 61): a book's ISBN; copies may share one ──
+
+export interface AssetBarcode {
+  id: string;
+  asset_id: string;
+  barcode: string;
+}
+
+export const assetBarcodesQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: thingsKey(householdId, 'barcodes'),
+    queryFn: async (): Promise<AssetBarcode[]> => {
+      const { data, error } = await supabase.from('asset_barcode').select('id, asset_id, barcode').eq('household_id', householdId);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+export async function addAssetBarcode(householdId: string, assetId: string, barcode: string) {
+  const { error } = await supabase.from('asset_barcode').insert({ household_id: householdId, asset_id: assetId, barcode: barcode.trim() });
+  if (error) throw error;
+}
+
+export async function removeAssetBarcode(id: string) {
+  const { error } = await supabase.from('asset_barcode').delete().eq('id', id);
+  if (error) throw error;
+}
+
+/** A product that is really a Thing (a book in Pantry) → a Thing, with its barcodes, QR labels and photo. */
+export async function productToThing(productId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('rpc_product_to_thing', { p_product: productId });
+  if (error) throw error;
+  return data as string;
+}
+
+/** Why a product couldn't move to Things. */
+export function toThingErrorKey(e: unknown): 'stock' | 'bill' | 'variants' | 'generic' {
+  const code = (e as { code?: string } | null)?.code;
+  if (code === 'GDSTK') return 'stock';
+  if (code === 'GDUSE') return 'bill';
+  if (code === 'GDVAR') return 'variants';
+  return 'generic';
+}
+
 /** Move a thing (and, when asked, its parts) to a place. */
 export async function moveAssets(ids: string[], locationId: string | null) {
   const { error } = await supabase.from('asset').update({ location_id: locationId }).in('id', ids);

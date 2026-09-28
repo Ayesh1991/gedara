@@ -74,3 +74,28 @@ describe('resolveFromCatalogue: things and blank labels (Phase 7b)', () => {
     expect(r('HL:TAG:EEEEEE')).toMatchObject({ status: 'offline' });
   });
 });
+
+describe('resolveFromCatalogue: Things by barcode (Phase 7e)', () => {
+  const book = (id: string, no: number) => ({ id, household_id: 'h1', name: `Rosemaryta babek Book 0060 #${no}`, code: `HL:AST:BK00${no}0`, asset_no: no, status: 'stored', location_id: null });
+  const full: Catalogue = {
+    ...cat,
+    assets: [book('a1', 1), book('a2', 2), book('a3', 3)],
+    assetBarcodes: [
+      { barcode: '9789556778052', asset_id: 'a1' },
+      { barcode: '9789556778069', asset_id: 'a2' },
+      { barcode: '9789556778069', asset_id: 'a3' },
+    ],
+  };
+  const r = (raw: string) => resolveFromCatalogue(parseScan(raw), full);
+
+  it("a book's ISBN opens the book", () => {
+    expect(r('9789556778052')).toMatchObject({ status: 'asset', asset: { id: 'a1' } });
+  });
+  it('copies sharing an ISBN ask which one', () => {
+    expect(r('9789556778069')).toMatchObject({ status: 'assetChoice', code: '9789556778069', assets: [{ id: 'a2' }, { id: 'a3' }] });
+  });
+  it('a Pantry barcode still wins, and an unknown ISBN is still new', () => {
+    expect(r('4792024000222')).toMatchObject({ status: 'product' });
+    expect(r('9780140449136')).toEqual({ status: 'unknownBarcode', code: '9780140449136' });
+  });
+});

@@ -1,6 +1,7 @@
 import { Link, createFileRoute, redirect } from '@tanstack/react-router';
 import { CircleAlert, ScanLine } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ScanResult } from '@/components/scan/ScanResult';
 import { Card } from '@/components/ui/card';
 import { resolveScan } from '@/lib/resolve';
 
@@ -31,6 +32,14 @@ function UnknownLabel() {
   const { t } = useTranslation();
   const result = Route.useLoaderData();
   const { code } = Route.useParams();
+  // Copies of a book share an ISBN: pick one (Phase 7e).
+  if (result.status === 'assetChoice') {
+    return (
+      <div className="mx-auto flex max-w-md flex-col gap-4 pt-6">
+        <ScanResult result={result} />
+      </div>
+    );
+  }
   const title = t(`scan.${result.status}.title`);
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 pt-6">

@@ -16,6 +16,7 @@ import { removeEntityPhoto, setEntityPhoto, type EntityPhoto } from '@/lib/photo
 import type { Place } from '@/lib/places';
 import { cleanCustom, fieldsFor, formValue, type CategoryField } from '@/lib/things/fields';
 import {
+  addAssetBarcode,
   CONDITIONS,
   MANUAL_STATUSES,
   createAsset,
@@ -55,6 +56,8 @@ export interface AssetInitial {
   maker?: string | null;
   model?: string | null;
   serial?: string | null;
+  /** A retail barcode scanned for it (a book's ISBN, Phase 7e): saved on the new thing. */
+  barcode?: string | null;
   description?: string | null;
 }
 
@@ -252,6 +255,7 @@ function AssetFormBody({
       const saved = src ? await updateAsset(src.id, input) : await createAsset(householdId, input);
       // Extras: a failure here shouldn't lose the thing itself.
       const extras: Promise<unknown>[] = [setAssetTags(householdId, saved.id, tagIds, src?.tag_ids ?? [])];
+      if (!src && initial?.barcode) extras.push(addAssetBarcode(householdId, saved.id, initial.barcode));
       if (file) extras.push(setEntityPhoto(householdId, 'asset', saved.id, file, photo));
       else if (dropPhoto && photo) extras.push(removeEntityPhoto(photo));
       const results = await Promise.allSettled(extras);

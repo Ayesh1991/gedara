@@ -23,6 +23,7 @@ import { PhotoEditButton } from '@/components/photos/PhotoControls';
 import { ExtraLabels } from '@/components/scan/ExtraLabels';
 import { AddLabelButton, ScanPlaceButton } from '@/components/scan/InstantScan';
 import { CodeQr } from '@/components/places/PlaceVisuals';
+import { AssetBarcodes } from '@/components/things/AssetBarcodes';
 import { AssetForm } from '@/components/things/AssetForm';
 import { AssetTimeline, DueChip, ValueLine } from '@/components/things/AssetViews';
 import { DocumentsPanel } from '@/components/things/DocumentsPanel';
@@ -265,6 +266,7 @@ function AssetPage() {
               </div>
             </div>
             <ExtraLabels householdId={householdId} target={{ kind: 'asset', id: asset.id }} canWrite={canWrite} />
+            <AssetBarcodes householdId={householdId} assetId={asset.id} canWrite={canWrite && !gone} />
 
             {canWrite && !gone && (
               <Button

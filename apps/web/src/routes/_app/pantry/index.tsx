@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { StatTile } from '@/components/aurora/StatTile';
 import { Money } from '@/components/money/bits';
 import { CouldntSync } from '@/components/offline/OfflineSync';
+import { MoveToThingsBanner } from '@/components/pantry/MoveToThings';
 import { usePantry, useStockAction } from '@/components/pantry/bits';
 import { ProductActionsSheet, ProductCard } from '@/components/pantry/ProductCard';
 import { ProductForm } from '@/components/pantry/ProductForm';
@@ -151,6 +152,10 @@ function PantryPage() {
       </div>
 
       <CouldntSync householdId={householdId} />
+
+      {canWrite && pantry.products.data && pantry.categories.data && (
+        <MoveToThingsBanner householdId={householdId} products={pantry.products.data} categories={pantry.categories.data} />
+      )}
 
       {pantry.error ? (
         <Card className="text-[14px] text-red">{t('pantry.loadError')}</Card>

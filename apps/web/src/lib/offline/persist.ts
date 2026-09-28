@@ -20,7 +20,7 @@ export function shouldPersist(key: QueryKey): boolean {
   if (a === 'pantry') return key.length === 3 && typeof c === 'string' && PANTRY_PARTS.has(c);
   if (a === 'places' || a === 'shopping' || a === 'place-types') return key.length === 2;
   // Phase 7b: things and assigned labels, so their labels scan (and "Fill this box" works) offline.
-  if (a === 'things') return key.length === 3 && c === 'assets';
+  if (a === 'things') return key.length === 3 && (c === 'assets' || c === 'barcodes');
   if (a === 'labels') return key.length === 3 && c === 'tags';
   return false;
 }

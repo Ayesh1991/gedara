@@ -420,6 +420,10 @@
     }
   },
   "scan": {
+    "copies": {
+      "title": "{{count}} copies have this barcode",
+      "hint": "Pick the one you mean, or scan its own QR label."
+    },
     "instant": {
       "scanPlace": "Scan where {{name}} is kept",
       "placeTitle": "Where is {{name}}?",
@@ -468,6 +472,9 @@
       "usualSet": "Usual place saved"
     },
     "fill": {
+      "copies": "{{count}} copies share this barcode: scan the book's own QR label",
+      "nowUsual": "Now usually kept here",
+      "alreadyUsual": "Already usually kept here",
       "start": "Fill this box",
       "short": "Fill",
       "title": "Filling {{place}}",
@@ -560,6 +567,7 @@
       "title": "Not a Gedara label"
     },
     "unknownBarcode": {
+      "createThing": "New thing",
       "title": "New barcode",
       "create": "New product",
       "link": "Add to a product",
@@ -579,6 +587,7 @@
       "body": "You're offline and this label isn't saved on the phone. Scan it again when you're back online."
     },
     "short": {
+      "assetChoice": "Several copies",
       "blankTag": "Blank label",
       "retiredTag": "Retired label",
       "notFound": "Unknown code",
@@ -645,6 +654,27 @@
     "niimbotHint": "Download a label and print it from the NIIMBOT app on a 20 × 20 mm label, without scaling. Each one is a sharp 1-bit image at the printer's 203 dpi. Printing straight from Gedara comes with the Pi station (Phase 6b)."
   },
   "pantry": {
+    "toThings": {
+      "banner": "{{count}} products are in Things categories ({{categories}}). They belong in Things.",
+      "banner_one": "{{count}} product is in a Things category ({{categories}}). It belongs in Things.",
+      "open": "Move to Things",
+      "title": "Move to Things",
+      "intro": "Each one becomes a Thing with its own A-number, keeping its barcode, your QR labels and its photo. Things can be put on shelves, lent and moved.",
+      "move": "Move {{count}} to Things",
+      "move_one": "Move {{count}} to Things",
+      "moving": "Moving {{done}} of {{total}}…",
+      "moved": "{{count}} moved to Things",
+      "moved_one": "{{count}} moved to Things",
+      "movedOne": "{{name}} is a Thing now",
+      "one": "This is a Things category: it belongs in Things, not the pantry.",
+      "moveOne": "Move to Things",
+      "errors": {
+        "stock": "it still has stock (use it up or count it first)",
+        "bill": "it was bought on a bill, so it stays in Pantry",
+        "variants": "it has variants",
+        "generic": "couldn't move it"
+      }
+    },
     "swipe": { "useQuick": "Use {{qty}}", "useAll": "Use all" },
     "intro": "Food and supplies: what you have, where it is, and what to use first.",
     "newProduct": "New product",
@@ -794,6 +824,9 @@
       "add": "Add"
     },
     "product": {
+      "thingCategory": "This category is for Things (kept, not used up), not pantry stock.",
+      "saveAsThing": "Save as a thing instead",
+      "savedAsThing": "{{name}} saved as a thing",
       "noUsualPlace": "Not set",
       "newTitle": "New product",
       "editTitle": "Edit {{name}}",
@@ -1368,6 +1401,14 @@
     "remove": "Remove"
   },
   "things": {
+    "barcodes": {
+      "title": "Barcodes",
+      "add": "Add a barcode",
+      "placeholder": "Scan or type",
+      "remove": "Remove barcode {{code}}",
+      "duplicate": "This thing already has that barcode.",
+      "failed": "Couldn't save the barcode. Try again."
+    },
     "intro": "What you own: where it is, what it cost, its receipts, warranty and services.",
     "add": "Add a thing",
     "addFirst": "Add your first thing",

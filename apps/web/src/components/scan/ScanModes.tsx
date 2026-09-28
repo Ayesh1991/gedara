@@ -273,8 +273,6 @@ interface Row {
   state: 'done' | 'queued' | 'error' | 'undone' | 'info';
   message?: string;
   undo?: () => Promise<void>;
-  /** A product with no stock to move: offer to make the box its usual place. */
-  usualFor?: string;
 }
 
 export function FillMode({ householdId, placeId, register, bannerEl }: { householdId: string; placeId: string; register: Register; bannerEl: HTMLElement | null }) {
@@ -308,7 +306,23 @@ export function FillMode({ householdId, placeId, register, bannerEl }: { househo
           return add({ name, state: d.queued ? 'queued' : 'done', undo: d.undo });
         }
         const p = pantry.products.data?.find((x) => x.id === target.id);
-        if (p && p.stock.qty <= 0) return add({ name, state: 'info', message: t('scan.fill.noStock'), usualFor: target.id });
+        if (p && p.stock.qty <= 0) {
+          // Nothing to move: this box simply becomes where it's usually kept (Undo puts the old one
+          // back), so filling carries on without a stop.
+          const before = p.default_location_id ?? null;
+          if (before === placeId) return add({ name, state: 'info', message: t('scan.fill.alreadyUsual') });
+          await updateProduct(target.id, { default_location_id: placeId });
+          await qc.invalidateQueries({ queryKey: ['pantry', householdId] });
+          return add({
+            name,
+            state: 'done',
+            message: t('scan.fill.nowUsual'),
+            undo: async () => {
+              await updateProduct(target.id, { default_location_id: before });
+              await qc.invalidateQueries({ queryKey: ['pantry', householdId] });
+            },
+          });
+        }
         const d = await putStock(qc, householdId, target.id, placeId, label);
         const unit = p ? pantry.units.data?.get(p.stock_unit_id) : undefined;
         add({ name, state: d.queued ? 'queued' : 'done', message: d.qty !== undefined ? formatQty(d.qty, unit) : undefined, undo: d.undo });
@@ -335,6 +349,9 @@ export function FillMode({ householdId, placeId, register, bannerEl }: { househo
       if (r.status === 'asset') return putTarget({ kind: 'asset', id: r.asset.id }, r.asset.name);
       if (r.status === 'product') return putTarget({ kind: 'product', id: r.product.id }, r.product.name);
       if (r.status === 'blankTag') return setClaim(r);
+      if (r.status === 'assetChoice') {
+        return add({ name: r.assets[0]!.name, state: 'error', message: t('scan.fill.copies', { count: r.assets.length }) });
+      }
       if (r.status === 'unknownBarcode') {
         setFormOpen(true);
         return setCreate({ kind: 'product', barcode: r.code, placeId });
@@ -363,17 +380,6 @@ export function FillMode({ householdId, placeId, register, bannerEl }: { househo
     } catch (e) {
       patch(row.key, { undo: row.undo });
       toast.error(t(`moves.errors.${moveErrorKey(e)}`));
-    }
-  }
-
-  async function makeUsual(row: Row) {
-    if (!row.usualFor) return;
-    try {
-      await updateProduct(row.usualFor, { default_location_id: placeId });
-      await qc.invalidateQueries({ queryKey: ['pantry', householdId] });
-      patch(row.key, { state: 'done', message: t('scan.put.usualSet'), usualFor: undefined });
-    } catch (e) {
-      toast.error(t(`pantry.errors.${pantryErrorKey(e)}`));
     }
   }
 
@@ -427,11 +433,6 @@ export function FillMode({ householdId, placeId, register, bannerEl }: { househo
                   <div className={cn('truncate text-[14px]', row.state === 'undone' && 'text-muted line-through')}>{row.name}</div>
                   {row.message && <div className={cn('truncate text-[12px]', row.state === 'error' ? 'text-caution' : 'text-muted')}>{row.message}</div>}
                 </div>
-                {row.usualFor && (
-                  <Button size="sm" variant="ghost" onClick={() => void makeUsual(row)}>
-                    {t('scan.put.makeUsual')}
-                  </Button>
-                )}
                 {row.undo && (row.state === 'done' || row.state === 'queued') && (
                   <Button size="sm" variant="ghost" onClick={() => void undoRow(row)} aria-label={t('scan.fill.undoRow', { name: row.name })}>
                     <Undo2 className="h-4 w-4" aria-hidden />
@@ -487,8 +488,10 @@ export function AddMode({
         if (r.status === 'invalid' && BARCODE.test(raw)) return setCreate({ kind, barcode: raw });
         if (r.status === 'product') return setExisting({ id: ++counter.current, result: r });
       } else {
-        if (r.status === 'asset') return setExisting({ id: ++counter.current, result: r });
-        if (r.status === 'unknownBarcode' || (r.status === 'invalid' && raw.length <= 120)) return setCreate({ kind, serial: raw });
+        if (r.status === 'asset' || r.status === 'assetChoice') return setExisting({ id: ++counter.current, result: r });
+        // A retail barcode (a book's ISBN) is the thing's barcode; any other code is its serial number.
+        if (r.status === 'unknownBarcode') return setCreate({ kind, barcode: r.code });
+        if (r.status === 'invalid' && raw.length <= 120) return setCreate({ kind, serial: raw });
       }
       setExisting({ id: ++counter.current, result: r });
     },
