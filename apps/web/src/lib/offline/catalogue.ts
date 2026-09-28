@@ -15,6 +15,8 @@ export interface Catalogue {
   places: Place[];
   /** Phase 7b: things and the labels that mean something (optional: older saved copies lack them). */
   assets?: ScanAsset[];
+  /** Phase 7e: Things' retail barcodes (copies of a book share one). */
+  assetBarcodes?: { barcode: string; asset_id: string }[];
   tags?: Pick<LabelTag, 'code' | 'location_id' | 'asset_id' | 'product_id' | 'retired_at'>[];
 }
 
@@ -34,7 +36,12 @@ export function resolveFromCatalogue(parsed: ParsedScan, c: Catalogue): Resolved
   const byBarcode = (code: string): Resolved | null => {
     const b = c.barcodes.find((x) => x.barcode === code);
     const p = b && c.products.find((x) => x.id === b.product_id);
-    return b && p ? { status: 'product', product: pick(p), barcode: { code: b.barcode, unitId: b.unit_id, qty: Number(b.qty) } } : null;
+    if (b && p) return { status: 'product', product: pick(p), barcode: { code: b.barcode, unitId: b.unit_id, qty: Number(b.qty) } };
+    const ids = new Set((c.assetBarcodes ?? []).filter((x) => x.barcode === code).map((x) => x.asset_id));
+    const things = (c.assets ?? []).filter((a) => ids.has(a.id)).map(pickAsset);
+    if (things.length === 1) return { status: 'asset', asset: things[0]! };
+    if (things.length > 1) return { status: 'assetChoice', code, assets: things };
+    return null;
   };
   switch (parsed.kind) {
     case 'unknown': {

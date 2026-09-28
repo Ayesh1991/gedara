@@ -339,6 +339,52 @@ export type Database = {
           },
         ]
       }
+      asset_barcode: {
+        Row: {
+          asset_id: string
+          barcode: string
+          created_at: string
+          household_id: string
+          id: string
+        }
+        Insert: {
+          asset_id: string
+          barcode: string
+          created_at?: string
+          household_id: string
+          id?: string
+        }
+        Update: {
+          asset_id?: string
+          barcode?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_barcode_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "asset_barcode_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "v_asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "asset_barcode_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_tag: {
         Row: {
           asset_id: string
@@ -4565,6 +4611,7 @@ export type Database = {
         Returns: number
       }
       rpc_open: { Args: { p: Json }; Returns: Json }
+      rpc_product_to_thing: { Args: { p_product: string }; Returns: string }
       rpc_purchase: { Args: { p: Json }; Returns: Json }
       rpc_push_digest: { Args: { p_token: string }; Returns: Json }
       rpc_push_result: {

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.4 — Phase 7e Books are Things
+- **Things carry barcodes** (a book's ISBN): scanning it opens the Thing; copies sharing an ISBN ask
+  which one (each copy's own QR label opens it directly). Thing pages have a Barcodes section
+  (camera / USB add, remove). Works offline too.
+- **Move to Things**: Pantry shows "N products are in Things categories (Books …) → Move to Things".
+  Each becomes a Thing with its own A-number, keeping its barcode, your QR labels and its photo.
+  Products with stock left or bought on a bill stay in Pantry (the reason is shown). A product page
+  in a Things category has the same button.
+- **So it doesn't happen again**: an unknown barcode offers **New product** or **New thing**; the
+  product form says when a Things category is picked and offers **Save as a thing instead**;
+  Quick add › Add things keeps an ISBN / EAN as the thing's barcode (other codes stay the serial).
+- **Fill this box back to back**: a book's ISBN or QR label goes straight in; a Pantry product with
+  nothing in stock now just becomes usually kept in the box (Undo per row) instead of stopping.
+- Migration 61 `thing_barcodes` (`asset_barcode`, `rpc_product_to_thing`); schema_version 61.
+
 ## 0.7.3 — Phase 7d Place types, your own categories, QR on Android
 - **QR codes on Android**: the phone's own detector missed a printed A4 label that zxing reads at once
   (checked on Didula's screenshot of the Kitchen label). Now zxing also looks whenever the phone's

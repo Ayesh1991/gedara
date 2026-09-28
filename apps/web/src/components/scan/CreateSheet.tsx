@@ -20,8 +20,11 @@ export interface CreateRequest {
   placeKind?: PlaceKind | null;
   /** …or one of the household's own place types. */
   placeTypeId?: string | null;
-  /** Product: a scanned retail barcode. */
+  /** Product or thing: a scanned retail barcode (a thing keeps it too since Phase 7e: a book's ISBN). */
   barcode?: string | null;
+  /** Prefill from a form it came from ("Save as a thing instead"). */
+  name?: string | null;
+  categoryId?: string | null;
   /** Thing: a scanned serial-number barcode. */
   serial?: string | null;
 }
@@ -89,7 +92,13 @@ function NewThing({ householdId, request, onCreated, onClose }: Props) {
       assets={things.assets.data ?? []}
       tags={things.tags.data ?? []}
       fields={things.fields.data ?? []}
-      initial={{ location_id: request.placeId ?? null, serial: request.serial ?? null }}
+      initial={{
+        location_id: request.placeId ?? null,
+        serial: request.serial ?? null,
+        barcode: request.barcode ?? null,
+        name: request.name ?? undefined,
+        category_id: request.categoryId ?? null,
+      }}
       onSaved={(id, name) => onCreated({ target: { kind: 'asset', id }, name })}
     />
   );
