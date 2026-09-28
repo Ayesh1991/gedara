@@ -18,6 +18,8 @@ export interface CreateRequest {
   /** Place: its parent · thing: where it is · product: its usual place ("Fill this box"). */
   placeId?: string | null;
   placeKind?: PlaceKind | null;
+  /** …or one of the household's own place types. */
+  placeTypeId?: string | null;
   /** Product: a scanned retail barcode. */
   barcode?: string | null;
   /** Thing: a scanned serial-number barcode. */
@@ -66,6 +68,7 @@ function NewPlace({ householdId, request, onCreated, onClose }: Props) {
       tree={tree}
       defaultParentId={request.placeId ?? null}
       defaultKind={request.placeKind ?? null}
+      defaultTypeId={request.placeTypeId ?? null}
       onSaved={(p) => onCreated({ target: { kind: 'location', id: p.id }, name: p.name })}
     />
   );

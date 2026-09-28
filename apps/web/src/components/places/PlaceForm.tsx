@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -23,7 +24,8 @@ import {
 } from '@/lib/places';
 import { moveTargets, type Tree } from '@/lib/tree';
 import { cn } from '@/lib/utils';
-import { KIND_ICON } from './PlaceVisuals';
+import { KIND_ICON, kindIcon, usePlaceTypes } from './PlaceVisuals';
+import { PlaceTypeSheet } from './PlaceTypeSheet';
 
 const fieldLabel = 'mb-1.5 block text-[13px] font-medium text-muted';
 const selectClass =
@@ -39,6 +41,8 @@ interface PlaceFormProps {
   defaultParentId?: string | null;
   /** A new place's kind ("New box" from a blank label). */
   defaultKind?: PlaceKind | null;
+  /** …or one of the household's own types (Phase 7d). */
+  defaultTypeId?: string | null;
   onSaved?: (p: Place) => void;
 }
 
@@ -53,13 +57,16 @@ export function PlaceForm(props: PlaceFormProps) {
   );
 }
 
-function PlaceFormBody({ onClose, householdId, tree, place, photo, defaultParentId, defaultKind, onSaved }: PlaceFormProps) {
+function PlaceFormBody({ onClose, householdId, tree, place, photo, defaultParentId, defaultKind, defaultTypeId, onSaved }: PlaceFormProps) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [name, setName] = useState(place?.name ?? '');
   const [kind, setKind] = useState<PlaceKind | null>(
     (place?.kind as PlaceKind | null) ?? (place ? null : (defaultKind ?? (defaultParentId ? 'container' : 'room'))),
   );
+  const [typeId, setTypeId] = useState<string | null>(place ? place.type_id : (defaultTypeId ?? null));
+  const [newType, setNewType] = useState(false);
+  const types = usePlaceTypes();
   const [parentId, setParentId] = useState<string | null>(place ? place.parent_id : (defaultParentId ?? null));
   const [climate, setClimate] = useState<Climate | null>((place?.climate as Climate | null) ?? null);
   const [notes, setNotes] = useState(place?.notes ?? '');
@@ -82,7 +89,7 @@ function PlaceFormBody({ onClose, householdId, tree, place, photo, defaultParent
     if (!name.trim() || busy) return;
     setBusy(true);
     try {
-      const input = { name, kind, parentId, climate, notes: notes || null };
+      const input = { name, kind: typeId ? null : kind, typeId, parentId, climate, notes: notes || null };
       const saved = place ? await updatePlace(place.id, input) : await createPlace(householdId, input);
       if (file) {
         try {
@@ -130,13 +137,16 @@ function PlaceFormBody({ onClose, householdId, tree, place, photo, defaultParent
         <div className="flex flex-wrap gap-2">
           {PLACE_KINDS.map((k) => {
             const Icon = KIND_ICON[k];
-            const on = kind === k;
+            const on = !typeId && kind === k;
             return (
               <button
                 key={k}
                 type="button"
                 aria-pressed={on}
-                onClick={() => setKind(on ? null : k)}
+                onClick={() => {
+                  setTypeId(null);
+                  setKind(on ? null : k);
+                }}
                 className={cn(
                   'inline-flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-[14px] transition-colors',
                   on ? 'accent-pill border-transparent text-text' : 'border-line-2 bg-white/[0.03] text-muted',
@@ -147,8 +157,38 @@ function PlaceFormBody({ onClose, householdId, tree, place, photo, defaultParent
               </button>
             );
           })}
+          {types
+            .filter((x) => !x.archived || x.id === typeId)
+            .map((x) => {
+              const Icon = kindIcon(null, x);
+              const on = typeId === x.id;
+              return (
+                <button
+                  key={x.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setTypeId(on ? null : x.id)}
+                  className={cn(
+                    'inline-flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-[14px] transition-colors',
+                    on ? 'accent-pill border-transparent text-text' : 'border-line-2 bg-white/[0.03] text-muted',
+                  )}
+                >
+                  <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden />
+                  {x.name}
+                </button>
+              );
+            })}
+          <button
+            type="button"
+            onClick={() => setNewType(true)}
+            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-dashed border-line-2 px-3.5 text-[14px] text-accent-b"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            {t('placeTypes.new')}
+          </button>
         </div>
       </fieldset>
+      <PlaceTypeSheet open={newType} onClose={() => setNewType(false)} householdId={householdId} onSaved={(x) => setTypeId(x.id)} />
 
       <div>
         <label htmlFor="place-parent" className={fieldLabel}>

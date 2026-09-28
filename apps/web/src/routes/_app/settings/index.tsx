@@ -1,5 +1,5 @@
 import { Link, createFileRoute, type LinkProps } from '@tanstack/react-router';
-import { BellRing, ChevronRight, HardDrive, HardDriveDownload, ListPlus, MapPin, Palette, Ruler, Shapes, Smartphone, Stethoscope, Wallet, type LucideIcon } from 'lucide-react';
+import { BellRing, ChevronRight, HardDrive, HardDriveDownload, ListPlus, MapPin, Palette, Ruler, Shapes, Smartphone, Stethoscope, type LucideIcon, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -62,6 +62,7 @@ function SettingsPage() {
         title={t('categories.title')}
         hint={t('settings.categoriesHint')}
       />
+      <SettingsLink to="/settings/place-types" icon={MapPin} title={t('placeTypes.title')} hint={t('settings.placeTypesHint')} />
       <SettingsLink to="/settings/fields" icon={ListPlus} title={t('fields.title')} hint={t('settings.fieldsHint')} />
       <SettingsLink to="/settings/units" icon={Ruler} title={t('units.title')} hint={t('settings.unitsHint')} />
       <SettingsLink

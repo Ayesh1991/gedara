@@ -1,37 +1,88 @@
+import { useQuery } from '@tanstack/react-query';
 import {
   Archive,
+  Bed,
+  BookOpen,
   Box,
+  Briefcase,
   Car,
   DoorOpen,
   Droplets,
+  Folder,
+  FolderOpen,
+  Inbox,
+  Lamp,
   LayoutGrid,
   LibraryBig,
   MapPin,
+  Package,
+  Refrigerator,
+  Rows3,
+  Shirt,
+  ShoppingBag,
   Snowflake,
   Sofa,
   Sun,
   Thermometer,
   ThermometerSnowflake,
+  Tv,
+  Utensils,
   Warehouse,
+  Wrench,
   type LucideIcon,
   type LucideProps,
 } from 'lucide-react';
 import { createElement, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Climate, PlaceKind, PlacePhoto } from '@/lib/places';
+import { placeTypesQuery, type Climate, type PlaceKind, type PlacePhoto, type PlaceType, type PlaceTypeIcon } from '@/lib/places';
+import { membershipQuery } from '@/lib/queries';
 import { qrSvgPath, rawCodeQr } from '@/lib/qr';
 import { cn } from '@/lib/utils';
 
 export const KIND_ICON: Record<PlaceKind, LucideIcon> = {
   room: DoorOpen,
   furniture: Sofa,
+  cupboard: Archive,
+  rack: Rows3,
   container: Box,
-  drawer: Archive,
+  drawer: Inbox,
   shelf: LibraryBig,
+  file: FolderOpen,
   zone: LayoutGrid,
   vehicle: Car,
   offsite: Warehouse,
 };
+
+/** Icons a household's own place type can pick (migration 60's list). */
+export const TYPE_ICON: Record<PlaceTypeIcon, LucideIcon> = {
+  box: Box,
+  archive: Archive,
+  folder: Folder,
+  book: BookOpen,
+  briefcase: Briefcase,
+  package: Package,
+  'shopping-bag': ShoppingBag,
+  refrigerator: Refrigerator,
+  bed: Bed,
+  car: Car,
+  warehouse: Warehouse,
+  wrench: Wrench,
+  shirt: Shirt,
+  utensils: Utensils,
+  lamp: Lamp,
+  tv: Tv,
+};
+
+/** The signed-in household's own place types (cached; empty until loaded). */
+export function usePlaceTypes(): PlaceType[] {
+  const membership = useQuery(membershipQuery);
+  const hh = membership.data?.household.id ?? '';
+  return useQuery({ ...placeTypesQuery(hh), enabled: Boolean(hh) }).data ?? [];
+}
+
+function typeOf(types: PlaceType[], typeId: string | null | undefined): PlaceType | undefined {
+  return typeId ? types.find((x) => x.id === typeId) : undefined;
+}
 
 export const CLIMATE_ICON: Record<Climate, LucideIcon> = {
   ambient: Thermometer,
@@ -41,25 +92,29 @@ export const CLIMATE_ICON: Record<Climate, LucideIcon> = {
   humid: Droplets,
 };
 
-export function kindIcon(kind: string | null): LucideIcon {
+export function kindIcon(kind: string | null, type?: PlaceType | null): LucideIcon {
+  if (type) return TYPE_ICON[type.icon as PlaceTypeIcon] ?? MapPin;
   return (kind && KIND_ICON[kind as PlaceKind]) || MapPin;
 }
 
-/** The icon for a place kind (MapPin when unset). */
-export function KindIcon({ kind, ...props }: { kind: string | null } & LucideProps) {
-  return createElement(kindIcon(kind), props);
+/** The icon for a place kind or the household's own type (MapPin when unset). */
+export function KindIcon({ kind, typeId, ...props }: { kind: string | null; typeId?: string | null } & LucideProps) {
+  const types = usePlaceTypes();
+  return createElement(kindIcon(kind, typeOf(types, typeId)), props);
 }
 
 /** Photo thumbnail, or an aurora gradient with the kind icon + initial when there's no photo. */
 export function PlaceArt({
   name,
   kind,
+  typeId,
   photo,
   size = 'tile',
   className,
 }: {
   name: string;
   kind: string | null;
+  typeId?: string | null;
   photo?: PlacePhoto | null;
   size?: 'tile' | 'hero' | 'thumb';
   className?: string;
@@ -95,6 +150,7 @@ export function PlaceArt({
       </span>
       <KindIcon
         kind={kind}
+        typeId={typeId}
         className={cn('absolute text-white/80', size === 'thumb' ? 'h-5 w-5' : 'h-9 w-9')}
         strokeWidth={1.6}
       />
@@ -116,8 +172,10 @@ export function Chip({ icon: Icon, children, tone = 'neutral' }: { icon?: Lucide
   );
 }
 
-export function KindChip({ kind }: { kind: string | null }) {
+export function KindChip({ kind, typeId }: { kind: string | null; typeId?: string | null }) {
   const { t } = useTranslation();
+  const type = typeOf(usePlaceTypes(), typeId);
+  if (type) return <Chip icon={kindIcon(null, type)}>{type.name}</Chip>;
   if (!kind) return null;
   return <Chip icon={KIND_ICON[kind as PlaceKind] ?? MapPin}>{t(`places.kinds.${kind as PlaceKind}`)}</Chip>;
 }

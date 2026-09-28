@@ -40,6 +40,7 @@ import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settin
 import { Route as AppSettingsExportRouteImport } from './routes/_app/settings/export'
 import { Route as AppSettingsFieldsRouteImport } from './routes/_app/settings/fields'
 import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings/notifications'
+import { Route as AppSettingsPlaceTypesRouteImport } from './routes/_app/settings/place-types'
 import { Route as AppSettingsStorageRouteImport } from './routes/_app/settings/storage'
 import { Route as AppSettingsUnitsRouteImport } from './routes/_app/settings/units'
 import { Route as AppThingsIndexRouteImport } from './routes/_app/things/index'
@@ -204,6 +205,11 @@ const AppSettingsNotificationsRoute =
     path: '/settings/notifications',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSettingsPlaceTypesRoute = AppSettingsPlaceTypesRouteImport.update({
+  id: '/settings/place-types',
+  path: '/settings/place-types',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsStorageRoute = AppSettingsStorageRouteImport.update({
   id: '/settings/storage',
   path: '/settings/storage',
@@ -272,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/settings/export': typeof AppSettingsExportRoute
   '/settings/fields': typeof AppSettingsFieldsRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/settings/storage': typeof AppSettingsStorageRoute
   '/settings/units': typeof AppSettingsUnitsRoute
   '/things/$assetId': typeof AppThingsAssetIdRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByTo {
   '/settings/export': typeof AppSettingsExportRoute
   '/settings/fields': typeof AppSettingsFieldsRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/settings/storage': typeof AppSettingsStorageRoute
   '/settings/units': typeof AppSettingsUnitsRoute
   '/things/$assetId': typeof AppThingsAssetIdRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/_app/settings/export': typeof AppSettingsExportRoute
   '/_app/settings/fields': typeof AppSettingsFieldsRoute
   '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/_app/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/_app/settings/storage': typeof AppSettingsStorageRoute
   '/_app/settings/units': typeof AppSettingsUnitsRoute
   '/_app/things/$assetId': typeof AppThingsAssetIdRoute
@@ -396,6 +405,7 @@ export interface FileRouteTypes {
     | '/settings/export'
     | '/settings/fields'
     | '/settings/notifications'
+    | '/settings/place-types'
     | '/settings/storage'
     | '/settings/units'
     | '/things/$assetId'
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/settings/export'
     | '/settings/fields'
     | '/settings/notifications'
+    | '/settings/place-types'
     | '/settings/storage'
     | '/settings/units'
     | '/things/$assetId'
@@ -477,6 +488,7 @@ export interface FileRouteTypes {
     | '/_app/settings/export'
     | '/_app/settings/fields'
     | '/_app/settings/notifications'
+    | '/_app/settings/place-types'
     | '/_app/settings/storage'
     | '/_app/settings/units'
     | '/_app/things/$assetId'
@@ -717,6 +729,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/place-types': {
+      id: '/_app/settings/place-types'
+      path: '/settings/place-types'
+      fullPath: '/settings/place-types'
+      preLoaderRoute: typeof AppSettingsPlaceTypesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/storage': {
       id: '/_app/settings/storage'
       path: '/settings/storage'
@@ -800,6 +819,7 @@ interface AppRouteChildren {
   AppSettingsExportRoute: typeof AppSettingsExportRoute
   AppSettingsFieldsRoute: typeof AppSettingsFieldsRoute
   AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
+  AppSettingsPlaceTypesRoute: typeof AppSettingsPlaceTypesRoute
   AppSettingsStorageRoute: typeof AppSettingsStorageRoute
   AppSettingsUnitsRoute: typeof AppSettingsUnitsRoute
   AppThingsAssetIdRoute: typeof AppThingsAssetIdRoute
@@ -839,6 +859,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsExportRoute: AppSettingsExportRoute,
   AppSettingsFieldsRoute: AppSettingsFieldsRoute,
   AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
+  AppSettingsPlaceTypesRoute: AppSettingsPlaceTypesRoute,
   AppSettingsStorageRoute: AppSettingsStorageRoute,
   AppSettingsUnitsRoute: AppSettingsUnitsRoute,
   AppThingsAssetIdRoute: AppThingsAssetIdRoute,

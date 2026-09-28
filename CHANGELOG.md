@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.3 — Phase 7d Place types, your own categories, QR on Android
+- **QR codes on Android**: the phone's own detector missed a printed A4 label that zxing reads at once
+  (checked on Didula's screenshot of the Kitchen label). Now zxing also looks whenever the phone's
+  detector misses, the camera takes a sharper picture (1080p) and uses continuous autofocus where the
+  phone allows it.
+- **Cupboard, Rack and File** are place types now (File for document folders), offered when a blank
+  label is scanned ("New Cupboard") and in the place form.
+- **Your own place types**: "+ New type" in the place form and in "New label — what is this?" — a name
+  and an icon; it's picked at once. Settings › Place types renames, re-icons or archives them.
+- **"+ New category…"** at the end of every category picker (bills, pantry products, things): add a
+  sub-category under a main one and it's picked at once.
+- Migration 60 `place_type`; schema_version 60.
+
 ## 0.7.2 — Phase 7c Scan polish + missed bank SMS
 - **The camera starts by itself** on the Scan tab on phones and tablets once the camera was
   allowed for the site (laptops with the USB scanner keep the button). It starts again when you

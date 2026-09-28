@@ -1,10 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ArrowDownToLine, Check, ChevronRight, Package, PackagePlus, Plus, Search, Tag, Wrench } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { KIND_ICON } from '@/components/places/PlaceVisuals';
+import { PlaceTypeSheet } from '@/components/places/PlaceTypeSheet';
+import { KIND_ICON, kindIcon, usePlaceTypes } from '@/components/places/PlaceVisuals';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { assignTag, detachTag, invalidateLabels, tagErrorKey } from '@/lib/labels/blank';
@@ -16,7 +17,7 @@ import { CreateSheet, type CreateRequest } from './CreateSheet';
 import { ItemPicker } from './ItemPicker';
 
 /** The place kinds offered first for a new label (a box is by far the most common). */
-const NEW_PLACE_KINDS: PlaceKind[] = ['container', 'shelf', 'drawer', 'furniture', 'room'];
+const NEW_PLACE_KINDS: PlaceKind[] = ['container', 'shelf', 'cupboard', 'rack', 'file', 'drawer', 'furniture', 'room'];
 
 export interface Claimed {
   target: TagTarget;
@@ -60,6 +61,9 @@ export function ClaimPanel({
   const [create, setCreate] = useState<CreateRequest | null>(null);
   const [picking, setPicking] = useState<TagKind | null>(null);
   const [busy, setBusy] = useState(false);
+  const [newType, setNewType] = useState(false);
+  const typeSaved = useRef(false);
+  const types = usePlaceTypes();
 
   const open = (c: CreateRequest | null, p: TagKind | null) => {
     setCreate(c);
@@ -137,6 +141,35 @@ export function ClaimPanel({
                     </Button>
                   );
                 })}
+                {types
+                  .filter((x) => !x.archived)
+                  .map((x) => {
+                    const Icon = kindIcon(null, x);
+                    return (
+                      <Button
+                        key={x.id}
+                        size="sm"
+                        variant="secondary"
+                        disabled={busy}
+                        onClick={() => open({ kind: 'place', placeTypeId: x.id, placeId }, null)}
+                      >
+                        <Icon className="h-4 w-4" aria-hidden />
+                        {t('scan.claim.newKind', { kind: x.name })}
+                      </Button>
+                    );
+                  })}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setNewType(true);
+                    onBusyChange?.(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4" aria-hidden />
+                  {t('placeTypes.new')}
+                </Button>
                 <Button size="sm" variant="ghost" disabled={busy} onClick={() => open(null, 'location')}>
                   <Search className="h-4 w-4" aria-hidden />
                   {t('scan.claim.existingPlace')}
@@ -177,6 +210,20 @@ export function ClaimPanel({
         </>
       )}
 
+      <PlaceTypeSheet
+        open={newType}
+        onClose={() => {
+          setNewType(false);
+          // Saved: the new place's form opens next and keeps the page busy.
+          if (!typeSaved.current) onBusyChange?.(false);
+          typeSaved.current = false;
+        }}
+        householdId={householdId}
+        onSaved={(x) => {
+          typeSaved.current = true;
+          open({ kind: 'place', placeTypeId: x.id, placeId }, null);
+        }}
+      />
       {create && (
         <CreateSheet
           householdId={householdId}

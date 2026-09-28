@@ -30,6 +30,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'budget', order: ['id'], scope: 'household' },
   { name: 'sms_message', order: ['id'], scope: 'household' },
   { name: 'location', order: ['id'], scope: 'household' },
+  { name: 'place_type', order: ['id'], scope: 'household' },
   { name: 'floor_plan', order: ['id'], scope: 'household' },
   { name: 'label_profile', order: ['id'], scope: 'household' },
   { name: 'label_sheet', order: ['sheet_no'], scope: 'household' },

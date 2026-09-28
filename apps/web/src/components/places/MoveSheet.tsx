@@ -121,7 +121,7 @@ export function MoveSheet({
                     onClick={() => void moveTo(p.id, p.name)}
                     className="flex w-full items-center gap-3 rounded-2xl bg-white/[0.03] px-3.5 py-3 text-left hover:bg-white/[0.06]"
                   >
-                    <KindIcon kind={p.kind} className="h-[18px] w-[18px] shrink-0 text-muted" aria-hidden />
+                    <KindIcon kind={p.kind} typeId={p.type_id} className="h-[18px] w-[18px] shrink-0 text-muted" aria-hidden />
                     <span className="min-w-0 flex-1 truncate text-[15px]">{p.path}</span>
                   </button>
                 </li>

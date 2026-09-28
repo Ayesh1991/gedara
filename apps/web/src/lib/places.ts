@@ -5,17 +5,93 @@ import { entityPhotosQuery, removeEntityPhoto, removeFiles, setEntityPhoto, type
 import { supabase } from './supabase';
 import type { Tables, TablesInsert } from './db.types';
 
-export const PLACE_KINDS = ['room', 'furniture', 'container', 'drawer', 'shelf', 'zone', 'vehicle', 'offsite'] as const;
+// Built-in kinds, in the order they are offered (Phase 7d added cupboard, rack and file).
+export const PLACE_KINDS = [
+  'room',
+  'furniture',
+  'cupboard',
+  'rack',
+  'shelf',
+  'drawer',
+  'container',
+  'file',
+  'zone',
+  'vehicle',
+  'offsite',
+] as const;
 export const CLIMATES = ['ambient', 'fridge', 'freezer', 'dry', 'humid'] as const;
 export type PlaceKind = (typeof PLACE_KINDS)[number];
 export type Climate = (typeof CLIMATES)[number];
 
 export type Place = Pick<
   Tables<'location'>,
-  'id' | 'household_id' | 'parent_id' | 'name' | 'kind' | 'climate' | 'code' | 'notes' | 'sort' | 'path' | 'updated_at'
+  'id' | 'household_id' | 'parent_id' | 'name' | 'kind' | 'type_id' | 'climate' | 'code' | 'notes' | 'sort' | 'path' | 'updated_at'
 >;
 
-const PLACE_COLUMNS = 'id, household_id, parent_id, name, kind, climate, code, notes, sort, path, updated_at';
+const PLACE_COLUMNS = 'id, household_id, parent_id, name, kind, type_id, climate, code, notes, sort, path, updated_at';
+
+// ── The household's own place types (Phase 7d, migration 60) ──────────────────
+
+/** Icons a place type can have (the database allows exactly these). */
+export const PLACE_TYPE_ICONS = [
+  'box',
+  'archive',
+  'folder',
+  'book',
+  'briefcase',
+  'package',
+  'shopping-bag',
+  'refrigerator',
+  'bed',
+  'car',
+  'warehouse',
+  'wrench',
+  'shirt',
+  'utensils',
+  'lamp',
+  'tv',
+] as const;
+export type PlaceTypeIcon = (typeof PLACE_TYPE_ICONS)[number];
+
+export type PlaceType = Pick<Tables<'place_type'>, 'id' | 'household_id' | 'name' | 'icon' | 'sort' | 'archived'>;
+
+export const placeTypesKey = (householdId: string) => ['place-types', householdId] as const;
+
+export const placeTypesQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: placeTypesKey(householdId),
+    queryFn: async (): Promise<PlaceType[]> => {
+      const { data, error } = await supabase
+        .from('place_type')
+        .select('id, household_id, name, icon, sort, archived')
+        .eq('household_id', householdId)
+        .order('sort')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+export async function createPlaceType(householdId: string, name: string, icon: PlaceTypeIcon): Promise<PlaceType> {
+  const { data, error } = await supabase
+    .from('place_type')
+    .insert({ household_id: householdId, name: name.trim(), icon })
+    .select('id, household_id, name, icon, sort, archived')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePlaceType(id: string, patch: { name?: string; icon?: PlaceTypeIcon; archived?: boolean }) {
+  const { error } = await supabase.from('place_type').update(patch).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deletePlaceType(id: string) {
+  const { error } = await supabase.from('place_type').delete().eq('id', id);
+  if (error) throw error;
+}
 
 export const placesKey = (householdId: string) => ['places', householdId] as const;
 
@@ -51,6 +127,8 @@ export interface PlaceInput {
   name: string;
   parentId: string | null;
   kind: PlaceKind | null;
+  /** One of the household's own types (then `kind` is null). */
+  typeId?: string | null;
   climate: Climate | null;
   notes: string | null;
 }
@@ -62,7 +140,8 @@ export async function createPlace(householdId: string, input: PlaceInput): Promi
     household_id: householdId,
     parent_id: input.parentId,
     name: input.name.trim(),
-    kind: input.kind,
+    kind: input.typeId ? null : input.kind,
+    type_id: input.typeId ?? null,
     climate: input.climate,
     notes: input.notes?.trim() || null,
   };
@@ -76,10 +155,21 @@ export async function createPlace(householdId: string, input: PlaceInput): Promi
 }
 
 export async function updatePlace(id: string, input: Partial<PlaceInput>): Promise<Place> {
-  const patch: { name?: string; parent_id?: string | null; kind?: string | null; climate?: string | null; notes?: string | null } = {};
+  const patch: {
+    name?: string;
+    parent_id?: string | null;
+    kind?: string | null;
+    type_id?: string | null;
+    climate?: string | null;
+    notes?: string | null;
+  } = {};
   if (input.name !== undefined) patch.name = input.name.trim();
   if (input.parentId !== undefined) patch.parent_id = input.parentId;
   if (input.kind !== undefined) patch.kind = input.kind;
+  if (input.typeId !== undefined) {
+    patch.type_id = input.typeId;
+    if (input.typeId) patch.kind = null;
+  }
   if (input.climate !== undefined) patch.climate = input.climate;
   if (input.notes !== undefined) patch.notes = input.notes?.trim() || null;
   const { data, error } = await supabase.from('location').update(patch).eq('id', id).select(PLACE_COLUMNS).single();
