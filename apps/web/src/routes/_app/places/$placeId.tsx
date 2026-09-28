@@ -100,7 +100,7 @@ function PlacePage() {
       <Card className="relative overflow-hidden p-0">
         <div className="grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[300px]">
-            <PlaceArt name={place.name} kind={place.kind} photo={photo} size="hero" />
+            <PlaceArt name={place.name} kind={place.kind} typeId={place.type_id} photo={photo} size="hero" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(5,7,15,0.7)] via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-[rgba(5,7,15,0.35)]" />
             {canWrite && (
               <PhotoEditButton
@@ -116,7 +116,7 @@ function PlacePage() {
             <div>
               <h1 className="font-display text-[28px] leading-tight font-semibold tracking-tight">{place.name}</h1>
               <div className="mt-2.5 flex flex-wrap gap-2">
-                <KindChip kind={place.kind} />
+                <KindChip kind={place.kind} typeId={place.type_id} />
                 <ClimateChip climate={place.climate} />
               </div>
               <div className="mt-2.5 flex items-center gap-2 text-[14px]">

@@ -38,7 +38,7 @@ function PlaceTile({
   const body = (
     <>
       <div className="relative aspect-[4/3] overflow-hidden">
-        <PlaceArt name={place.name} kind={place.kind} photo={photo} />
+        <PlaceArt name={place.name} kind={place.kind} typeId={place.type_id} photo={photo} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[rgba(5,7,15,0.85)] to-transparent" />
         {selecting && (
           <span className="absolute top-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-xl bg-[rgba(5,7,15,0.6)] backdrop-blur">
@@ -58,7 +58,7 @@ function PlaceTile({
       <div className="flex flex-col gap-2 px-3.5 pt-3 pb-3.5">
         <div className="truncate font-display text-[15.5px] font-semibold">{place.name}</div>
         <div className="flex min-h-7 items-center gap-2">
-          <KindChip kind={place.kind} />
+          <KindChip kind={place.kind} typeId={place.type_id} />
         </div>
       </div>
     </>

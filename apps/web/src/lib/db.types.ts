@@ -1114,6 +1114,7 @@ export type Database = {
           parent_id: string | null
           path: string
           sort: number
+          type_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1133,6 +1134,7 @@ export type Database = {
           parent_id?: string | null
           path: string
           sort?: number
+          type_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1152,6 +1154,7 @@ export type Database = {
           parent_id?: string | null
           path?: string
           sort?: number
+          type_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1182,6 +1185,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_location_contents"
             referencedColumns: ["household_id", "location_id"]
+          },
+          {
+            foreignKeyName: "location_type_fk"
+            columns: ["household_id", "type_id"]
+            isOneToOne: false
+            referencedRelation: "place_type"
+            referencedColumns: ["household_id", "id"]
           },
         ]
       }
@@ -1692,6 +1702,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "move_op_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      place_type: {
+        Row: {
+          archived: boolean
+          created_at: string
+          created_by: string | null
+          household_id: string
+          icon: string
+          id: string
+          name: string
+          sort: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          icon?: string
+          id?: string
+          name: string
+          sort?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          icon?: string
+          id?: string
+          name?: string
+          sort?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "place_type_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "household"

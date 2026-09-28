@@ -34,7 +34,11 @@ export function Sheet({
     <dialog
       ref={ref}
       aria-label={title}
-      onClose={onClose}
+      // Only this dialog's own close: a sheet opened on top of it (camera, "+ New type" …) fires
+      // `close` too, and React passes it up to the sheet underneath.
+      onClose={(e) => {
+        if (e.target === ref.current) onClose();
+      }}
       onClick={(e) => {
         if (e.target === ref.current) onClose(); // backdrop click
       }}

@@ -399,9 +399,15 @@ export function pickableAccounts(accounts: Account[] | undefined, keep?: string 
   return (accounts ?? []).filter((a) => (!a.archived && !a.is_suspense) || a.id === keep);
 }
 
-export async function createCategory(householdId: string, parentId: string, name: string) {
-  const { error } = await supabase.from('category').insert({ household_id: householdId, parent_id: parentId, name: name.trim() });
+/** A sub-category; returns its id (the inline "+ New category…" picks it at once). */
+export async function createCategory(householdId: string, parentId: string, name: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('category')
+    .insert({ household_id: householdId, parent_id: parentId, name: name.trim() })
+    .select('id')
+    .single();
   if (error) throw error;
+  return data.id;
 }
 
 export async function updateCategory(id: string, patch: { name?: string; icon?: string | null; color?: string | null; archived?: boolean }) {

@@ -225,6 +225,7 @@
     "lowStock_one": "1 running low"
   },
   "settings": {
+    "placeTypesHint": "Your own kinds of places (tool wall, suitcase …)",
     "title": "Settings",
     "appearance": "Appearance",
     "appearanceHint": "Aurora colour theme and motion",
@@ -386,6 +387,9 @@
       "notes": "Notes"
     },
     "kinds": {
+      "cupboard": "Cupboard",
+      "rack": "Rack",
+      "file": "File",
       "room": "Room",
       "furniture": "Furniture",
       "container": "Box",
@@ -1214,6 +1218,11 @@
     }
   },
   "categories": {
+    "newOption": "+ New category…",
+    "newInline": "New category",
+    "under": "Under",
+    "createAndPick": "Add and pick it",
+    "createdInline": "{{name}} added",
     "title": "Categories",
     "intro": "The same categories as the old ledger, plus Income. Tap one to rename or archive it.",
     "addSub": "Add",
@@ -2285,5 +2294,30 @@
     "pasteLabel": "Bill Scanner JSON",
     "read": "Read",
     "notSms": "This isn't a bank SMS screenshot (doc_type bank_sms)."
+  },
+  "placeTypes": {
+    "title": "Place types",
+    "intro": "Box, shelf, cupboard, rack, file … are built in. Add your own for anything else; they show up wherever you pick a type.",
+    "yours": "Your types",
+    "builtIn": "Built in",
+    "new": "New type",
+    "newTitle": "New place type",
+    "editTitle": "Edit place type",
+    "name": "Name",
+    "namePlaceholder": "e.g. Tool wall, Suitcase, Locker",
+    "icon": "Icon",
+    "save": "Save type",
+    "saved": "{{name}} saved",
+    "none": "No types of your own yet.",
+    "archived": "archived",
+    "edit": "Edit {{name}}",
+    "archive": "Archive {{name}}",
+    "restore": "Bring back {{name}}",
+    "archiveHint": "An archived type stays on its places but isn't offered for new ones.",
+    "errors": {
+      "duplicate": "You already have a type with that name.",
+      "denied": "You can't change place types in this household.",
+      "generic": "Couldn't save the type. Try again."
+    }
   }
 }

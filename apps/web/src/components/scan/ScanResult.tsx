@@ -150,7 +150,7 @@ function PlaceResult({
     <div className={cn('glass-strong slide-up flex flex-col gap-3 rounded-3xl p-3.5', className)} role="status" data-testid="scan-result">
       <div className="flex items-center gap-3.5">
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
-          <PlaceArt name={place.name} kind={place.kind} photo={photos.data?.get(place.id)} size="thumb" />
+          <PlaceArt name={place.name} kind={place.kind} typeId={place.type_id} photo={photos.data?.get(place.id)} size="thumb" />
         </div>
         <div className="min-w-0 flex-1">
           {crumb && <div className="truncate text-[12px] text-muted">{crumb}</div>}
@@ -159,7 +159,7 @@ function PlaceResult({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <KindChip kind={place.kind} />
+        <KindChip kind={place.kind} typeId={place.type_id} />
         <ClimateChip climate={place.climate} />
         {inside !== undefined && (
           <span className="tabular text-[12.5px] text-muted">{t('places.insideCount', { count: inside })}</span>

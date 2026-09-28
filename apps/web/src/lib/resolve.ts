@@ -61,7 +61,7 @@ export type Resolved =
 
 const PRODUCT_COLUMNS = 'id, household_id, name, code';
 const ASSET_COLUMNS = 'id, household_id, name, code, asset_no, status, location_id';
-const PLACE_COLUMNS = 'id, household_id, parent_id, name, kind, climate, code, notes, sort, path, updated_at';
+const PLACE_COLUMNS = 'id, household_id, parent_id, name, kind, type_id, climate, code, notes, sort, path, updated_at';
 // Same shape the database accepts for product_barcode.barcode (migration 24).
 const BARCODE = /^[0-9A-Za-z._-]{4,64}$/;
 

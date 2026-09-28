@@ -1,6 +1,7 @@
 // Camera decoding for the Scan HUD. Native BarcodeDetector where the browser has one (Android
-// Chrome, macOS), otherwise zxing-wasm (iOS Safari, Windows). The WASM file is bundled with the app
-// (Vite `?url`), never fetched from a CDN, so scanning keeps working offline and under our headers.
+// Chrome, macOS), backed by zxing-wasm; zxing alone elsewhere (iOS Safari, Windows). The WASM file
+// is bundled with the app (Vite `?url`), never fetched from a CDN, so scanning keeps working offline
+// and under our headers.
 
 interface NativeDetector {
   detect(source: CanvasImageSource): Promise<Array<{ rawValue: string }>>;
@@ -11,7 +12,7 @@ interface NativeDetectorCtor {
 }
 
 export interface Decoder {
-  engine: 'native' | 'zxing';
+  engine: 'native' | 'zxing' | 'hybrid';
   decode(video: HTMLVideoElement): Promise<string | null>;
 }
 
@@ -68,10 +69,35 @@ async function zxingDecoder(): Promise<Decoder> {
   };
 }
 
+/**
+ * Native first (fast, easy on the battery); on every `every`-th frame it misses, zxing looks at the
+ * same frame too, and whichever reads the code wins (Phase 7d: Android's own detector missed a
+ * printed A4 URL label that zxing reads at once). zxing loads only when first needed.
+ */
+export function hybridDecoder(native: Decoder, loadZxing: () => Promise<Decoder>, every = 2): Decoder {
+  let misses = 0;
+  let zxing: Promise<Decoder | null> | null = null;
+  return {
+    engine: 'hybrid',
+    async decode(video) {
+      const hit = await native.decode(video).catch(() => null);
+      if (hit) {
+        misses = 0;
+        return hit;
+      }
+      misses += 1;
+      if (misses % every !== 0) return null;
+      zxing ??= loadZxing().catch(() => null);
+      const z = await zxing;
+      return z ? z.decode(video) : null;
+    },
+  };
+}
+
 let cached: Promise<Decoder> | null = null;
 
 export function getDecoder(): Promise<Decoder> {
-  cached ??= nativeDecoder().then((d) => d ?? zxingDecoder());
+  cached ??= nativeDecoder().then((d) => (d ? hybridDecoder(d, zxingDecoder) : zxingDecoder()));
   cached.catch(() => {
     cached = null;
   });
@@ -114,10 +140,18 @@ export async function openRearCamera(): Promise<MediaStream> {
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
     throw new DOMException('insecure', 'SecurityError');
   }
-  return navigator.mediaDevices.getUserMedia({
+  // More detail than 720p so a small label reads from further away; continuous autofocus where the
+  // phone offers it (ignored elsewhere).
+  const stream = await navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
   });
+  const track = stream.getVideoTracks()[0];
+  const caps = track?.getCapabilities?.() as { focusMode?: string[] } | undefined;
+  if (caps?.focusMode?.includes('continuous')) {
+    await track!.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] }).catch(() => undefined);
+  }
+  return stream;
 }
 
 /** Torch (flash) on Android Chrome; iOS doesn't expose it. */

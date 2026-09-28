@@ -1,9 +1,13 @@
 import { Banknote, CreditCard, Landmark, PiggyBank, TrendingUp, Wallet, type LucideIcon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatLKR } from '@/lib/money/format';
 import { subsOf, type CategoryRow } from '@/lib/money/categoriesMap';
 import type { Account, AccountKind, TxType } from '@/lib/money/queries';
+import { membershipQuery } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { NewCategorySheet } from './NewCategorySheet';
 
 export const fieldLabel = 'mb-1.5 block text-[13px] font-medium text-muted';
 export const selectClass =
@@ -81,16 +85,25 @@ export function CategorySelect({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const membership = useQuery(membershipQuery);
+  const [adding, setAdding] = useState(false);
+  const canAdd = Boolean(membership.data && membership.data.role !== 'viewer');
   const tops = categories
     .filter((c) => c.parent_id === null && (c.kind === kind || c.kind === 'both') && (!c.archived || c.id === value))
     .sort((a, b) => a.sort - b.sort);
+  const current = categories.find((c) => c.id === value);
   return (
+    <>
     <select
       id={id}
       required={required}
       className={cn(selectClass, className)}
       value={value ?? ''}
-      onChange={(e) => onChange(e.target.value || null)}
+      onChange={(e) => {
+        // "+ New category…" opens the sheet; the choice stays as it was until one is made.
+        if (e.target.value === NEW_CATEGORY) return setAdding(true);
+        onChange(e.target.value || null);
+      }}
     >
       <option value="">{t('money.form.pickCategory')}</option>
       {tops.map((top) => (
@@ -105,9 +118,23 @@ export function CategorySelect({
             ))}
         </optgroup>
       ))}
+      {canAdd && <option value={NEW_CATEGORY}>{t('categories.newOption')}</option>}
     </select>
+    {adding && membership.data && (
+      <NewCategorySheet
+        open
+        onClose={() => setAdding(false)}
+        householdId={membership.data.household.id}
+        tops={tops.filter((x) => !x.archived)}
+        defaultParentId={current ? (current.parent_id ?? current.id) : null}
+        onCreated={(newId) => onChange(newId)}
+      />
+    )}
+    </>
   );
 }
+
+const NEW_CATEGORY = '__new__';
 
 export function AccountSelect({
   id,
