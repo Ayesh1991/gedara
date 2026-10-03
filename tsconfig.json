@@ -11,5 +11,5 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["playwright.config.ts", "tests/e2e/**/*.ts", "scripts/**/*.mjs"]
+  "include": ["playwright.config.ts", "tests/e2e/**/*.ts", "scripts/**/*.mjs", "devices/kitchen-scale/tools/**/*.ts"]
 }

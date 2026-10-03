@@ -9,9 +9,11 @@ import {
   MessageSquareText,
   PiggyBank,
   Receipt,
+  Scale,
   ShieldAlert,
   ShieldCheck,
   ShoppingCart,
+  Tag,
   TrendingDown,
   Wrench,
   type LucideIcon,
@@ -42,6 +44,8 @@ const ICON: Record<AttentionKind, LucideIcon> = {
   backup_due: HardDriveDownload,
   budget_over: PiggyBank,
   budget_near: PiggyBank,
+  scale_decision: Scale,
+  scale_new_tag: Tag,
 };
 
 const TONE_BG = {
@@ -81,6 +85,8 @@ export function useAttentionText() {
         return t('attention.kinds.scan_waiting', { count: Number(i.qty ?? 0) });
       case 'backup_due':
         return t(i.extra.last_at ? 'attention.kinds.backup_due' : 'attention.kinds.backup_never');
+      case 'scale_new_tag':
+        return t('attention.kinds.scale_new_tag', { count: Number(i.qty ?? 0) });
       case 'bill_due':
       case 'insurance_due':
       case 'service_due':
@@ -115,6 +121,8 @@ function useAttentionDetail() {
         });
       case 'things_pending':
         return i.amount !== null ? formatLKR(Number(i.amount), { whole: true }) : null;
+      case 'scale_decision':
+        return t('attention.scaleExtra', { qty: formatQty(Number(i.qty ?? 0), { code: 'g' }), container: String(i.extra.container ?? '') });
       default:
         return null;
     }

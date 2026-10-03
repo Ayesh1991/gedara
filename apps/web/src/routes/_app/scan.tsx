@@ -9,6 +9,7 @@ import { CouldntSync } from '@/components/offline/OfflineSync';
 import { CameraScanner } from '@/components/scan/CameraScanner';
 import { AddMode, ClaimMode, FillMode, PutMode, parsePut, type ScanHandler } from '@/components/scan/ScanModes';
 import { ScanResult } from '@/components/scan/ScanResult';
+import { NfcScanButton } from '@/components/scale/NfcScanButton';
 import { SCAN_EVENT } from '@/components/scan/WedgeListener';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -125,10 +126,13 @@ function ScanPage() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('nav.scan')}</h1>
-        <span className="tabular mb-1.5 inline-flex items-center gap-1.5 text-[12px] text-muted">
-          <Usb className="h-3.5 w-3.5" aria-hidden />
-          {t('scan.usbReady')}
-        </span>
+        <div className="flex items-center gap-3">
+          <NfcScanButton onScan={handle} />
+          <span className="tabular mb-1.5 inline-flex items-center gap-1.5 text-[12px] text-muted">
+            <Usb className="h-3.5 w-3.5" aria-hidden />
+            {t('scan.usbReady')}
+          </span>
+        </div>
       </div>
 
       {!mode && canWrite && (

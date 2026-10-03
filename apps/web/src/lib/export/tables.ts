@@ -4,6 +4,7 @@
 //   sms_device        phone tokens (hashes) — secrets
 //   push_subscription browser push endpoints + keys — secrets
 //   push_run          the daily job's bookkeeping
+//   device_token      kitchen-scale token hashes — secrets (Phase 6b)
 // Pure (no Supabase import) so the test can read it.
 
 export interface ExportTable {
@@ -56,10 +57,15 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'attention_dismissal', order: ['id'], scope: 'household' },
   { name: 'drive_source', order: ['household_id'], scope: 'household' },
   { name: 'scan_file', order: ['id'], scope: 'household' },
+  { name: 'device', order: ['id'], scope: 'household' },
+  { name: 'nfc_tag', order: ['id'], scope: 'household' },
+  { name: 'scale_reading', order: ['id'], scope: 'household' },
+  { name: 'device_command', order: ['id'], scope: 'household' },
+  { name: 'device_firmware', order: ['id'], scope: 'household' },
   { name: 'export_run', order: ['id'], scope: 'household' },
 ];
 
-export const EXCLUDED_TABLES = ['app_meta', 'sms_device', 'push_subscription', 'push_run'];
+export const EXCLUDED_TABLES = ['app_meta', 'sms_device', 'push_subscription', 'push_run', 'device_token'];
 
 /** One row → CSV-friendly values (objects/arrays as JSON text). */
 export function csvRow(row: Record<string, unknown>): Record<string, string | number | boolean | null> {

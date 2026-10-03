@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.7.5 — Phase 6b Kitchen Scale Station
+- **The kitchen scale** (ESP32-S3 + 5 kg load cell + NFC reader under the platform): put a container
+  down and Gedara records what you used — "Sugar −24 g · 788 g left" — as a stock movement, never
+  by editing stock. Each weighing is compared with the jar's stock, so small uses add up (2 g
+  dead-band) and every weighing is also a free stock count.
+- **Refills**: a heavier jar moves the difference in from the same product's other pantry stock
+  (keeps its bill price). If there's nothing to move from, it asks: Move from pantry · Count
+  correction · Later (also in Attention).
+- **Pantry › Kitchen scale**: the iPad page — live state, the last result big with how long it took
+  to arrive, open questions, recent weighings, keep-screen-on. **Pop-ups with Undo** on every other
+  screen (switch per device).
+- **Containers**: a place that holds one product, with its empty weight ("Weigh empty" on the scale
+  or typed) and its NFC sticker — written from Android Chrome (Web NFC, a URL any phone opens) or
+  linked on the iPad when the scale sees a new tag. Product pages list their containers; Android's
+  Scan screen reads stickers.
+- **Settings › Devices › Kitchen scales**: add a scale (its key is shown once, only a fingerprint is
+  kept), sound + quiet hours, a calibration wizard, firmware upload + install on tap, health
+  (last seen, firmware, Wi-Fi, queue, latency). Diagnostics shows the scale and the new
+  `scale-ingest` function.
+- Firmware + wiring + assembly + setup guide in `devices/kitchen-scale` and `docs/kitchen-scale`.
+- Migrations 62–67 (`device`, `container_nfc`, `scale_reading`, `scale_rpcs`, `device_firmware`,
+  `scale_attention`); schema_version 67. Edge Function `scale-ingest-1`; `attention-push-3`.
+
 ## 0.7.4 — Phase 7e Books are Things
 - **Things carry barcodes** (a book's ISBN): scanning it opens the Thing; copies sharing an ISBN ask
   which one (each copy's own QR label opens it directly). Thing pages have a Barcodes section

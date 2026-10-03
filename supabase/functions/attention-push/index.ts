@@ -15,7 +15,7 @@ import { z } from 'npm:zod@4.6.5';
 import { type DigestItem, digestMessage } from '../_shared/push/digest.ts';
 import { type PushResult, type VapidKeys, sendPush } from '../_shared/push/webpush.ts';
 
-const FN_VERSION = 'attention-push-2';
+const FN_VERSION = 'attention-push-3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

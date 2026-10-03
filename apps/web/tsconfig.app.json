@@ -20,7 +20,7 @@
     "allowImportingTsExtensions": true,
     "paths": { "@/*": ["./src/*"], "@sms/*": ["../../supabase/functions/_shared/sms/*"],
                "@push/*": ["../../supabase/functions/_shared/push/*"],
-               "@scan/*": ["../../supabase/functions/_shared/scan/*"], "zod": ["./node_modules/zod"] }
+               "@scan/*": ["../../supabase/functions/_shared/scan/*"], "@scale/*": ["../../supabase/functions/_shared/scale/*"], "zod": ["./node_modules/zod"] }
   },
   "include": ["src"],
   "exclude": ["src/sw.ts", "src/**/*.test.ts", "src/**/*.test.tsx"]

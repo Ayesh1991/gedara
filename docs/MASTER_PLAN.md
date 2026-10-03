@@ -538,6 +538,14 @@ data for everything else.
 
 ## 7b. Kitchen Scale Station (Raspberry Pi 2 + 5 kg load cell + HX711 + USB scanner)
 
+> **Replaced 2026-10-03 (Phase 6b, v0.7.5):** built on an **ESP32-S3** with an **RC522 NFC reader under the
+> plate and an NTAG sticker under every container** (no Pi, no USB scanner, no jar QR scan), an SSD1306 OLED
+> and a MAX98357A speaker. The idea below (weigh the jar, compare with its stock, every weighing is a count)
+> is unchanged. Current design: `docs/kitchen-scale/` (setup, pins, wiring, assembly, protocol) and
+> `docs/decisions.md` 2026-10-03. Schema as built: migrations 62–67 (`device`, `device_token`, `nfc_tag`,
+> `location.tare_g / holds_product_id`, `scale_reading`, `device_command`, `device_firmware`); Edge Function
+> `scale-ingest` (not `device-ingest`).
+
 **Purpose:** exact consumption of loose goods (sugar, flour, salt, rice, spices, tea, milk
 powder) with no typing. Weighing replaces guessing "how much did I use?"
 
@@ -721,7 +729,7 @@ version badge bumped, a short `CHANGELOG.md` entry.
 | **4 The spine** | Bill import destiny routing (stock/asset/expense), product matching + learning aliases, shopping list (manual + below-min), tick-off on import | Scan a Cargills bill → expense logged, 8 lots created, 3 list items ticked, in one confirm |
 | **5 Things** | Assets, tags, category field templates, parent/child, attachments (warranty/manual/receipt), maintenance plans + logs → ledger, lend/sell flows, asset labels | Fridge, TV, laptop entered with receipts & warranty dates; AC service logged as expense |
 | **6 Insights & Attention** | Drill-down framework, all §6 views, Attention feed, `pg_cron` jobs, Web Push, ⌘K search, recurring bills + monthly budgets; ~~floor-plan (optional)~~ moved to Phase 7 and personal inflation from our own basket only (no CCPI), 2026-09-25 | Every number clickable to the record level |
-| **6b Scale Station** (after Phase 3 or 4) | `device` + `scale_reading`, jar tare, `rpc_weigh`, `device-ingest` Edge Function, Pi Python service + systemd + SQLite outbox, Realtime live card, calibration page | Lift the sugar jar, use 2 spoons, put it back → "Sugar −24 g" appears on the iPad within 2 s |
+| **6b Scale Station** (v0.7.5, 2026-10-03; ESP32-S3 + NFC instead of the Pi, §7b) | `device` + `device_token`, containers (`location.tare_g`, `holds_product_id`) + `nfc_tag`, `scale_reading`, `rpc_scale_sync` / `rpc_weigh` / `rpc_scale_decide`, `scale-ingest` Edge Function, PlatformIO firmware (`devices/kitchen-scale`, LittleFS outbox, OTA with rollback), Pantry › Kitchen scale + pop-ups (Realtime), Web NFC tag writing, calibration wizard, firmware upload | Lift the sugar jar, use 2 spoons, put it back → "Sugar −24 g" appears on the iPad within 2 s |
 | **7 AI & polish** | ~~In-app scan Edge Function (optional)~~ → the claude.ai Bill Scanner's Drive folder read by `drive-scan` (bills, warranty cards, rating plates; no Claude API, 2026-09-25), Open Food Facts, offline outbox, export/backup, Sinhala strings, performance pass, Places floor-plan (from Phase 6), HL:LOT + 10 mm labels, opt-in swipe | Lighthouse PWA ✓ (now `scripts/pwa-check.mjs`: Lighthouse 12 has no PWA category), works offline for scan-and-consume |
 | **7b Scan & photo everywhere** (v0.7.1, 2026-09-27) | Camera button on barcode fields, photos from camera or gallery in place, Quick add (scan first), Put in a place / Fill this box (both directions, offline via `rpc_move`), blank label sheets (`HL:TAG`, print first, assign on first scan) | Scan a blank label → "New box" → Fill this box with 3 scans, on phone and iPad, camera and USB scanner |
 | **7c Scan polish + missed SMS** (v0.7.2, 2026-09-27) | Camera starts itself on phones, "Opened" on the scan card, one-step "kept in" and "add label" scans on item pages, bank SMS screenshots via the Bill Scanner (`bank_sms`) into the SMS inbox | A missed BOC alert screenshotted → Bill Scanner → inbox → posted; the balance check agrees again |
@@ -770,7 +778,7 @@ gedara/
 │  └─ grocy-export/*.json     ← API dump for the Phase 3 import test
 ├─ apps/web/                  ← Vite + React PWA
 ├─ supabase/                  ← migrations/, functions/, seed.sql, tests/
-├─ devices/pi-station/        ← Python: scale, scanner, NIIMBOT print service (Phase 6b)
+├─ devices/kitchen-scale/     ← ESP32-S3 firmware (PlatformIO) for the kitchen scale (Phase 6b; replaced pi-station)
 └─ scripts/                   ← import-sheet.ts, import-grocy.ts
 ```
 Keep the full **Grocy and Homebox source trees outside the repo** (they are large and would waste

@@ -50,6 +50,10 @@ export function itemPhrase(i: DigestItem): string {
       return n === 1 ? '1 scanned file to import' : `${n} scanned files to import`;
     case 'backup_due':
       return 'Time for a backup';
+    case 'scale_decision':
+      return `${t} jar: say where the extra came from`;
+    case 'scale_new_tag':
+      return n === 1 ? '1 new tag on the kitchen scale' : `${n} new tags on the kitchen scale`;
     case 'budget_over':
       return `${t} budget is over`;
     case 'budget_near':

@@ -18,6 +18,8 @@ export const ATTENTION_KINDS = [
   'backup_due',
   'budget_over',
   'budget_near',
+  'scale_decision',
+  'scale_new_tag',
 ] as const;
 export type AttentionKind = (typeof ATTENTION_KINDS)[number];
 
@@ -79,6 +81,9 @@ export function attentionTarget(i: AttentionItem): Target {
       return { to: '/money/import', search: { tab: 'drive' } };
     case 'backup_due':
       return { to: '/settings/export' };
+    case 'scale_decision':
+    case 'scale_new_tag':
+      return { to: '/pantry/scale' };
     case 'budget_over':
     case 'budget_near': {
       const month = typeof i.extra.month === 'string' ? i.extra.month : undefined;

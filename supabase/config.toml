@@ -435,3 +435,9 @@ verify_jwt = false
 [functions.drive-scan]
 enabled = true
 verify_jwt = true
+
+# The kitchen scale (Phase 6b): no Supabase session and no key on the device; the handler checks the
+# scale's own token (only its sha256 is stored) and talks to the database with the service role.
+[functions.scale-ingest]
+enabled = true
+verify_jwt = false

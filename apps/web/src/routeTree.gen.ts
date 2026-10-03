@@ -26,6 +26,7 @@ import { Route as AppPantryIndexRouteImport } from './routes/_app/pantry/index'
 import { Route as AppPantryProductIdRouteImport } from './routes/_app/pantry/$productId'
 import { Route as AppPantryJournalRouteImport } from './routes/_app/pantry/journal'
 import { Route as AppPantryListRouteImport } from './routes/_app/pantry/list'
+import { Route as AppPantryScaleRouteImport } from './routes/_app/pantry/scale'
 import { Route as AppPlacesIndexRouteImport } from './routes/_app/places/index'
 import { Route as AppPlacesPlaceIdRouteImport } from './routes/_app/places/$placeId'
 import { Route as AppPlacesBlankLabelsRouteImport } from './routes/_app/places/blank-labels'
@@ -49,6 +50,7 @@ import { Route as AppThingsPendingRouteImport } from './routes/_app/things/pendi
 import { Route as AppMoneyAccountsIndexRouteImport } from './routes/_app/money/accounts/index'
 import { Route as AppMoneyAccountsAccountIdRouteImport } from './routes/_app/money/accounts/$accountId'
 import { Route as AppMoneyTxTxIdRouteImport } from './routes/_app/money/tx.$txId'
+import { Route as AppSettingsScaleDeviceIdRouteImport } from './routes/_app/settings/scale.$deviceId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -132,6 +134,11 @@ const AppPantryJournalRoute = AppPantryJournalRouteImport.update({
 const AppPantryListRoute = AppPantryListRouteImport.update({
   id: '/pantry/list',
   path: '/pantry/list',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPantryScaleRoute = AppPantryScaleRouteImport.update({
+  id: '/pantry/scale',
+  path: '/pantry/scale',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlacesIndexRoute = AppPlacesIndexRouteImport.update({
@@ -251,6 +258,12 @@ const AppMoneyTxTxIdRoute = AppMoneyTxTxIdRouteImport.update({
   path: '/money/tx/$txId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsScaleDeviceIdRoute =
+  AppSettingsScaleDeviceIdRouteImport.update({
+    id: '/settings/scale/$deviceId',
+    path: '/settings/scale/$deviceId',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -266,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/pantry/$productId': typeof AppPantryProductIdRoute
   '/pantry/journal': typeof AppPantryJournalRoute
   '/pantry/list': typeof AppPantryListRoute
+  '/pantry/scale': typeof AppPantryScaleRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/blank-labels': typeof AppPlacesBlankLabelsRoute
   '/places/labels': typeof AppPlacesLabelsRoute
@@ -291,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/things/': typeof AppThingsIndexRoute
   '/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/money/tx/$txId': typeof AppMoneyTxTxIdRoute
+  '/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
   '/money/accounts/': typeof AppMoneyAccountsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -307,6 +322,7 @@ export interface FileRoutesByTo {
   '/pantry/$productId': typeof AppPantryProductIdRoute
   '/pantry/journal': typeof AppPantryJournalRoute
   '/pantry/list': typeof AppPantryListRoute
+  '/pantry/scale': typeof AppPantryScaleRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/blank-labels': typeof AppPlacesBlankLabelsRoute
   '/places/labels': typeof AppPlacesLabelsRoute
@@ -332,6 +348,7 @@ export interface FileRoutesByTo {
   '/things': typeof AppThingsIndexRoute
   '/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/money/tx/$txId': typeof AppMoneyTxTxIdRoute
+  '/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
   '/money/accounts': typeof AppMoneyAccountsIndexRoute
 }
 export interface FileRoutesById {
@@ -350,6 +367,7 @@ export interface FileRoutesById {
   '/_app/pantry/$productId': typeof AppPantryProductIdRoute
   '/_app/pantry/journal': typeof AppPantryJournalRoute
   '/_app/pantry/list': typeof AppPantryListRoute
+  '/_app/pantry/scale': typeof AppPantryScaleRoute
   '/_app/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/_app/places/blank-labels': typeof AppPlacesBlankLabelsRoute
   '/_app/places/labels': typeof AppPlacesLabelsRoute
@@ -375,6 +393,7 @@ export interface FileRoutesById {
   '/_app/things/': typeof AppThingsIndexRoute
   '/_app/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/_app/money/tx/$txId': typeof AppMoneyTxTxIdRoute
+  '/_app/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
   '/_app/money/accounts/': typeof AppMoneyAccountsIndexRoute
 }
 export interface FileRouteTypes {
@@ -393,6 +412,7 @@ export interface FileRouteTypes {
     | '/pantry/$productId'
     | '/pantry/journal'
     | '/pantry/list'
+    | '/pantry/scale'
     | '/places/$placeId'
     | '/places/blank-labels'
     | '/places/labels'
@@ -418,6 +438,7 @@ export interface FileRouteTypes {
     | '/things/'
     | '/money/accounts/$accountId'
     | '/money/tx/$txId'
+    | '/settings/scale/$deviceId'
     | '/money/accounts/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -434,6 +455,7 @@ export interface FileRouteTypes {
     | '/pantry/$productId'
     | '/pantry/journal'
     | '/pantry/list'
+    | '/pantry/scale'
     | '/places/$placeId'
     | '/places/blank-labels'
     | '/places/labels'
@@ -459,6 +481,7 @@ export interface FileRouteTypes {
     | '/things'
     | '/money/accounts/$accountId'
     | '/money/tx/$txId'
+    | '/settings/scale/$deviceId'
     | '/money/accounts'
   id:
     | '__root__'
@@ -476,6 +499,7 @@ export interface FileRouteTypes {
     | '/_app/pantry/$productId'
     | '/_app/pantry/journal'
     | '/_app/pantry/list'
+    | '/_app/pantry/scale'
     | '/_app/places/$placeId'
     | '/_app/places/blank-labels'
     | '/_app/places/labels'
@@ -501,6 +525,7 @@ export interface FileRouteTypes {
     | '/_app/things/'
     | '/_app/money/accounts/$accountId'
     | '/_app/money/tx/$txId'
+    | '/_app/settings/scale/$deviceId'
     | '/_app/money/accounts/'
   fileRoutesById: FileRoutesById
 }
@@ -629,6 +654,13 @@ declare module '@tanstack/react-router' {
       path: '/pantry/list'
       fullPath: '/pantry/list'
       preLoaderRoute: typeof AppPantryListRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pantry/scale': {
+      id: '/_app/pantry/scale'
+      path: '/pantry/scale'
+      fullPath: '/pantry/scale'
+      preLoaderRoute: typeof AppPantryScaleRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/places/': {
@@ -792,6 +824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMoneyTxTxIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/scale/$deviceId': {
+      id: '/_app/settings/scale/$deviceId'
+      path: '/settings/scale/$deviceId'
+      fullPath: '/settings/scale/$deviceId'
+      preLoaderRoute: typeof AppSettingsScaleDeviceIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -807,6 +846,7 @@ interface AppRouteChildren {
   AppPantryProductIdRoute: typeof AppPantryProductIdRoute
   AppPantryJournalRoute: typeof AppPantryJournalRoute
   AppPantryListRoute: typeof AppPantryListRoute
+  AppPantryScaleRoute: typeof AppPantryScaleRoute
   AppPlacesPlaceIdRoute: typeof AppPlacesPlaceIdRoute
   AppPlacesBlankLabelsRoute: typeof AppPlacesBlankLabelsRoute
   AppPlacesLabelsRoute: typeof AppPlacesLabelsRoute
@@ -832,6 +872,7 @@ interface AppRouteChildren {
   AppThingsIndexRoute: typeof AppThingsIndexRoute
   AppMoneyAccountsAccountIdRoute: typeof AppMoneyAccountsAccountIdRoute
   AppMoneyTxTxIdRoute: typeof AppMoneyTxTxIdRoute
+  AppSettingsScaleDeviceIdRoute: typeof AppSettingsScaleDeviceIdRoute
   AppMoneyAccountsIndexRoute: typeof AppMoneyAccountsIndexRoute
 }
 
@@ -847,6 +888,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPantryProductIdRoute: AppPantryProductIdRoute,
   AppPantryJournalRoute: AppPantryJournalRoute,
   AppPantryListRoute: AppPantryListRoute,
+  AppPantryScaleRoute: AppPantryScaleRoute,
   AppPlacesPlaceIdRoute: AppPlacesPlaceIdRoute,
   AppPlacesBlankLabelsRoute: AppPlacesBlankLabelsRoute,
   AppPlacesLabelsRoute: AppPlacesLabelsRoute,
@@ -872,6 +914,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppThingsIndexRoute: AppThingsIndexRoute,
   AppMoneyAccountsAccountIdRoute: AppMoneyAccountsAccountIdRoute,
   AppMoneyTxTxIdRoute: AppMoneyTxTxIdRoute,
+  AppSettingsScaleDeviceIdRoute: AppSettingsScaleDeviceIdRoute,
   AppMoneyAccountsIndexRoute: AppMoneyAccountsIndexRoute,
 }
 
