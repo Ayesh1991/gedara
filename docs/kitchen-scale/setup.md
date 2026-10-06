@@ -11,17 +11,21 @@ You need: the PC with **VS Code** (PlatformIO is already installed on it), a **U
 
 ## Part 1 · Put the firmware on the board (once, by cable)
 
-1. Open **VS Code**.
+1. Open **VS Code**. The first time only: install the **PlatformIO IDE** extension. Click the
+   **Extensions** icon in the left bar (four squares, or **Ctrl+Shift+X**), search **PlatformIO IDE**, pick
+   the one by PlatformIO (orange ant-head icon) → **Install**, wait until it finishes, then **Reload Now**
+   (or close and reopen VS Code). An ant-head icon appears in the left bar.
 2. **File › Open Folder…** → go to `D:\Website development\home ledger\gedara-handoff\devices\kitchen-scale` → **Select Folder**.
    The first time, PlatformIO prepares the project for a minute (bottom-right corner shows progress).
 3. Plug the board into the PC with the USB-C cable, into the port marked **UART** (some boards say **COM**).
-4. In the blue bar at the bottom, find the item that says **`env:s3`** (or `Default`). Click it and choose:
+4. In the **status bar along the very bottom** of the window (blue or grey, depending on your colour theme),
+   find the item that says **`env:s3`** (or `Default`). Click it and choose:
    - **`env:s3`** for the real scale (everything wired), or
    - **`env:s3_fake`** for the bare board test (Part 6).
-5. Click the **→ arrow** ("Upload") in the blue bar. Wait for **SUCCESS** in the terminal (1–3 minutes).
+5. Click the **→ arrow** ("Upload") in that bottom bar. Wait for **SUCCESS** in the terminal (1–3 minutes).
    - *"Failed to connect"* or *"No serial port"*: hold the board's **BOOT** button, press and release
      **RST** (or **EN**), release BOOT, then click → again.
-6. Click the **plug icon** ("Serial Monitor") in the blue bar. You'll see lines like
+6. Click the **plug icon** ("Serial Monitor") in the bottom bar. You'll see lines like
    `[SELFTEST] scale ok  NFC ok | storage ok …`.
 
 ## Part 2 · Add the scale in Gedara and give it Wi-Fi
@@ -75,7 +79,7 @@ the scale says *"minus twenty four grams"*, and the iPad on **Pantry › Kitchen
 ## Part 5 · Updating the firmware later
 
 1. Change `FW_VERSION` in `src/version.h` (e.g. `0.1.0` → `0.1.1`). Gedara only installs a **newer** version.
-2. VS Code → click the **✓** ("Build") in the blue bar → **SUCCESS**.
+2. VS Code → click the **✓** ("Build") in the bottom bar → **SUCCESS**.
 3. Gedara → **Settings** → **Devices** → the scale → **Firmware** → **Upload firmware.bin** → choose
    `devices\kitchen-scale\.pio\build\s3\firmware.bin`.
 4. Tap **Install** next to the new version. The scale shows a progress bar, restarts and reports the new
