@@ -260,10 +260,14 @@ void app::begin() {
   ctlQ = xQueueCreate(12, sizeof(Msg));
   Persisted& p = settings::get();
 #ifdef GEDARA_FAKE
-  if (p.factor == 0.0f) settings::saveCalibration(400.0f, 84213);  // the simulated load cell
-#endif
+  // The simulated load cell's numbers, in memory only: flash must never keep them, or the real
+  // firmware flashed later would believe it is calibrated.
+  engine.setCalibration(400.0f, 84213);
+  gCalibrated = true;
+#else
   if (p.factor != 0.0f) engine.setCalibration(p.factor, p.zero);
   gCalibrated = p.factor != 0.0f;
+#endif
   seqs.begin();
 }
 

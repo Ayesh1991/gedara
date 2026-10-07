@@ -10,6 +10,7 @@ MAX98357A + speaker · optional button. (Replaces the Raspberry Pi design of MAS
 | Read | For |
 |---|---|
 | [setup.md](setup.md) | **click by click:** flash, Wi-Fi + key, calibrate, the first jar, updates |
+| [after-staging.md](after-staging.md) | **the checklist from the bare-board test to going live**, stage by stage |
 | [pins.md](pins.md) · [wiring.svg](wiring.svg) | what goes where (pins checked against the datasheet) |
 | [bom.md](bom.md) | parts list |
 | [assembly.md](assembly.md) | load-cell mounting, RC522 under the plate, tag placement, checks |
