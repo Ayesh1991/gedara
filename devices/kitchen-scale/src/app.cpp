@@ -107,6 +107,8 @@ void showEstimate(bool offline) {
       char d[16];
       fmtGrams(net - cur.info.lastNetG, d, sizeof d, true);
       snprintf(line, sizeof line, offline ? "%s  (saved)" : "%s", d);
+      // The next offline weighing compares with this one (Gedara's answer replaces it when it comes).
+      if (offline) containers::setLastNet(cur.uid, net);
     } else {
       snprintf(line, sizeof line, "%s", offline ? "saved, sent later" : "...");
     }
@@ -463,6 +465,15 @@ void app::controlTask(void*) {
       }
     }
     // Gedara slow (> 4 s): show what the scale knows; the answer replaces it when it comes.
-    if (cur.seq && !cur.answered && !cur.estimateShown && millis() - cur.stableAt > 4000) showEstimate(false);
+    if (cur.seq && !cur.answered && !cur.estimateShown && millis() - cur.stableAt > 4000) {
+      const bool offline = !net::online();
+      showEstimate(offline);
+      if (offline) {
+        audio::chime(audio::Chime::Logged);
+        gedara::Phrase p;
+        p.add(gedara::Clip::SAVED_OFFLINE);
+        audio::say(p);
+      }
+    }
   }
 }

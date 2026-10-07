@@ -397,7 +397,11 @@ void syncOnce() {
 
 void net::begin() {
   WiFi.mode(WIFI_STA);
-  WiFi.setAutoReconnect(true);
+  // Reconnects are ours (net::task, with back-off): the core's own auto-reconnect retries at once on
+  // every failure, ~25 times a second when the router refuses (ASSOC_FAIL), which floods the log
+  // and can keep the scale from ever getting back on.
+  WiFi.setAutoReconnect(false);
+  esp_log_level_set("wifi", ESP_LOG_WARN);
   WiFi.setSleep(false);  // lowest latency; the scale is mains-powered
   tls.setCACert(kRootCAs);  // verified HTTPS: only these roots (tools/make-roots.py)
   tls.setHandshakeTimeout(12);
@@ -413,6 +417,9 @@ void net::task(void*) {
   Serial.printf("[NET] server %s (%s)\n", settings::get().server.c_str(), settings::ingestUrl().c_str());
   WiFi.begin();
   uint32_t wifiLostAt = millis();
+  uint32_t wifiRetryAt = millis() + 15000;  // the first connection gets 15 s
+  uint32_t wifiBackoff = 2000;
+  bool wifiWasUp = false;
   for (;;) {
     esp_task_wdt_reset();
     ota::loop();
@@ -420,11 +427,29 @@ void net::task(void*) {
     if (WiFi.status() != WL_CONNECTED) {
       lastOk = false;
       ui::setNet(false, outbox::pending() > 0, outbox::pending());
+      if (wifiWasUp) {
+        wifiWasUp = false;
+        wifiBackoff = 2000;
+        wifiRetryAt = millis() + wifiBackoff;
+        Serial.println("[NET] Wi-Fi lost - weighing goes on, readings wait on the scale");
+      } else if (static_cast<int32_t>(millis() - wifiRetryAt) >= 0) {
+        Serial.printf("[NET] Wi-Fi: trying again (next try in %lu s if it fails)\n",
+                      static_cast<unsigned long>((wifiBackoff * 2 > 60000 ? 60000 : wifiBackoff * 2) / 1000));
+        WiFi.disconnect(false, false);
+        WiFi.begin();
+        wifiBackoff = wifiBackoff * 2 > 60000 ? 60000 : wifiBackoff * 2;
+        wifiRetryAt = millis() + wifiBackoff + esp_random() % 1000;
+      }
       if (millis() - wifiLostAt > 180000 && outbox::pending() == 0 && !app::calibrated()) runPortal();
       ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000));
       continue;
     }
     wifiLostAt = millis();
+    if (!wifiWasUp) {
+      wifiWasUp = true;
+      Serial.printf("[NET] Wi-Fi connected (%s, %d dBm)\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
+      nextSyncAt = millis();  // report in at once (and send anything queued)
+    }
     if (!clockSet) {
       configTime(0, 0, "time.google.com", "pool.ntp.org");
       clockSet = true;
