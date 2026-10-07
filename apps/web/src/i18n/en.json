@@ -242,7 +242,7 @@
     "signOut": "Sign out",
     "accountsHint": "Cash, BOC savings, cards, balances",
     "categoriesHint": "Grocery, dining, income… and their sub-categories",
-    "devicesHint": "The phone that forwards bank SMS alerts"
+    "devicesHint": "The kitchen scale and the phone that forwards bank SMS alerts"
   },
   "appearance": {
     "title": "Appearance",
@@ -282,6 +282,10 @@
     "allGreen": "All green",
     "someFailed": "{{count}} check(s) failed",
     "clearCache": "Clear cache & reload",
+    "scale": {
+      "title": "Kitchen scale",
+      "line": "seen {{seen}} \u00b7 fw {{fw}} \u00b7 {{rssi}} dBm \u00b7 queue {{queue}} \u00b7 last result {{latency}}"
+    },
     "push": {
       "title": "Daily notification",
       "error": "Couldn't read the notification status.",
@@ -306,6 +310,7 @@
       "pushKeys": "attention-push has no VAPID keys yet (set the secrets)",
       "driveScan": "The drive-scan function didn't answer. Deploy it (Phase 7).",
       "driveKeys": "drive-scan runs, but the Google Drive reader secrets aren't set. Run scripts/drive-secrets.mjs.",
+      "scaleIngest": "The scale endpoint (scale-ingest) didn't answer. Deploy it (Phase 6b).",
       "noSession": "No session",
       "noHousehold": "No household membership",
       "noController": "No active service worker",
@@ -2000,6 +2005,7 @@
     "expected": "About {{amount}}",
     "left": "{{qty}} left",
     "budget": "{{spent}} of {{budget}}",
+    "scaleExtra": "{{qty}} to place \u00b7 {{container}}",
     "kinds": {
       "expired": "{{title}} has expired",
       "best_before_passed": "{{title}} is past best-before",
@@ -2022,7 +2028,10 @@
       "backup_due": "Your last backup is over a month old",
       "backup_never": "Make your first backup of Gedara",
       "budget_over": "{{title}} is over budget",
-      "budget_near": "{{title}} budget is almost used"
+      "budget_near": "{{title}} budget is almost used",
+      "scale_decision": "{{title}} container is heavier than its stock",
+      "scale_new_tag": "{{count}} new tags on the kitchen scale",
+      "scale_new_tag_one": "1 new tag on the kitchen scale"
     }
   },
   "activity": {
@@ -2359,6 +2368,250 @@
       "duplicate": "You already have a type with that name.",
       "denied": "You can't change place types in this household.",
       "generic": "Couldn't save the type. Try again."
+    }
+  },
+  "scale": {
+    "status": {
+      "consumed": "Used \u2014 recorded",
+      "no_change": "No change \u2014 the count is confirmed",
+      "refilled": "Refilled: {{moved}} moved in from the pantry",
+      "needs_decision": "{{pending}} heavier than its stock. Where did it come from?",
+      "decided": "Sorted \u2014 the stock matches the weight",
+      "below_tare": "Lighter than the empty container \u2014 is the lid off?",
+      "superseded": "An older reading \u2014 a newer change already counts",
+      "unknown_tag": "A tag Gedara doesn't know yet ({{gross}} on the scale)",
+      "no_tag": "No tag \u2014 just {{gross}}",
+      "no_product": "{{container}} doesn't hold anything yet",
+      "no_tare": "{{container}} has no empty weight yet",
+      "tare_set": "Empty weight saved: {{tare}}",
+      "error": "This reading couldn't be used"
+    },
+    "short": {
+      "consumed": "Used",
+      "no_change": "No change",
+      "refilled": "Refilled",
+      "needs_decision": "Heavier \u2014 waiting",
+      "decided": "Sorted",
+      "below_tare": "Below empty weight",
+      "superseded": "Older reading",
+      "unknown_tag": "Unknown tag",
+      "no_tag": "No tag",
+      "no_product": "Holds nothing",
+      "no_tare": "No empty weight",
+      "tare_set": "Empty weight saved",
+      "error": "Error"
+    },
+    "card": {
+      "left": "{{left}} left",
+      "latencyHint": "Time from the steady weight on the scale to this screen",
+      "movePantry": "Move from pantry",
+      "countCorrection": "Count correction",
+      "later": "Later",
+      "linkTag": "Link to a container",
+      "openJar": "Open the container",
+      "undone": "Undone",
+      "unknownJar": "Unknown container",
+      "decidedToast": "Done \u2014 {{left}} in the container"
+    },
+    "live": {
+      "empty": "Ready",
+      "settling": "Weighing\u2026",
+      "stable": "Steady",
+      "overload": "Too heavy (over 5 kg)",
+      "no_tag": "No tag \u2014 showing the plain weight",
+      "setup": "Needs its Wi-Fi setup",
+      "error": "Has a problem \u2014 see its page",
+      "offline": "Offline"
+    },
+    "page": {
+      "title": "Kitchen scale",
+      "short": "Kitchen scale",
+      "keepAwake": "Keep the screen on",
+      "popups": "Pop-ups on this device",
+      "emptyTitle": "No kitchen scale yet",
+      "emptyBody": "Add the scale in Settings \u203a Devices, then put a container with a tag on it.",
+      "addScale": "Add a scale",
+      "noReadings": "Put a container on the scale: the result appears here.",
+      "questions": "Waiting for you",
+      "recent": "Recent weighings"
+    },
+    "devices": {
+      "pageTitle": "Devices",
+      "title": "Kitchen scales",
+      "intro": "The scale weighs your containers and records what you used. It signs in with its own key, never with your account.",
+      "name": "Scale name",
+      "namePlaceholder": "Kitchen scale",
+      "add": "Add scale",
+      "setUpTitle": "Set up {{name}}",
+      "tokenOnce": "Copy this key now: it is shown only once. Gedara keeps only a fingerprint of it.",
+      "token": "Scale key",
+      "copyToken": "Copy the scale key",
+      "step1": "Copy the key above (tap the copy button).",
+      "step2": "Plug in the scale. Its screen says \u201cWi-Fi setup\u201d and shows a network name like Gedara-Scale-1A2B and a password.",
+      "step3": "On this phone open Wi-Fi settings, join that network and type the password from the scale's screen. The setup page opens by itself (or open http://192.168.4.1); tap Configure WiFi.",
+      "step4": "Choose your home Wi-Fi, type its password, paste the key, pick the server \u201c{{server}}\u201d and tap Save.",
+      "step5": "The scale restarts, chimes and says \u201cReady\u201d. It shows as online here within a minute.",
+      "stats": "Last seen {{seen}} \u00b7 firmware {{fw}} \u00b7 {{count}} weighings",
+      "notYet": "Not connected yet",
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "detail": {
+      "notFound": "This scale isn't here any more.",
+      "lastSeen": "Last seen",
+      "firmware": "Firmware",
+      "wifi": "Wi-Fi",
+      "wifiQuality": {
+        "good": "good",
+        "fair": "fair",
+        "weak": "weak",
+        "unknown": "unknown"
+      },
+      "queue": "Waiting to send",
+      "calibrated": "Calibrated",
+      "never": "Never",
+      "latency": "Last result took",
+      "readings": "Weighings",
+      "restart": "Last restart",
+      "lastError": "Last problem: {{error}}",
+      "beep": "Test beep",
+      "identify": "Find it",
+      "zero": "Zero it",
+      "calibrate": "Calibrate",
+      "sent": "Sent \u2014 the scale picks it up within 30 seconds.",
+      "remove": "Remove this scale",
+      "removeConfirm": "Remove {{name}}? Its key stops working at once; you'd need a new key to connect it again.",
+      "removed": "{{name}} removed"
+    },
+    "settings": {
+      "title": "Sound and weighing",
+      "volume": "Volume: {{volume}}%",
+      "voice": "Speak results (\u201cminus twenty-four grams\u201d)",
+      "quietFrom": "Quiet from",
+      "quietTo": "Quiet until",
+      "quietHint": "In quiet hours the scale only plays soft tones.",
+      "threshold": "Counts as used from (g)",
+      "thresholdHint": "Smaller differences are treated as noise. 2 g suits most kitchens.",
+      "save": "Save",
+      "saved": "Saved \u2014 the scale updates within a minute"
+    },
+    "calibrate": {
+      "title": "Calibrate the scale",
+      "steps": "Steps",
+      "sees": "The scale sees",
+      "connecting": "Connecting to the scale\u2026 (up to 30 s)",
+      "step1": "Take everything off the scale, then tap Zero.",
+      "step2": "Put something whose weight you know exactly in the middle of the scale, type its weight, then tap Calibrate.",
+      "step3": "Done. Check it: put something else you know on the scale; the number above should match.",
+      "known": "Known weight (g)",
+      "knownHint": "A calibration weight is best. An unopened 1 kg pack is usually within a few grams.",
+      "zero": "Zero",
+      "calibrate": "Calibrate",
+      "finish": "Finish",
+      "waiting": "Waiting for the scale\u2026",
+      "failed": "The scale didn't answer. Check it is online and try again."
+    },
+    "container": {
+      "title": "Kitchen scale",
+      "holds": "Holds",
+      "filterProducts": "Find a product",
+      "nothing": "Nothing yet",
+      "weighableHint": "Only products counted by weight (g, kg, or packs with a weight) can go in a container.",
+      "empty": "Empty weight (with lid)",
+      "notSet": "Not set",
+      "weighEmpty": "Weigh empty on the scale",
+      "cancelWeighEmpty": "Cancel",
+      "typeIt": "Type it",
+      "armed": "Put the EMPTY container (with its lid) on the scale now\u2026 {{seconds}} s",
+      "tarePlaceholder": "e.g. 412",
+      "save": "Save",
+      "saved": "Saved",
+      "tareSaved": "Empty weight saved: {{tare}}",
+      "tag": "Tag",
+      "noTag": "No tag yet",
+      "writeTag": "Write tag",
+      "rewrite": "Write again",
+      "removeTag": "Remove tag",
+      "removeTagConfirm": "Remove this tag from the container? The scale won't know the container until a tag is linked again.",
+      "tagHint": "Stick an NFC tag under the container and put it on the scale: Gedara asks which container it is.",
+      "tagHintNfc": "Stick an NFC tag under the container, tap Write tag and hold the tag to the back of this phone.",
+      "byHand": "Weighed on another scale? Type what's inside (g, without the container)",
+      "byHandPlaceholder": "e.g. 788",
+      "record": "Record",
+      "lastWeighings": "Last weighings"
+    },
+    "tag": {
+      "writeTitle": "Write the tag for {{name}}",
+      "waiting": "Hold the tag to the back of the phone\u2026",
+      "linking": "Written. Linking it to {{name}}\u2026",
+      "taken": "This tag belongs to another container.",
+      "moveHere": "Move it to {{name}}",
+      "done": "Done. {{name}} opens with a tap and the scale knows it.",
+      "failed": "Couldn't write the tag. Hold it still against the phone and try again.",
+      "close": "Done"
+    },
+    "link": {
+      "title": "Which container is this?",
+      "intro": "The scale saw a new tag ({{uid}}).",
+      "existing": "An existing container",
+      "new": "A new container",
+      "container": "Container",
+      "pick": "Choose\u2026",
+      "hasTag": "has a tag",
+      "replaces": "Its old tag will stop working.",
+      "name": "Name",
+      "namePlaceholder": "Sugar jar",
+      "emptyNow": "It's empty now \u2014 use {{gross}} as its empty weight",
+      "save": "Link the tag",
+      "done": "Tag linked"
+    },
+    "nfc": {
+      "start": "NFC",
+      "listening": "Hold a tag\u2026",
+      "unknown": "This tag isn't linked to anything yet.",
+      "denied": "NFC is blocked for Gedara. Allow it in Chrome's site settings."
+    },
+    "product": {
+      "title": "In containers",
+      "empty": "empty {{tare}}",
+      "noTare": "no empty weight",
+      "tagged": "has a tag",
+      "untagged": "no tag"
+    },
+    "firmware": {
+      "title": "Firmware",
+      "current": "Installed: {{version}}",
+      "none": "No firmware uploaded yet.",
+      "install": "Install",
+      "installed": "Installed",
+      "installConfirm": "Install {{version}} on {{name}}? It restarts once; if the new version can't reach Gedara it goes back by itself.",
+      "installing": "Sent \u2014 the scale installs {{version}} within a minute.",
+      "otaState": "Update: {{state}}",
+      "upload": "Upload firmware.bin",
+      "uploadHint": "In VS Code it is devices/kitchen-scale/.pio/build/s3/firmware.bin",
+      "uploaded": "Firmware {{version}} uploaded",
+      "problems": {
+        "too_small": "That file is too small to be firmware.",
+        "too_large": "That file is too big for the scale (3 MB at most).",
+        "not_esp": "That isn't ESP32 firmware.",
+        "wrong_chip": "That firmware is for another chip (the scale is an ESP32-S3).",
+        "full_flash": "That's the full-flash file. Upload firmware.bin instead.",
+        "not_gedara": "That isn't Gedara kitchen-scale firmware.",
+        "wrong_project": "That firmware is for a different Gedara device."
+      }
+    },
+    "errors": {
+      "denied": "You can't do that in this household.",
+      "invalid": "That value isn't valid.",
+      "noStock": "There's none of this product elsewhere to move in.",
+      "unitMismatch": "This product isn't counted by weight, so it can't go in a container.",
+      "notEmpty": "Empty the container first, then change what it holds.",
+      "tagTaken": "This tag already belongs to another container.",
+      "decided": "Already sorted.",
+      "cantUndo": "Can't undo: the stock changed since.",
+      "duplicate": "That already exists.",
+      "reference": "Something it refers to is gone.",
+      "generic": "Something went wrong. Try again."
     }
   }
 }

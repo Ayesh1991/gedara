@@ -700,6 +700,229 @@ export type Database = {
           },
         ]
       }
+      device: {
+        Row: {
+          calibrated_at: string | null
+          created_at: string
+          created_by: string | null
+          epoch: number | null
+          fw_version: string | null
+          household_id: string
+          id: string
+          kind: string
+          last_seen_at: string | null
+          live_at: string | null
+          live_gross_g: number | null
+          live_state: string | null
+          live_uid: string | null
+          name: string
+          reading_count: number
+          revoked_at: string | null
+          seq_floor: number
+          settings: Json
+          settings_version: number
+          status: Json | null
+          token_hint: string
+          watch_until: string | null
+        }
+        Insert: {
+          calibrated_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          epoch?: number | null
+          fw_version?: string | null
+          household_id: string
+          id?: string
+          kind?: string
+          last_seen_at?: string | null
+          live_at?: string | null
+          live_gross_g?: number | null
+          live_state?: string | null
+          live_uid?: string | null
+          name: string
+          reading_count?: number
+          revoked_at?: string | null
+          seq_floor?: number
+          settings?: Json
+          settings_version?: number
+          status?: Json | null
+          token_hint: string
+          watch_until?: string | null
+        }
+        Update: {
+          calibrated_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          epoch?: number | null
+          fw_version?: string | null
+          household_id?: string
+          id?: string
+          kind?: string
+          last_seen_at?: string | null
+          live_at?: string | null
+          live_gross_g?: number | null
+          live_state?: string | null
+          live_uid?: string | null
+          name?: string
+          reading_count?: number
+          revoked_at?: string | null
+          seq_floor?: number
+          settings?: Json
+          settings_version?: number
+          status?: Json | null
+          token_hint?: string
+          watch_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_command: {
+        Row: {
+          args: Json
+          command: string
+          created_at: string
+          created_by: string | null
+          device_id: string
+          done_at: string | null
+          household_id: string
+          id: string
+          result: Json | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          args?: Json
+          command: string
+          created_at?: string
+          created_by?: string | null
+          device_id: string
+          done_at?: string | null
+          household_id: string
+          id?: string
+          result?: Json | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          args?: Json
+          command?: string
+          created_at?: string
+          created_by?: string | null
+          device_id?: string
+          done_at?: string | null
+          household_id?: string
+          id?: string
+          result?: Json | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_command_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "device_command_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_firmware: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          kind: string
+          notes: string | null
+          path: string
+          project: string
+          sha256: string
+          size: number
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          path: string
+          project: string
+          sha256: string
+          size: number
+          version: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          path?: string
+          project?: string
+          sha256?: string
+          size?: number
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_firmware_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_token: {
+        Row: {
+          device_id: string
+          household_id: string
+          token_hash: string
+        }
+        Insert: {
+          device_id: string
+          household_id: string
+          token_hash: string
+        }
+        Update: {
+          device_id?: string
+          household_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_token_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "device"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_token_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drive_source: {
         Row: {
           folder_id: string
@@ -1149,6 +1372,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           floor_plan_id: string | null
+          holds_product_id: string | null
           household_id: string
           id: string
           kind: string | null
@@ -1159,7 +1383,10 @@ export type Database = {
           notes: string | null
           parent_id: string | null
           path: string
+          scale_setup_until: string | null
           sort: number
+          tare_g: number | null
+          tare_set_at: string | null
           type_id: string | null
           updated_at: string
         }
@@ -1169,6 +1396,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           floor_plan_id?: string | null
+          holds_product_id?: string | null
           household_id: string
           id?: string
           kind?: string | null
@@ -1179,7 +1407,10 @@ export type Database = {
           notes?: string | null
           parent_id?: string | null
           path: string
+          scale_setup_until?: string | null
           sort?: number
+          tare_g?: number | null
+          tare_set_at?: string | null
           type_id?: string | null
           updated_at?: string
         }
@@ -1189,6 +1420,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           floor_plan_id?: string | null
+          holds_product_id?: string | null
           household_id?: string
           id?: string
           kind?: string | null
@@ -1199,7 +1431,10 @@ export type Database = {
           notes?: string | null
           parent_id?: string | null
           path?: string
+          scale_setup_until?: string | null
           sort?: number
+          tare_g?: number | null
+          tare_set_at?: string | null
           type_id?: string | null
           updated_at?: string
         }
@@ -1210,6 +1445,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "floor_plan"
             referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "location_holds_product_fk"
+            columns: ["household_id", "holds_product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "location_holds_product_fk"
+            columns: ["household_id", "holds_product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "location_holds_product_fk"
+            columns: ["household_id", "holds_product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
           },
           {
             foreignKeyName: "location_household_id_fkey"
@@ -1752,6 +2008,58 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "household"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfc_tag: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          last_seen_at: string | null
+          location_id: string
+          uid: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          last_seen_at?: string | null
+          location_id: string
+          uid: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          last_seen_at?: string | null
+          location_id?: string
+          uid?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfc_tag_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfc_tag_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: true
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "nfc_tag_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: true
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
           },
         ]
       }
@@ -2445,6 +2753,146 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_utility_usage"
             referencedColumns: ["household_id", "recurring_id"]
+          },
+        ]
+      }
+      scale_reading: {
+        Row: {
+          actor: string | null
+          at: string
+          correlation_id: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision: Json | null
+          delta_g: number | null
+          device_id: string | null
+          epoch: number | null
+          error_code: string | null
+          gross_g: number | null
+          household_id: string
+          id: string
+          location_id: string | null
+          moved_g: number | null
+          net_g: number | null
+          op_id: string | null
+          pending_g: number | null
+          product_id: string | null
+          received_at: string
+          result: Json
+          seq: number | null
+          status: string
+          stock_before_g: number | null
+          tare_g: number | null
+          time_estimated: boolean
+          uid: string | null
+        }
+        Insert: {
+          actor?: string | null
+          at: string
+          correlation_id?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: Json | null
+          delta_g?: number | null
+          device_id?: string | null
+          epoch?: number | null
+          error_code?: string | null
+          gross_g?: number | null
+          household_id: string
+          id?: string
+          location_id?: string | null
+          moved_g?: number | null
+          net_g?: number | null
+          op_id?: string | null
+          pending_g?: number | null
+          product_id?: string | null
+          received_at?: string
+          result: Json
+          seq?: number | null
+          status: string
+          stock_before_g?: number | null
+          tare_g?: number | null
+          time_estimated?: boolean
+          uid?: string | null
+        }
+        Update: {
+          actor?: string | null
+          at?: string
+          correlation_id?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: Json | null
+          delta_g?: number | null
+          device_id?: string | null
+          epoch?: number | null
+          error_code?: string | null
+          gross_g?: number | null
+          household_id?: string
+          id?: string
+          location_id?: string | null
+          moved_g?: number | null
+          net_g?: number | null
+          op_id?: string | null
+          pending_g?: number | null
+          product_id?: string | null
+          received_at?: string
+          result?: Json
+          seq?: number | null
+          status?: string
+          stock_before_g?: number | null
+          tare_g?: number | null
+          time_estimated?: boolean
+          uid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scale_reading_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "scale_reading_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scale_reading_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "scale_reading_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
+          },
+          {
+            foreignKeyName: "scale_reading_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "scale_reading_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "scale_reading_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
           },
         ]
       }
@@ -4560,6 +5008,10 @@ export type Database = {
       rpc_asset_split: { Args: { p_asset: string }; Returns: string[] }
       rpc_asset_unsell: { Args: { p_asset: string }; Returns: undefined }
       rpc_consume: { Args: { p: Json }; Returns: Json }
+      rpc_container_setup: {
+        Args: { p_location: string; p_on?: boolean }
+        Returns: string
+      }
       rpc_delete_maintenance_log: {
         Args: { p_delete_expense?: boolean; p_id: string }
         Returns: undefined
@@ -4567,6 +5019,24 @@ export type Database = {
       rpc_delete_transaction: {
         Args: { p_id: string; p_keep_stock?: boolean }
         Returns: undefined
+      }
+      rpc_device_command: {
+        Args: { p_args?: Json; p_command: string; p_device: string }
+        Returns: string
+      }
+      rpc_device_create: {
+        Args: { p_household: string; p_kind?: string; p_name: string }
+        Returns: Json
+      }
+      rpc_device_firmware_add: {
+        Args: { p: Json; p_household: string }
+        Returns: string
+      }
+      rpc_device_revoke: { Args: { p_id: string }; Returns: undefined }
+      rpc_device_update: { Args: { p: Json; p_id: string }; Returns: Json }
+      rpc_device_watch: {
+        Args: { p_id: string; p_minutes?: number }
+        Returns: string
       }
       rpc_export_done: {
         Args: {
@@ -4610,6 +5080,11 @@ export type Database = {
         Args: { p_account: string; p_ids: string[] }
         Returns: number
       }
+      rpc_nfc_tag_link: {
+        Args: { p_location: string; p_move?: boolean; p_uid: string }
+        Returns: Json
+      }
+      rpc_nfc_tag_unlink: { Args: { p_id: string }; Returns: undefined }
       rpc_open: { Args: { p: Json }; Returns: Json }
       rpc_product_to_thing: { Args: { p_product: string }; Returns: string }
       rpc_purchase: { Args: { p: Json }; Returns: Json }
@@ -4638,6 +5113,11 @@ export type Database = {
         Returns: Json
       }
       rpc_save_transaction: { Args: { p: Json }; Returns: Json }
+      rpc_scale_decide: {
+        Args: { p_choice: string; p_reading: string }
+        Returns: Json
+      }
+      rpc_scale_sync: { Args: { p: Json; p_token_hash: string }; Returns: Json }
       rpc_scan_file_asset: {
         Args: { p_asset: string; p_file: string }
         Returns: undefined
@@ -4712,6 +5192,10 @@ export type Database = {
       rpc_tag_retire: { Args: { p_code: string }; Returns: undefined }
       rpc_transfer: { Args: { p: Json }; Returns: Json }
       rpc_undo: { Args: { p_correlation: string }; Returns: Json }
+      rpc_weigh: {
+        Args: { p_location: string; p_net_g: number; p_op_id: string }
+        Returns: Json
+      }
       safe_uuid: { Args: { p: string }; Returns: string }
       schema_version: { Args: never; Returns: number }
       search_all: {

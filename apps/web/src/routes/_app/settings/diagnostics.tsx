@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import { CircleCheck, CircleX, LoaderCircle, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,8 @@ import { CHECK_IDS, buildChecks, runCheck, type CheckId, type CheckResult } from
 import { env } from '@/lib/env';
 import { pushStatusQuery } from '@/lib/insights/queries';
 import { schemaVersionQuery } from '@/lib/queries';
+import { deviceOnline, formatLatency } from '@/lib/scale/format';
+import { scalesQuery } from '@/lib/scale/queries';
 import { supabase } from '@/lib/supabase';
 import { APP_VERSION, BUILD_TIME, GIT_SHA } from '@/lib/version';
 import { useCountUp } from '@/hooks/useCountUp';
@@ -144,6 +146,7 @@ function DiagnosticsPage() {
       </Card>
 
       <PushStatusCard householdId={membership.household.id} />
+      <ScaleStatusCard householdId={membership.household.id} />
 
       <Button className="w-full" onClick={() => void clearCacheAndReload()}>
         <RefreshCw className="h-4 w-4" aria-hidden />
@@ -190,6 +193,49 @@ function PushStatusCard({ householdId }: { householdId: string }) {
           )}
         </ul>
       )}
+    </Card>
+  );
+}
+
+/** The kitchen scale(s) (MASTER_PLAN §7b Diagnostics): online, firmware, Wi-Fi, queue, last error, latency. */
+function ScaleStatusCard({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const scales = useQuery({ ...scalesQuery(householdId), refetchInterval: 15_000 });
+  const active = (scales.data ?? []).filter((d) => !d.revoked_at);
+  if (active.length === 0) return null;
+  return (
+    <Card>
+      <CardTitle>{t('diagnostics.scale.title')}</CardTitle>
+      <ul className="flex flex-col gap-3 text-[14.5px]" data-testid="diag-scale">
+        {active.map((d) => {
+          const online = deviceOnline(d.last_seen_at);
+          const st = d.status ?? {};
+          return (
+            <li key={d.id} className="flex items-start gap-3">
+              {online ? (
+                <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-teal" aria-hidden />
+              ) : (
+                <CircleX className="mt-0.5 h-5 w-5 shrink-0 text-red" aria-hidden />
+              )}
+              <div className="min-w-0 flex-1">
+                <Link to="/settings/scale/$deviceId" params={{ deviceId: d.id }} className="font-medium text-accent-b">
+                  {d.name}
+                </Link>
+                <div className="tabular text-xs text-muted">
+                  {t('diagnostics.scale.line', {
+                    seen: d.last_seen_at ? new Date(d.last_seen_at).toLocaleString() : t('diagnostics.push.notYet'),
+                    fw: d.fw_version ?? '—',
+                    rssi: st.rssi ?? '—',
+                    queue: st.queue ?? 0,
+                    latency: st.latency_ms != null ? formatLatency(st.latency_ms) : '—',
+                  })}
+                </div>
+                {st.err && <div className="text-xs text-red">{st.err}</div>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </Card>
   );
 }

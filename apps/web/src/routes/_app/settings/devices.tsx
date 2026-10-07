@@ -10,6 +10,7 @@ import { fieldLabel } from '@/components/money/bits';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ScaleDevicesSection } from '@/components/scale/ScaleDevicesSection';
 import { moneyErrorKey } from '@/lib/money/queries';
 import { createDevice, devicesQuery, ingestUrl, revokeDevice, type Device } from '@/lib/sms/queries';
 
@@ -105,8 +106,19 @@ function DevicesPage() {
         {t('settings.title')}
       </Link>
       <div>
-        <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('devices.title')}</h1>
-        <p className="mt-1 text-[14.5px] text-muted">{t('devices.intro')}</p>
+        <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('scale.devices.pageTitle')}</h1>
+      </div>
+
+      <ScaleDevicesSection
+        householdId={householdId}
+        isOwner={isOwner}
+        locale={membership.household.locale}
+        timezone={membership.household.timezone}
+      />
+
+      <div className="mt-2">
+        <h2 className="font-display text-[21px] font-semibold">{t('devices.title')}</h2>
+        <p className="mt-1 text-[14px] text-muted">{t('devices.intro')}</p>
       </div>
 
       {created && (

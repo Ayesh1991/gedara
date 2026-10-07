@@ -15,6 +15,8 @@ export default defineConfig({
       // Scanner-JSON schemas + ledger-v7 fingerprints shared with the drive-scan Edge Function. They
       // import zod, which must resolve to the app's copy from outside apps/web (Deno maps it itself).
       '@scan': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scan'),
+      // Kitchen-scale protocol (Zod) shared with the scale-ingest Edge Function and the simulator.
+      '@scale': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scale'),
       zod: path.resolve(import.meta.dirname, 'node_modules/zod'),
     },
   },

@@ -68,7 +68,7 @@ function SettingsPage() {
       <SettingsLink
         to="/settings/devices"
         icon={Smartphone}
-        title={t('devices.title')}
+        title={t('scale.devices.pageTitle')}
         hint={t('settings.devicesHint')}
       />
       <SettingsLink to="/settings/storage" icon={HardDrive} title={t('storage.title')} hint={t('settings.storageHint')} />

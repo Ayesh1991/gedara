@@ -46,6 +46,7 @@ import {
 } from '@/components/pantry/bits';
 import { Money } from '@/components/money/bits';
 import { Button } from '@/components/ui/button';
+import { ProductContainers } from '@/components/scale/ProductContainers';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { categoryLabel } from '@/lib/money/categoriesMap';
@@ -371,6 +372,8 @@ function ProductPage() {
       {canWrite && product.stock.qty <= 0 && isThingCategory(pantry.categories.data ?? [], product.category_id) && (
         <MoveToThingButton householdId={householdId} product={product} />
       )}
+
+      <ProductContainers householdId={householdId} productId={product.id} />
 
       <CodesSection product={product} units={units} householdId={householdId} canWrite={canWrite} />
 

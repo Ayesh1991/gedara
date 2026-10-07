@@ -18,7 +18,7 @@ Solo project for one household in Sri Lanka (LKR, Asia/Colombo). Built phase by 
 ## Stack
 Vite + React + TS (strict) + Tailwind + shadcn/ui · TanStack Router/Query · supabase-js v2 ·
 Supabase (Postgres, Auth email-OTP, Storage, Realtime, Edge Functions/Deno, pg_cron) ·
-vite-plugin-pwa (NetworkFirst) · Vercel · Vitest + Playwright · Python 3 for `devices/pi-station`.
+vite-plugin-pwa (NetworkFirst) · Vercel · Vitest + Playwright · PlatformIO (ESP32-S3, C++) for `devices/kitchen-scale`.
 
 ## Commands
 - `pnpm dev` · `pnpm test` · `pnpm e2e` · `pnpm typecheck` · `pnpm lint`

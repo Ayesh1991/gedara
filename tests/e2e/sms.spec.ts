@@ -178,7 +178,7 @@ ${sms('+94770000000', now, 'Personal message that must never leave the device')}
 
   // ── 6. Add a phone; its token posts straight to sms-ingest ──────────────────
   await page.goto('/settings/devices');
-  await expect(page.getByRole('heading', { name: 'SMS forwarding', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'SMS forwarding', level: 2 })).toBeVisible();
   await page.getByLabel('Phone name').fill(`${PREFIX}Phone ${tag}`);
   await page.getByRole('button', { name: 'Add phone' }).click();
   await expect(page.getByText('The secret below is shown only now.', { exact: false })).toBeVisible();

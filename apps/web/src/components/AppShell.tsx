@@ -23,6 +23,7 @@ import { initials, longDate } from '@/lib/time';
 import { Brand, EnvChip, LogoMark } from './Brand';
 import { CommandPalette } from './CommandPalette';
 import { OfflineBanner, OfflineSync, useOutbox } from './offline/OfflineSync';
+import { ScalePopups } from './scale/ScalePopups';
 import { ShortcutsHelp } from './ShortcutsHelp';
 import { WedgeListener } from './scan/WedgeListener';
 import { VersionBadge } from './VersionBadge';
@@ -148,6 +149,7 @@ export function AppShell({ membership, children }: { membership: Membership; chi
     <div className="relative z-10 min-h-dvh lg:flex">
       <WedgeListener />
       <OfflineSync householdId={membership.household.id} />
+      <ScalePopups householdId={membership.household.id} canWrite={membership.role !== 'viewer'} />
       <CommandPalette open={palette} onClose={() => setPalette(false)} householdId={membership.household.id} locale={locale} />
       <ShortcutsHelp open={help} onClose={() => setHelp(false)} />
       {/* Desktop / iPad landscape: glass rail */}

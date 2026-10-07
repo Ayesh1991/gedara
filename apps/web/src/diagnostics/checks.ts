@@ -134,7 +134,7 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
 
     edge: async () => {
       // All at once: each may be a cold start, and in a row they could pass the 8 s limit.
-      const [ping, sms, push, drive] = await Promise.all([
+      const [ping, sms, push, drive, scale] = await Promise.all([
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('ping', { method: 'POST', body: {} }),
         // Bank-SMS ingest (Phase 2b): its version answers a plain GET.
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('sms-ingest', { method: 'GET' }),
@@ -144,6 +144,8 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
         }),
         // Scanner files from Drive (Phase 7): its version, and whether the Google secrets are set.
         supabase.functions.invoke<{ ok: boolean; fn_version: string; configured: boolean }>('drive-scan', { method: 'GET' }),
+        // Kitchen scale (Phase 6b): its version answers a plain GET.
+        supabase.functions.invoke<{ ok: boolean; fn_version: string }>('scale-ingest', { method: 'GET' }),
       ]);
       if (ping.error) throw ping.error;
       if (!ping.data?.ok) throw new Error('ping returned no ok');
@@ -152,7 +154,8 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
       if (!push.data.vapid_public_key) throw new CheckError('diagnostics.errors.pushKeys');
       if (drive.error || !drive.data?.ok) throw new CheckError('diagnostics.errors.driveScan');
       if (!drive.data.configured) throw new CheckError('diagnostics.errors.driveKeys');
-      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version} · ${drive.data.fn_version}`;
+      if (scale.error || !scale.data?.ok) throw new CheckError('diagnostics.errors.scaleIngest');
+      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version} · ${drive.data.fn_version} · ${scale.data.fn_version}`;
     },
 
     sw: async () => {

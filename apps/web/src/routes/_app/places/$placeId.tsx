@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PlaceStock } from '@/components/pantry/PlaceStock';
+import { ContainerPanel } from '@/components/scale/ContainerPanel';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
 import { ExtraLabels } from '@/components/scan/ExtraLabels';
 import { AddLabelButton, ScanPlaceButton } from '@/components/scan/InstantScan';
@@ -198,6 +199,15 @@ function PlacePage() {
           </IconAction>
         )}
       </div>
+
+      <ContainerPanel
+        householdId={householdId}
+        placeId={place.id}
+        kind={place.kind}
+        canWrite={canWrite}
+        locale={membership.household.locale}
+        timezone={membership.household.timezone}
+      />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
