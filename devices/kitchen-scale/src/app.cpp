@@ -210,6 +210,15 @@ void handleResult(const app::Result& res) {
 }
 
 void handleScale(const gedara::Event& ev) {
+  // The settled weights in the Serial Monitor: what Gedara gets, for calibration and noise checks.
+  switch (ev.type) {
+    case EventType::Placed: Serial.printf("[SCALE] put down (%.1f g so far)\n", ev.grams); break;
+    case EventType::Stable: Serial.printf("[SCALE] steady: %.1f g (after %.1f s)\n", ev.grams, ev.settleMs / 1000.0f); break;
+    case EventType::Removed: Serial.printf("[SCALE] lifted - empty again\n"); break;
+    case EventType::Overload: Serial.printf("[SCALE] too heavy\n"); break;
+    case EventType::ZeroLost: Serial.printf("[SCALE] zero drifted: please empty the scale and press the button\n"); break;
+    default: break;
+  }
   switch (ev.type) {
     case EventType::Placed:
       cur = Current();
