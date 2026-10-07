@@ -120,6 +120,11 @@ void runPortal() {
   esp_restart();
 }
 
+// One line per sync in the Serial Monitor: which server, what happened, what it most likely means.
+void logSync(const String& what) {
+  Serial.printf("[NET] %s: %s\n", settings::get().server.c_str(), what.c_str());
+}
+
 void fail(uint32_t minMs, bool hadEvents) {
   lastOk = false;
   backoffMs = backoffMs ? (backoffMs * 2 > 60000 ? 60000 : backoffMs * 2) : 1000;
@@ -263,6 +268,8 @@ void syncOnce() {
   serializeJson(req, body);
   if (!http.connected()) http.end();
   if (!http.begin(tls, settings::ingestUrl())) {
+    lastError = "net:bad url";
+    logSync("can't start the request");
     fail(1000, n > 0);
     return;
   }
@@ -271,6 +278,7 @@ void syncOnce() {
   const int code = http.POST(body);
   if (code <= 0) {
     lastError = String("net:") + HTTPClient::errorToString(code);
+    logSync(String("can't reach it (") + HTTPClient::errorToString(code) + ") - Wi-Fi or internet down?");
     http.end();
     fail(1000, n > 0);
     return;
@@ -282,6 +290,14 @@ void syncOnce() {
     const String err = e["error"] | "";
     const String path = e["path"] | "";
     lastError = String("http_") + code + (err.length() ? ":" + err : "");
+    if (code == 404) {
+      logSync("HTTP 404 - this server has no kitchen-scale endpoint. Wrong server? Type: server gedara-staging");
+      ui::show(Screen::Notice, "Server not found", "", "check the server", "in the setup");
+    } else if (code == 401) {
+      logSync("HTTP 401 - key not accepted. Was it made on the other server (preview = gedara-staging)?");
+    } else {
+      logSync(String("HTTP ") + code + (err.length() ? " " + err : "") + (path.length() ? " at " + path : ""));
+    }
     if (code == 401) {
       ui::show(Screen::Notice, "Key not accepted", "", "set the scale up again", "(hold button 10 s)");
       fail(300000, n > 0);
@@ -305,6 +321,11 @@ void syncOnce() {
     lastError = "bad_reply";
     fail(5000, n > 0);
     return;
+  }
+  if (!lastOk || n > 0) {
+    char b[64];
+    snprintf(b, sizeof b, "OK - %u reading(s) sent, Gedara answered", static_cast<unsigned>(n));
+    logSync(b);
   }
   lastOk = true;
   lastError = "";
@@ -389,6 +410,7 @@ void net::task(void*) {
   netTask = xTaskGetCurrentTaskHandle();
   esp_task_wdt_add(nullptr);
   if (!haveWifiConfig() || !settings::tokenLooksRight(settings::get().token)) runPortal();
+  Serial.printf("[NET] server %s (%s)\n", settings::get().server.c_str(), settings::ingestUrl().c_str());
   WiFi.begin();
   uint32_t wifiLostAt = millis();
   for (;;) {
@@ -432,6 +454,7 @@ void net::requestPortal() {
 }
 
 bool net::online() { return WiFi.status() == WL_CONNECTED && lastOk; }
+String net::lastError() { return ::lastError; }
 const char* net::rootCAs() { return kRootCAs; }
 String net::ip() { return WiFi.localIP().toString(); }
 int net::rssi() { return WiFi.RSSI(); }

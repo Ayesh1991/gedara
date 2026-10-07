@@ -16,7 +16,7 @@ enum class Screen : uint8_t {
 struct UiModel {
   Screen screen = Screen::Boot;
   char title[24] = "";   // product / container name or headline
-  char big[16] = "";     // "788 g"
+  char big[24] = "";     // "788 g" (or the setup network name)
   char line[32] = "";    // "-24 g" / second line
   char line2[32] = "";
   bool wifi = false;

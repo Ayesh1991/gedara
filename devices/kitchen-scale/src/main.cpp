@@ -78,9 +78,14 @@ void command(String cmd) {
   if (cmd.isEmpty()) return;
   Serial.printf("> %s\n", cmd.c_str());
   if (cmd == "status") {
-    Serial.printf("fw %s · ip %s · rssi %d · online %d · queue %u · grams %.1f · calibrated %d · ota '%s'\n", FW_VERSION,
-                  net::ip().c_str(), net::rssi(), net::online(), static_cast<unsigned>(outbox::pending()), app::grams(),
-                  app::calibrated(), ota::state().c_str());
+    Serial.printf("fw %s · server %s · ip %s · rssi %d · online %d · last error '%s' · queue %u · grams %.1f · calibrated %d · ota '%s'\n",
+                  FW_VERSION, settings::get().server.c_str(), net::ip().c_str(), net::rssi(), net::online(),
+                  net::lastError().c_str(), static_cast<unsigned>(outbox::pending()), app::grams(), app::calibrated(),
+                  ota::state().c_str());
+  } else if (cmd == "server gedara" || cmd == "server gedara-staging") {
+    settings::saveToken(settings::get().token, cmd.substring(7));
+    Serial.printf("server is now %s (%s)\n", settings::get().server.c_str(), settings::ingestUrl().c_str());
+    net::nudge();
   } else if (cmd == "sync") {
     net::nudge();
   } else if (cmd == "tare") {
@@ -108,7 +113,7 @@ void command(String cmd) {
     fake::noisy(cmd.endsWith("on"));
 #endif
   } else {
-    Serial.println("commands: status · sync · tare · calibrate <g> · portal · offline on|off · reboot"
+    Serial.println("commands: status · sync · server gedara|gedara-staging · tare · calibrate <g> · portal · offline on|off · reboot"
 #ifdef GEDARA_FAKE
                    " · put <uid|-> <grams> [HL:LOC:code] · lift · noisy on|off"
 #endif

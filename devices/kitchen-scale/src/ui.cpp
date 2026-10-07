@@ -9,6 +9,7 @@ SemaphoreHandle_t mtx;
 UiModel model;
 uint32_t version = 0;      // bumped on every change
 uint32_t lastActivity = 0;
+bool setupLocked = false;  // the Wi-Fi setup screen stays until the scale restarts
 
 void copyStr(char* dst, size_t n, const char* src) {
   strncpy(dst, src ? src : "", n - 1);
@@ -175,6 +176,11 @@ void ui::task(void*) {
 
 void ui::set(const UiModel& m) {
   xSemaphoreTake(mtx, portMAX_DELAY);
+  if (m.screen == Screen::Setup) setupLocked = true;
+  else if (setupLocked) {
+    xSemaphoreGive(mtx);
+    return;
+  }
   const bool wifi = model.wifi, offline = model.offline;
   const uint16_t queue = model.queue;
   model = m;
