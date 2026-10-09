@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.6 — Phase 6b: the scale's log in Gedara
+- **Scale log** on each scale's page (Settings › Devices): the scale's own messages, live, last 7 days
+  ("[SCALE] steady: 1000.2 g", "[NET] Wi-Fi lost …", "[BOOT] … restart reason", "[CAL] …", "[OTA] …").
+  Once the scale is built its USB port is sealed inside, so this replaces the Serial Monitor.
+- Scale firmware 0.1.4 sends its log lines with each sync (kept on the scale while offline).
+- Migration 68 `device_log` (+ `rpc_scale_log`); schema_version 68. Edge Function `scale-ingest-2`.
+
 ## 0.7.5 — Phase 6b Kitchen Scale Station
 - **The kitchen scale** (ESP32-S3 + 5 kg load cell + NFC reader under the platform): put a container
   down and Gedara records what you used — "Sugar −24 g · 788 g left" — as a stock movement, never
