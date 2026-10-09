@@ -109,7 +109,8 @@ test('Sugar −24 g reaches the Kitchen-scale page within 2 s; a replay moves no
 
   await page.goto('/pantry/scale');
   await expect(page.getByRole('heading', { name: 'Kitchen scale', level: 1 })).toBeVisible();
-  // First contact: the live state arrives over Realtime (this page doesn't poll), so the channel is up.
+  await page.waitForTimeout(1500); // Realtime says "joined" a moment before changes flow
+  // First contact: the live state arrives over Realtime, so the channel is up.
   const warm = await sim.sync({ live: { state: 'empty', gross_g: 0 } });
   expect(warm.ok, JSON.stringify(warm)).toBe(true);
   await expect(page.getByTestId('scale-live').filter({ hasText: `${t} Scale` })).toHaveAttribute('data-state', 'empty');

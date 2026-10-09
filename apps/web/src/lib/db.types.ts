@@ -890,6 +890,48 @@ export type Database = {
           },
         ]
       }
+      device_log: {
+        Row: {
+          at: string
+          boot: number | null
+          device_id: string
+          household_id: string
+          id: number
+          line: string
+        }
+        Insert: {
+          at?: string
+          boot?: number | null
+          device_id: string
+          household_id: string
+          id?: never
+          line: string
+        }
+        Update: {
+          at?: string
+          boot?: number | null
+          device_id?: string
+          household_id?: string
+          id?: never
+          line?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_log_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "device_log_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_token: {
         Row: {
           device_id: string
@@ -5116,6 +5158,15 @@ export type Database = {
       rpc_scale_decide: {
         Args: { p_choice: string; p_reading: string }
         Returns: Json
+      }
+      rpc_scale_log: {
+        Args: {
+          p_boot: number
+          p_lines: Json
+          p_token_hash: string
+          p_up: number
+        }
+        Returns: number
       }
       rpc_scale_sync: { Args: { p: Json; p_token_hash: string }; Returns: Json }
       rpc_scan_file_asset: {

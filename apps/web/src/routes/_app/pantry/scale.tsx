@@ -81,7 +81,8 @@ function KitchenScalePage() {
   const householdId = membership.household.id;
   const canWrite = membership.role !== 'viewer';
   const now = useNow(5000);
-  const scales = useQuery(scalesQuery(householdId));
+  // Live updates come over Realtime; the 30 s refresh only covers one missed while the channel joins.
+  const scales = useQuery({ ...scalesQuery(householdId), refetchInterval: 30_000 });
   const recent = useQuery(readingsQuery(householdId, { limit: 20 }));
   const open = useQuery(openReadingsQuery(householdId));
   const [latest, setLatest] = useState<ScaleReading | null>(null);
