@@ -13,6 +13,7 @@ void requestPortal();      // button held 10 s
 void simulateOffline(bool on);  // Serial "offline on|off" (tests the outbox)
 bool online();             // Wi-Fi up and the last sync worked
 String lastError();        // "" or e.g. "http_404" / "net:connection refused"
+const char* resetReasonText();  // why the scale last restarted: poweron, software, crash, watchdog, brownout …
 const char* rootCAs();     // the pinned roots (src/roots.h), also used by OTA downloads
 String ip();
 int rssi();

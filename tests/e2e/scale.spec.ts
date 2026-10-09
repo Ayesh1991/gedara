@@ -163,4 +163,13 @@ test('a pop-up on another screen; a heavier jar asks and Count correction settle
   await popup.getByRole('button', { name: 'Count correction' }).click();
   await expect(page.getByText('Done — 800 g in the container')).toBeVisible();
   await expect.poll(() => jarGrams(jar.jarId)).toBe(800);
+
+  // The scale's log (its Serial Monitor once the USB port is sealed in) shows on its page, live.
+  await page.goto('/settings/devices');
+  await page.getByRole('link', { name: new RegExp(`${t} Scale 2`) }).click();
+  await expect(page.getByRole('heading', { name: 'Scale log' })).toBeVisible();
+  await page.waitForTimeout(1500); // let the Realtime channel join
+  const sent = await sim.sync({ log: [{ t: sim.up(), m: `[SCALE] steady: 1000.2 g (after 0.9 s) ${t}` }] });
+  expect(sent.ok, JSON.stringify(sent)).toBe(true);
+  await expect(page.getByTestId('scale-log')).toContainText(`[SCALE] steady: 1000.2 g (after 0.9 s) ${t}`);
 });

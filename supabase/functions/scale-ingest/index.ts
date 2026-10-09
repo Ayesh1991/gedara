@@ -10,7 +10,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { PROTOCOL_VERSION, SyncRequest } from '../_shared/scale/protocol.ts';
 
-const FN_VERSION = 'scale-ingest-1';
+const FN_VERSION = 'scale-ingest-2';
 const MAX_BYTES = 16_384;
 const FIRMWARE_LINK_SECONDS = 600;
 
@@ -40,6 +40,9 @@ function rpcStatus(code: string | undefined): number {
 }
 
 type Command = { id: string; command: string; args: Record<string, unknown> };
+
+// Supabase Edge Runtime: finish work after the reply has been sent.
+declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
 async function sync(req: Request, token: string): Promise<Response> {
   const started = Date.now();
@@ -77,6 +80,19 @@ async function sync(req: Request, token: string): Promise<Response> {
   }
 
   const reply = data as { commands: Command[]; results: { status: string }[] } & Record<string, unknown>;
+
+  // The scale's log lines are stored after the reply goes out: they never slow the scale down.
+  const lines = parsed.data.log ?? [];
+  if (lines.length) {
+    const tokenHash = await sha256Hex(token);
+    const store = admin
+      .rpc('rpc_scale_log', { p_token_hash: tokenHash, p_boot: parsed.data.boot, p_up: parsed.data.up, p_lines: lines })
+      .then(({ error: e }) => {
+        if (e) console.log(JSON.stringify({ fn: FN_VERSION, log_error: e.code }));
+      });
+    if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(store);
+    else await store;
+  }
   // An update: swap the storage path for a short-lived signed link.
   for (const c of reply.commands) {
     if (c.command !== 'ota') continue;

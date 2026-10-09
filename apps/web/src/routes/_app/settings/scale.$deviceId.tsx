@@ -11,6 +11,7 @@ import { fieldLabel } from '@/components/pantry/bits';
 import { CalibrateSheet } from '@/components/scale/CalibrateSheet';
 import { FirmwarePanel } from '@/components/scale/FirmwarePanel';
 import { ReadingCard } from '@/components/scale/ReadingCard';
+import { ScaleLog } from '@/components/scale/ScaleLog';
 import { useScaleLive } from '@/components/scale/useScaleLive';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -236,6 +237,7 @@ function ScalePage() {
       {/* Keyed by version: a change saved elsewhere resets the form to the new values. */}
       <SettingsForm key={device.settings_version} deviceId={device.id} settings={device.settings} canWrite={canWrite} />
       <FirmwarePanel householdId={householdId} device={device} isOwner={isOwner} locale={membership.household.locale} />
+      <ScaleLog householdId={householdId} deviceId={device.id} timezone={membership.household.timezone} />
 
       {(readings.data?.length ?? 0) > 0 && (
         <section className="flex flex-col gap-2.5">

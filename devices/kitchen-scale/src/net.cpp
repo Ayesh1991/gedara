@@ -1,3 +1,4 @@
+#include "logbuf.h"
 #include "net.h"
 
 #include <ArduinoJson.h>
@@ -122,7 +123,7 @@ void runPortal() {
 
 // One line per sync in the Serial Monitor: which server, what happened, what it most likely means.
 void logSync(const String& what) {
-  Serial.printf("[NET] %s: %s\n", settings::get().server.c_str(), what.c_str());
+  logbuf::logf("[NET] %s: %s\n", settings::get().server.c_str(), what.c_str());
 }
 
 void fail(uint32_t minMs, bool hadEvents) {
@@ -155,11 +156,14 @@ void runCommand(JsonObject c) {
     const app::CalResult r = app::tare();
     d.ok = r.ok;
     d.resultJson = r.ok ? String("{\"zero\":") + r.zero + "}" : String("{\"error\":\"") + r.error + "\"}";
+    logbuf::logf("[CAL] zero %s", r.ok ? "set" : r.error);
   } else if (cmd == "calibrate") {
     const float known = args["known_g"] | 0.0f;
     ui::show(Screen::Notice, "Calibrating", "", "keep it still");
     const app::CalResult r = app::calibrate(known);
     d.ok = r.ok;
+    if (r.ok) logbuf::logf("[CAL] calibrated with %.1f g (factor %.3f)", known, r.factor);
+    else logbuf::logf("[CAL] calibration failed: %s", r.error);
     if (r.ok) {
       char b[96];
       snprintf(b, sizeof b, "{\"factor\":%.4f,\"zero\":%ld,\"known_g\":%.1f}", r.factor, static_cast<long>(r.zero), known);
@@ -184,7 +188,10 @@ void runCommand(JsonObject c) {
   } else if (cmd == "ota") {
     String err;
     const String version = args["version"] | "";
+    logbuf::logf("[OTA] downloading %s", version.c_str());
     const bool ok = ota::install(args["url"] | "", args["size"] | 0, args["sha256"] | "", version, err);
+    if (ok) logbuf::logf("[OTA] %s downloaded and checked - restarting into it", version.c_str());
+    else logbuf::logf("[OTA] update to %s failed: %s", version.c_str(), err.c_str());
     d.ok = ok;
     d.resultJson = ok ? String("{\"version\":\"") + version + "\"}" : String("{\"error\":\"") + err + "\"}";
     if (ok) rebootAfterSync = true;  // report first, then start the new firmware
@@ -258,6 +265,17 @@ void syncOnce() {
   }
   const String cv = containers::version();
   if (cv.length()) req["containers_v"] = cv;
+  // The log lines Gedara hasn't got yet (the scale's Serial Monitor, once the USB port is sealed in).
+  static logbuf::Line logLines[20];
+  const size_t nLog = logbuf::peek(logLines, 20);
+  if (nLog) {
+    JsonArray lg = req["log"].to<JsonArray>();
+    for (size_t i = 0; i < nLog; i++) {
+      JsonObject o = lg.add<JsonObject>();
+      o["t"] = logLines[i].upMs;
+      o["m"] = logLines[i].text;
+    }
+  }
 
   if (pretendOffline) {
     lastError = "net:simulated offline";
@@ -333,6 +351,7 @@ void syncOnce() {
   maxBatch = 20;
   sentLive = live.version;
   toReport.clear();
+  logbuf::sent(nLog);
   ota::confirm();
 
   uint32_t maxAck = 0;
@@ -414,7 +433,7 @@ void net::task(void*) {
   netTask = xTaskGetCurrentTaskHandle();
   esp_task_wdt_add(nullptr);
   if (!haveWifiConfig() || !settings::tokenLooksRight(settings::get().token)) runPortal();
-  Serial.printf("[NET] server %s (%s)\n", settings::get().server.c_str(), settings::ingestUrl().c_str());
+  logbuf::logf("[NET] server %s (%s)\n", settings::get().server.c_str(), settings::ingestUrl().c_str());
   WiFi.begin();
   uint32_t wifiLostAt = millis();
   uint32_t wifiRetryAt = millis() + 15000;  // the first connection gets 15 s
@@ -431,9 +450,9 @@ void net::task(void*) {
         wifiWasUp = false;
         wifiBackoff = 2000;
         wifiRetryAt = millis() + wifiBackoff;
-        Serial.println("[NET] Wi-Fi lost - weighing goes on, readings wait on the scale");
+        logbuf::logf("[NET] Wi-Fi lost - weighing goes on, readings wait on the scale");
       } else if (static_cast<int32_t>(millis() - wifiRetryAt) >= 0) {
-        Serial.printf("[NET] Wi-Fi: trying again (next try in %lu s if it fails)\n",
+        logbuf::logf("[NET] Wi-Fi: trying again (next try in %lu s if it fails)\n",
                       static_cast<unsigned long>((wifiBackoff * 2 > 60000 ? 60000 : wifiBackoff * 2) / 1000));
         WiFi.disconnect(false, false);
         WiFi.begin();
@@ -447,7 +466,7 @@ void net::task(void*) {
     wifiLostAt = millis();
     if (!wifiWasUp) {
       wifiWasUp = true;
-      Serial.printf("[NET] Wi-Fi connected (%s, %d dBm)\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
+      logbuf::logf("[NET] Wi-Fi connected (%s, %d dBm)\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
       nextSyncAt = millis();  // report in at once (and send anything queued)
     }
     if (!clockSet) {
@@ -480,6 +499,7 @@ void net::requestPortal() {
 
 bool net::online() { return WiFi.status() == WL_CONNECTED && lastOk; }
 String net::lastError() { return ::lastError; }
+const char* net::resetReasonText() { return resetReason(); }
 const char* net::rootCAs() { return kRootCAs; }
 String net::ip() { return WiFi.localIP().toString(); }
 int net::rssi() { return WiFi.RSSI(); }

@@ -12,6 +12,7 @@
 #include <esp_task_wdt.h>
 
 #include "app.h"
+#include "logbuf.h"
 #include "audio.h"
 #include "containers.h"
 #include "net.h"
@@ -171,7 +172,8 @@ void setup() {
   snprintf(l2, sizeof l2, "storage %s  queue %u", fsOk ? "ok" : "ERROR", static_cast<unsigned>(outbox::pending()));
   snprintf(l3, sizeof l3, "%s", app::calibrated() ? "calibrated" : "not calibrated");
   ui::show(Screen::Boot, "Gedara scale " FW_VERSION, l1, l2, l3);
-  Serial.printf("[SELFTEST] %s | %s | %s | %s\n", kBuild, l1, l2, l3);
+  logbuf::logf("[SELFTEST] %s | %s | %s | %s\n", kBuild, l1, l2, l3);
+  logbuf::logf("[BOOT] fw %s · restart reason: %s · update: %s", FW_VERSION, net::resetReasonText(), ota::state().length() ? ota::state().c_str() : "-");
 
   xTaskCreatePinnedToCore(ui::task, "ui", 4096, nullptr, 2, nullptr, 0);
   xTaskCreatePinnedToCore(audio::task, "audio", 6144, nullptr, 3, nullptr, 0);

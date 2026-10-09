@@ -62,6 +62,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'scale_reading', order: ['id'], scope: 'household' },
   { name: 'device_command', order: ['id'], scope: 'household' },
   { name: 'device_firmware', order: ['id'], scope: 'household' },
+  { name: 'device_log', order: ['id'], scope: 'household' },
   { name: 'export_run', order: ['id'], scope: 'household' },
 ];
 
