@@ -9,6 +9,8 @@
 - Scale firmware 0.1.5: louder, clearer sound for a small speaker — the voice is shaped for it (bass cut,
   consonants lifted, compressed: about 9 dB louder on average) and stored as 8-bit mu-law instead of 4-bit
   ADPCM; chimes moved up to 1.5–2.6 kHz and up to 60 % of full scale (were 27 %).
+- Scale firmware 0.1.6: every chime at full level (the result chimes were softer than "Ready"); the
+  start-up sound waits for the internet clock, so quiet hours (22:00–06:00) apply to it too.
 
 ## 0.7.5 — Phase 6b Kitchen Scale Station
 - **The kitchen scale** (ESP32-S3 + 5 kg load cell + NFC reader under the platform): put a container

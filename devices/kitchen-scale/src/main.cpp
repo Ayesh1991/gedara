@@ -10,6 +10,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
+#include <time.h>
 
 #include "app.h"
 #include "logbuf.h"
@@ -182,7 +183,10 @@ void setup() {
   xTaskCreatePinnedToCore(app::controlTask, "control", 8192, nullptr, 3, nullptr, 0);
   xTaskCreatePinnedToCore(net::task, "net", 16384, nullptr, 2, nullptr, 0);
 
+  // Wait (up to 15 s) for the clock from the internet before the start-up sound, so quiet hours apply
+  // to it too (up to 0.1.5 "Ready" was spoken at full volume at night: the clock wasn't set yet).
   delay(1500);
+  for (int i = 0; i < 135 && time(nullptr) < 1700000000; i++) delay(100);
   if (cellOk && tagOk && fsOk) {
     audio::chime(audio::Chime::Ready);
     gedara::Phrase p;

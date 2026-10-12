@@ -88,9 +88,10 @@ void silence(int ms) {
 
 void playChime(audio::Chime c) {
   switch (c) {
-    case audio::Chime::Ready: tone(1568, 90, 0.8f); tone(1976, 90, 0.8f); tone(2637, 160, 0.8f); break;
-    case audio::Chime::Logged: tone(1568, 80, 0.9f); tone(2349, 140, 0.9f); break;
-    case audio::Chime::NoChange: tone(1760, 120, 0.6f); break;
+    // Every chime at full level (fw 0.1.6): the result chimes were softer than "Ready" and hard to hear.
+    case audio::Chime::Ready: tone(1568, 90, 1.0f); tone(1976, 90, 1.0f); tone(2637, 160, 1.0f); break;
+    case audio::Chime::Logged: tone(1568, 100, 1.0f); tone(2349, 180, 1.0f); break;
+    case audio::Chime::NoChange: tone(1760, 200, 1.0f); break;
     case audio::Chime::Attention: tone(2093, 90, 1.0f); silence(60); tone(2093, 90, 1.0f); break;
     case audio::Chime::Error: tone(1047, 150, 1.0f); tone(698, 260, 1.0f); break;
     case audio::Chime::Locate:
