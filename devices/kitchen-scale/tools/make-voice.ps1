@@ -1,6 +1,6 @@
 # Records the scale's spoken clips with Windows' built-in voice (System.Speech: no download, no API).
 # Reads the CLIP(ID, "text") lines of lib/speech/src/clips.h and writes tools/voice/<ID>.wav
-# (16 kHz, 16-bit, mono). Then run:  py tools/wav2adpcm.py   (packs them into src/voice_data.h)
+# (16 kHz, 16-bit, mono). Then run:  py tools/pack-voice.py   (shapes and packs them into src/voice_data.h)
 #
 #   powershell -ExecutionPolicy Bypass -File tools/make-voice.ps1 [-Voice "Microsoft Zira Desktop"] [-Rate 0]
 param(

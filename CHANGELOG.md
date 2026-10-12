@@ -6,6 +6,9 @@
   Once the scale is built its USB port is sealed inside, so this replaces the Serial Monitor.
 - Scale firmware 0.1.4 sends its log lines with each sync (kept on the scale while offline).
 - Migration 68 `device_log` (+ `rpc_scale_log`); schema_version 68. Edge Function `scale-ingest-2`.
+- Scale firmware 0.1.5: louder, clearer sound for a small speaker — the voice is shaped for it (bass cut,
+  consonants lifted, compressed: about 9 dB louder on average) and stored as 8-bit mu-law instead of 4-bit
+  ADPCM; chimes moved up to 1.5–2.6 kHz and up to 60 % of full scale (were 27 %).
 
 ## 0.7.5 — Phase 6b Kitchen Scale Station
 - **The kitchen scale** (ESP32-S3 + 5 kg load cell + NFC reader under the platform): put a container

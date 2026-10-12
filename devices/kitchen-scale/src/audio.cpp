@@ -57,12 +57,17 @@ void ampOn(bool on) {
   if (on) delay(8);  // let the amplifier start before the first sample (no click)
 }
 
+// Chimes sit at 1–3 kHz, where a small speaker is loudest (below ~500 Hz it plays almost nothing).
+// A sine is all power, unlike speech, so the loudest chime stays at 60 % of full scale: short and safe
+// for a 0.5 W speaker on the MAX98357A at 5 V (fw 0.1.5; up to 0.1.4 chimes peaked at 27 %).
+constexpr float kChimeMax = 0.60f * 32767.0f;
+
 void tone(float hz, int ms, float level) {
   const int total = kRate * ms / 1000;
   const int ramp = kRate / 200;  // 5 ms attack / release
   float phase = 0;
   const float step = 2.0f * PI * hz / kRate;
-  const float amp = 9000.0f * level * gain() / 100.0f;
+  const float amp = kChimeMax * level * gain() / 100.0f;
   for (int i = 0; i < total;) {
     int n = 0;
     for (; n < 256 && i < total; n++, i++) {
@@ -83,15 +88,15 @@ void silence(int ms) {
 
 void playChime(audio::Chime c) {
   switch (c) {
-    case audio::Chime::Ready: tone(784, 90, 0.7f); tone(988, 90, 0.7f); tone(1319, 160, 0.7f); break;
-    case audio::Chime::Logged: tone(1047, 80, 0.8f); tone(1568, 140, 0.8f); break;
-    case audio::Chime::NoChange: tone(1175, 120, 0.5f); break;
-    case audio::Chime::Attention: tone(1319, 90, 0.9f); silence(60); tone(1319, 90, 0.9f); break;
-    case audio::Chime::Error: tone(330, 300, 0.9f); break;
+    case audio::Chime::Ready: tone(1568, 90, 0.8f); tone(1976, 90, 0.8f); tone(2637, 160, 0.8f); break;
+    case audio::Chime::Logged: tone(1568, 80, 0.9f); tone(2349, 140, 0.9f); break;
+    case audio::Chime::NoChange: tone(1760, 120, 0.6f); break;
+    case audio::Chime::Attention: tone(2093, 90, 1.0f); silence(60); tone(2093, 90, 1.0f); break;
+    case audio::Chime::Error: tone(1047, 150, 1.0f); tone(698, 260, 1.0f); break;
     case audio::Chime::Locate:
       for (int k = 0; k < 4; k++) {
-        tone(880, 100, 1.0f);
         tone(1760, 100, 1.0f);
+        tone(2637, 100, 1.0f);
         silence(150);
         esp_task_wdt_reset();
       }
@@ -99,34 +104,19 @@ void playChime(audio::Chime c) {
   }
 }
 
-// IMA ADPCM (4 bits per sample, low nibble first).
-const int8_t kIndexTable[16] = {-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8};
-const int16_t kStepTable[89] = {
-    7,    8,    9,    10,   11,   12,   13,   14,   16,    17,    19,    21,    23,    25,    28,    31,
-    34,   37,   41,   45,   50,   55,   60,   66,   73,    80,    88,    97,    107,   118,   130,   143,
-    157,  173,  190,  209,  230,  253,  279,  307,  337,   371,   408,   449,   494,   544,   598,   658,
-    724,  796,  876,  963,  1060, 1166, 1282, 1411, 1552,  1707,  1878,  2066,  2272,  2499,  2749,  3024,
-    3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132,  7845,  8630,  9493,  10442, 11487, 12635, 13899,
-    15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767};
+// G.711 mu-law (8 bits per sample), already shaped and normalised by tools/pack-voice.py.
+int16_t ulaw(uint8_t u) {
+  u = ~u;
+  const int s = (((u & 0x0F) << 3) + 0x84) << ((u >> 4) & 7);
+  return static_cast<int16_t>(u & 0x80 ? 0x84 - s : s - 0x84);
+}
 
 void playClip(gedara::Clip c) {
   const VoiceClip& v = kVoiceClips[static_cast<int>(c)];
-  int pred = v.pred0, index = v.index0;
   const int g = gain();
   int n = 0;
   for (uint32_t i = 0; i < v.samples; i++) {
-    const uint8_t byte = kVoiceData[v.offset + i / 2];
-    const int code = (i & 1) ? (byte >> 4) : (byte & 0x0F);
-    const int step = kStepTable[index];
-    int diff = step >> 3;
-    if (code & 1) diff += step >> 2;
-    if (code & 2) diff += step >> 1;
-    if (code & 4) diff += step;
-    pred += (code & 8) ? -diff : diff;
-    pred = pred > 32767 ? 32767 : (pred < -32768 ? -32768 : pred);
-    index += kIndexTable[code];
-    index = index < 0 ? 0 : (index > 88 ? 88 : index);
-    buf[n++] = static_cast<int16_t>(pred * g / 100);
+    buf[n++] = static_cast<int16_t>(ulaw(kVoiceData[v.offset + i]) * g / 100);
     if (n == 256) {
       i2s.write(reinterpret_cast<uint8_t*>(buf), sizeof buf);
       n = 0;
