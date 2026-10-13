@@ -109,7 +109,8 @@ test('Sugar −24 g reaches the Kitchen-scale page within 2 s; a replay moves no
 
   await page.goto('/pantry/scale');
   await expect(page.getByRole('heading', { name: 'Kitchen scale', level: 1 })).toBeVisible();
-  // First contact: the live state arrives over Realtime (this page doesn't poll), so the channel is up.
+  await page.waitForTimeout(1500); // Realtime says "joined" a moment before changes flow
+  // First contact: the live state arrives over Realtime, so the channel is up.
   const warm = await sim.sync({ live: { state: 'empty', gross_g: 0 } });
   expect(warm.ok, JSON.stringify(warm)).toBe(true);
   await expect(page.getByTestId('scale-live').filter({ hasText: `${t} Scale` })).toHaveAttribute('data-state', 'empty');
@@ -163,4 +164,13 @@ test('a pop-up on another screen; a heavier jar asks and Count correction settle
   await popup.getByRole('button', { name: 'Count correction' }).click();
   await expect(page.getByText('Done — 800 g in the container')).toBeVisible();
   await expect.poll(() => jarGrams(jar.jarId)).toBe(800);
+
+  // The scale's log (its Serial Monitor once the USB port is sealed in) shows on its page, live.
+  await page.goto('/settings/devices');
+  await page.getByRole('link', { name: new RegExp(`${t} Scale 2`) }).click();
+  await expect(page.getByRole('heading', { name: 'Scale log' })).toBeVisible();
+  await page.waitForTimeout(1500); // let the Realtime channel join
+  const sent = await sim.sync({ log: [{ t: sim.up(), m: `[SCALE] steady: 1000.2 g (after 0.9 s) ${t}` }] });
+  expect(sent.ok, JSON.stringify(sent)).toBe(true);
+  await expect(page.getByTestId('scale-log')).toContainText(`[SCALE] steady: 1000.2 g (after 0.9 s) ${t}`);
 });

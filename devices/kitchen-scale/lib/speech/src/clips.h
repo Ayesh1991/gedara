@@ -1,5 +1,5 @@
 // The scale's spoken clips — the ONE list. tools/make-voice.ps1 reads the CLIP(...) lines below to
-// record each text with Windows' built-in voice; tools/wav2adpcm.py packs them into
+// record each text with Windows' built-in voice; tools/pack-voice.py packs them into
 // src/voice_data.h in this order. Add a clip at the end, then run both tools again.
 #pragma once
 

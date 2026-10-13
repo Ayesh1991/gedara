@@ -10,8 +10,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
+#include <time.h>
 
 #include "app.h"
+#include "logbuf.h"
 #include "audio.h"
 #include "containers.h"
 #include "net.h"
@@ -24,6 +26,13 @@
 #include "version.h"
 
 namespace {
+// Which build is running: both report the same version, so say it plainly.
+#ifdef GEDARA_FAKE
+constexpr const char* kBuild = "TEST build (simulated scale, env:s3_fake)";
+#else
+constexpr const char* kBuild = "REAL scale build (env:s3)";
+#endif
+
 uint32_t pressedAt = 0;
 bool statusShown = false, portalAsked = false;
 String line;
@@ -78,8 +87,8 @@ void command(String cmd) {
   if (cmd.isEmpty()) return;
   Serial.printf("> %s\n", cmd.c_str());
   if (cmd == "status") {
-    Serial.printf("fw %s · server %s · ip %s · rssi %d · online %d · last error '%s' · queue %u · grams %.1f · calibrated %d · ota '%s'\n",
-                  FW_VERSION, settings::get().server.c_str(), net::ip().c_str(), net::rssi(), net::online(),
+    Serial.printf("%s · fw %s · server %s · ip %s · rssi %d · online %d · last error '%s' · queue %u · grams %.1f · calibrated %d · ota '%s'\n",
+                  kBuild, FW_VERSION, settings::get().server.c_str(), net::ip().c_str(), net::rssi(), net::online(),
                   net::lastError().c_str(), static_cast<unsigned>(outbox::pending()), app::grams(), app::calibrated(),
                   ota::state().c_str());
   } else if (cmd == "server gedara" || cmd == "server gedara-staging") {
@@ -164,7 +173,8 @@ void setup() {
   snprintf(l2, sizeof l2, "storage %s  queue %u", fsOk ? "ok" : "ERROR", static_cast<unsigned>(outbox::pending()));
   snprintf(l3, sizeof l3, "%s", app::calibrated() ? "calibrated" : "not calibrated");
   ui::show(Screen::Boot, "Gedara scale " FW_VERSION, l1, l2, l3);
-  Serial.printf("[SELFTEST] %s | %s | %s\n", l1, l2, l3);
+  logbuf::logf("[SELFTEST] %s | %s | %s | %s\n", kBuild, l1, l2, l3);
+  logbuf::logf("[BOOT] fw %s · restart reason: %s · update: %s", FW_VERSION, net::resetReasonText(), ota::state().length() ? ota::state().c_str() : "-");
 
   xTaskCreatePinnedToCore(ui::task, "ui", 4096, nullptr, 2, nullptr, 0);
   xTaskCreatePinnedToCore(audio::task, "audio", 6144, nullptr, 3, nullptr, 0);
@@ -173,7 +183,10 @@ void setup() {
   xTaskCreatePinnedToCore(app::controlTask, "control", 8192, nullptr, 3, nullptr, 0);
   xTaskCreatePinnedToCore(net::task, "net", 16384, nullptr, 2, nullptr, 0);
 
+  // Wait (up to 15 s) for the clock from the internet before the start-up sound, so quiet hours apply
+  // to it too (up to 0.1.5 "Ready" was spoken at full volume at night: the clock wasn't set yet).
   delay(1500);
+  for (int i = 0; i < 135 && time(nullptr) < 1700000000; i++) delay(100);
   if (cellOk && tagOk && fsOk) {
     audio::chime(audio::Chime::Ready);
     gedara::Phrase p;

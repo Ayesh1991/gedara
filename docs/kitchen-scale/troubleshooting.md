@@ -9,6 +9,7 @@ scale's page in **Settings › Devices** (Wi-Fi, queue, last problem, firmware) 
 | **NFC MISSING** at start | RC522 wiring or 5 V | 3.3 V only; SS 10, MOSI 11, SCK 12, MISO 13, RST 9 |
 | Weight goes **negative** when loaded | A+ / A− swapped | swap the two signal wires, or just calibrate again (the sign is learned) |
 | Weight **jumps** or never settles | something touches the plate or cell; wires near the speaker | corner test (assembly.md §5); twist and shorten the load-cell wires |
+| Sound **quiet or muffled** | volume below 100; speaker loose in the box (its back cancels its front) | Settings › Devices › the scale › Volume 100; glue the speaker's rim to a panel with holes in front of the cone, back closed; fw 0.1.5 or later |
 | Drifts away from 0 when empty | creep / temperature | auto-zero handles ±50 g; if it says **Please empty**, empty it and press the button |
 | **Too heavy** | over 5 kg | keep bulk rice in the pantry, refill a smaller jar |
 | Container shows **No tag** | sticker too far from the antenna, or on metal | put it inside the circle; on steel tins use on-metal stickers; thick glass: coaster |

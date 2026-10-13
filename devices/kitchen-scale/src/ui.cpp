@@ -165,7 +165,13 @@ void ui::task(void*) {
     m = model;
     v = version;
     xSemaphoreGive(mtx);
-    if (v != drawn && m.screen != Screen::Weighing) {
+    static int8_t lastPct = -1;
+    if (v != drawn && m.screen == Screen::Updating && m.progress >= 0) {
+      // Every 10 %, not every progress step.
+      if (m.progress / 10 != lastPct / 10) Serial.printf("[OLED] %s | %d %%\n", m.title, m.progress);
+      lastPct = m.progress;
+      drawn = v;
+    } else if (v != drawn && m.screen != Screen::Weighing) {
       Serial.printf("[OLED] %s | %s | %s | %s%s\n", m.title, m.big, m.line, m.line2, m.queue ? " (queued)" : "");
       drawn = v;
     }

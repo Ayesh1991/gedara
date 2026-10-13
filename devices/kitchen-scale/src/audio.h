@@ -1,6 +1,7 @@
 // Sound (MAX98357A over I²S, 16 kHz mono). Chimes are synthesised; spoken clips (English numbers and
-// phrases, Didula's choice 2026-10-03) are 4-bit ADPCM inside the firmware (src/voice_data.h), so a
-// firmware update also updates the voice. Quiet hours (from Gedara): soft chimes only, no speech.
+// phrases, Didula's choice 2026-10-03) are 8-bit mu-law inside the firmware (src/voice_data.h, shaped
+// for a small speaker by tools/pack-voice.py), so a firmware update also updates the voice. Quiet
+// hours (from Gedara): soft chimes only, no speech.
 // The amplifier's SD pin is held low while silent — no hiss.
 #pragma once
 #include <stdint.h>

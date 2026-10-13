@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.6 — Phase 6b: the scale's log in Gedara
+- **Scale log** on each scale's page (Settings › Devices): the scale's own messages, live, last 7 days
+  ("[SCALE] steady: 1000.2 g", "[NET] Wi-Fi lost …", "[BOOT] … restart reason", "[CAL] …", "[OTA] …").
+  Once the scale is built its USB port is sealed inside, so this replaces the Serial Monitor.
+- Scale firmware 0.1.4 sends its log lines with each sync (kept on the scale while offline).
+- Migration 68 `device_log` (+ `rpc_scale_log`); schema_version 68. Edge Function `scale-ingest-2`.
+- Scale firmware 0.1.5: louder, clearer sound for a small speaker — the voice is shaped for it (bass cut,
+  consonants lifted, compressed: about 9 dB louder on average) and stored as 8-bit mu-law instead of 4-bit
+  ADPCM; chimes moved up to 1.5–2.6 kHz and up to 60 % of full scale (were 27 %).
+- Scale firmware 0.1.6: every chime at full level (the result chimes were softer than "Ready"); the
+  start-up sound waits for the internet clock, so quiet hours (22:00–06:00) apply to it too.
+
 ## 0.7.5 — Phase 6b Kitchen Scale Station
 - **The kitchen scale** (ESP32-S3 + 5 kg load cell + NFC reader under the platform): put a container
   down and Gedara records what you used — "Sugar −24 g · 788 g left" — as a stock movement, never

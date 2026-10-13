@@ -79,6 +79,11 @@ export const SyncRequest = z.object({
     .max(10)
     .default([]),
   containers_v: z.string().regex(/^[0-9a-f]{1,8}$/).optional(),
+  // Recent log lines (the scale's USB port is sealed inside: this is its Serial Monitor), fw ≥ 0.1.4.
+  log: z
+    .array(z.object({ t: ms, m: z.string().max(160) }))
+    .max(30)
+    .optional(),
 });
 export type SyncRequest = z.input<typeof SyncRequest>;
 

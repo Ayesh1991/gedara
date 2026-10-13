@@ -6,6 +6,7 @@
 
 #include <atomic>
 
+#include "logbuf.h"
 #include "audio.h"
 #include "containers.h"
 #include "engine.h"
@@ -107,6 +108,8 @@ void showEstimate(bool offline) {
       char d[16];
       fmtGrams(net - cur.info.lastNetG, d, sizeof d, true);
       snprintf(line, sizeof line, offline ? "%s  (saved)" : "%s", d);
+      // The next offline weighing compares with this one (Gedara's answer replaces it when it comes).
+      if (offline) containers::setLastNet(cur.uid, net);
     } else {
       snprintf(line, sizeof line, "%s", offline ? "saved, sent later" : "...");
     }
@@ -208,6 +211,15 @@ void handleResult(const app::Result& res) {
 }
 
 void handleScale(const gedara::Event& ev) {
+  // The settled weights in the Serial Monitor: what Gedara gets, for calibration and noise checks.
+  switch (ev.type) {
+    case EventType::Placed: logbuf::logf("[SCALE] put down (%.1f g so far)\n", ev.grams); break;
+    case EventType::Stable: logbuf::logf("[SCALE] steady: %.1f g (after %.1f s)\n", ev.grams, ev.settleMs / 1000.0f); break;
+    case EventType::Removed: logbuf::logf("[SCALE] lifted - empty again\n"); break;
+    case EventType::Overload: logbuf::logf("[SCALE] too heavy\n"); break;
+    case EventType::ZeroLost: logbuf::logf("[SCALE] zero drifted: please empty the scale and press the button\n"); break;
+    default: break;
+  }
   switch (ev.type) {
     case EventType::Placed:
       cur = Current();
@@ -260,10 +272,14 @@ void app::begin() {
   ctlQ = xQueueCreate(12, sizeof(Msg));
   Persisted& p = settings::get();
 #ifdef GEDARA_FAKE
-  if (p.factor == 0.0f) settings::saveCalibration(400.0f, 84213);  // the simulated load cell
-#endif
+  // The simulated load cell's numbers, in memory only: flash must never keep them, or the real
+  // firmware flashed later would believe it is calibrated.
+  engine.setCalibration(400.0f, 84213);
+  gCalibrated = true;
+#else
   if (p.factor != 0.0f) engine.setCalibration(p.factor, p.zero);
   gCalibrated = p.factor != 0.0f;
+#endif
   seqs.begin();
 }
 
@@ -459,6 +475,15 @@ void app::controlTask(void*) {
       }
     }
     // Gedara slow (> 4 s): show what the scale knows; the answer replaces it when it comes.
-    if (cur.seq && !cur.answered && !cur.estimateShown && millis() - cur.stableAt > 4000) showEstimate(false);
+    if (cur.seq && !cur.answered && !cur.estimateShown && millis() - cur.stableAt > 4000) {
+      const bool offline = !net::online();
+      showEstimate(offline);
+      if (offline) {
+        audio::chime(audio::Chime::Logged);
+        gedara::Phrase p;
+        p.add(gedara::Clip::SAVED_OFFLINE);
+        audio::say(p);
+      }
+    }
   }
 }

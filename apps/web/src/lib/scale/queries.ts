@@ -135,6 +135,30 @@ export async function waitForCommand(commandId: string, timeoutMs = 90_000, ever
   return 'expired';
 }
 
+// ── The scale's log (migration 68) ─────────────────────────────────────────────
+export interface DeviceLogLine {
+  id: number;
+  at: string;
+  boot: number | null;
+  line: string;
+}
+
+export const deviceLogQuery = (householdId: string, deviceId: string) =>
+  queryOptions({
+    queryKey: scaleKey(householdId, 'log', deviceId),
+    queryFn: async (): Promise<DeviceLogLine[]> => {
+      const { data, error } = await supabase
+        .from('device_log')
+        .select('id, at, boot, line')
+        .eq('device_id', deviceId)
+        .order('id', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data as DeviceLogLine[];
+    },
+    staleTime: 30 * 1000,
+  });
+
 // ── Readings ──────────────────────────────────────────────────────────────────
 export interface ScaleReading {
   id: string;

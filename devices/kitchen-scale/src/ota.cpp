@@ -7,6 +7,7 @@
 #include <esp_task_wdt.h>
 #include <mbedtls/sha256.h>
 
+#include "logbuf.h"
 #include "net.h"
 #include "settings.h"
 #include "ui.h"

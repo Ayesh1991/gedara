@@ -2571,6 +2571,11 @@
       "unknown": "This tag isn't linked to anything yet.",
       "denied": "NFC is blocked for Gedara. Allow it in Chrome's site settings."
     },
+    "log": {
+      "title": "Scale log",
+      "hint": "live \u00b7 last 7 days",
+      "empty": "Nothing yet. Scales with firmware 0.1.4 or newer send their log here with every sync."
+    },
     "product": {
       "title": "In containers",
       "empty": "empty {{tare}}",
