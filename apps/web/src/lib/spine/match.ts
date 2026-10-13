@@ -7,6 +7,12 @@
 //   ≥ MAYBE_AT                            → maybe (only suggested)
 // A name match is downgraded to "maybe" when it's ambiguous (two products almost equally close) or
 // when the product sits in a different top-level category than the line.
+//
+// Brands (Phase 7f): one generic product per jar content, every brand maps to it. Once a bill name
+// like "FREELAN MUSTARD SEEDS" was sent to "Mustard seeds", the words left over ("freelan") are brand
+// words: they are dropped from lines and learned names before scoring. Learned from
+// `product_alias`, so per household and nothing extra to store.
+// When the best names are nearly tied, the product a kitchen jar holds wins the tie.
 import { billNameNorm } from './normalise';
 
 export type Destiny = 'stock' | 'asset' | 'expense';
@@ -92,6 +98,44 @@ export function nameScore(names: Set<string>[], line: Set<string>): number {
   return Math.round(best * 1000) / 1000;
 }
 
+/** The words of a name, as matching sees them (normalised, split on anything but letters/digits). */
+export function words(s: string): string[] {
+  return billNameNorm(s)
+    .split(/[^\p{L}\p{M}\p{N}]+/u)
+    .filter(Boolean);
+}
+
+/** "seeds" = "seed": enough plural tolerance for names vs bill lines. */
+const stem = (w: string) => (w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w);
+
+const SIZE_WORDS = new Set(['g', 'gr', 'gm', 'kg', 'mg', 'ml', 'l', 'ltr', 'lt', 'pc', 'pcs', 'nos', 'pack', 'pkt', 'packet', 'x', 'pouch', 'bottle', 'tin', 'can', 'jar', 'bag']);
+/** Sizes and counts ("400g", "1kg", "2", "pack") are never brands. */
+const isSizeWord = (w: string) => /\p{N}/u.test(w) || SIZE_WORDS.has(w);
+
+/**
+ * Brand words learned from bill names: for a learned name whose product's name is inside it
+ * ("freelan mustard seeds 100g" → "Mustard seeds"), the 1–3 words left over that aren't sizes, have
+ * at least 3 letters and aren't a word of any product name ("powder" never becomes a brand).
+ */
+export function brandTokens(products: MatchProduct[], aliases: AliasRow[]): Set<string> {
+  const active = products.filter((p) => !p.archived);
+  const byId = new Map(active.map((p) => [p.id, p]));
+  const productWords = new Set(active.flatMap((p) => [...words(p.name), ...(p.name_si ? words(p.name_si) : [])].map(stem)));
+  const out = new Set<string>();
+  for (const a of aliases) {
+    const p = a.product_id ? byId.get(a.product_id) : undefined;
+    if (!p) continue;
+    const own = new Set(words(p.name).filter((w) => !isSizeWord(w)).map(stem));
+    const said = words(a.alias_norm);
+    const saidStems = new Set(said.map(stem));
+    if (!own.size || ![...own].every((w) => saidStems.has(w))) continue;
+    const left = said.filter((w) => !own.has(stem(w)) && !isSizeWord(w));
+    if (left.length < 1 || left.length > 3) continue;
+    for (const w of left) if (w.length >= 3 && /^\p{L}+$/u.test(w) && !productWords.has(stem(w))) out.add(w);
+  }
+  return out;
+}
+
 export interface Matcher {
   match(line: { raw_name: string; barcode?: string | null; categoryTop?: string | null }): Match;
 }
@@ -102,15 +146,28 @@ export function buildMatcher(opts: {
   barcodes: BarcodeRow[];
   /** Top-level category of a category id (to spot "Salted peanuts" ≠ the product "Salt"). */
   topOf?: (categoryId: string | null) => string | null;
+  /** Products a kitchen container (jar) holds: they win near-ties. */
+  heldProductIds?: ReadonlySet<string>;
 }): Matcher {
   const active = opts.products.filter((p) => !p.archived);
   const activeIds = new Set(active.map((p) => p.id));
   const byAlias = new Map(opts.aliases.map((a) => [a.alias_norm, a]));
   const byBarcode = new Map(opts.barcodes.map((b) => [b.barcode.trim(), b.product_id]));
-  // Every name a product is known by: its name, Sinhala name, and the bill names learned for it.
+  // Brand words are never a word of a product's name, so dropping them can't hurt any candidate.
+  const brands = brandTokens(opts.products, opts.aliases);
+  const unbranded = (s: string) => {
+    const ws = words(s);
+    const kept = ws.filter((w) => !brands.has(w));
+    return (kept.length ? kept : ws).join(' ');
+  };
+  // Every name a product is known by: its name, Sinhala name, and the bill names learned for it
+  // (without brand words).
   const names = new Map<string, Set<string>[]>(active.map((p) => [p.id, [trigrams(p.name), ...(p.name_si ? [trigrams(p.name_si)] : [])]]));
-  for (const a of opts.aliases) if (a.product_id && names.has(a.product_id)) names.get(a.product_id)!.push(trigrams(a.alias_norm));
+  for (const a of opts.aliases) {
+    if (a.product_id && names.has(a.product_id)) names.get(a.product_id)!.push(trigrams(unbranded(a.alias_norm)));
+  }
   const topOfProduct = new Map(active.map((p) => [p.id, opts.topOf?.(p.category_id) ?? null]));
+  const held = opts.heldProductIds;
 
   return {
     match({ raw_name, barcode, categoryTop }) {
@@ -129,18 +186,33 @@ export function buildMatcher(opts: {
         }
       }
 
-      const line = trigrams(raw_name);
+      const line = trigrams(unbranded(raw_name));
       const scored = [...names]
         .map(([productId, ns]) => ({ productId, score: nameScore(ns, line) }))
         .filter((s) => s.score >= 0.2)
         .sort((a, b) => b.score - a.score);
+
+      // A near-tie goes to the product a jar holds (if exactly one of the tied ones is in a jar).
+      let tieBroken = false;
+      const top = scored[0];
+      if (top && held?.size) {
+        const close = scored.filter((s) => top.score - s.score < AMBIGUOUS_GAP);
+        const inJar = close.filter((s) => held.has(s.productId));
+        const pick = inJar[0];
+        if (close.length > 1 && pick) {
+          scored.splice(scored.indexOf(pick), 1);
+          scored.unshift(pick);
+          tieBroken = inJar.length === 1;
+        }
+      }
+
       const suggestions = scored.slice(0, 3);
       const best = scored[0];
       if (!best || best.score < MAYBE_AT) return { ...NONE, suggestions };
 
       let confidence: Confidence = best.score >= CHECK_AT ? 'check' : 'maybe';
       const second = scored[1];
-      if (confidence === 'check' && second && best.score - second.score < AMBIGUOUS_GAP) confidence = 'maybe';
+      if (confidence === 'check' && !tieBroken && second && Math.abs(best.score - second.score) < AMBIGUOUS_GAP) confidence = 'maybe';
       const productTop = topOfProduct.get(best.productId) ?? null;
       if (confidence === 'check' && categoryTop && productTop && categoryTop !== productTop) confidence = 'maybe';
       return { productId: best.productId, destiny: null, via: 'name', score: best.score, confidence, suggestions };

@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -2164,6 +2164,7 @@ export type Database = {
           due_type: string
           household_id: string
           id: string
+          merged_into_id: string | null
           min_qty: number | null
           name: string
           name_si: string | null
@@ -2190,6 +2191,7 @@ export type Database = {
           due_type?: string
           household_id: string
           id?: string
+          merged_into_id?: string | null
           min_qty?: number | null
           name: string
           name_si?: string | null
@@ -2216,6 +2218,7 @@ export type Database = {
           due_type?: string
           household_id?: string
           id?: string
+          merged_into_id?: string | null
           min_qty?: number | null
           name?: string
           name_si?: string | null
@@ -2274,6 +2277,27 @@ export type Database = {
           {
             foreignKeyName: "product_household_id_parent_id_fkey"
             columns: ["household_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "product_merged_into_fk"
+            columns: ["household_id", "merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "product_merged_into_fk"
+            columns: ["household_id", "merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "product_merged_into_fk"
+            columns: ["household_id", "merged_into_id"]
             isOneToOne: false
             referencedRelation: "v_product_velocity"
             referencedColumns: ["household_id", "product_id"]
@@ -5128,6 +5152,10 @@ export type Database = {
       }
       rpc_nfc_tag_unlink: { Args: { p_id: string }; Returns: undefined }
       rpc_open: { Args: { p: Json }; Returns: Json }
+      rpc_product_merge: {
+        Args: { p_source: string; p_target: string }
+        Returns: Json
+      }
       rpc_product_to_thing: { Args: { p_product: string }; Returns: string }
       rpc_purchase: { Args: { p: Json }; Returns: Json }
       rpc_push_digest: { Args: { p_token: string }; Returns: Json }

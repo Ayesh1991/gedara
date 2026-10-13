@@ -659,6 +659,32 @@
     "niimbotHint": "Download a label and print it from the NIIMBOT app on a 20 × 20 mm label, without scaling. Each one is a sharp 1-bit image at the printer's 203 dpi. Printing straight from Gedara comes with the Pi station (Phase 6b)."
   },
   "pantry": {
+    "merge": {
+      "open": "Merge into…",
+      "title": "Merge “{{name}}” into…",
+      "intro": "For duplicates: a brand-name product a bill made (“Freelan Mustard Seeds”) and the one you keep (“Mustard seeds”, the one in your jar). Pick the product to keep.",
+      "search": "Search products",
+      "none": "No other product matches.",
+      "back": "Choose another product",
+      "moves": "Everything moves to {{target}}: stock and its history, prices, bill names, barcodes, pack sizes, shopping-list items, jars and labels. {{name}} is then archived.",
+      "stock": "Stock that moves:",
+      "convert": "converted to {{unit}}",
+      "irreversible": "This can't be undone.",
+      "confirm": "Merge into {{target}}",
+      "merging": "Merging…",
+      "done": "Merged into {{target}}",
+      "mergedInto": "This product was merged into {{target}}. Its stock, bill names and barcodes are there now.",
+      "goTo": "Open {{target}}",
+      "errors": {
+        "unit": "These two are counted in units that don't convert (for example pieces and grams). Add a pack size to one of them first.",
+        "container": "A jar still holds stock of this product. Try again.",
+        "same": "Pick a different product.",
+        "archived": "That product is archived, or this one was already merged.",
+        "variant": "A product can't be merged into its own sub-product, or a product with sub-products into a sub-product.",
+        "denied": "You can't change the pantry.",
+        "generic": "Couldn't merge. Check your connection and try again."
+      }
+    },
     "toThings": {
       "banner": "{{count}} products are in Things categories ({{categories}}). They belong in Things.",
       "banner_one": "{{count}} product is in a Things category ({{categories}}). It belongs in Things.",

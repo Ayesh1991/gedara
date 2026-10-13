@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   Copy,
   ListPlus,
+  Merge,
   PackageOpen,
   Pencil,
   Plus,
@@ -22,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CodeQr } from '@/components/places/PlaceVisuals';
 import { JournalList } from '@/components/pantry/JournalList';
+import { MergedIntoBanner, MergeProductSheet } from '@/components/pantry/MergeProduct';
 import { MoveToThingButton, isThingCategory } from '@/components/pantry/MoveToThings';
 import { ProductForm } from '@/components/pantry/ProductForm';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
@@ -118,6 +120,7 @@ function ProductPage() {
   const list = useShoppingList(householdId, false);
   const [sheet, setSheet] = useState<{ mode: StockMode; lot?: Lot | null } | null>(null);
   const [editing, setEditing] = useState(false);
+  const [merging, setMerging] = useState(false);
 
   const product = pantry.products.data?.find((p) => p.id === productId);
   const units = pantry.units.data;
@@ -181,6 +184,8 @@ function ProductPage() {
         <ChevronLeft className="h-4 w-4" aria-hidden />
         {t('nav.pantry')}
       </Link>
+
+      <MergedIntoBanner product={product} products={pantry.products.data ?? []} />
 
       <Card className="relative overflow-hidden p-0">
         <div className="grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -303,6 +308,9 @@ function ProductPage() {
             icon={Printer}
             onClick={() => void navigate({ to: '/places/labels', search: { products: product.id } })}
           />
+          {canWrite && !product.archived && (
+            <IconAction label={t('pantry.merge.open')} icon={Merge} onClick={() => setMerging(true)} />
+          )}
           {canWrite && inStock && (
             <IconAction label={t('pantry.actions.waste')} icon={Trash2} danger onClick={() => setSheet({ mode: 'waste' })} />
           )}
@@ -408,6 +416,17 @@ function ProductPage() {
           tree={pantry.tree}
         />
       )}
+      {merging && (
+        <MergeProductSheet
+          open
+          onClose={() => setMerging(false)}
+          householdId={householdId}
+          product={product}
+          products={pantry.products.data ?? []}
+          units={units}
+        />
+      )}
+
       <ProductForm
         open={editing}
         onClose={() => setEditing(false)}
