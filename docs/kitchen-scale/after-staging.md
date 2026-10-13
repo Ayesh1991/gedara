@@ -196,7 +196,7 @@ Do these **in this order** on the PC, in a terminal in the `gedara-handoff` fold
    2. **base: main** ← **compare: phase-6b** → **Create pull request**.
    3. Title: `Phase 6b Kitchen Scale Station` → **Create pull request**.
    4. **Merge pull request** → **Confirm merge**.
-5. [ ] Wait 2–3 minutes. Open **https://gedara.vercel.app**: the footer says **v0.7.5 · db 67**.
+5. [ ] Wait 2–3 minutes. Open **https://gedara.vercel.app**: the footer says **v0.7.6 · db 68**.
    **Settings → Diagnostics → Test connection** is all green.
 6. [ ] Real site → **Settings → Devices → Kitchen scales** → name `Kitchen scale` → **Add scale** →
    **copy** the key.

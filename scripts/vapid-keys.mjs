@@ -7,6 +7,7 @@
 // Running it again makes NEW keys: every device then has to turn notifications off and on again.
 import { execFileSync } from 'node:child_process';
 
+/** @type {Record<string, string>} */
 const refs = { staging: 'ebtvpsrehwdxepayqwma', prod: 'ltzlsxupcsamwtgqfejg' };
 const target = process.argv[2];
 if (!refs[target]) {
@@ -14,7 +15,7 @@ if (!refs[target]) {
   process.exit(2);
 }
 
-const b64url = (bytes) => Buffer.from(bytes).toString('base64url');
+const b64url = (/** @type {Uint8Array} */ bytes) => Buffer.from(bytes).toString('base64url');
 const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
 const publicKey = b64url(new Uint8Array(await crypto.subtle.exportKey('raw', pair.publicKey)));
 const privateKey = (await crypto.subtle.exportKey('jwk', pair.privateKey)).d;

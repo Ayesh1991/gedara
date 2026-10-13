@@ -10,7 +10,9 @@ import { config as loadEnv } from 'dotenv';
 
 loadEnv({ path: '.env.local', quiet: true });
 const base = (process.argv[2] ?? process.env.E2E_BASE_URL ?? 'http://localhost:4173').replace(/\/$/, '');
+/** @type {{ name: string; ok: boolean; detail: string }[]} */
 const results = [];
+/** @param {string} name @param {unknown} ok @param {string} [detail] */
 const check = (name, ok, detail = '') => results.push({ name, ok: Boolean(ok), detail });
 
 const browser = await chromium.launch({ channel: process.env.E2E_CHANNEL ?? 'chromium' });
@@ -35,8 +37,9 @@ try {
   check('Document language', head.lang, head.lang);
 
   const manifest = head.manifest ? await (await page.request.get(new URL(head.manifest, `${base}/`).href)).json() : {};
+  /** @type {{ src: string; sizes?: string; purpose?: string }[]} */
   const icons = manifest.icons ?? [];
-  const has = (size, purpose) => icons.some((i) => (i.sizes ?? '').split(' ').includes(size) && (!purpose || (i.purpose ?? '').includes(purpose)));
+  const has = (/** @type {string} */ size, /** @type {string} */ purpose = '') => icons.some((i) => (i.sizes ?? '').split(' ').includes(size) && (!purpose || (i.purpose ?? '').includes(purpose)));
   check('Manifest name + short_name', manifest.name && manifest.short_name, `${manifest.name} / ${manifest.short_name}`);
   check('start_url inside scope', manifest.start_url && new URL(manifest.start_url, base).href.startsWith(new URL(manifest.scope ?? '/', base).href), `${manifest.start_url} in ${manifest.scope}`);
   check('Display standalone', ['standalone', 'fullscreen', 'minimal-ui'].includes(manifest.display), manifest.display);
