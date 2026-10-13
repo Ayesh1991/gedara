@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.7 — Phase 7f: merge products, brand-aware bill matching
+- **Merge into…** on every product page: pick the product to keep ("Freelan Mustard Seeds" → "Mustard
+  seeds") and everything moves to it in one step — stock and its history, bill prices, learned bill
+  names (and the old name itself), barcodes, pack sizes, shopping-list items, jars, scale readings and
+  QR labels. The duplicate is archived and its page says "Merged into …" (old labels still lead there).
+  Same unit → lots and journal are re-pointed; another unit that converts (1 kg pack → g) → the stock is
+  moved into new lots in the kept product's unit; units that don't convert are refused. Can't be undone.
+- **Brand words**: once a bill name like "FREELAN MUSTARD SEEDS" was sent to "Mustard seeds", "freelan" is
+  known as a brand and ignored when matching, so "FREELAN CHILLI POWDER" proposes "Chilli powder" with more
+  confidence (still an amber "check" you approve). Learned from the bill names Gedara already remembers.
+- **Jars win near-ties**: when two products match a bill line almost equally, the one a kitchen jar holds
+  is proposed.
+- Migration 69 `product_merge` (`product.merged_into_id`, `rpc_product_merge`; the journal may only be
+  re-pointed by a merge; `rpc_undo` refuses a merge); schema_version 69.
+
 ## 0.7.6 — Phase 6b: the scale's log in Gedara
 - **Scale log** on each scale's page (Settings › Devices): the scale's own messages, live, last 7 days
   ("[SCALE] steady: 1000.2 g", "[NET] Wi-Fi lost …", "[BOOT] … restart reason", "[CAL] …", "[OTA] …").

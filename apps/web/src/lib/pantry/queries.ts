@@ -410,6 +410,35 @@ export function pantryErrorKey(e: unknown): PantryError {
   return 'generic';
 }
 
+// ── Merge two products (Phase 7f, rpc_product_merge) ─────────────────────────
+
+export interface MergeResult {
+  mode: 'repoint' | 'convert';
+  factor: number;
+  lots: number;
+  aliases: number;
+  barcodes: number;
+  containers: number;
+}
+
+/** Moves everything of `sourceId` to `targetId` and archives the source. Can't be undone. */
+export async function mergeProduct(sourceId: string, targetId: string): Promise<MergeResult> {
+  const { data, error } = await supabase.rpc('rpc_product_merge', { p_source: sourceId, p_target: targetId });
+  if (error) throw error;
+  return data as unknown as MergeResult;
+}
+
+export type MergeError = 'unit' | 'same' | 'archived' | 'variant' | 'container' | 'denied' | 'generic';
+
+export function mergeErrorKey(e: unknown): MergeError {
+  const err = e as { code?: string; details?: string } | null;
+  if (err?.code === 'GDUNT') return 'unit';
+  if (err?.code === 'GDCNE') return 'container';
+  if (err?.code === 'GDMRG') return err.details === 'same' || err.details === 'archived' || err.details === 'variant' ? err.details : 'generic';
+  if (err?.code === '42501') return 'denied';
+  return 'generic';
+}
+
 /** For GDSTK: how much there actually is (stock units), from the error's DETAIL. */
 export function availableQty(e: unknown): number | null {
   const d = (e as { details?: string } | null)?.details;

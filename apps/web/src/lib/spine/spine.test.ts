@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ScannedBillSchema, scannedToImport, toRpcBill } from '../money/billSchema';
 import type { CategoryRow } from '../money/categoriesMap';
 import type { Unit, UnitMap } from '../pantry/units';
-import { buildMatcher, containment, nameScore, similarity, trigrams, type Match } from './match';
+import { brandTokens, buildMatcher, containment, nameScore, similarity, trigrams, type Match } from './match';
 import { billNameNorm } from './normalise';
 import { defaultQtyUnit, initialRoute, isBlocking, isUnresolved, routeProblem, stockPreview, toRpcRoute, unitByText, withProduct, type LineRoute, type RouteLine } from './route';
 import { splitList } from './shopping';
@@ -101,6 +101,74 @@ describe('matching', () => {
       barcodes: [],
     });
     expect(m2.match({ raw_name: 'Keeri samba rice 5kg' }).confidence).toBe('maybe');
+  });
+});
+
+// ── Brands and jars (Phase 7f) ────────────────────────────────────────────────
+describe('brand words', () => {
+  const spices = [
+    { id: 'p-mus', name: 'Mustard seeds', name_si: null, archived: false, category_id: 'c-spices' },
+    { id: 'p-chp', name: 'Chilli powder', name_si: null, archived: false, category_id: 'c-spices' },
+    { id: 'p-cur', name: 'Curry powder', name_si: null, archived: false, category_id: 'c-spices' },
+    { id: 'p-cum', name: 'Cumin seeds', name_si: null, archived: false, category_id: 'c-spices' },
+    { id: 'p-chi', name: 'Chilli', name_si: null, archived: false, category_id: 'c-spices' },
+  ];
+  const learned = [{ alias_norm: 'freelan mustard seeds 100g', product_id: 'p-mus', destiny: 'stock' }];
+  const withBrands = buildMatcher({ products: spices, aliases: learned, barcodes: [] });
+  const without = buildMatcher({ products: spices, aliases: [], barcodes: [] });
+
+  it('learns the words left over when a product name is inside a learned bill name', () => {
+    expect([...brandTokens(spices, learned)]).toEqual(['freelan']);
+  });
+  it('sizes, short words and words of product names are never brands', () => {
+    const tokens = brandTokens(spices, [
+      { alias_norm: 'mc chilli powder 250g pkt', product_id: 'p-chi', destiny: 'stock' },
+      { alias_norm: 'mustard seeds 2x50g', product_id: 'p-mus', destiny: 'stock' },
+    ]);
+    expect(tokens.size).toBe(0);
+  });
+  it('needs the whole product name inside the bill name (plurals allowed)', () => {
+    expect([...brandTokens(spices, [{ alias_norm: 'freelan mustard seed', product_id: 'p-mus', destiny: 'stock' }])]).toEqual(['freelan']);
+    expect(brandTokens(spices, [{ alias_norm: 'freelan mustard', product_id: 'p-mus', destiny: 'stock' }]).size).toBe(0);
+    expect(brandTokens(spices, [{ alias_norm: 'a b c d mustard seeds', product_id: 'p-mus', destiny: 'stock' }]).size).toBe(0);
+  });
+  it('a product named with the word keeps it from being a brand', () => {
+    const mix = [...spices, { id: 'p-mix', name: 'Freelan mix', name_si: null, archived: false, category_id: null }];
+    expect(brandTokens(mix, learned).size).toBe(0);
+  });
+  it('ignores a known brand: FREELAN CHILLI POWDER → Chilli powder, more sure', () => {
+    const m = withBrands.match({ raw_name: 'FREELAN CHILLI POWDER 250G' });
+    const before = without.match({ raw_name: 'FREELAN CHILLI POWDER 250G' });
+    expect([m.productId, m.via, m.confidence]).toEqual(['p-chp', 'name', 'check']);
+    expect(m.score).toBeGreaterThan(before.score);
+  });
+  it("the brand in a learned name doesn't pull other products of that brand", () => {
+    const m = withBrands.match({ raw_name: 'FREELAN CUMIN SEEDS 100G' });
+    expect([m.productId, m.confidence]).toEqual(['p-cum', 'check']);
+    expect(m.suggestions.find((s) => s.productId === 'p-mus')?.score ?? 0).toBeLessThan(m.score - 0.1);
+  });
+  it('a learned name is still sure, brand and all', () => {
+    expect(withBrands.match({ raw_name: 'Freelan Mustard Seeds 100g' }).confidence).toBe('sure');
+  });
+});
+
+describe('jars win near-ties', () => {
+  const rice = [
+    { id: 'a', name: 'Rice keeri samba', name_si: null, archived: false, category_id: null },
+    { id: 'b', name: 'Rice samba keeri', name_si: null, archived: false, category_id: null },
+  ];
+  it('the product a container holds is picked (still only "check")', () => {
+    const m = buildMatcher({ products: rice, aliases: [], barcodes: [], heldProductIds: new Set(['b']) }).match({ raw_name: 'Keeri samba rice 5kg' });
+    expect([m.productId, m.confidence]).toEqual(['b', 'check']);
+    expect(m.suggestions[0]?.productId).toBe('b');
+  });
+  it('two tied products both in jars stay a suggestion', () => {
+    const m = buildMatcher({ products: rice, aliases: [], barcodes: [], heldProductIds: new Set(['a', 'b']) }).match({ raw_name: 'Keeri samba rice 5kg' });
+    expect(m.confidence).toBe('maybe');
+  });
+  it('a clear winner is not overruled by a jar', () => {
+    const m = buildMatcher({ products, aliases: [], barcodes: [], heldProductIds: new Set(['p-coco']) }).match({ raw_name: 'Anchor Hot Chocolate' });
+    expect(m.productId).toBe('p-choc');
   });
 });
 

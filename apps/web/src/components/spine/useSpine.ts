@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { usePantry } from '@/components/pantry/bits';
 import { topOf, type CategoryRow } from '@/lib/money/categoriesMap';
 import type { Product } from '@/lib/pantry/queries';
+import { containersQuery } from '@/lib/scale/queries';
 import { buildMatcher } from '@/lib/spine/match';
 import { aliasesQuery } from '@/lib/spine/queries';
 import { initialRoute, isDestiny, type LineRoute, type RouteLine } from '@/lib/spine/route';
@@ -19,10 +20,13 @@ export interface RouterLine extends RouteLine {
 export function useSpineData(householdId: string) {
   const pantry = usePantry(householdId);
   const aliases = useQuery(aliasesQuery(householdId));
+  // Kitchen jars: the product a jar holds wins a near-tie (not required to route).
+  const containers = useQuery(containersQuery(householdId));
   return {
     ...pantry,
     householdId,
     aliases,
+    containers,
     ready: pantry.ready && pantry.categories.isSuccess && aliases.isSuccess && pantry.barcodes.isSuccess,
   };
 }
@@ -39,6 +43,7 @@ export function useProposals(lines: RouterLine[], data: SpineData): Map<string, 
   const categories = data.categories.data;
   const aliases = data.aliases.data;
   const barcodes = data.barcodes.data;
+  const containers = data.containers.data;
   return useMemo(() => {
     const out = new Map<string, LineRoute>();
     if (!products || !categories || !aliases || !barcodes) return out;
@@ -47,6 +52,7 @@ export function useProposals(lines: RouterLine[], data: SpineData): Map<string, 
       aliases,
       barcodes,
       topOf: (id) => topOf(categories, id)?.id ?? null,
+      heldProductIds: new Set((containers ?? []).flatMap((c) => (c.holds_product_id ? [c.holds_product_id] : []))),
     });
     const byId = new Map<string, Product>(products.map((p) => [p.id, p]));
     for (const l of lines) {
@@ -54,5 +60,5 @@ export function useProposals(lines: RouterLine[], data: SpineData): Map<string, 
       out.set(l.key, initialRoute(l, m, categoryDestiny(categories, l.category_id), byId));
     }
     return out;
-  }, [lines, products, categories, aliases, barcodes]);
+  }, [lines, products, categories, aliases, barcodes, containers]);
 }
