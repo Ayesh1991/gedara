@@ -44,12 +44,10 @@ if systemctl list-unit-files cups-browsed.service >/dev/null 2>&1; then
   systemctl disable --now cups-browsed >/dev/null 2>&1 && ok "cups-browsed off (no extra queues)"
 fi
 
-# The login user may use the CUPS web page (http://<pi>:631) to look at queues.
-if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ]; then usermod -aG lpadmin "$SUDO_USER"; fi
-
 # ── 2. CUPS settings ──────────────────────────────────────────────────────────
 say "2/7 CUPS: share on the home network only"
-cupsctl --share-printers --remote-admin --no-remote-any --no-user-cancel-any \
+# Printing is shared; administration stays on the Pi itself (setup.sh over SSH does it).
+cupsctl --share-printers --no-remote-admin --no-remote-any --no-user-cancel-any \
   PreserveJobFiles=No PreserveJobHistory=86400 MaxJobs=200 || die "cupsctl failed"
 # cupsctl normally switches "Listen localhost:631" to "Port 631"; make sure.
 if ! grep -qE '^(Port 631|Listen (\*|0\.0\.0\.0):631)' /etc/cups/cupsd.conf; then

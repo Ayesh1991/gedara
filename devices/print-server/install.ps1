@@ -130,7 +130,9 @@ if (-not ($ip -match '^\d+\.\d+\.\d+\.\d+$')) { Fail "'$ip' is not an IP address
 if (-not (Test-Connection -ComputerName $ip -Count 2 -Quiet)) { Fail "the Pi at $ip doesn't answer. Is it powered, and on the network cable / Wi-Fi? Wait 3 minutes after power-on." }
 Ok "the Pi answers at $ip"
 
-$sshOpts = @('-o', "UserKnownHostsFile=$KnownHosts", '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10')
+# The Pi's identity is remembered under the name "gedara-print", not under its IP: if the address
+# changes, ssh still checks it is the same Pi and refuses another device (-Reflashed forgets it).
+$sshOpts = @('-o', "UserKnownHostsFile=$KnownHosts", '-o', 'HostKeyAlias=gedara-print', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10')
 $sshKeyOpts = @('-i', $Key, '-o', 'IdentitiesOnly=yes') + $sshOpts
 $target = "$User@$ip"
 
