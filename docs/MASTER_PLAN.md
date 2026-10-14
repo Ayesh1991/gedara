@@ -618,7 +618,7 @@ live, outbox queue length, and a **"Test beep + ping"** button.
 
 | Printer | Use for | How it's driven |
 |---|---|---|
-| **Epson L3110** (owned) | Bulk sheets: **54 QR labels per A4 (6 rows × 9 columns)**, printed on A4 sticker paper for boxes, shelves, rooms, drawers | Browser prints a `pdf-lib` PDF. The grid template is configurable (rows, columns, margins, cell size) with a **calibration test page**, because inkjet feed offsets vary |
+| **Epson L3110** (owned; on the network through the Pi print server since Phase 7g, `docs/print-server`) | Bulk sheets: **54 QR labels per A4 (6 rows × 9 columns)**, printed on A4 sticker paper for boxes, shelves, rooms, drawers | Browser prints a `pdf-lib` PDF. The grid template is configurable (rows, columns, margins, cell size) with a **calibration test page**, because inkjet feed offsets vary |
 | **NIIMBOT B1** (recommended purchase) | One-off die-cut adhesive labels made on the spot: new jar, new asset, a freezer bag with a date | **Pi print service** using the open-source `niimprint` Python library (B1 via USB or Bluetooth). The web app sends a print job → Edge Function → Realtime → Pi prints. Fallback: download a PNG and print it from the NIIMBOT phone app |
 | EM5822 58 mm receipt printer (not recommended as the label printer) | Only if you want printed shopping lists or a weekly "use these first" slip | ESC/POS over serial from the Pi/ESP32 — simple, but prints on a continuous roll with no die-cut labels and no gap sensing |
 
@@ -736,6 +736,7 @@ version badge bumped, a short `CHANGELOG.md` entry.
 | **7d Place types + categories** (v0.7.3, 2026-09-28) | Cupboard / rack / file kinds, the household's own place types (`place_type`), "+ New category…" in every picker, hybrid native + zxing QR decoding on Android | The printed Kitchen label reads on Android; a blank label becomes a "Tool wall" of your own |
 | **7e Books are Things** (v0.7.4, 2026-09-28) | `asset_barcode` (ISBN on Things, copies share one), "Move to Things" (`rpc_product_to_thing`), New thing from an unknown barcode, Things-category guard in the product form, fill never stops for stockless products | Didula's 27 books moved to Things with their QR labels; Rack 1 filled by scanning them one after another |
 | **7f Merge & brands** (v0.7.7, 2026-10-13) | `product.merged_into_id`, `rpc_product_merge` (stock re-pointed or converted, bill names, barcodes, pack sizes, list, jars, labels move; source archived), brand words learned from `product_alias` in `lib/spine/match.ts`, jars win near-ties | "Freelan Mustard Seeds" merged into "Mustard seeds"; the Mustard jar refills from all of it; "FREELAN CHILLI POWDER" proposes "Chilli powder" |
+| **7g Print server** (no app version, 2026-10-14) | Raspberry Pi 2 shares the Epson L3110: CUPS queue `L3110` (ESC/P-R, shared, AirPrint/IPP Everywhere) for phones, `L3110_raw` behind port 9100 for the PC's own Epson driver; `devices/print-server` (`install.ps1` on the PC, `setup.sh`/`status.sh` on the Pi), docs in `docs/print-server` | Word/PDF print from the PC on "EPSON L3110 (Gedara Pi)" with the Epson Properties; a Gedara label PDF prints from the iPhone and from Android with the PC off |
 
 **Rules for Claude Code on every phase** (put these in the repo's `CLAUDE.md`):
 1. Never edit stock or balances directly — only via RPCs / movements.
