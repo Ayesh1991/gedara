@@ -203,7 +203,7 @@ async function run(job: Job): Promise<void> {
         continue;
       }
       if (error) throw error;
-      const begun = data as { status: 'new' | 'duplicate'; id: string; inbox_path?: string };
+      const begun = data as unknown as { status: 'new' | 'duplicate'; id: string; inbox_path?: string };
       if (begun.status === 'duplicate') return patch(job, { status: 'duplicate', trackId: begun.id, progress: 1 });
 
       patch(job, { status: 'uploading', trackId: begun.id, progress: 0 });

@@ -167,7 +167,8 @@ export interface SyncReply {
 export function sniffAudio(head: Uint8Array): MediaMime | null {
   const at = (s: string, off = 0) => [...s].every((c, i) => head[off + i] === c.charCodeAt(0));
   if (at('ID3')) return 'audio/mpeg';
-  if (head.length >= 2 && head[0] === 0xff && (head[1] & 0xe0) === 0xe0 && (head[1] & 0x06) !== 0) {
+  const b1 = head[1] ?? 0;
+  if (head.length >= 2 && head[0] === 0xff && (b1 & 0xe0) === 0xe0 && (b1 & 0x06) !== 0) {
     // MPEG audio frame sync (layer bits not "reserved"); ADTS AAC (layer 00) is not accepted as MP3.
     return 'audio/mpeg';
   }

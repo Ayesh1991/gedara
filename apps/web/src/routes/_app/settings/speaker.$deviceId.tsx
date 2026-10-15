@@ -49,7 +49,8 @@ function SettingsForm({ speaker, canWrite }: { speaker: Speaker; canWrite: boole
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [name, setName] = useState(speaker.name);
-  const [s, setS] = useState<SpeakerSettings>({ volume_max: 80, fade_s: 8, normalise: true, ...speaker.settings });
+  // Defaults for keys an older speaker row may not have.
+  const [s, setS] = useState<SpeakerSettings>({ ...{ volume_max: 80, fade_s: 8, normalise: true }, ...speaker.settings });
   const [busy, setBusy] = useState(false);
   async function save(e: FormEvent) {
     e.preventDefault();

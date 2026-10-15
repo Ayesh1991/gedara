@@ -416,8 +416,16 @@ export async function deleteSchedule(id: string) {
 /** Bit 0 = Monday … bit 6 = Sunday. */
 export const DAY_BITS = [1, 2, 4, 8, 16, 32, 64] as const;
 
+export type MediaErrorKey =
+  | 'music.errors.inboxFull'
+  | 'music.errors.slowDown'
+  | 'music.errors.wrongCode'
+  | 'music.errors.notAllowed'
+  | 'music.errors.rejected'
+  | 'music.errors.generic';
+
 /** The i18n key for an error from these RPCs. */
-export function mediaErrorKey(e: unknown): string {
+export function mediaErrorKey(e: unknown): MediaErrorKey {
   const code = (e as { code?: string } | null)?.code;
   if (code === 'GDMQF') return 'music.errors.inboxFull';
   if (code === 'GDRTE') return 'music.errors.slowDown';
