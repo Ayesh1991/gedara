@@ -94,12 +94,13 @@ export const SyncRequest = z.object({
   pc_added: z.array(FolderSong).max(20).optional(),
   pc_removed: z.array(DeviceFile).max(100).optional(),
   played: z.array(z.object({ id: uuid, at_ms: ms })).max(20).optional(),
-  art: z.array(z.object({ id: uuid, art_path: z.string().max(200) })).max(20).optional(),
+  art: z.array(z.object({ sha256, art_path: z.string().max(200) })).max(20).optional(),
   known: z.object({ settings_v: z.string().max(20).nullable(), schedules_v: z.string().max(64).nullable() }).partial().optional(),
 });
 export type SyncRequest = z.infer<typeof SyncRequest>;
 
-export const ArtUpload = z.object({ action: z.literal('art_upload'), id: uuid });
+/** A cover for a folder song, by the song's sha256 (the Pi doesn't know Gedara's ids). */
+export const ArtUpload = z.object({ action: z.literal('art_upload'), sha256 });
 
 /** A song the speaker should play, as the file on its card. */
 export const QueueSong = z.object({ id: uuid, file: z.string() });

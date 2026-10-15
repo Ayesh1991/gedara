@@ -350,11 +350,11 @@ begin
    where t.device_id = v_dev.id and t.source = 'pc'
      and t.device_file in (select x from jsonb_array_elements_text(coalesce(p -> 'pc_removed', '[]')) x);
 
-  -- Cover art it uploaded for folder songs.
+  -- Cover art it uploaded for folder songs (by the song's sha256: the Pi doesn't know Gedara's ids).
   for v_e in select value from jsonb_array_elements(coalesce(p -> 'art', '[]')) loop
     update public.media_track t set art_path = left(v_e ->> 'art_path', 200), updated_at = now()
-     where t.id = (v_e ->> 'id')::uuid and t.device_id = v_dev.id
-       and (v_e ->> 'art_path') like v_dev.household_id::text || '/%';
+     where t.sha256 = lower(v_e ->> 'sha256') and t.device_id = v_dev.id
+       and (v_e ->> 'art_path') like v_dev.household_id::text || '/%' and (v_e ->> 'art_path') not like '%..%';
   end loop;
 
   -- Songs it finished playing (or played for 30 s).

@@ -199,13 +199,15 @@ async function artUpload(db: SupabaseClient, keyHash: string, raw: unknown): Pro
   const { data: who, error } = await db.rpc('rpc_media_pair_poll', { p_token_hash: keyHash });
   const me = who as { status: string; device_id?: string } | null;
   if (error || me?.status !== 'paired') return json({ ok: false, error: 'unauthorized' }, 401);
+  const sha = parsed.data.sha256.toLowerCase();
   const { data: track } = await db
     .from('media_track')
     .select('household_id, device_id')
-    .eq('id', parsed.data.id)
+    .eq('device_id', me.device_id ?? '')
+    .eq('sha256', sha)
     .maybeSingle();
-  if (!track || track.device_id !== me.device_id) return json({ ok: false, error: 'rejected' }, 400);
-  const path = `${track.household_id}/pc-${parsed.data.id}.webp`;
+  if (!track) return json({ ok: false, error: 'rejected' }, 400);
+  const path = `${track.household_id}/pc-${sha.slice(0, 32)}.webp`;
   const { data: up, error: ue } = await db.storage.from('media-art').createSignedUploadUrl(path, { upsert: true });
   if (ue || !up) return json({ ok: false, error: 'server' }, 500);
   return json({ ok: true, fn_version: FN_VERSION, path, url: up.signedUrl });
