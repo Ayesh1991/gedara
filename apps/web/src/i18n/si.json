@@ -2824,6 +2824,10 @@
       "inProgress": "එක් කෙරෙමින්",
       "done": "එක් කළා",
       "clear": "ලැයිස්තුව හිස් කරන්න",
+      "shared": "Gedara වෙත බෙදා ගත්: {{name}} සඳහා ගීත {{count}}ක්",
+      "shared_one": "Gedara වෙත බෙදා ගත්: {{name}} සඳහා ගීත 1ක්",
+      "addShared": "ගීත {{count}}ක් එක් කරන්න",
+      "addShared_one": "ගීත 1ක් එක් කරන්න",
       "pcFolder": "PC එකේ File Explorer හි “Gedara Music” ෆෝල්ඩරයට (ස්ථාපකය සකසයි) ගීත ඇදලාද දැමිය හැක. ඒවා ආවරණ සමඟ ඉබේම මෙහි පෙනේ.",
       "status": {
         "checking": "ගොනුව කියවමින්…",

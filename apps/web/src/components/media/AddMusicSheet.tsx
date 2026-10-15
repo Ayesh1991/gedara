@@ -64,12 +64,15 @@ function Row({ item }: { item: UploadItem }) {
   );
 }
 
-export function AddMusicSheet({ open, onClose, deviceId, householdId, speakerName }: {
+export function AddMusicSheet({ open, onClose, deviceId, householdId, speakerName, shared = [], onSharedAdded }: {
   open: boolean;
   onClose: () => void;
   deviceId: string;
   householdId: string;
   speakerName: string;
+  /** Songs shared to Gedara (Android): shown first, uploaded only after "Add". */
+  shared?: File[];
+  onSharedAdded?: () => void;
 }) {
   const { t } = useTranslation();
   const uploads = useUploads();
@@ -80,6 +83,19 @@ export function AddMusicSheet({ open, onClose, deviceId, householdId, speakerNam
 
   return (
     <Sheet open={open} onClose={onClose} title={t('music.add.title')}>
+      {shared.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-3xl border border-accent-b/40 bg-[color-mix(in_srgb,var(--accent-b)_8%,transparent)] p-4">
+          <p className="text-[14.5px]">{t('music.add.shared', { count: shared.length, name: speakerName })}</p>
+          <ul className="max-h-32 overflow-y-auto text-[13px] text-muted">
+            {shared.map((f, i) => (
+              <li key={`${f.name}-${i}`} className="truncate">{f.name}</li>
+            ))}
+          </ul>
+          <Button variant="primary" onClick={onSharedAdded}>
+            {t('music.add.addShared', { count: shared.length })}
+          </Button>
+        </div>
+      )}
       <div
         onDragOver={(e) => {
           e.preventDefault();

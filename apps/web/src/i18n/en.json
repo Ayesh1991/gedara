@@ -2764,6 +2764,10 @@
       "inProgress": "Adding",
       "done": "Added",
       "clear": "Clear the list",
+      "shared": "Shared to Gedara: {{count}} songs for {{name}}",
+      "shared_one": "Shared to Gedara: 1 song for {{name}}",
+      "addShared": "Add {{count}} songs",
+      "addShared_one": "Add 1 song",
       "pcFolder": "On the PC you can also drag songs into the “Gedara Music” folder in File Explorer (set up by the installer). They appear here by themselves, with their covers.",
       "status": {
         "checking": "Reading the file…",

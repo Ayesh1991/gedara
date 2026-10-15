@@ -69,16 +69,18 @@ function MusicPage() {
   const view = useSpeaker(householdId);
   const playlists = useQuery(playlistsQuery(householdId));
   const [adding, setAdding] = useState(false);
+  const [shareFiles, setShareFiles] = useState<File[]>([]);
 
-  // Android Share → Gedara: the service worker kept the files; queue them for this speaker.
+  // Android Share → Gedara: the service worker kept the files; they upload only after a tap on
+  // "Add" in the sheet (nothing is sent just because a page opened this address).
   useEffect(() => {
-    if (!shared || !view.speaker || !canWrite) return;
+    if (!shared || !canWrite) return;
     void takeSharedAudio().then((files) => {
       if (!files.length) return;
-      addFiles(files, view.speaker!.id, householdId);
+      setShareFiles(files);
       setAdding(true);
     });
-  }, [shared, view.speaker, canWrite, householdId]);
+  }, [shared, canWrite]);
 
   const header = (
     <div className="flex flex-wrap items-center gap-3">
@@ -171,7 +173,21 @@ function MusicPage() {
       )}
 
       {adding && (
-        <AddMusicSheet open onClose={() => setAdding(false)} deviceId={view.speaker.id} householdId={householdId} speakerName={view.speaker.name} />
+        <AddMusicSheet
+          open
+          onClose={() => {
+            setAdding(false);
+            setShareFiles([]);
+          }}
+          deviceId={view.speaker.id}
+          householdId={householdId}
+          speakerName={view.speaker.name}
+          shared={shareFiles}
+          onSharedAdded={() => {
+            addFiles(shareFiles, view.speaker!.id, householdId);
+            setShareFiles([]);
+          }}
+        />
       )}
     </div>
   );

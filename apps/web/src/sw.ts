@@ -114,6 +114,12 @@ const AUDIO_NAME = /\.(mp3|m4a|aac|flac|ogg|opus|wav)$/i;
 registerRoute(
   ({ url, request }) => url.origin === self.location.origin && url.pathname === '/share-target' && request.method === 'POST',
   async ({ request }) => {
+    // A real share comes from the phone's share sheet (no initiator: "none"). A form on another
+    // website posting here is cross-site: ignore it, so no page can push files into Gedara.
+    const site = request.headers.get('sec-fetch-site');
+    if (site && site !== 'none' && site !== 'same-origin') {
+      return Response.redirect(new URL('/', self.registration.scope).href, 303);
+    }
     let text: string;
     try {
       const form = await request.formData();
