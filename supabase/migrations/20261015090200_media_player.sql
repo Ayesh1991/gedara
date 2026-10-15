@@ -410,7 +410,13 @@ begin
            'id', s.id, 'name', s.name, 'days', s.days, 'start', to_char(s.start_time, 'HH24:MI'),
            'volume', least(s.volume, coalesce((v_dev.settings ->> 'volume_max')::integer, 100)),
            'stop_after_min', s.stop_after_min, 'fade_s', s.fade_s, 'shuffle', s.shuffle,
-           'tracks', case when s.playlist_id is null then null else
+           -- No playlist = the whole library (up to 500 songs; the Pi shuffles them if asked).
+           'tracks', case when s.playlist_id is null then
+                       private.media_queue(v_dev.id, (select coalesce(array_agg(t.id order by t.created_at), '{}')
+                                                        from (select t2.id, t2.created_at from public.media_track t2
+                                                               where t2.device_id = v_dev.id and t2.state = 'ready'
+                                                               order by t2.created_at limit 500) t))
+                     else
                        private.media_queue(v_dev.id, (select coalesce(array_agg(i.track_id order by i.position), '{}')
                                                         from public.media_playlist_item i where i.playlist_id = s.playlist_id)) end)
            order by s.start_time), '[]')
