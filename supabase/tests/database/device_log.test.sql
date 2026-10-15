@@ -42,14 +42,14 @@ select throws_ok(format($$select rpc_scale_log(%L, 1, 1, (select jsonb_agg(jsonb
 reset role;
 select is((select count(*)::int from device_log where household_id = '00000000-0000-0000-0000-0000000f6eaa'), 2, 'lines are in A');
 select ok((select at between now() - interval '2 seconds' and now() - interval '0.5 seconds' from device_log
-            where line like '[SCALE]%'), 'the time comes from the scale''s uptime (1 s ago)');
-select is((select at from device_log where line like '[NET]%'), now(), 'an uptime from the future means "now"');
+            where household_id = '00000000-0000-0000-0000-0000000f6eaa' and line like '[SCALE]%'), 'the time comes from the scale''s uptime (1 s ago)');
+select is((select at from device_log where household_id = '00000000-0000-0000-0000-0000000f6eaa' and line like '[NET]%'), now(), 'an uptime from the future means "now"');
 insert into device_log (household_id, device_id, at, line)
   values ('00000000-0000-0000-0000-0000000f6eaa', (select id from device where name = 'Scale A'), now() - interval '8 days', 'old');
 set local role service_role;
 select lives_ok(format($$select rpc_scale_log(%L, 7, 1000, '[{"t":1000,"m":"next"}]')$$, pg_temp.h('a')), 'another line');
 reset role;
-select is((select count(*)::int from device_log where line = 'old'), 0, 'lines older than 7 days are pruned');
+select is((select count(*)::int from device_log where household_id = '00000000-0000-0000-0000-0000000f6eaa' and line = 'old'), 0, 'lines older than 7 days are pruned');
 
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f6f01","role":"authenticated"}';

@@ -92,14 +92,14 @@ insert into t_c values ('s1', pg_temp.sync(jsonb_build_object('events', jsonb_bu
 select is(pg_temp.res('s1') ->> 'status', 'no_change', '812 g in an 812 g jar: no change');
 select is((pg_temp.res('s1') ->> 'left_g')::numeric, 812.0, '… 812 g left');
 select is((select v -> 'acked' from t_c where k = 's1'), '[1]'::jsonb, 'reading 1 acked');
-select is((select live_state || ' ' || round(live_gross_g) from device), 'stable 1212', 'the live state is on the device row');
+select is((select live_state || ' ' || round(live_gross_g) from device where household_id = '00000000-0000-0000-0000-0000000f6daa'), 'stable 1212', 'the live state is on the device row');
 
 insert into t_c values ('s2', pg_temp.sync(jsonb_build_object('events', jsonb_build_array(pg_temp.ev(2, 1188, p_ago => '80 seconds')))));
 select is(pg_temp.res('s2') ->> 'status', 'consumed', 'two spoons out: consumed');
 select is((pg_temp.res('s2') ->> 'delta_g')::numeric, -24.0, '… Sugar −24 g');
 select is(pg_temp.res('s2') ->> 'name', 'Sugar', '… named for the device');
 select is(pg_temp.jar('00000000-0000-0000-0000-00000000c6d1'), 788::numeric, 'the jar holds 788 g');
-select is((select note from stock_movement where reason = 'consume'), 'Kitchen scale', 'the journal says where it came from');
+select is((select note from stock_movement where household_id = '00000000-0000-0000-0000-0000000f6daa' and reason = 'consume'), 'Kitchen scale', 'the journal says where it came from');
 
 insert into t_c values ('s2r', pg_temp.sync(jsonb_build_object('events', jsonb_build_array(pg_temp.ev(2, 1188, p_ago => '80 seconds')))));
 select is((pg_temp.res('s2r') ->> 'replayed')::boolean, true, 'the same epoch + seq replays');
@@ -127,22 +127,22 @@ select is((select count(*)::int from stock_movement where reason = 'transfer_in'
 insert into t_c values ('s7', pg_temp.sync(jsonb_build_object('events', jsonb_build_array(pg_temp.ev(7, 400 + 1268 + 200, p_ago => '10 seconds')))));
 select is(pg_temp.res('s7') ->> 'status', 'needs_decision', '200 g heavier with nothing left elsewhere: ask');
 select is((pg_temp.res('s7') ->> 'pending_g')::numeric, 200.0, '… 200 g to decide');
-select is((select count(*)::int from scale_reading where status = 'needs_decision'), 1, '… one open question');
+select is((select count(*)::int from scale_reading where household_id = '00000000-0000-0000-0000-0000000f6daa' and status = 'needs_decision'), 1, '… one open question');
 
 reset role;
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f6d01","role":"authenticated"}';
 select ok(exists (select 1 from attention_feed('00000000-0000-0000-0000-0000000f6daa') a where a.kind = 'scale_decision'),
   'the question is in the Attention feed');
-select throws_ok($$select rpc_scale_decide((select id from scale_reading where status = 'needs_decision'), 'transfer')$$,
+select throws_ok($$select rpc_scale_decide((select id from scale_reading where household_id = '00000000-0000-0000-0000-0000000f6daa' and status = 'needs_decision'), 'transfer')$$,
   'GDSTK', null, 'Move from pantry: nothing there');
-select is(rpc_scale_decide((select id from scale_reading where status = 'needs_decision'), 'later') ->> 'status', 'needs_decision',
+select is(rpc_scale_decide((select id from scale_reading where household_id = '00000000-0000-0000-0000-0000000f6daa' and status = 'needs_decision'), 'later') ->> 'status', 'needs_decision',
   'Later keeps the question');
-insert into t_c values ('d1', rpc_scale_decide((select id from scale_reading where status = 'needs_decision'), 'adjust'));
+insert into t_c values ('d1', rpc_scale_decide((select id from scale_reading where household_id = '00000000-0000-0000-0000-0000000f6daa' and status = 'needs_decision'), 'adjust'));
 select is((select v ->> 'status' from t_c where k = 'd1'), 'decided', 'Count correction decides it');
 select is(pg_temp.jar('00000000-0000-0000-0000-00000000c6d1'), 1468::numeric, '… the jar holds what it weighs');
 select is((select count(*)::int from stock_movement where reason = 'adjust'), 1, '… as one adjust movement');
-select throws_ok($$select rpc_scale_decide((select id from scale_reading where status = 'decided'), 'adjust')$$,
+select throws_ok($$select rpc_scale_decide((select id from scale_reading where household_id = '00000000-0000-0000-0000-0000000f6daa' and status = 'decided'), 'adjust')$$,
   'GDDEC', null, 'a decided reading can''t be decided again');
 
 -- ── A newer change in the app wins over an older queued reading ──────────────
@@ -172,7 +172,7 @@ select is((select location_id from nfc_tag where uid = '04BBBBBBBBBBBB'), '00000
 reset role;
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f6d01","role":"authenticated"}';
-select lives_ok($$select rpc_scale_decide((select id from scale_reading where status = 'needs_decision'), 'adjust')$$,
+select lives_ok($$select rpc_scale_decide((select id from scale_reading where household_id = '00000000-0000-0000-0000-0000000f6daa' and status = 'needs_decision'), 'adjust')$$,
   'count correction for the rice');
 select is(pg_temp.jar('00000000-0000-0000-0000-00000000c6d2'), 2.0000::numeric, 'rice is counted in kg: 2 kg');
 select ok(exists (select 1 from attention_feed('00000000-0000-0000-0000-0000000f6daa') a where a.kind = 'scale_new_tag'),
@@ -221,11 +221,11 @@ select is((select (v ->> 'poll_ms')::int from t_c where k = 's18'), 30000, 'idle
 reset role;
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f6d01","role":"authenticated"}';
-select throws_ok($$select rpc_device_update((select id from device), '{"settings":{"volume":150}}')$$, '23514', null,
+select throws_ok($$select rpc_device_update((select id from device where household_id = '00000000-0000-0000-0000-0000000f6daa'), '{"settings":{"volume":150}}')$$, '23514', null,
   'volume is 0–100');
-select throws_ok($$select rpc_device_command((select id from device), 'calibrate', '{"known_g":10}')$$, '23514', null,
+select throws_ok($$select rpc_device_command((select id from device where household_id = '00000000-0000-0000-0000-0000000f6daa'), 'calibrate', '{"known_g":10}')$$, '23514', null,
   'a known weight below 50 g is refused');
-insert into t_c values ('cmd', to_jsonb(rpc_device_command((select id from device), 'calibrate', '{"known_g":1000}')));
+insert into t_c values ('cmd', to_jsonb(rpc_device_command((select id from device where household_id = '00000000-0000-0000-0000-0000000f6daa'), 'calibrate', '{"known_g":1000}')));
 reset role;
 set local role service_role;
 insert into t_c values ('s19', pg_temp.sync('{}'));
@@ -234,8 +234,8 @@ select is((select v -> 'commands' -> 0 ->> 'command' || ' ' || (v -> 'commands' 
 select is((select (v ->> 'poll_ms')::int from t_c where k = 's19'), 1000, '… which polls every second meanwhile');
 insert into t_c values ('s20', pg_temp.sync(jsonb_build_object('done', jsonb_build_array(jsonb_build_object(
   'id', (select v #>> '{}' from t_c where k = 'cmd'), 'ok', true, 'result', '{"factor":-412.37}'::jsonb)))));
-select is((select status || ' ' || (result ->> 'factor') from device_command), 'done -412.37', 'the result comes back');
-select isnt((select calibrated_at from device), null, '… and the scale counts as calibrated');
+select is((select status || ' ' || (result ->> 'factor') from device_command where household_id = '00000000-0000-0000-0000-0000000f6daa'), 'done -412.37', 'the result comes back');
+select isnt((select calibrated_at from device where household_id = '00000000-0000-0000-0000-0000000f6daa'), null, '… and the scale counts as calibrated');
 
 -- ── The app's own weighing: replay and undo ───────────────────────────────────
 reset role;
@@ -249,7 +249,7 @@ select lives_ok(format($$select rpc_undo(%L)$$, (select v ->> 'correlation_id' f
 select is(pg_temp.jar('00000000-0000-0000-0000-00000000c6d1'), 1368::numeric, '… puts the 30 g back');
 
 -- ── Revoked ───────────────────────────────────────────────────────────────────
-select lives_ok($$select rpc_device_revoke((select id from device))$$, 'the owner removes the scale');
+select lives_ok($$select rpc_device_revoke((select id from device where household_id = '00000000-0000-0000-0000-0000000f6daa'))$$, 'the owner removes the scale');
 reset role;
 set local role service_role;
 select throws_ok($$select pg_temp.sync('{}')$$, '42501', null, 'a removed scale is refused');

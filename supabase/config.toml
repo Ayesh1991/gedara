@@ -441,3 +441,8 @@ verify_jwt = true
 [functions.scale-ingest]
 enabled = true
 verify_jwt = false
+
+# The music speaker (Raspberry Pi, Phase 7h): no Supabase session; its own key in X-Gedara-Device.
+[functions.media-agent]
+enabled = true
+verify_jwt = false
