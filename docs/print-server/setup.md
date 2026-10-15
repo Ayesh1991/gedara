@@ -119,6 +119,30 @@ whether the two calibration pages lined up.
 
 ---
 
+## Another PC (the laptop)
+
+Windows may add the Pi's printer by itself as **"Epson L3110 (Gedara) @ gedara-print"**. That one
+prints, but with Windows' basic driver: only Layout and Paper/Quality, no Epson presets. For the full
+Epson Properties, add **EPSON L3110 (Gedara Pi)** to the laptop too:
+
+1. [ ] **Epson driver on the laptop:** epson.com → Support → search **L3110** → Drivers → **Printer
+   Driver** for Windows → install. If the installer insists on a USB connection, plug the printer
+   into the laptop just for the install, then put the cable back on the Pi.
+2. [ ] Copy **one file** to the laptop (USB stick, OneDrive or email to yourself):
+   `devices/print-server/install.ps1` → for example into **Downloads**.
+3. [ ] On the laptop: **Start** → type `powershell` → open **Windows PowerShell** → type:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downloads\install.ps1" -ThisPcOnly
+   ```
+   It finds the Pi (or asks for the address the desktop showed) → **Yes** when Windows asks → Enter.
+4. [ ] **Remove the basic one** so you don't pick it by mistake: Settings → Bluetooth & devices (or
+   Devices) → **Printers & scanners** → **Epson L3110 (Gedara) @ gedara-print** → **Remove**.
+
+**You should see:** in the Print window, **EPSON L3110 (Gedara Pi)** → Properties → the Epson window
+with Printing Presets, Document Size **A4**, Paper Type and Quality.
+
+---
+
 ## Later
 
 | You want to | Do this |
@@ -128,4 +152,5 @@ whether the two calibration pages lined up.
 | Clean the print head | hold the printer's ink/stop button for about 3 seconds (check its manual), or plug the USB back into the PC and use Epson's **Maintenance** tab |
 | Use the printer on the PC by USB again | plug the cable back into the PC and choose **EPSON L3110 Series** |
 | Remove the Pi printer from the PC | `… install.ps1 -RemoveWindowsPrinter` |
+| Add the printer to another PC | see **Another PC (the laptop)** above (`install.ps1 -ThisPcOnly`) |
 | You wrote the SD card again | the Stage C command with `-Reflashed` at the end |

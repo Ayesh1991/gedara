@@ -11,6 +11,8 @@ Cheapest first: is the printer on and is there paper → is the Pi's red light o
 | setup: **can't see the Epson L3110 on USB** | cable still in the PC, printer off | move the USB cable to the Pi, switch the printer on, run `install.ps1` again |
 | setup: **no Linux driver lists the L3110** | the Pi's driver package doesn't know this model | the PC still prints. Send me the lines above it: phone printing needs another driver |
 | PC: job sits **"Error – Printing"** / nothing comes out | the Pi's address changed | run `install.ps1` again (it fixes the address), then reserve the address in the router (setup.md, Stage D) |
+| PC: Properties shows only **Layout / Paper/Quality** (no Epson presets) | that PC uses Windows' basic printer "Epson L3110 (Gedara) @ gedara-print" | add **EPSON L3110 (Gedara Pi)** there: setup.md, *Another PC (the laptop)* |
+| PC: Epson window starts on **Letter** | an older install | Printing preferences → Document Size **A4** → OK (new installs set A4 themselves) |
 | PC: prints **garbage** (pages of symbols) | the Windows printer uses the wrong driver | Settings → Printers → EPSON L3110 (Gedara Pi) → Printer properties → Advanced → Driver: **EPSON L3110 Series** |
 | Phone: **printer not in the list** | the phone is on mobile data or a guest Wi-Fi, or the Pi's name service is stuck | phone on the home Wi-Fi (not "guest"); then `install.ps1 -Status`: "Name on the network" must be OK; restarting the Pi (unplug 10 s) also helps |
 | Phone: **printer found, nothing prints** | the job waits on the Pi | `-Status` → "Jobs waiting" / "Queue L3110 STOPPED" → run `install.ps1` again (it re-enables the queues) |

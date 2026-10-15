@@ -13,6 +13,7 @@ TCP/IP port to the Pi (port 9100), and (5) prints test pages. Run it again any t
     -RemoveWindowsPrinter   take "EPSON L3110 (Gedara Pi)" off this PC again
     -Reflashed              the Pi's SD card was written again (forget its old identity)
     -PiHost <name|IP>       if the Pi isn't called gedara-print
+    -ThisPcOnly [-PiIp <IP>] another PC (e.g. the laptop): only add the printer there (this file alone is enough)
 Nothing secret is stored in the repo or printed. The SSH key lives in %USERPROFILE%\.ssh\gedara_print_ed25519.
 #>
 param(
@@ -21,6 +22,7 @@ param(
   [switch]$Status,
   [switch]$RemoveWindowsPrinter,
   [switch]$Reflashed,
+  [switch]$ThisPcOnly,
   # Used when the script restarts itself as administrator for the Windows printer part.
   [switch]$WindowsPrinterOnly,
   [string]$PiIp = ''
@@ -60,13 +62,18 @@ function Remove-GedaraPrinter {
 function Add-GedaraPrinter([string]$ip) {
   $driver = Get-PrinterDriver | Where-Object { $_.Name -like '*L3110*' } | Select-Object -First 1
   if (-not $driver) {
-    Fail "the Epson L3110 driver isn't on this PC. Install it from epson.com (L3110 > Drivers), then run this again."
+    Fail ("the Epson L3110 driver isn't on this PC. Install it from epson.com (L3110 > Drivers > Printer Driver); " +
+          "if the installer insists on a USB connection, plug the printer into this PC just for the install, " +
+          "then put the cable back on the Pi. Then run this again.")
   }
   Remove-GedaraPrinter
   $port = "$PortPrefix$ip"
   Add-PrinterPort -Name $port -PrinterHostAddress $ip -PortNumber 9100
   Add-Printer -Name $PrinterName -DriverName $driver.Name -PortName $port
   Ok "added '$PrinterName' (driver: $($driver.Name), port: $ip`:9100)"
+  # Sri Lanka uses A4 (Gedara's label sheets too); the Epson driver starts on Letter.
+  try { Set-PrintConfiguration -PrinterName $PrinterName -PaperSize A4; Ok 'paper size A4' }
+  catch { Note 'could not set A4: Printing preferences > Document Size > A4' }
   try {
     Get-CimInstance Win32_Printer -Filter "Name='$PrinterName'" | Invoke-CimMethod -MethodName SetDefaultPrinter | Out-Null
     Ok 'it is now the default printer'
@@ -92,6 +99,25 @@ function Invoke-AsAdmin([string]$extra) {
 if ($RemoveWindowsPrinter) {
   if (Test-Admin) { Remove-GedaraPrinter; Ok "removed '$PrinterName'" }
   elseif (-not (Invoke-AsAdmin '-RemoveWindowsPrinter')) { Fail 'the printer was not removed' }
+  exit 0
+}
+
+# Another PC (the laptop): the Pi is already set up, so only add the Windows printer. Needs just this
+# one file and the Epson L3110 driver on that PC.
+if ($ThisPcOnly) {
+  if (-not $PiIp) {
+    $name = $PiHost
+    if (-not $name) { $name = 'gedara-print.local' }
+    try { $PiIp = ([System.Net.Dns]::GetHostAddresses($name) | Where-Object { $_.AddressFamily -eq 'InterNetwork' } | Select-Object -First 1).IPAddressToString } catch { $PiIp = '' }
+    if ($PiIp) { Ok "found the Pi at $PiIp" }
+    else { $PiIp = (Read-Host 'The Pi''s IP address (the one install.ps1 showed on the desktop, e.g. 192.168.1.50)').Trim() }
+  }
+  if (-not ($PiIp -match '^\d+\.\d+\.\d+\.\d+$')) { Fail "'$PiIp' is not an IP address" }
+  Step 'The printer on this PC'
+  if (Test-Admin) { Add-GedaraPrinter $PiIp }
+  elseif (-not (Invoke-AsAdmin "-PiIp $PiIp")) { Fail 'the Windows printer was not added (run this again and click Yes)' }
+  Write-Host ''
+  Write-Host "Done. Choose '$PrinterName' in any Print window." -ForegroundColor Green
   exit 0
 }
 
