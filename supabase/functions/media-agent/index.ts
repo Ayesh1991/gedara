@@ -73,16 +73,41 @@ function invalid(path: (string | number | symbol)[] | undefined, action: string)
   return json({ ok: false, error: 'invalid', path: p }, 400);
 }
 
+/** The body, read as a stream that stops at MAX_BYTES (a missing or false Content-Length can't get past it). */
 async function readBody(req: Request): Promise<unknown | Response> {
   const declared = Number(req.headers.get('content-length') ?? '0');
   if (declared > MAX_BYTES) return json({ ok: false, error: 'too_large' }, 413);
-  const text = await req.text();
-  if (text.length > MAX_BYTES) return json({ ok: false, error: 'too_large' }, 413);
+  if (!req.body) return json({ ok: false, error: 'bad_json' }, 400);
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_BYTES) {
+      await reader.cancel();
+      return json({ ok: false, error: 'too_large' }, 413);
+    }
+    chunks.push(value);
+  }
+  const all = new Uint8Array(total);
+  let at = 0;
+  for (const c of chunks) {
+    all.set(c, at);
+    at += c.byteLength;
+  }
   try {
-    return JSON.parse(text);
+    return JSON.parse(new TextDecoder().decode(all));
   } catch {
     return json({ ok: false, error: 'bad_json' }, 400);
   }
+}
+
+/** sha256 of the caller's IP: pairing is limited per caller without keeping the address itself. */
+async function sourceHash(req: Request): Promise<string | null> {
+  const ip = (req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for') ?? '').split(',')[0]?.trim();
+  return ip ? await sha256Hex(`gedara-pairing:${ip}`) : null;
 }
 
 type SyncData = {
@@ -198,6 +223,7 @@ Deno.serve(async (req) => {
         p_token_hash: parsed.data.key_hash.toLowerCase(),
         p_hint: parsed.data.hint,
         p_agent: parsed.data.agent ?? null,
+        p_source: await sourceHash(req),
       });
       if (error) {
         console.log(JSON.stringify({ fn: FN_VERSION, action, error: error.code }));

@@ -32,20 +32,23 @@ create table public.device_pairing (
   token_hash text not null unique check (token_hash ~ '^[0-9a-f]{64}$'),
   hint       text not null check (length(hint) = 4),          -- last 4 characters of the Pi's key
   agent      text check (length(agent) <= 40),                -- what the Pi says it is ("gedara-media 0.1.0")
+  source     text check (source ~ '^[0-9a-f]{64}$'),           -- sha256 of the caller's IP (rate limit only)
   created_at timestamptz not null default now(),
   expires_at timestamptz not null default now() + interval '10 minutes'
 );
 create unique index device_pairing_code_idx on public.device_pairing (code);
+create index device_pairing_source_idx on public.device_pairing (source);
 alter table public.device_pairing enable row level security;
 revoke all on table public.device_pairing from anon, authenticated;
 
--- Wrong codes typed by a household (at most 10 tries in 10 minutes).
+-- Wrong codes typed (at most 10 tries in 10 minutes per household, 30 across everyone).
 create table public.device_pair_attempt (
   id           bigint generated always as identity primary key,
   household_id uuid not null references public.household (id) on delete cascade,
   at           timestamptz not null default now()
 );
 create index device_pair_attempt_household_idx on public.device_pair_attempt (household_id, at);
+create index device_pair_attempt_at_idx on public.device_pair_attempt (at);
 alter table public.device_pair_attempt enable row level security;
 revoke all on table public.device_pair_attempt from anon, authenticated;
 
@@ -128,9 +131,11 @@ end;
 $$;
 
 -- ── Pairing, the Pi's side (service role only: called by the media-agent function) ────────────
--- Returns the waiting pairing's code (the same one again if the Pi asks twice), or GDRTE when too
--- many pairings are waiting at once (nobody can fill the table by calling the function in a loop).
-create function public.rpc_media_pair_start(p_token_hash text, p_hint text, p_agent text default null)
+-- Returns the waiting pairing's code (the same one again if the Pi asks twice), or GDRTE when one
+-- caller (by the sha256 of its IP, from the function) already has 3 waiting, or 100 wait in all:
+-- a loop calling the function can neither fill the table nor block other people's pairing.
+create function public.rpc_media_pair_start(p_token_hash text, p_hint text, p_agent text default null,
+                                            p_source text default null)
 returns jsonb
 language plpgsql
 security definer
@@ -141,9 +146,11 @@ declare
   v_code  text;
   v_bytes bytea;
 begin
-  if coalesce(p_token_hash, '') !~ '^[0-9a-f]{64}$' or length(coalesce(p_hint, '')) <> 4 then
+  if coalesce(p_token_hash, '') !~ '^[0-9a-f]{64}$' or length(coalesce(p_hint, '')) <> 4
+     or coalesce(p_source, repeat('0', 64)) !~ '^[0-9a-f]{64}$' then
     raise exception 'bad pairing request' using errcode = '23514';
   end if;
+  perform pg_advisory_xact_lock(hashtext('gedara.device_pairing'));
   if exists (select 1 from public.media_token t where t.token_hash = p_token_hash) then
     return jsonb_build_object('status', 'paired');
   end if;
@@ -152,7 +159,10 @@ begin
   if found then
     return jsonb_build_object('status', 'waiting', 'code', v_row.code, 'expires_at', v_row.expires_at);
   end if;
-  if (select count(*) from public.device_pairing) >= 10 then
+  if p_source is not null and (select count(*) from public.device_pairing d where d.source = p_source) >= 3 then
+    raise exception 'too many pairings waiting from here' using errcode = 'GDRTE';
+  end if;
+  if (select count(*) from public.device_pairing) >= 100 then
     raise exception 'too many pairings waiting' using errcode = 'GDRTE';
   end if;
   loop
@@ -160,14 +170,15 @@ begin
     v_code := lpad(((get_byte(v_bytes, 0) * 65536 + get_byte(v_bytes, 1) * 256 + get_byte(v_bytes, 2)) % 1000000)::text, 6, '0');
     exit when not exists (select 1 from public.device_pairing d where d.code = v_code);
   end loop;
-  insert into public.device_pairing (code, token_hash, hint, agent)
-  values (v_code, p_token_hash, p_hint, left(p_agent, 40))
+  insert into public.device_pairing (code, token_hash, hint, agent, source)
+  values (v_code, p_token_hash, p_hint, left(p_agent, 40), p_source)
   returning * into v_row;
   return jsonb_build_object('status', 'waiting', 'code', v_row.code, 'expires_at', v_row.expires_at);
 end;
 $$;
 
--- 'paired' (with the device's id and name) once the owner typed the code; 'waiting'; or 'expired'.
+-- 'paired' (with the device's id, its name and the household's, which the installer shows so a
+-- wrong pairing is noticed at once) once the owner typed the code; 'waiting'; or 'expired'.
 create function public.rpc_media_pair_poll(p_token_hash text)
 returns jsonb
 language plpgsql
@@ -180,7 +191,8 @@ begin
   select d.* into v_dev from public.media_token t join public.device d on d.id = t.device_id
    where t.token_hash = p_token_hash and d.revoked_at is null;
   if found then
-    return jsonb_build_object('status', 'paired', 'device_id', v_dev.id, 'name', v_dev.name);
+    return jsonb_build_object('status', 'paired', 'device_id', v_dev.id, 'name', v_dev.name,
+                              'household', (select h.name from public.household h where h.id = v_dev.household_id));
   end if;
   if exists (select 1 from public.device_pairing d where d.token_hash = p_token_hash and d.expires_at >= now()) then
     return jsonb_build_object('status', 'waiting');
@@ -189,14 +201,16 @@ begin
 end;
 $$;
 
-revoke execute on function public.rpc_media_pair_start(text, text, text) from public, anon, authenticated;
+revoke execute on function public.rpc_media_pair_start(text, text, text, text) from public, anon, authenticated;
 revoke execute on function public.rpc_media_pair_poll(text) from public, anon, authenticated;
-grant execute on function public.rpc_media_pair_start(text, text, text) to service_role;
+grant execute on function public.rpc_media_pair_start(text, text, text, text) to service_role;
 grant execute on function public.rpc_media_pair_poll(text) to service_role;
 
 -- ── Pairing, the owner's side ─────────────────────────────────────────────────
 -- GDPCN: no waiting speaker has that code (wrong, or older than 10 minutes). GDRTE: 10 wrong codes
--- in 10 minutes. At most 2 speakers per household.
+-- in 10 minutes from this household, or 30 from everyone (guessing a 6-digit code within its 10
+-- minutes is then out of reach). Calls are serialised, so the limits can't be raced. At most 2
+-- speakers per household.
 create function public.rpc_device_pair(p_household uuid, p_code text, p_name text)
 returns jsonb
 language plpgsql
@@ -211,8 +225,10 @@ begin
   if p_household is null or not private.is_owner(p_household) then
     raise exception 'not allowed' using errcode = '42501';
   end if;
+  perform pg_advisory_xact_lock(hashtext('gedara.device_pairing'));
   if (select count(*) from public.device_pair_attempt a
-       where a.household_id = p_household and a.at > now() - interval '10 minutes') >= 10 then
+       where a.household_id = p_household and a.at > now() - interval '10 minutes') >= 10
+     or (select count(*) from public.device_pair_attempt a where a.at > now() - interval '10 minutes') >= 30 then
     raise exception 'too many wrong codes, wait 10 minutes' using errcode = 'GDRTE';
   end if;
   if length(v_name) not between 1 and 40 then

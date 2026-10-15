@@ -8,7 +8,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(54);
+select plan(57);
 
 create temp table t_c (k text primary key, v jsonb) on commit drop;
 grant all on t_c to public;
@@ -18,7 +18,8 @@ create function pg_temp.k(p_n integer) returns text language sql immutable as
   $$ select pg_temp.h('speaker-key-' || p_n || '-0000000000000000000000000000000') $$;
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000f7c01', 'p7h-owner@test.local');
-insert into household (id, name) values ('00000000-0000-0000-0000-0000000f7ccc', 'Music C');
+insert into household (id, name) values ('00000000-0000-0000-0000-0000000f7ccc', 'Music C'),
+  ('00000000-0000-0000-0000-0000000f7ddd', 'Music D');
 insert into household_member (household_id, user_id, role) values
   ('00000000-0000-0000-0000-0000000f7ccc', '00000000-0000-0000-0000-0000000f7c01', 'owner');
 
@@ -47,6 +48,12 @@ select is((select count(*)::int from device_pairing where token_hash = pg_temp.k
 set local role service_role;
 select is(rpc_media_pair_poll(pg_temp.k(1)) ->> 'status', 'paired', 'the Pi learns it is paired');
 select is(rpc_media_pair_start(pg_temp.k(1), 'KEY1') ->> 'status', 'paired', 'and starting again says so');
+select is(rpc_media_pair_poll(pg_temp.k(1)) ->> 'household', 'Music C', '… with the household it joined (shown on the PC)');
+insert into t_c values ('s5', rpc_media_pair_start(pg_temp.k(5), 'KEY5', null, repeat('f', 64)));
+insert into t_c values ('s6', rpc_media_pair_start(pg_temp.k(6), 'KEY6', null, repeat('f', 64)));
+insert into t_c values ('s7', rpc_media_pair_start(pg_temp.k(7), 'KEY7', null, repeat('f', 64)));
+select throws_ok(format($$select rpc_media_pair_start(%L, 'KEY8', null, %L)$$, pg_temp.k(8), repeat('f', 64)), 'GDRTE', null,
+  'one caller can''t keep more than 3 pairings waiting');
 insert into t_c values ('p2', rpc_media_pair_start(pg_temp.k(2), 'KEY2'));
 insert into t_c values ('p3', rpc_media_pair_start(pg_temp.k(3), 'KEY3'));
 reset role;
@@ -57,6 +64,13 @@ select throws_ok(format($$select rpc_device_pair('00000000-0000-0000-0000-000000
   (select v ->> 'code' from t_c where k = 'p2')), 'GDRTE', null, 'after 10 wrong codes in 10 minutes it waits');
 reset role;
 delete from device_pair_attempt where household_id = '00000000-0000-0000-0000-0000000f7ccc';
+insert into device_pair_attempt (household_id) select '00000000-0000-0000-0000-0000000f7ddd' from generate_series(1, 30);
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f7c01","role":"authenticated"}';
+select throws_ok($$select rpc_device_pair('00000000-0000-0000-0000-0000000f7ccc', '000000', 'Guess')$$, 'GDRTE', null,
+  '30 wrong codes from anyone in 10 minutes stop all guessing');
+reset role;
+delete from device_pair_attempt where household_id = '00000000-0000-0000-0000-0000000f7ddd';
 update device_pairing set expires_at = now() - interval '1 second' where token_hash = pg_temp.k(3);
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f7c01","role":"authenticated"}';
