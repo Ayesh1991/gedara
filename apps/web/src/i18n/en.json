@@ -287,6 +287,10 @@
     "allGreen": "All green",
     "someFailed": "{{count}} check(s) failed",
     "clearCache": "Clear cache & reload",
+    "speaker": {
+      "title": "Music speaker",
+      "line": "seen {{seen}} · {{agent}} · output {{output}} · {{free}} GB free · {{temp}} °C"
+    },
     "scale": {
       "title": "Kitchen scale",
       "line": "seen {{seen}} \u00b7 fw {{fw}} \u00b7 {{rssi}} dBm \u00b7 queue {{queue}} \u00b7 last result {{latency}}"
@@ -315,6 +319,7 @@
       "pushKeys": "attention-push has no VAPID keys yet (set the secrets)",
       "driveScan": "The drive-scan function didn't answer. Deploy it (Phase 7).",
       "driveKeys": "drive-scan runs, but the Google Drive reader secrets aren't set. Run scripts/drive-secrets.mjs.",
+      "mediaAgent": "The music speaker's function (media-agent) doesn't answer.",
       "scaleIngest": "The scale endpoint (scale-ingest) didn't answer. Deploy it (Phase 6b).",
       "noSession": "No session",
       "noHousehold": "No household membership",

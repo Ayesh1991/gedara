@@ -5,6 +5,8 @@
 //   push_subscription browser push endpoints + keys — secrets
 //   push_run          the daily job's bookkeeping
 //   device_token      kitchen-scale token hashes — secrets (Phase 6b)
+//   media_token, device_pairing, device_pair_attempt, media_inbox_trash
+//                     music-speaker key hashes, waiting pairings, wrong-code tries, files to delete (Phase 7h)
 // Pure (no Supabase import) so the test can read it.
 
 export interface ExportTable {
@@ -63,10 +65,26 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'device_command', order: ['id'], scope: 'household' },
   { name: 'device_firmware', order: ['id'], scope: 'household' },
   { name: 'device_log', order: ['id'], scope: 'household' },
+  { name: 'media_track', order: ['id'], scope: 'household' },
+  { name: 'media_playlist', order: ['id'], scope: 'household' },
+  { name: 'media_playlist_item', order: ['id'], scope: 'household' },
+  { name: 'media_schedule', order: ['id'], scope: 'household' },
+  { name: 'media_player', order: ['device_id'], scope: 'household' },
+  { name: 'media_command', order: ['id'], scope: 'household' },
   { name: 'export_run', order: ['id'], scope: 'household' },
 ];
 
-export const EXCLUDED_TABLES = ['app_meta', 'sms_device', 'push_subscription', 'push_run', 'device_token'];
+export const EXCLUDED_TABLES = [
+  'app_meta',
+  'sms_device',
+  'push_subscription',
+  'push_run',
+  'device_token',
+  'media_token',
+  'device_pairing',
+  'device_pair_attempt',
+  'media_inbox_trash',
+];
 
 /** One row → CSV-friendly values (objects/arrays as JSON text). */
 export function csvRow(row: Record<string, unknown>): Record<string, string | number | boolean | null> {

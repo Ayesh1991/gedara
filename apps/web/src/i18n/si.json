@@ -325,6 +325,10 @@
     "allGreen": "සියල්ල හරි",
     "someFailed": "පරීක්ෂණ {{count}} ක් අසාර්ථකයි",
     "clearCache": "හැඹිලිය හිස් කර නැවත පූරණය කරන්න",
+    "speaker": {
+      "title": "සංගීත ස්පීකරය",
+      "line": "අවසන් වරට {{seen}} · {{agent}} · ප්‍රතිදානය {{output}} · GB {{free}} නිදහස් · {{temp}} °C"
+    },
     "scale": {
       "title": "මුළුතැන්ගෙයි තරාදිය",
       "line": "දුටුවේ {{seen}} · fw {{fw}} · {{rssi}} dBm · පෝලිම {{queue}} · අවසන් ප්‍රතිඵලය {{latency}}"
@@ -353,6 +357,7 @@
       "pushKeys": "attention-push හි තවම VAPID යතුරු නැත (රහස් සකසන්න)",
       "driveScan": "drive-scan function එක පිළිතුරු දුන්නේ නැත. එය deploy කරන්න (7 වන අදියර).",
       "driveKeys": "drive-scan ක්‍රියා කරයි, නමුත් Google Drive කියවනයේ රහස් සකසා නැත. scripts/drive-secrets.mjs ධාවනය කරන්න.",
+      "mediaAgent": "සංගීත ස්පීකරයේ ශ්‍රිතය (media-agent) පිළිතුරු නොදෙයි.",
       "scaleIngest": "තරාදි අන්තය (scale-ingest) පිළිතුරු දුන්නේ නැත. එය deploy කරන්න (අදියර 6b).",
       "noSession": "සැසියක් නැත",
       "noHousehold": "නිවසක සාමාජිකත්වයක් නැත",
