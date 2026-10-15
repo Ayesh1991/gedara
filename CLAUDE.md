@@ -19,7 +19,8 @@ Solo project for one household in Sri Lanka (LKR, Asia/Colombo). Built phase by 
 Vite + React + TS (strict) + Tailwind + shadcn/ui · TanStack Router/Query · supabase-js v2 ·
 Supabase (Postgres, Auth email-OTP, Storage, Realtime, Edge Functions/Deno, pg_cron) ·
 vite-plugin-pwa (NetworkFirst) · Vercel · Vitest + Playwright · PlatformIO (ESP32-S3, C++) for `devices/kitchen-scale` ·
-Raspberry Pi OS + CUPS (bash, PowerShell installer) for `devices/print-server`.
+Raspberry Pi OS + CUPS (bash, PowerShell installer) for `devices/print-server` · MPD + Python 3 agent
+(stdlib, python-mpd2, mutagen) for `devices/media-player`.
 
 ## Commands
 - `pnpm dev` · `pnpm test` · `pnpm e2e` · `pnpm typecheck` · `pnpm lint`
