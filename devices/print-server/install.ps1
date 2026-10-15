@@ -14,6 +14,9 @@ TCP/IP port to the Pi (port 9100), and (5) prints test pages. Run it again any t
     -Reflashed              the Pi's SD card was written again (forget its old identity)
     -PiHost <name|IP>       if the Pi isn't called gedara-print
     -ThisPcOnly [-PiIp <IP>] another PC (e.g. the laptop): only add the printer there (this file alone is enough)
+    -Music [-Server gedara-staging]  also set up the music speaker (Phase 7h, docs/media-player): MPD,
+                            the agent, the "Gedara Music" folder; shows the 8-digit pairing code
+    -MusicFolder            only the "Gedara Music" folder on this PC (e.g. the laptop; this file is enough)
 Nothing secret is stored in the repo or printed. The SSH key lives in %USERPROFILE%\.ssh\gedara_print_ed25519.
 #>
 param(
@@ -23,6 +26,10 @@ param(
   [switch]$RemoveWindowsPrinter,
   [switch]$Reflashed,
   [switch]$ThisPcOnly,
+  [switch]$Music,
+  [switch]$MusicFolder,
+  [ValidateSet('gedara', 'gedara-staging')]
+  [string]$Server = 'gedara',
   # Used when the script restarts itself as administrator for the Windows printer part.
   [switch]$WindowsPrinterOnly,
   [string]$PiIp = ''
@@ -188,9 +195,65 @@ if ((Test-KeyLogin) -ne 0) {
 Ok 'this PC can reach the Pi without a password from now on'
 @{ user = $User; host = $PiHost; ip = $ip } | ConvertTo-Json | Set-Content -Path $Saved -Encoding ascii
 
+# The music folder's password is read from the Pi straight into Windows' Credential Manager: never
+# shown, never typed. (cmdkey takes it as an argument for that moment on this PC only.)
+function Add-MusicFolder([string]$ip) {
+  Step 'The "Gedara Music" folder on this PC'
+  $old = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try { $pw = (& ssh @sshKeyOpts -o BatchMode=yes $target 'sudo cat /etc/gedara-media/samba-password' 2>$null | Out-String).Trim() }
+  finally { $ErrorActionPreference = $old }
+  if (-not $pw) { Fail 'the Pi has no music folder yet: run install.ps1 -Music on the main PC first' }
+  & cmdkey "/add:$ip" '/user:music' "/pass:$pw" | Out-Null
+  $pw = $null
+  $share = "\\$ip\Gedara Music"
+  $lnk = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Gedara Music.lnk'
+  $shell = New-Object -ComObject WScript.Shell
+  $s = $shell.CreateShortcut($lnk)
+  $s.TargetPath = $share
+  $s.Description = 'Drop songs here: they appear in Gedara Music'
+  $s.Save()
+  Ok "the folder $share is ready, with a 'Gedara Music' shortcut on the desktop"
+  Start-Process explorer.exe $share
+}
+
 if ($Status) {
   & ssh @sshKeyOpts -t $target 'sudo bash /opt/gedara-print/status.sh'
   exit $LASTEXITCODE
+}
+
+if ($MusicFolder) {
+  Add-MusicFolder $ip
+  exit 0
+}
+
+if ($Music) {
+  Step 'Music 1/3 Copying the music speaker to the Pi'
+  $musicDir = Join-Path (Split-Path $PSScriptRoot -Parent) 'media-player'
+  $tmp = Join-Path $env:TEMP 'gedara-media'
+  New-Item -ItemType Directory -Force $tmp | Out-Null
+  $utf8 = New-Object System.Text.UTF8Encoding $false
+  foreach ($f in 'setup-media.sh', 'gedara_media_agent.py') {
+    $text = [IO.File]::ReadAllText((Join-Path $musicDir $f)) -replace "`r`n", "`n"
+    [IO.File]::WriteAllText((Join-Path $tmp $f), $text, $utf8)
+  }
+  & scp @sshKeyOpts -q (Join-Path $tmp 'setup-media.sh') (Join-Path $tmp 'gedara_media_agent.py') "${target}:/tmp/"
+  if ($LASTEXITCODE -ne 0) { Fail 'copying to the Pi failed' }
+  Ok 'setup-media.sh and the agent are on the Pi'
+
+  Step "Music 2/3 Setting up the speaker (5-10 minutes; server: $Server)"
+  & ssh @sshKeyOpts -t $target "sudo install -d /opt/gedara-media && sudo install -m 755 /tmp/setup-media.sh /tmp/gedara_media_agent.py /opt/gedara-media/ && sudo MEDIA_SERVER=$Server bash /opt/gedara-media/setup-media.sh"
+  if ($LASTEXITCODE -ne 0) { Note 'setup-media.sh reported a problem (see the lines above).' }
+
+  Step 'Music 3/3 Pairing with Gedara'
+  Note 'In Gedara: Settings > Devices > Music speakers > Add speaker, then type the code below.'
+  & ssh @sshKeyOpts -t $target 'sudo gedara-media pair && sudo chown gedara-media:gedara-media /etc/gedara-media/key && sudo chmod 600 /etc/gedara-media/key && sudo systemctl restart gedara-media-agent'
+  if ($LASTEXITCODE -ne 0) { Fail 'the speaker is not paired yet: run this again for a new code' }
+  Ok 'the speaker is paired and running'
+  Add-MusicFolder $ip
+  Write-Host ''
+  Write-Host 'Music is ready: open Gedara > Music.' -ForegroundColor Green
+  exit 0
 }
 
 Step '3/5 Copying the setup to the Pi'
