@@ -5,6 +5,7 @@ import {
   ChartNoAxesColumn,
   House,
   MapPin,
+  Music,
   Package,
   ScanLine,
   Search,
@@ -22,13 +23,14 @@ import { createShortcutReader, isTypingTarget, newTargetFor } from '@/lib/shortc
 import { initials, longDate } from '@/lib/time';
 import { Brand, EnvChip, LogoMark } from './Brand';
 import { CommandPalette } from './CommandPalette';
+import { MiniPlayer } from './media/MiniPlayer';
 import { OfflineBanner, OfflineSync, useOutbox } from './offline/OfflineSync';
 import { ScalePopups } from './scale/ScalePopups';
 import { ShortcutsHelp } from './ShortcutsHelp';
 import { WedgeListener } from './scan/WedgeListener';
 import { VersionBadge } from './VersionBadge';
 
-type NavKey = 'home' | 'money' | 'scan' | 'pantry' | 'things' | 'places' | 'insights' | 'settings';
+type NavKey = 'home' | 'money' | 'scan' | 'pantry' | 'things' | 'places' | 'insights' | 'music' | 'settings';
 
 interface NavItem {
   key: NavKey;
@@ -52,6 +54,7 @@ const RAIL: NavItem[] = [
   { key: 'things', to: '/things', icon: Package },
   { key: 'places', to: '/places', icon: MapPin },
   { key: 'insights', to: '/insights', icon: ChartNoAxesColumn },
+  { key: 'music', to: '/music', icon: Music },
   { key: 'settings', to: '/settings', icon: Settings },
 ];
 
@@ -244,6 +247,7 @@ export function AppShell({ membership, children }: { membership: Membership; chi
           <div key={pathname} className="page-enter">
             {children}
           </div>
+          <MiniPlayer householdId={membership.household.id} canWrite={membership.role !== 'viewer'} />
           <footer className="mt-10 text-center lg:hidden">
             <VersionBadge />
           </footer>

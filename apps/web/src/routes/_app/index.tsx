@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronRight, CircleCheck, ListChecks, MapPin } from 'lucide-react';
+import { ChevronRight, CircleCheck, ListChecks, MapPin, Music } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
@@ -18,6 +18,7 @@ import { formatLKR } from '@/lib/money/format';
 import { cashflowQuery, type MonthFlow } from '@/lib/money/queries';
 import { productsQuery } from '@/lib/pantry/queries';
 import { placesQuery } from '@/lib/places';
+import { playersQuery, speakersQuery, tracksQuery } from '@/lib/media/queries';
 import { driveSourceQuery } from '@/lib/scan/queries';
 import { assetsQuery } from '@/lib/things/queries';
 import { addMonths, dayPart, firstName, formatMonth, hourIn, todayIn } from '@/lib/time';
@@ -239,6 +240,35 @@ function PlacesCard({ householdId }: { householdId: string }) {
   );
 }
 
+/** Music (Phase 7h): only once a speaker is set up; shows what it plays, or the library size. */
+function MusicCard({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const speakers = useQuery(speakersQuery(householdId));
+  const has = !!speakers.data?.length;
+  const players = useQuery({ ...playersQuery(householdId), enabled: has });
+  const tracks = useQuery({ ...tracksQuery(householdId), enabled: has });
+  if (!has) return null;
+  const playing = players.data?.find((p) => p.state !== 'stopped' && p.track_id);
+  const song = playing ? tracks.data?.find((x) => x.id === playing.track_id) : undefined;
+  const ready = tracks.data?.filter((x) => x.state === 'ready').length ?? 0;
+  return (
+    <Link to="/music" className="block">
+      <Card className="flex items-center gap-4 transition-colors hover:border-white/25">
+        <div className="brand-gradient flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-[#05070F]">
+          <Music className="h-6 w-6" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-[17px] font-semibold">{t('nav.music')}</div>
+          <div className="tabular truncate text-[13px] text-muted">
+            {song ? t(playing?.state === 'playing' ? 'home.musicPlaying' : 'home.musicPaused', { title: song.title }) : t('home.musicSummary', { count: ready })}
+          </div>
+        </div>
+        <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
+      </Card>
+    </Link>
+  );
+}
+
 /** The last six calendar months ending with this one, with zeros where nothing was recorded. */
 function lastSixMonths(flow: MonthFlow[] | undefined, thisMonth: string): MonthFlow[] {
   return Array.from({ length: 6 }, (_, i) => {
@@ -295,6 +325,7 @@ function Pulse() {
       </section>
 
       <PlacesCard householdId={membership.household.id} />
+      <MusicCard householdId={membership.household.id} />
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
         <Card className="flex flex-col gap-3">

@@ -17,6 +17,7 @@ export default defineConfig({
       '@scan': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scan'),
       // Kitchen-scale protocol (Zod) shared with the scale-ingest Edge Function and the simulator.
       '@scale': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scale'),
+      '@media': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/media'),
       zod: path.resolve(import.meta.dirname, 'node_modules/zod'),
     },
   },

@@ -124,6 +124,7 @@
     "things": "Things",
     "places": "Places",
     "insights": "Insights",
+    "music": "Music",
     "settings": "Settings",
     "main": "Main navigation"
   },
@@ -212,6 +213,10 @@
     "placesSummary": "{{count}} places · {{rooms}} at the top level",
     "placesSummary_one": "1 place · {{rooms}} at the top level",
     "placesEmpty": "Map your home: rooms, cupboards and boxes, each with a QR label",
+    "musicPlaying": "Playing: {{title}}",
+    "musicPaused": "Paused: {{title}}",
+    "musicSummary_one": "1 song on the speaker",
+    "musicSummary": "{{count}} songs on the speaker",
     "incomeLine": "In {{amount}} this month",
     "billsLine": "{{count}} bills this month",
     "billsLine_one": "1 bill this month",
@@ -2642,6 +2647,224 @@
       "cantUndo": "Can't undo: the stock changed since.",
       "duplicate": "That already exists.",
       "reference": "Something it refers to is gone.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
+  "music": {
+    "title": "Music",
+    "player": {
+      "title": "Now playing",
+      "nothing": "Nothing playing",
+      "pickBelow": "Pick a song below, or play everything",
+      "play": "Play",
+      "pause": "Pause",
+      "next": "Next song",
+      "prev": "Previous song",
+      "shuffle": "Shuffle",
+      "repeat": {
+        "off": "Repeat: off",
+        "all": "Repeat: all",
+        "one": "Repeat: this song"
+      },
+      "position": "Position in the song",
+      "volume": "Volume",
+      "playAll": "Play all",
+      "shuffleAll": "Shuffle all",
+      "speaker": "Speaker"
+    },
+    "sleep": {
+      "title": "Sleep timer",
+      "minutes_one": "1 min",
+      "minutes": "{{count}} min",
+      "endOfSong": "End of this song",
+      "off": "Timer off",
+      "left_one": "Fades out in 1 minute",
+      "left": "Fades out in {{count}} minutes"
+    },
+    "queue": {
+      "title": "Up next",
+      "drag": "Move {{title}} (drag, or use the arrow keys)",
+      "up": "Move up",
+      "down": "Move down",
+      "remove": "Take {{title}} out of the queue"
+    },
+    "mini": {
+      "open": "Open Music: {{title}}"
+    },
+    "library": {
+      "title": "Library",
+      "search": "Search songs, artists, albums",
+      "tabs": {
+        "songs": "Songs",
+        "albums": "Albums",
+        "artists": "Artists",
+        "playlists": "Playlists"
+      },
+      "songs_one": "1 song",
+      "songs": "{{count}} songs",
+      "plays_one": "played once",
+      "plays": "played {{count}} times",
+      "unknownArtist": "Unknown artist",
+      "playSong": "Play {{title}}",
+      "more": "More for {{title}}",
+      "empty": "No songs yet.",
+      "noMatch": "Nothing matches that search.",
+      "noAlbums": "No albums yet: songs with an album in their tags appear here."
+    },
+    "state": {
+      "uploading": "Uploading…",
+      "waiting": "On its way to the speaker",
+      "downloading": "On its way to the speaker",
+      "failed": "Couldn't reach the speaker",
+      "deleting": "Being removed"
+    },
+    "source": {
+      "upload": "added in Gedara",
+      "pc": "from the PC folder"
+    },
+    "actions": {
+      "playNext": "Play next",
+      "addToQueue": "Add to the queue",
+      "addToPlaylist": "Add to a playlist",
+      "edit": "Edit details",
+      "delete": "Delete from the speaker",
+      "addedNext": "Plays next",
+      "addedQueue": "Added to the queue",
+      "addedTo": "Added to {{name}}",
+      "alreadyIn": "already in it",
+      "saved": "Saved",
+      "deleteBody": "“{{title}}” is removed from the speaker's card and from every playlist.",
+      "deletePcBody": "“{{title}}” is removed from the speaker, including its file in the PC's Gedara Music folder.",
+      "deleteConfirm": "Delete",
+      "deleted": "Deleted"
+    },
+    "fields": {
+      "title": "Title",
+      "artist": "Artist",
+      "album": "Album"
+    },
+    "playlists": {
+      "newName": "New playlist name",
+      "create": "Create",
+      "empty": "No playlists yet. Make one here, or from a song's ⋯ menu.",
+      "noSongs": "No songs in this playlist yet: add them from a song's ⋯ menu in the library.",
+      "rename": "Rename the playlist",
+      "removeSong": "Take {{title}} out of the playlist",
+      "delete": "Delete playlist",
+      "deleteConfirm": "Delete this playlist (the songs stay)",
+      "gone": "This playlist was deleted."
+    },
+    "add": {
+      "button": "Add music",
+      "title": "Add music",
+      "drop": "Drop songs here for {{name}}",
+      "formats": "MP3, M4A, FLAC, OGG / Opus or WAV, up to 60 MB each",
+      "choose": "Choose songs",
+      "uploading": "Uploading… {{pct}} %",
+      "inProgress": "Adding",
+      "done": "Added",
+      "clear": "Clear the list",
+      "pcFolder": "On the PC you can also drag songs into the “Gedara Music” folder in File Explorer (set up by the installer). They appear here by themselves, with their covers.",
+      "status": {
+        "checking": "Reading the file…",
+        "queued": "Waiting",
+        "waitingRoom": "Waiting: the speaker is still collecting earlier songs",
+        "sent": "On its way to the speaker",
+        "duplicate": "Already on the speaker",
+        "unsupported": "Not a song this speaker can play",
+        "tooLarge": "Bigger than 60 MB",
+        "failed": "Couldn't upload. Try again."
+      }
+    },
+    "empty": {
+      "noSpeakerTitle": "Your music speaker",
+      "noSpeakerBody": "Music plays from the Raspberry Pi next to the printer. Once it's set up, pick songs here on any phone, the iPad or the PC.",
+      "setUp": "Set it up in Settings › Devices",
+      "noSongsTitle": "No music yet",
+      "noSongsBody": "Add songs from this phone or PC, share them to Gedara on Android, or drop them into the PC's “Gedara Music” folder."
+    },
+    "offline": {
+      "since": "The speaker hasn't been heard from since {{when}}. Is the Raspberry Pi on?",
+      "never": "The speaker hasn't come online yet. Is the Raspberry Pi on?"
+    },
+    "devices": {
+      "title": "Music speakers",
+      "intro": "The Raspberry Pi plays music from its own card. Pick songs here; nothing plays from the phone.",
+      "add": "Add speaker",
+      "addTitle": "Add a music speaker",
+      "step1": "On the PC, in VS Code's terminal (gedara-handoff folder), run:",
+      "step2": "It shows an 8-digit code. Type it here:",
+      "code": "Pairing code",
+      "name": "Name",
+      "defaultName": "Living room speaker",
+      "pair": "Pair",
+      "paired": "{{name}} is paired",
+      "none": "No speaker yet.",
+      "online": "Online",
+      "offline": "Offline",
+      "output": {
+        "usb": "USB sound card",
+        "jack": "3.5 mm jack",
+        "none": "no sound output"
+      }
+    },
+    "speaker": {
+      "settings": "Settings",
+      "saved": "Saved — the speaker picks it up within a minute",
+      "volumeMax": "Loudest anyone can set: {{v}}",
+      "volumeMaxHint": "A limit for the whole household (and for schedules).",
+      "fade": "Sleep timer fade-out: {{s}} s",
+      "normalise": "Even out loud and quiet songs",
+      "normaliseHint": "No sudden loud song in a relaxing playlist.",
+      "offlineSince": "Offline since {{when}}",
+      "neverSeen": "Not online yet",
+      "output": "Sound output",
+      "songs": "Songs on the card",
+      "space": "Space on the card",
+      "free": "{{gb}} GB free",
+      "temp": "Temperature",
+      "test": "Play a test sound",
+      "tested": "The speaker played the test sound",
+      "rescan": "Check the PC folder now",
+      "rescanned": "Folder checked",
+      "remove": "Remove this speaker",
+      "removeBody": "Gedara forgets the speaker and its key; the songs on its card stay on the card. To use it again, pair it again.",
+      "removeConfirm": "Remove",
+      "gone": "This speaker was removed."
+    },
+    "schedule": {
+      "title": "Wind-down schedules",
+      "intro": "The speaker starts these by itself at their time, even if the internet is down.",
+      "add": "Add",
+      "edit": "Edit",
+      "defaultName": "Wind down",
+      "name": "Name",
+      "start": "Starts at",
+      "onDays": "On",
+      "days": "M,T,W,T,F,S,S",
+      "playlist": "Plays",
+      "wholeLibrary": "The whole library",
+      "volume": "Volume {{v}}",
+      "stopAfter": "Stops after (min)",
+      "fade": "Fade-out (s)",
+      "summary": "volume {{v}} · stops after {{min}} min",
+      "enabled": "On",
+      "delete": "Delete schedule",
+      "saved": "Saved — the speaker picks it up within a minute",
+      "none": "No schedules yet."
+    },
+    "units": {
+      "h": "h",
+      "min": "min"
+    },
+    "errors": {
+      "noAnswer": "The speaker didn't answer. Is it on and online?",
+      "speakerFailed": "The speaker couldn't do that.",
+      "inboxFull": "The speaker is still collecting earlier songs. Gedara will carry on by itself.",
+      "slowDown": "Too many at once: wait a moment.",
+      "wrongCode": "That code doesn't match a speaker waiting to pair (codes last 10 minutes).",
+      "notAllowed": "You can't change this.",
+      "rejected": "That wasn't accepted.",
       "generic": "Something went wrong. Try again."
     }
   }
