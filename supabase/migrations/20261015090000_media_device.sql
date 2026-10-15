@@ -1,8 +1,8 @@
 -- Phase 7h · 70 — the music speaker (Raspberry Pi 2, docs/media-player): a second kind of device,
--- paired with a 6-digit code instead of a key to copy.
+-- paired with an 8-digit code instead of a key to copy.
 --
 -- Pairing: the Pi makes its own 43-character key and sends only its sha256 to the media-agent Edge
--- Function (pair_start), which stores it here with a short random code and shows the code on the PC
+-- Function (pair_start), which stores it here with a random 8-digit code and shows the code on the PC
 -- (install.ps1 -Music). The owner types the code in Settings › Devices (rpc_device_pair): that turns
 -- the waiting pairing into a device whose key hash is the Pi's. The key itself is never stored and
 -- never travels anywhere except from the Pi to the function, so there is nothing secret to copy.
@@ -28,7 +28,7 @@ revoke all on table public.media_token from anon, authenticated;
 create table public.device_pairing (
   id         uuid primary key default gen_random_uuid(),
   kind       text not null default 'media' check (kind in ('media')),
-  code       text not null check (code ~ '^[0-9]{6}$'),
+  code       text not null check (code ~ '^[0-9]{8}$'),
   token_hash text not null unique check (token_hash ~ '^[0-9a-f]{64}$'),
   hint       text not null check (length(hint) = 4),          -- last 4 characters of the Pi's key
   agent      text check (length(agent) <= 40),                -- what the Pi says it is ("gedara-media 0.1.0")
@@ -41,14 +41,13 @@ create index device_pairing_source_idx on public.device_pairing (source);
 alter table public.device_pairing enable row level security;
 revoke all on table public.device_pairing from anon, authenticated;
 
--- Wrong codes typed (at most 10 tries in 10 minutes per household, 30 across everyone).
+-- Wrong codes typed by a household (at most 10 tries in 10 minutes).
 create table public.device_pair_attempt (
   id           bigint generated always as identity primary key,
   household_id uuid not null references public.household (id) on delete cascade,
   at           timestamptz not null default now()
 );
 create index device_pair_attempt_household_idx on public.device_pair_attempt (household_id, at);
-create index device_pair_attempt_at_idx on public.device_pair_attempt (at);
 alter table public.device_pair_attempt enable row level security;
 revoke all on table public.device_pair_attempt from anon, authenticated;
 
@@ -166,8 +165,9 @@ begin
     raise exception 'too many pairings waiting' using errcode = 'GDRTE';
   end if;
   loop
-    v_bytes := extensions.gen_random_bytes(3);
-    v_code := lpad(((get_byte(v_bytes, 0) * 65536 + get_byte(v_bytes, 1) * 256 + get_byte(v_bytes, 2)) % 1000000)::text, 6, '0');
+    v_bytes := extensions.gen_random_bytes(4);
+    v_code := lpad(((get_byte(v_bytes, 0)::bigint * 16777216 + get_byte(v_bytes, 1) * 65536
+                     + get_byte(v_bytes, 2) * 256 + get_byte(v_bytes, 3)) % 100000000)::text, 8, '0');
     exit when not exists (select 1 from public.device_pairing d where d.code = v_code);
   end loop;
   insert into public.device_pairing (code, token_hash, hint, agent, source)
@@ -208,8 +208,9 @@ grant execute on function public.rpc_media_pair_poll(text) to service_role;
 
 -- ── Pairing, the owner's side ─────────────────────────────────────────────────
 -- GDPCN: no waiting speaker has that code (wrong, or older than 10 minutes). GDRTE: 10 wrong codes
--- in 10 minutes from this household, or 30 from everyone (guessing a 6-digit code within its 10
--- minutes is then out of reach). Calls are serialised, so the limits can't be raced. At most 2
+-- in 10 minutes from this household. With 8-digit codes that live 10 minutes, at most ~100 waiting
+-- and only invited owners able to try, guessing one is out of reach — and no other household can
+-- use up this household's tries. Calls are serialised, so the limit can't be raced. At most 2
 -- speakers per household.
 create function public.rpc_device_pair(p_household uuid, p_code text, p_name text)
 returns jsonb
@@ -227,8 +228,7 @@ begin
   end if;
   perform pg_advisory_xact_lock(hashtext('gedara.device_pairing'));
   if (select count(*) from public.device_pair_attempt a
-       where a.household_id = p_household and a.at > now() - interval '10 minutes') >= 10
-     or (select count(*) from public.device_pair_attempt a where a.at > now() - interval '10 minutes') >= 30 then
+       where a.household_id = p_household and a.at > now() - interval '10 minutes') >= 10 then
     raise exception 'too many wrong codes, wait 10 minutes' using errcode = 'GDRTE';
   end if;
   if length(v_name) not between 1 and 40 then

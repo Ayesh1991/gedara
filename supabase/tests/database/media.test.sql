@@ -26,7 +26,7 @@ insert into household_member (household_id, user_id, role) values
 -- ── Pairing ───────────────────────────────────────────────────────────────────
 set local role service_role;
 insert into t_c values ('p1', rpc_media_pair_start(pg_temp.k(1), 'KEY1', 'gedara-media 0.1.0'));
-select ok((select v ->> 'code' from t_c where k = 'p1') ~ '^[0-9]{6}$', 'the Pi gets a 6-digit code');
+select ok((select v ->> 'code' from t_c where k = 'p1') ~ '^[0-9]{8}$', 'the Pi gets an 8-digit code');
 select is(rpc_media_pair_start(pg_temp.k(1), 'KEY1') ->> 'code', (select v ->> 'code' from t_c where k = 'p1'), 'asking again gives the same code');
 select is(rpc_media_pair_poll(pg_temp.k(1)) ->> 'status', 'waiting', 'waiting until the owner types it');
 select throws_ok($$select rpc_media_pair_start('short', 'KEY1')$$, '23514', null, 'a malformed request is refused');
@@ -35,10 +35,10 @@ reset role;
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f7c01","role":"authenticated"}';
 select is(rpc_device_pair('00000000-0000-0000-0000-0000000f7ccc',
-  lpad(((select (v ->> 'code')::int from t_c where k = 'p1') + 1) % 1000000 || '', 6, '0'), 'Speaker') ->> 'error',
+  lpad(((select (v ->> 'code')::bigint from t_c where k = 'p1') + 1) % 100000000 || '', 8, '0'), 'Speaker') ->> 'error',
   'GDPCN', 'a wrong code says so');
 insert into t_c values ('s1', rpc_device_pair('00000000-0000-0000-0000-0000000f7ccc',
-  (select regexp_replace(v ->> 'code', '(\d{3})(\d{3})', '\1 \2') from t_c where k = 'p1'), '  Living room  '));
+  (select regexp_replace(v ->> 'code', '(\d{4})(\d{4})', '\1 \2') from t_c where k = 'p1'), '  Living room  '));
 select is((select v ->> 'ok' from t_c where k = 's1'), 'true', 'the right code (typed with a space) pairs the speaker');
 reset role;
 create function pg_temp.dev() returns uuid language sql stable as $$ select (v ->> 'id')::uuid from t_c where k = 's1' $$;
@@ -67,10 +67,10 @@ delete from device_pair_attempt where household_id = '00000000-0000-0000-0000-00
 insert into device_pair_attempt (household_id) select '00000000-0000-0000-0000-0000000f7ddd' from generate_series(1, 30);
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f7c01","role":"authenticated"}';
-select throws_ok($$select rpc_device_pair('00000000-0000-0000-0000-0000000f7ccc', '000000', 'Guess')$$, 'GDRTE', null,
-  '30 wrong codes from anyone in 10 minutes stop all guessing');
+select is(rpc_device_pair('00000000-0000-0000-0000-0000000f7ccc', '00000000', 'Guess') ->> 'error', 'GDPCN',
+  'another household''s wrong codes don''t use up this household''s tries');
 reset role;
-delete from device_pair_attempt where household_id = '00000000-0000-0000-0000-0000000f7ddd';
+delete from device_pair_attempt;
 update device_pairing set expires_at = now() - interval '1 second' where token_hash = pg_temp.k(3);
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f7c01","role":"authenticated"}';

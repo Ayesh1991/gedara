@@ -104,10 +104,16 @@ async function readBody(req: Request): Promise<unknown | Response> {
   }
 }
 
-/** sha256 of the caller's IP: pairing is limited per caller without keeping the address itself. */
-async function sourceHash(req: Request): Promise<string | null> {
-  const ip = (req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for') ?? '').split(',')[0]?.trim();
-  return ip ? await sha256Hex(`gedara-pairing:${ip}`) : null;
+/**
+ * sha256 of the caller's IP: pairing is limited per caller without keeping the address itself.
+ * Supabase's edge sits behind Cloudflare, which sets cf-connecting-ip itself (a client can't choose
+ * it); otherwise the last X-Forwarded-For hop, the one our own proxy added. No address at all counts
+ * in one shared "unknown" bucket, so a missing header never skips the limit.
+ */
+async function sourceHash(req: Request): Promise<string> {
+  const cf = req.headers.get('cf-connecting-ip')?.trim();
+  const xff = (req.headers.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean).pop();
+  return await sha256Hex(`gedara-pairing:${cf || xff || 'unknown'}`);
 }
 
 type SyncData = {

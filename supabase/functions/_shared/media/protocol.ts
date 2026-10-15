@@ -1,6 +1,6 @@
 // Music-speaker protocol v1 (Phase 7h; docs/media-player/protocol.md). The Raspberry Pi's
 // gedara-media-agent talks only to the media-agent Edge Function:
-//   pair_start  { key_hash, hint, agent }            → { status: 'waiting', code, expires_at } | { status: 'paired' }
+//   pair_start  { key_hash, hint, agent }            → { status: 'waiting', code (8 digits), expires_at } | { status: 'paired' }
 //   pair_poll   header X-Gedara-Device: <its key>   → { status: 'waiting' | 'paired' | 'expired', device_id?, name? }
 //   sync        header X-Gedara-Device: <its key>   → SyncReply (wait: true holds the request up to 25 s
 //                                                     until a command arrives)
