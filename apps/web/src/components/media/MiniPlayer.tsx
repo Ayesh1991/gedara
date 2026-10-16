@@ -5,10 +5,10 @@
 // the end of the page so it never covers the last row.
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
-import { Pause, Play } from 'lucide-react';
+import { Airplay, Bluetooth, Pause, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { fraction } from '@/lib/media/progress';
-import { speakersQuery } from '@/lib/media/queries';
+import { externalSource, speakersQuery } from '@/lib/media/queries';
 import { Cover } from './AuroraArt';
 import { PlayingBars } from './Library';
 import { useNow, useSpeaker } from './useSpeaker';
@@ -27,7 +27,9 @@ function Bar({ householdId, canWrite }: { householdId: string; canWrite: boolean
   const p = view.player;
   const playing = p?.state === 'playing';
   const now = useNow(playing, 1000);
-  if (!view.speaker || !p || !view.track || p.state === 'stopped' || pathname.startsWith('/music')) return null;
+  if (!view.speaker || !p || pathname.startsWith('/music')) return null;
+  const external = externalSource(p);
+  if (!external && (!view.track || p.state === 'stopped')) return null;
 
   const open = () => {
     const go = () => void navigate({ to: '/music' });
@@ -36,25 +38,48 @@ function Bar({ householdId, canWrite }: { householdId: string; canWrite: boolean
     else go();
   };
 
+  const shell =
+    'glass-strong fixed inset-x-3.5 bottom-[calc(var(--nav-h)+env(safe-area-inset-bottom)+1.6rem)] z-30 overflow-hidden rounded-[22px] shadow-[0_18px_50px_-18px_rgba(0,0,0,0.95)] lg:inset-x-auto lg:right-6 lg:bottom-6 lg:w-[380px]';
+
+  // A phone plays over AirPlay / Bluetooth (Phase 7i): say who; Music has the take-over.
+  const song = view.track;
+  if (external || !song) {
+    const Icon = p.source === 'airplay' ? Airplay : Bluetooth;
+    return (
+      <>
+        <div aria-hidden className="h-20 lg:hidden" />
+        <div className={shell} data-testid="mini-player">
+          <button type="button" onClick={open} className="flex h-[64px] w-full items-center gap-3 px-3 text-left">
+            <span className="brand-gradient flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#05070F]">
+              <Icon className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[14.5px] font-semibold">{t(`music.external.${p.source as 'airplay' | 'bluetooth'}`)}</span>
+              <span className="block truncate text-[12.5px] text-muted">
+                {p.source_name ?? t('music.external.aPhone')} · {view.speaker.name}
+              </span>
+            </span>
+          </button>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <div aria-hidden className="h-20 lg:hidden" />
-      <div
-        className="glass-strong fixed inset-x-3.5 bottom-[calc(var(--nav-h)+env(safe-area-inset-bottom)+1.6rem)] z-30 overflow-hidden rounded-[22px] shadow-[0_18px_50px_-18px_rgba(0,0,0,0.95)] lg:inset-x-auto lg:right-6 lg:bottom-6 lg:w-[380px]"
-        data-testid="mini-player"
-      >
+      <div className={shell} data-testid="mini-player">
         <div className="flex h-[64px] items-center gap-3 pr-2 pl-2.5">
-          <button type="button" onClick={open} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label={t('music.mini.open', { title: view.track.title })}>
+          <button type="button" onClick={open} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label={t('music.mini.open', { title: song.title })}>
             <span style={{ viewTransitionName: 'music-art' }} className="shrink-0">
-              <Cover url={view.artUrl(view.track.art_path)} title={view.track.title} className="h-11 w-11" rounded="rounded-xl" />
+              <Cover url={view.artUrl(song.art_path)} title={song.title} className="h-11 w-11" rounded="rounded-xl" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2">
-                <span className="truncate text-[14.5px] font-semibold">{view.track.title}</span>
+                <span className="truncate text-[14.5px] font-semibold">{song.title}</span>
                 {playing && <PlayingBars playing />}
               </span>
               <span className="block truncate text-[12.5px] text-muted">
-                {view.track.artist ?? t('music.library.unknownArtist')} · {view.speaker.name}
+                {song.artist ?? t('music.library.unknownArtist')} · {view.speaker.name}
               </span>
             </span>
           </button>

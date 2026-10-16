@@ -2717,6 +2717,32 @@
   },
   "music": {
     "title": "සංගීතය",
+    "external": {
+      "airplay": "AirPlay හරහා වාදනය වේ",
+      "bluetooth": "Bluetooth හරහා වාදනය වේ",
+      "aPhone": "දුරකථනයක්",
+      "takeOverTitle": "ස්පීකරය ආපසු ගන්නද?",
+      "takeOverAirplay": "{{who}} AirPlay හරහා මෙම ස්පීකරයේ වාදනය කරයි. Gedara සංගීතය වාදනය කිරීමෙන් එය නවතී.",
+      "takeOverBluetooth": "{{who}} Bluetooth හරහා මෙම ස්පීකරයේ වාදනය කරයි. Gedara සංගීතය වාදනය කිරීමෙන් එය නවතී.",
+      "takeOverConfirm": "මෙහි වාදනය කරන්න"
+    },
+    "network": {
+      "title": "ජාල ස්පීකරය",
+      "intro": "දුරකථන සහ PC වලට මෙම ස්පීකරයට කෙලින්ම වාදනය කළ හැක: YouTube Music, ඕනෑම යෙදුමක්. එකවර එකක් පමණි.",
+      "airplay": "AirPlay (iPhone, iPad, Mac)",
+      "airplayOn": "AirPlay මෙනුවේ “{{name}}” ලෙස පෙනේ",
+      "bluetooth": "Bluetooth (Android, ලැප්ටොප්, PC)",
+      "bluetoothOn": "යුගල කළ දුරකථන සහ PC “{{name}}” වෙත ඉබේම සම්බන්ධ වේ",
+      "off": "අක්‍රිය",
+      "noAdapter": "Pi එකේ Bluetooth ඇඩැප්ටරයක් නැත: USB Bluetooth ඇඩැප්ටරයක් සවි කර, install.ps1 -Music නැවත ධාවනය කරන්න.",
+      "pair": "දුරකථනයකට හෝ PC එකකට යුගල වීමට ඉඩ දෙන්න (මිනි. 2)",
+      "pairingOpen": "යුගල කිරීම විවෘතයි: තත්. {{s}}",
+      "pairingHow": "දුරකථනයේ හෝ PC එකේ: Settings › Bluetooth › “{{name}}” තෝරන්න.",
+      "connected": "දැන් සම්බන්ධයි",
+      "paired": "යුගල කළා",
+      "forget": "{{name}} අමතක කරන්න",
+      "noCast": "YouTube Music “cast” බොත්තමට Chromecast එකක් අවශ්‍යයි; ඒ වෙනුවට AirPlay හෝ Bluetooth භාවිත කරන්න."
+    },
     "player": {
       "title": "දැන් වාදනය වේ",
       "nothing": "කිසිවක් වාදනය නොවේ",

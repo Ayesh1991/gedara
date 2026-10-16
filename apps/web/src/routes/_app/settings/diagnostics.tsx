@@ -274,6 +274,7 @@ function SpeakerStatusCard({ householdId }: { householdId: string }) {
                     free: st.disk_free_mb != null ? (st.disk_free_mb / 1024).toFixed(1) : '—',
                     temp: st.temp_c != null ? Math.round(st.temp_c) : '—',
                   })}
+                  {` · AirPlay ${st.airplay ? '✓' : '—'} · Bluetooth ${st.bluetooth ?? '—'}`}
                 </div>
                 {st.error && <div className="text-xs text-red">{st.error}</div>}
               </div>

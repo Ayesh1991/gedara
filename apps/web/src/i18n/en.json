@@ -2657,6 +2657,32 @@
   },
   "music": {
     "title": "Music",
+    "external": {
+      "airplay": "Playing from AirPlay",
+      "bluetooth": "Playing from Bluetooth",
+      "aPhone": "a phone",
+      "takeOverTitle": "Take the speaker back?",
+      "takeOverAirplay": "{{who}} is playing on this speaker over AirPlay. Playing Gedara's music stops it.",
+      "takeOverBluetooth": "{{who}} is playing on this speaker over Bluetooth. Playing Gedara's music stops it.",
+      "takeOverConfirm": "Play here"
+    },
+    "network": {
+      "title": "Network speaker",
+      "intro": "Phones and PCs can play to this speaker directly: YouTube Music, any app. One plays at a time.",
+      "airplay": "AirPlay (iPhone, iPad, Mac)",
+      "airplayOn": "Appears as “{{name}}” in the AirPlay menu",
+      "bluetooth": "Bluetooth (Android, laptops, PCs)",
+      "bluetoothOn": "Paired phones and PCs connect to “{{name}}” by themselves",
+      "off": "Off",
+      "noAdapter": "No Bluetooth adapter on the Pi: plug a USB Bluetooth adapter in, then run install.ps1 -Music again.",
+      "pair": "Let a phone or PC pair (2 min)",
+      "pairingOpen": "Pairing open: {{s}} s",
+      "pairingHow": "On the phone or PC: Settings › Bluetooth › choose “{{name}}”.",
+      "connected": "Connected now",
+      "paired": "Paired",
+      "forget": "Forget {{name}}",
+      "noCast": "The YouTube Music “cast” button needs a Chromecast; use AirPlay or Bluetooth instead."
+    },
     "player": {
       "title": "Now playing",
       "nothing": "Nothing playing",

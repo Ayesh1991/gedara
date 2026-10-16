@@ -42,6 +42,9 @@ function open(householdId: string, qc: QueryClient): Sub {
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'device', filter: `household_id=eq.${householdId}` }, () =>
       invalidateMedia(qc, householdId, 'speakers'),
     )
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'media_bt_device', filter: `household_id=eq.${householdId}` }, () =>
+      invalidateMedia(qc, householdId, 'bt'),
+    )
     // Joined (or re-joined): fetch once, so nothing sent while connecting is missed.
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') void invalidateMedia(qc, householdId);

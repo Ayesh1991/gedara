@@ -1,11 +1,14 @@
 // Now playing (Phase 7h): the cover on its aurora, the song, a progress line that runs smoothly
 // between the speaker's reports (drag or arrow keys to seek), the transport with the one gold
-// Play/Pause, volume (up to the speaker's limit) and the sleep timer with its fade-out.
-import { Moon, Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume1, Volume2, VolumeX } from 'lucide-react';
+// Play/Pause, volume (up to the speaker's limit) and the sleep timer with its fade-out. Phase 7i:
+// when a phone plays over AirPlay or Bluetooth, a banner says who, and Play asks before taking over.
+import { Airplay, Bluetooth, Moon, Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { elapsedAt, formatTime, sleepMinutesLeft } from '@/lib/media/progress';
-import type { Player, Speaker, Track } from '@/lib/media/queries';
+import { externalSource, type Player, type Speaker, type Track } from '@/lib/media/queries';
+import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { AuroraArt } from './AuroraArt';
 import { useNow, type SpeakerView } from './useSpeaker';
@@ -154,7 +157,12 @@ export function NowPlaying({ speaker, online, player, track, artUrl, canWrite, h
   const disabled = !canWrite || !online;
   const playing = player.state === 'playing';
   const max = speaker.settings?.volume_max ?? 100;
-  const title = track?.title ?? t('music.player.nothing');
+  const external = externalSource(player);
+  const [confirm, setConfirm] = useState<(() => void) | null>(null);
+  /** Playing Gedara's music while a phone has the speaker stops the phone first: ask. */
+  const takeOver = (fn: () => void) => (external ? setConfirm(() => fn) : fn());
+  const who = player.source_name ?? t('music.external.aPhone');
+  const title = track?.title ?? (external ? t(`music.external.${player.source as 'airplay' | 'bluetooth'}`) : t('music.player.nothing'));
   const RepeatIcon = player.repeat === 'one' ? Repeat1 : Repeat;
   const iconBtn = (active = false) =>
     cn(
@@ -168,6 +176,19 @@ export function NowPlaying({ speaker, online, player, track, artUrl, canWrite, h
         <div className="w-full max-w-[300px] px-4 pt-3 lg:max-w-[340px]" style={{ viewTransitionName: 'music-art' }}>
           <AuroraArt url={artUrl} title={track?.title ?? speaker.name} playing={playing} />
         </div>
+
+        {external && (
+          <div
+            className="relative z-10 flex w-full items-center gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--accent-b)_40%,transparent)] bg-[color-mix(in_srgb,var(--accent-b)_10%,transparent)] px-4 py-3"
+            data-testid="source-banner"
+          >
+            {player.source === 'airplay' ? <Airplay className="h-5 w-5 shrink-0 text-accent-b" aria-hidden /> : <Bluetooth className="h-5 w-5 shrink-0 text-accent-b" aria-hidden />}
+            <div className="min-w-0 flex-1">
+              <div className="text-[14.5px] font-medium">{t(`music.external.${player.source as 'airplay' | 'bluetooth'}`)}</div>
+              <div className="truncate text-[13px] text-muted">{who}</div>
+            </div>
+          </div>
+        )}
 
         <div className="relative z-10 w-full text-center" aria-live="polite">
           <h2 className="truncate font-display text-[24px] font-semibold leading-tight tracking-tight lg:text-[26px]">{title}</h2>
@@ -197,7 +218,7 @@ export function NowPlaying({ speaker, online, player, track, artUrl, canWrite, h
                 type="button"
                 disabled={disabled}
                 aria-label={playing ? t('music.player.pause') : t('music.player.play')}
-                onClick={() => void command(playing ? 'pause' : 'resume')}
+                onClick={() => (playing ? void command('pause') : takeOver(() => void command('resume')))}
                 className="glow-gold flex h-[76px] w-[76px] items-center justify-center rounded-full transition-transform active:scale-95 disabled:opacity-50"
               >
                 {playing ? <Pause className="h-8 w-8 fill-current" aria-hidden /> : <Play className="ml-1 h-8 w-8 fill-current" aria-hidden />}
@@ -228,13 +249,13 @@ export function NowPlaying({ speaker, online, player, track, artUrl, canWrite, h
               <button
                 type="button"
                 disabled={disabled}
-                onClick={() => onPlayAll(false)}
+                onClick={() => takeOver(() => onPlayAll(false))}
                 className="glow-gold flex h-14 items-center gap-2.5 rounded-full px-7 font-display text-[16px] font-semibold disabled:opacity-50"
               >
                 <Play className="h-5 w-5 fill-current" aria-hidden />
                 {t('music.player.playAll')}
               </button>
-              <button type="button" disabled={disabled} onClick={() => onPlayAll(true)} className="flex items-center gap-2 text-[14px] text-muted hover:text-text disabled:opacity-50">
+              <button type="button" disabled={disabled} onClick={() => takeOver(() => onPlayAll(true))} className="flex items-center gap-2 text-[14px] text-muted hover:text-text disabled:opacity-50">
                 <Shuffle className="h-4 w-4" aria-hidden />
                 {t('music.player.shuffleAll')}
               </button>
@@ -242,6 +263,28 @@ export function NowPlaying({ speaker, online, player, track, artUrl, canWrite, h
           )
         )}
       </div>
+      {confirm && (
+        <Sheet open onClose={() => setConfirm(null)} title={t('music.external.takeOverTitle')}>
+          <p className="text-[14.5px] leading-relaxed text-[#a5b0d0]">
+            {t(player.source === 'airplay' ? 'music.external.takeOverAirplay' : 'music.external.takeOverBluetooth', { who })}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              onClick={() => {
+                const fn = confirm;
+                setConfirm(null);
+                fn();
+              }}
+            >
+              {t('music.external.takeOverConfirm')}
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirm(null)}>
+              {t('common.cancel')}
+            </Button>
+          </div>
+        </Sheet>
+      )}
     </section>
   );
 }

@@ -62,6 +62,7 @@ export class SpeakerSim {
   /** Another source playing (Phase 7i): AirPlay or Bluetooth from a phone. */
   external: { source: 'airplay' | 'bluetooth'; name: string } | null = null;
   btPairingUntil = 0;
+  deviceId: string | null = null;
   private done: { id: string; ok: boolean; error?: string }[] = [];
   private downloaded: { id: string; ok: boolean; file?: string; error?: string }[] = [];
   private deleted: string[] = [];
@@ -137,6 +138,7 @@ export class SpeakerSim {
         p.state = 'paused';
         break;
       case 'resume':
+        this.external = null;
         if (p.queue.length) {
           p.since = Date.now();
           p.state = 'playing';
@@ -212,6 +214,7 @@ export class SpeakerSim {
     if (this.deleted.length) body.deleted = this.deleted.splice(0);
     const r = await this.post(body);
     if (!r.ok) return r;
+    if (typeof r.device_id === 'string') this.deviceId = r.device_id;
     for (const c of r.commands ?? []) {
       this.received.push({ ...c, at: Date.now() });
       if (this.deaf) continue;

@@ -2,13 +2,13 @@
 // commands and playlist order change through RPCs, playlists and schedules are plain rows
 // (can_write policies, migration 71). The speaker itself only talks to the media-agent function.
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
-import type { MediaCommandName, MediaMime, PlayerState, RepeatMode } from '@media/protocol';
+import type { BtState, MediaCommandName, MediaMime, PlayerState, RepeatMode, Source } from '@media/protocol';
 import type { Json } from '../db.types';
 import { supabase } from '../supabase';
 
 export const mediaKey = (householdId: string, ...rest: unknown[]) => ['media', householdId, ...rest] as const;
 
-export function invalidateMedia(qc: QueryClient, householdId: string, what?: 'tracks' | 'playlists' | 'player' | 'speakers' | 'schedules') {
+export function invalidateMedia(qc: QueryClient, householdId: string, what?: 'tracks' | 'playlists' | 'player' | 'speakers' | 'schedules' | 'bt') {
   return qc.invalidateQueries({ queryKey: what ? mediaKey(householdId, what) : mediaKey(householdId) });
 }
 
@@ -17,6 +17,9 @@ export interface SpeakerSettings {
   volume_max: number;
   fade_s: number;
   normalise: boolean;
+  /** Phase 7i: the speaker as an AirPlay / Bluetooth speaker (on unless switched off). */
+  airplay?: boolean;
+  bluetooth?: boolean;
 }
 
 export interface SpeakerStatus {
@@ -28,6 +31,8 @@ export interface SpeakerStatus {
   files?: number;
   error?: string | null;
   up?: number;
+  airplay?: boolean;
+  bluetooth?: BtState;
 }
 
 export interface Speaker {
@@ -274,6 +279,9 @@ export interface Player {
   queue: string[];
   queue_index: number | null;
   updated_at: string;
+  /** Phase 7i: who plays — Gedara, or a phone over AirPlay / Bluetooth (with its name). */
+  source: Source;
+  source_name: string | null;
 }
 
 export const playersQuery = (householdId: string) =>
@@ -319,7 +327,7 @@ export function optimistic(p: Player, command: MediaCommandName, args: Record<st
     case 'pause':
       return { ...p, state: 'paused', elapsed_s: elapsed, at };
     case 'resume':
-      return { ...p, state: 'playing', elapsed_s: elapsed, at };
+      return { ...p, state: 'playing', elapsed_s: elapsed, at, source: 'gedara', source_name: null };
     case 'stop':
       return { ...p, state: 'stopped', elapsed_s: 0, at };
     case 'seek':
@@ -341,7 +349,7 @@ export function optimistic(p: Player, command: MediaCommandName, args: Record<st
     case 'play': {
       const ids = (args.track_ids as string[] | undefined) ?? [];
       const i = Number(args.index ?? 0);
-      return ids.length ? { ...p, state: 'playing', queue: ids, queue_index: i, track_id: ids[i] ?? null, elapsed_s: 0, at } : p;
+      return ids.length ? { ...p, state: 'playing', queue: ids, queue_index: i, track_id: ids[i] ?? null, elapsed_s: 0, at, source: 'gedara', source_name: null } : p;
     }
     default:
       return p;
@@ -364,7 +372,39 @@ export function emptyPlayer(deviceId: string, householdId: string): Player {
     queue: [],
     queue_index: null,
     updated_at: new Date(0).toISOString(),
+    source: 'gedara',
+    source_name: null,
   };
+}
+
+// ── Bluetooth devices paired with a speaker (Phase 7i) ─────────────────────────
+export interface BtDevice {
+  id: string;
+  device_id: string;
+  address: string;
+  name: string;
+  connected: boolean;
+  last_seen_at: string | null;
+}
+
+export const btDevicesQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: mediaKey(householdId, 'bt'),
+    queryFn: async (): Promise<BtDevice[]> => {
+      const { data, error } = await supabase
+        .from('media_bt_device')
+        .select('id, device_id, address, name, connected, last_seen_at')
+        .eq('household_id', householdId)
+        .order('name');
+      if (error) throw error;
+      return data as unknown as BtDevice[];
+    },
+    staleTime: 15_000,
+  });
+
+/** True while another source (a phone over AirPlay / Bluetooth) has the speaker. */
+export function externalSource(p: Pick<Player, 'source'> | null | undefined): boolean {
+  return !!p && p.source !== 'gedara';
 }
 
 // ── Schedules ─────────────────────────────────────────────────────────────────

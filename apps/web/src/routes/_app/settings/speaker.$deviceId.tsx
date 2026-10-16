@@ -10,6 +10,7 @@ import { fieldLabel } from '@/components/pantry/bits';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { NetworkSpeakerCard } from '@/components/media/NetworkSpeakerCard';
 import { useMediaLive } from '@/components/media/useMediaLive';
 import {
   DAY_BITS,
@@ -361,6 +362,7 @@ function SpeakerPage() {
       )}
 
       <SettingsForm key={speaker.settings_version} speaker={speaker} canWrite={canWrite} />
+      <NetworkSpeakerCard speaker={speaker} online={online} canWrite={canWrite} />
       <Schedules speaker={speaker} canWrite={canWrite} />
 
       {isOwner && (

@@ -112,6 +112,23 @@ test('pair a speaker, add a song, play it within 2 s, pause, sleep, no answer, d
     await expect(page.getByText("The speaker didn't answer")).toBeVisible({ timeout: 12_000 });
     sim.deaf = false;
 
+    // Phase 7i: a phone takes the speaker over AirPlay; Gedara says so, and Play asks before taking over.
+    sim.external = { source: 'airplay', name: 'E2E iPhone' };
+    await sim.sync(false);
+    await expect(page.getByTestId('source-banner')).toContainText('Playing from AirPlay');
+    await expect(page.getByTestId('source-banner')).toContainText('E2E iPhone');
+    await page.getByRole('button', { name: 'Play', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Play here' }).click();
+    await expect.poll(() => sim.external).toBeNull();
+    await expect(page.getByTestId('source-banner')).toHaveCount(0, { timeout: 15_000 });
+
+    // The Bluetooth pairing window opens for 2 minutes from the speaker's page.
+    await page.goto(`/settings/speaker/${sim.deviceId}`);
+    await page.getByRole('button', { name: 'Let a phone or PC pair (2 min)' }).click();
+    await expect(page.getByTestId('bt-pairing')).toContainText('Pairing open');
+    await expect.poll(() => sim.btPairingUntil).toBeGreaterThan(Date.now() + 100_000);
+    await page.goto('/music');
+
     // Delete it from the speaker.
     await page.getByRole('button', { name: `More for ${title}` }).click();
     await page.getByRole('button', { name: 'Delete from the speaker' }).click();
