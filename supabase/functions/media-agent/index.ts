@@ -15,7 +15,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { ArtUpload, DeviceKey, PairStart, PROTOCOL_VERSION, SyncRequest, type Download, type MediaCommand } from '../_shared/media/protocol.ts';
 
-const FN_VERSION = 'media-agent-1';
+const FN_VERSION = 'media-agent-2';
 const MAX_BYTES = 65_536;
 const LINK_SECONDS = 900;
 const WAIT_MS = 25_000;

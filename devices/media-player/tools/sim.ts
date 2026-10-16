@@ -59,6 +59,9 @@ export class SpeakerSim {
   };
   /** Commands this sim ignores (to test "the speaker didn't answer"). */
   deaf = false;
+  /** Another source playing (Phase 7i): AirPlay or Bluetooth from a phone. */
+  external: { source: 'airplay' | 'bluetooth'; name: string } | null = null;
+  btPairingUntil = 0;
   private done: { id: string; ok: boolean; error?: string }[] = [];
   private downloaded: { id: string; ok: boolean; file?: string; error?: string }[] = [];
   private deleted: string[] = [];
@@ -108,6 +111,8 @@ export class SpeakerSim {
       repeat: p.repeat,
       queue: p.queue.map((s) => s.id),
       queue_index: song ? p.index : null,
+      source: this.external?.source ?? 'gedara',
+      source_name: this.external?.name ?? null,
     };
   }
 
@@ -120,6 +125,7 @@ export class SpeakerSim {
     };
     switch (c.command) {
       case 'play':
+        this.external = null; // Gedara takes the speaker back
         p.queue = (a.queue as SimSong[]) ?? [];
         p.index = Number(a.index ?? 0);
         p.state = 'playing';
@@ -162,6 +168,9 @@ export class SpeakerSim {
       case 'repeat':
         p.repeat = a.mode as typeof p.repeat;
         break;
+      case 'bt_pair':
+        this.btPairingUntil = Date.now() + Number(a.seconds ?? 120) * 1000;
+        break;
       default:
         break;
     }
@@ -195,7 +204,7 @@ export class SpeakerSim {
       agent: 'gedara-media sim',
       up: Math.floor((Date.now() - this.started) / 1000),
       wait,
-      status: { output: 'none', mpd: true, files: this.files.size },
+      status: { output: 'none', mpd: true, files: this.files.size, airplay: true, bluetooth: Date.now() < this.btPairingUntil ? 'pairing' : 'ready', bt_devices: [] },
       player: this.report(),
     };
     if (this.done.length) body.done = this.done.splice(0);

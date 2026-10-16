@@ -27,6 +27,12 @@ export const PLAYER_STATES = ['stopped', 'playing', 'paused'] as const;
 export type PlayerState = (typeof PLAYER_STATES)[number];
 export const REPEAT_MODES = ['off', 'all', 'one'] as const;
 export type RepeatMode = (typeof REPEAT_MODES)[number];
+/** Who plays right now (Phase 7i): Gedara's music, or a phone over AirPlay / Bluetooth. */
+export const SOURCES = ['gedara', 'airplay', 'bluetooth'] as const;
+export type Source = (typeof SOURCES)[number];
+export const BT_STATES = ['none', 'off', 'ready', 'pairing'] as const;
+export type BtState = (typeof BT_STATES)[number];
+const BtAddress = z.string().regex(/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/);
 
 /** A path on the speaker, under its music folder ("inbox/<id>.mp3", "pc/Album/01 Song.flac"). */
 const DeviceFile = z
@@ -53,6 +59,8 @@ export const PlayerReport = z.object({
   repeat: z.enum(REPEAT_MODES),
   queue: z.array(uuid).max(500),
   queue_index: z.number().int().min(0).max(499).nullable(),
+  source: z.enum(SOURCES).optional(),
+  source_name: text(60).nullable().optional(),
 });
 export type PlayerReport = z.infer<typeof PlayerReport>;
 
@@ -64,6 +72,9 @@ export const SpeakerStatus = z.object({
   mpd: z.boolean().optional(),
   files: z.number().int().min(0).max(1_000_000).optional(),
   error: text(200).nullable().optional(),
+  airplay: z.boolean().optional(),
+  bluetooth: z.enum(BT_STATES).optional(),
+  bt_devices: z.array(z.object({ address: BtAddress, name: text(60), connected: z.boolean() })).max(20).optional(),
 });
 
 export const FolderSong = z.object({
@@ -107,7 +118,7 @@ export const QueueSong = z.object({ id: uuid, file: z.string() });
 export type QueueSong = z.infer<typeof QueueSong>;
 
 export const COMMANDS = ['play', 'pause', 'resume', 'stop', 'next', 'prev', 'seek', 'volume', 'sleep', 'shuffle', 'repeat',
-  'queue_add', 'queue_move', 'queue_remove', 'test_tone', 'rescan'] as const;
+  'queue_add', 'queue_move', 'queue_remove', 'test_tone', 'rescan', 'bt_pair', 'bt_forget'] as const;
 export type MediaCommandName = (typeof COMMANDS)[number];
 
 export interface MediaCommand {
@@ -145,6 +156,8 @@ export interface SpeakerSettings {
   volume_max?: number;
   fade_s?: number;
   normalise?: boolean;
+  airplay?: boolean;
+  bluetooth?: boolean;
 }
 
 export interface SyncReply {
