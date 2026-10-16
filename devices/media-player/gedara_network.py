@@ -78,7 +78,7 @@ SAFE_NAME = re.compile(r"[^\w .'-]")
 
 def safe_name(name: str) -> str:
     """A speaker name that is safe in shairport-sync.conf and bluetoothctl (same filter as apply-network.sh)."""
-    return SAFE_NAME.sub("", str(name))[:40].strip() or "Gedara speaker"
+    return " ".join(SAFE_NAME.sub("", str(name)).split())[:40] or "Gedara speaker"
 
 
 def newly_paired(before: set[str], now: list[dict]) -> list[str]:
