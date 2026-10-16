@@ -932,6 +932,68 @@ export type Database = {
           },
         ]
       }
+      device_pair_attempt: {
+        Row: {
+          at: string
+          household_id: string
+          id: number
+        }
+        Insert: {
+          at?: string
+          household_id: string
+          id?: never
+        }
+        Update: {
+          at?: string
+          household_id?: string
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_pair_attempt_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_pairing: {
+        Row: {
+          agent: string | null
+          code: string
+          created_at: string
+          expires_at: string
+          hint: string
+          id: string
+          kind: string
+          source: string | null
+          token_hash: string
+        }
+        Insert: {
+          agent?: string | null
+          code: string
+          created_at?: string
+          expires_at?: string
+          hint: string
+          id?: string
+          kind?: string
+          source?: string | null
+          token_hash: string
+        }
+        Update: {
+          agent?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string
+          hint?: string
+          id?: string
+          kind?: string
+          source?: string | null
+          token_hash?: string
+        }
+        Relationships: []
+      }
       device_token: {
         Row: {
           device_id: string
@@ -1709,6 +1771,447 @@ export type Database = {
           },
           {
             foreignKeyName: "maintenance_plan_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_command: {
+        Row: {
+          args: Json
+          command: string
+          created_at: string
+          created_by: string | null
+          device_id: string
+          done_at: string | null
+          error: string | null
+          household_id: string
+          id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          args?: Json
+          command: string
+          created_at?: string
+          created_by?: string | null
+          device_id: string
+          done_at?: string | null
+          error?: string | null
+          household_id: string
+          id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          args?: Json
+          command?: string
+          created_at?: string
+          created_by?: string | null
+          device_id?: string
+          done_at?: string | null
+          error?: string | null
+          household_id?: string
+          id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_command_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "media_command_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_inbox_trash: {
+        Row: {
+          created_at: string
+          household_id: string
+          path: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          path: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_inbox_trash_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_player: {
+        Row: {
+          at: string
+          device_id: string
+          duration_s: number | null
+          elapsed_s: number
+          household_id: string
+          queue: string[]
+          queue_index: number | null
+          repeat: string
+          shuffle: boolean
+          sleep_until: string | null
+          state: string
+          track_id: string | null
+          updated_at: string
+          volume: number
+        }
+        Insert: {
+          at?: string
+          device_id: string
+          duration_s?: number | null
+          elapsed_s?: number
+          household_id: string
+          queue?: string[]
+          queue_index?: number | null
+          repeat?: string
+          shuffle?: boolean
+          sleep_until?: string | null
+          state?: string
+          track_id?: string | null
+          updated_at?: string
+          volume?: number
+        }
+        Update: {
+          at?: string
+          device_id?: string
+          duration_s?: number | null
+          elapsed_s?: number
+          household_id?: string
+          queue?: string[]
+          queue_index?: number | null
+          repeat?: string
+          shuffle?: boolean
+          sleep_until?: string | null
+          state?: string
+          track_id?: string | null
+          updated_at?: string
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_player_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "media_player_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_player_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "media_track"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_playlist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          name: string
+          sort: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          name: string
+          sort?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          name?: string
+          sort?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_playlist_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_playlist_item: {
+        Row: {
+          household_id: string
+          id: string
+          playlist_id: string
+          position: number
+          track_id: string
+        }
+        Insert: {
+          household_id: string
+          id?: string
+          playlist_id: string
+          position: number
+          track_id: string
+        }
+        Update: {
+          household_id?: string
+          id?: string
+          playlist_id?: string
+          position?: number
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_playlist_item_household_id_playlist_id_fkey"
+            columns: ["household_id", "playlist_id"]
+            isOneToOne: false
+            referencedRelation: "media_playlist"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "media_playlist_item_household_id_track_id_fkey"
+            columns: ["household_id", "track_id"]
+            isOneToOne: false
+            referencedRelation: "media_track"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
+      media_schedule: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          days: number
+          device_id: string
+          enabled: boolean
+          fade_s: number
+          household_id: string
+          id: string
+          name: string
+          playlist_id: string | null
+          shuffle: boolean
+          start_time: string
+          stop_after_min: number | null
+          updated_at: string
+          volume: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          days?: number
+          device_id: string
+          enabled?: boolean
+          fade_s?: number
+          household_id: string
+          id?: string
+          name: string
+          playlist_id?: string | null
+          shuffle?: boolean
+          start_time: string
+          stop_after_min?: number | null
+          updated_at?: string
+          volume?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          days?: number
+          device_id?: string
+          enabled?: boolean
+          fade_s?: number
+          household_id?: string
+          id?: string
+          name?: string
+          playlist_id?: string | null
+          shuffle?: boolean
+          start_time?: string
+          stop_after_min?: number | null
+          updated_at?: string
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_schedule_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "media_schedule_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_schedule_household_id_playlist_id_fkey"
+            columns: ["household_id", "playlist_id"]
+            isOneToOne: false
+            referencedRelation: "media_playlist"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
+      media_token: {
+        Row: {
+          device_id: string
+          household_id: string
+          token_hash: string
+        }
+        Insert: {
+          device_id: string
+          household_id: string
+          token_hash: string
+        }
+        Update: {
+          device_id?: string
+          household_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_token_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "device"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_token_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_track: {
+        Row: {
+          added_by: string | null
+          album: string | null
+          art_path: string | null
+          artist: string | null
+          created_at: string
+          device_file: string | null
+          device_id: string
+          duration_s: number | null
+          error: string | null
+          file_name: string | null
+          household_id: string
+          id: string
+          inbox_path: string | null
+          last_played_at: string | null
+          mime: string
+          on_device: boolean
+          plays: number
+          sent_at: string | null
+          sha256: string
+          size_bytes: number
+          source: string
+          state: string
+          title: string
+          track_no: number | null
+          updated_at: string
+        }
+        Insert: {
+          added_by?: string | null
+          album?: string | null
+          art_path?: string | null
+          artist?: string | null
+          created_at?: string
+          device_file?: string | null
+          device_id: string
+          duration_s?: number | null
+          error?: string | null
+          file_name?: string | null
+          household_id: string
+          id?: string
+          inbox_path?: string | null
+          last_played_at?: string | null
+          mime: string
+          on_device?: boolean
+          plays?: number
+          sent_at?: string | null
+          sha256: string
+          size_bytes: number
+          source: string
+          state?: string
+          title: string
+          track_no?: number | null
+          updated_at?: string
+        }
+        Update: {
+          added_by?: string | null
+          album?: string | null
+          art_path?: string | null
+          artist?: string | null
+          created_at?: string
+          device_file?: string | null
+          device_id?: string
+          duration_s?: number | null
+          error?: string | null
+          file_name?: string | null
+          household_id?: string
+          id?: string
+          inbox_path?: string | null
+          last_played_at?: string | null
+          mime?: string
+          on_device?: boolean
+          plays?: number
+          sent_at?: string | null
+          sha256?: string
+          size_bytes?: number
+          source?: string
+          state?: string
+          title?: string
+          track_no?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_track_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "media_track_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "household"
@@ -5098,6 +5601,10 @@ export type Database = {
         Args: { p: Json; p_household: string }
         Returns: string
       }
+      rpc_device_pair: {
+        Args: { p_code: string; p_household: string; p_name: string }
+        Returns: Json
+      }
       rpc_device_revoke: { Args: { p_id: string }; Returns: undefined }
       rpc_device_update: { Args: { p: Json; p_id: string }; Returns: Json }
       rpc_device_watch: {
@@ -5130,6 +5637,41 @@ export type Database = {
       }
       rpc_log_maintenance: { Args: { p: Json }; Returns: Json }
       rpc_lot_code: { Args: { p_lot: string }; Returns: string }
+      rpc_media_command: {
+        Args: { p_args?: Json; p_command: string; p_device: string }
+        Returns: string
+      }
+      rpc_media_pair_poll: { Args: { p_token_hash: string }; Returns: Json }
+      rpc_media_pair_start: {
+        Args: {
+          p_agent?: string
+          p_hint: string
+          p_source?: string
+          p_token_hash: string
+        }
+        Returns: Json
+      }
+      rpc_media_pending: { Args: { p_token_hash: string }; Returns: Json }
+      rpc_media_playlist_set: {
+        Args: { p_playlist: string; p_track_ids: string[] }
+        Returns: number
+      }
+      rpc_media_sync: { Args: { p: Json; p_token_hash: string }; Returns: Json }
+      rpc_media_track_delete: { Args: { p_ids: string[] }; Returns: number }
+      rpc_media_track_update: {
+        Args: { p: Json; p_id: string }
+        Returns: undefined
+      }
+      rpc_media_trash_done: {
+        Args: { p_paths: string[]; p_token_hash: string }
+        Returns: number
+      }
+      rpc_media_upload_abort: { Args: { p_id: string }; Returns: undefined }
+      rpc_media_upload_begin: {
+        Args: { p: Json; p_device: string }
+        Returns: Json
+      }
+      rpc_media_upload_done: { Args: { p_id: string }; Returns: Json }
       rpc_move: {
         Args: {
           p_client_at?: string
