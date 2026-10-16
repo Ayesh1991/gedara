@@ -33,14 +33,14 @@ echo "---- $(date -Is) setup-media.sh on $(hostname)"
 export DEBIAN_FRONTEND=noninteractive
 
 # ── 1. Software ───────────────────────────────────────────────────────────────
-say "1/6 Installing the music software"
+say "1/7 Installing the music software"
 apt-get update -q || die "apt-get update failed - is the Pi on the internet?"
 apt-get -y -q install mpd python3-mpd python3-mutagen python3-pil samba alsa-utils \
   || die "could not install the music software"
 ok "mpd, python3-mpd, mutagen, pillow, samba, alsa-utils"
 
 # ── 2. Users, folders, the agent ──────────────────────────────────────────────
-say "2/6 Folders and the Gedara music agent"
+say "2/7 Folders and the Gedara music agent"
 getent group gedara-music >/dev/null || groupadd --system gedara-music
 id gedara-media >/dev/null 2>&1 || useradd --system --home /var/lib/gedara-media --shell /usr/sbin/nologin --groups audio,gedara-music gedara-media
 id music >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin --groups gedara-music music
@@ -78,7 +78,7 @@ EOF
 ok "folders under /srv/gedara-music, agent in $LIB, server ${MEDIA_SERVER:-gedara}"
 
 # ── 3. Sound output ───────────────────────────────────────────────────────────
-say "3/6 Choosing the sound output"
+say "3/7 Choosing the sound output"
 CONFIG_TXT=/boot/firmware/config.txt
 [ -f "$CONFIG_TXT" ] || CONFIG_TXT=/boot/config.txt
 if [ -f "$CONFIG_TXT" ] && ! grep -q '^dtparam=audio=on' "$CONFIG_TXT"; then
@@ -95,17 +95,36 @@ else
   CARD=0; OUTPUT=none
   warn "no sound card found: plug in the USB sound card or check the jack, then run install.ps1 -Music again"
 fi
+# "default" is a dmix on that card, so MPD, AirPlay and Bluetooth (Phase 7i) can all open it; the
+# agent makes sure only one of them is heard at a time.
 cat > /etc/asound.conf <<EOF
-# Gedara music speaker: the output setup-media.sh chose ($OUTPUT).
-defaults.pcm.card $CARD
-defaults.ctl.card $CARD
+# Gedara music speaker: the output setup-media.sh chose ($OUTPUT), shared by MPD, AirPlay, Bluetooth.
+pcm.!default {
+  type plug
+  slave.pcm "gedara_mix"
+}
+pcm.gedara_mix {
+  type dmix
+  ipc_key 4242
+  ipc_perm 0666
+  slave {
+    pcm "hw:$CARD,0"
+    rate 44100
+    period_size 1024
+    buffer_size 8192
+  }
+}
+ctl.!default {
+  type hw
+  card $CARD
+}
 EOF
 echo "$OUTPUT" > /etc/gedara-media/output
 chmod 0644 /etc/gedara-media/output
 ok "sound output: $OUTPUT (card $CARD)"
 
 # ── 4. MPD ────────────────────────────────────────────────────────────────────
-say "4/6 MPD, the player"
+say "4/7 MPD, the player"
 cat > /etc/mpd.conf <<'EOF'
 # Gedara music speaker (devices/media-player/setup-media.sh). Only the agent talks to MPD.
 music_directory     "/srv/gedara-music"
@@ -162,7 +181,7 @@ systemctl enable --now mpd gedara-mpd-normalise.path >/dev/null 2>&1
 systemctl restart mpd && ok "MPD running on localhost, music before printing" || warn "MPD did not start (journalctl -u mpd)"
 
 # ── 5. The "Gedara Music" network folder ──────────────────────────────────────
-say "5/6 The \"Gedara Music\" network folder (Samba)"
+say "5/7 The \"Gedara Music\" network folder (Samba)"
 PW_FILE=/etc/gedara-media/samba-password
 if [ ! -s "$PW_FILE" ]; then
   ( umask 077; python3 -c 'import secrets; print(secrets.token_urlsafe(18))' > "$PW_FILE" )
@@ -204,7 +223,7 @@ done
 ok "firewall: SMB from the home network only"
 
 # ── 6. The agent service ──────────────────────────────────────────────────────
-say "6/6 The agent service"
+say "6/7 The agent service"
 cat > /etc/systemd/system/gedara-media-agent.service <<'EOF'
 [Unit]
 Description=Gedara music speaker agent
@@ -224,7 +243,7 @@ NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
-ReadWritePaths=/srv/gedara-music /var/lib/gedara-media
+ReadWritePaths=/srv/gedara-music /var/lib/gedara-media -/run/gedara-media
 ReadOnlyPaths=/etc/gedara-media
 
 [Install]
@@ -238,6 +257,112 @@ if [ -s /etc/gedara-media/key ]; then
 else
   ok "agent installed; pairing comes next (install.ps1 shows the code)"
 fi
+
+# ── 7. Network speaker: AirPlay + Bluetooth (Phase 7i) ────────────────────────
+say "7/7 Network speaker: AirPlay and Bluetooth"
+apt-get -y -q install shairport-sync bluez bluez-alsa-utils bluez-tools >/dev/null \
+  || warn "could not install AirPlay / Bluetooth software"
+install -m 0644 "$HERE/gedara_network.py" "$LIB/gedara_network.py"
+usermod -aG bluetooth gedara-media 2>/dev/null || true
+id shairport-sync >/dev/null 2>&1 && usermod -aG gedara-music,audio shairport-sync
+cat > /etc/tmpfiles.d/gedara-media.conf <<'EOF'
+d /run/gedara-media 2775 gedara-media gedara-music -
+p /run/gedara-media/shairport-metadata 0660 shairport-sync gedara-music -
+EOF
+systemd-tmpfiles --create /etc/tmpfiles.d/gedara-media.conf
+
+# AirPlay: plays to the shared output; tells the agent (metadata pipe) when a phone starts / stops.
+NAME=$(python3 -c 'import json; print(json.load(open("/var/lib/gedara-media/network.json")).get("name","Gedara speaker"))' 2>/dev/null || echo "Gedara speaker")
+cat > /etc/shairport-sync.conf <<EOF
+// Gedara speaker (devices/media-player/setup-media.sh). The name follows the speaker's name in Gedara.
+general = {
+  name = "$NAME";
+  output_backend = "alsa";
+  interpolation = "basic";
+  volume_range_db = 50;
+};
+alsa = {
+  output_device = "default";
+};
+sessioncontrol = {
+  allow_session_interruption = "yes";
+  session_timeout = 20;
+};
+metadata = {
+  enabled = "yes";
+  include_cover_art = "no";
+  pipe_name = "/run/gedara-media/shairport-metadata";
+};
+EOF
+if shairport-sync -V 2>/dev/null | grep -qi airplay2; then ok "AirPlay 2 supported"; else ok "classic AirPlay (works with iPhone, iPad, Mac)"; fi
+
+# Gedara switches AirPlay on/off, renames it, or ends a session: the agent writes these files, root acts.
+cat > /usr/local/lib/gedara-media/apply-network.sh <<'EOF'
+#!/bin/sh
+# Gedara speaker: apply /var/lib/gedara-media/network.json (AirPlay on/off + name) and end an
+# AirPlay session when /run/gedara-media/airplay-stop appears (Gedara took the speaker back).
+CONF=/var/lib/gedara-media/network.json
+if [ -f "$CONF" ]; then
+  ON=$(python3 -c 'import json; print(1 if json.load(open("'"$CONF"'")).get("airplay", True) else 0)' 2>/dev/null || echo 1)
+  NAME=$(python3 -c 'import json,re; n=json.load(open("'"$CONF"'")).get("name","Gedara speaker"); print(re.sub(r"[^\w .\x27-]", "", n)[:40] or "Gedara speaker")' 2>/dev/null || echo "Gedara speaker")
+  sed -i "s/^  name = \".*\";/  name = \"$NAME\";/" /etc/shairport-sync.conf
+  if [ "$ON" = 1 ]; then systemctl enable --now shairport-sync >/dev/null 2>&1; systemctl restart shairport-sync
+  else systemctl disable --now shairport-sync >/dev/null 2>&1; fi
+fi
+if [ -e /run/gedara-media/airplay-stop ]; then
+  rm -f /run/gedara-media/airplay-stop
+  systemctl restart shairport-sync
+fi
+EOF
+chmod 0755 /usr/local/lib/gedara-media/apply-network.sh
+cat > /etc/systemd/system/gedara-network.path <<'EOF'
+[Unit]
+Description=Gedara speaker - apply AirPlay settings from Gedara
+[Path]
+PathChanged=/var/lib/gedara-media/network.json
+PathExists=/run/gedara-media/airplay-stop
+[Install]
+WantedBy=multi-user.target
+EOF
+cat > /etc/systemd/system/gedara-network.service <<'EOF'
+[Unit]
+Description=Gedara speaker - apply AirPlay settings
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/gedara-media/apply-network.sh
+EOF
+mkdir -p /etc/systemd/system/shairport-sync.service.d /etc/systemd/system/bluealsa.service.d /etc/systemd/system/bluealsa-aplay.service.d
+printf '[Service]\nCPUWeight=200\nRestart=on-failure\n' > /etc/systemd/system/shairport-sync.service.d/gedara.conf
+printf '[Service]\nCPUWeight=200\nRestart=on-failure\n' > /etc/systemd/system/bluealsa-aplay.service.d/gedara.conf
+
+# Bluetooth: an A2DP speaker that is invisible and refuses pairing except in Gedara's 2-minute window.
+if [ -f /etc/bluetooth/main.conf ]; then
+  sed -i -E 's/^#?\s*Class\s*=.*/Class = 0x240414/; s/^#?\s*DiscoverableTimeout\s*=.*/DiscoverableTimeout = 120/; s/^#?\s*PairableTimeout\s*=.*/PairableTimeout = 120/' /etc/bluetooth/main.conf
+fi
+BLUEALSA=$(command -v bluealsa || echo /usr/bin/bluealsa)
+cat > /etc/systemd/system/bluealsa.service.d/gedara.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=$BLUEALSA -p a2dp-sink
+EOF
+systemctl daemon-reload
+systemctl enable --now gedara-network.path shairport-sync >/dev/null 2>&1
+systemctl restart shairport-sync && ok "AirPlay: \"$NAME\" on the home network" || warn "AirPlay did not start (journalctl -u shairport-sync)"
+for net in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16; do
+  ufw allow from "$net" to any port 5000,7000 proto tcp >/dev/null
+  ufw allow from "$net" to any port 6000:6100 proto udp >/dev/null
+  ufw allow from "$net" to any port 319,320 proto udp >/dev/null
+done
+ok "firewall: AirPlay from the home network only"
+if [ -d /sys/class/bluetooth ] && ls /sys/class/bluetooth | grep -q hci; then
+  systemctl enable --now bluetooth bluealsa bluealsa-aplay >/dev/null 2>&1
+  systemctl restart bluealsa bluealsa-aplay
+  bluetoothctl discoverable off >/dev/null 2>&1; bluetoothctl pairable off >/dev/null 2>&1
+  ok "Bluetooth adapter found: pair phones from Gedara (Settings > Devices > the speaker)"
+else
+  note "no Bluetooth adapter: plug a USB Bluetooth adapter in and run install.ps1 -Music again"
+fi
+systemctl restart gedara-media-agent 2>/dev/null || true
 
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 echo

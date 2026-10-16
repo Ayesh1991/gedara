@@ -8,6 +8,7 @@ on any phone, the iPad or the PC. Nothing plays from the phone itself.
 |---|---|
 | [setup.md](setup.md) | **click by click**: sound output, one command, pairing code, first songs, the PC folder |
 | [troubleshooting.md](troubleshooting.md) | symptom → fix |
+| [network-speaker.md](network-speaker.md) | **AirPlay and Bluetooth**: YouTube Music or any app from phones and PCs (Phase 7i) |
 | [protocol.md](protocol.md) | how the Pi and Gedara talk (for developers) |
 
 ## What you get

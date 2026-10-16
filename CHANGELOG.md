@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.9 — Phase 7i: the speaker as a network speaker
+- **AirPlay** (iPhone, iPad, Mac) and **Bluetooth** (Android, laptops, PCs) on the Gedara speaker:
+  YouTube Music or any app plays straight to it, one source at a time.
+- **In Gedara:**
+  - Music and the mini player show "Playing from AirPlay · <phone>", and Play asks before taking the speaker back.
+  - The speaker's page has a **Network speaker** card: AirPlay and Bluetooth switches, and **"Let a phone or PC pair (2 min)"** (the speaker is otherwise invisible to Bluetooth and refuses pairing), plus paired devices with Remove.
+- Migration 73 (`media_player.source`, `media_bt_device`, `bt_pair` / `bt_forget`, settings `airplay` / `bluetooth`); schema_version 73. Edge Function `media-agent-2`.
+- Pi: shairport-sync, BlueALSA (A2DP sink) and a shared dmix output, set up by `install.ps1 -Music`; agent 0.2.0 (`gedara_network.py`). Docs: `docs/media-player/network-speaker.md`.
+
 ## 0.7.8 — Phase 7h: Gedara Music
 - **Music** (sidebar; Home card and mini player on the phone). The Raspberry Pi that shares the
   printer is also the household's speaker.

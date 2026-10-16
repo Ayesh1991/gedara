@@ -200,3 +200,8 @@ Format: date · decision · why. Append-only.
 - 2026-10-15 · Uploads use a plain XHR to Storage with progress (no tus-js-client) · one fewer dependency; songs are ≤ 60 MB on home Wi-Fi
 - 2026-10-15 · The Samba folder password is made on the Pi and put into Windows Credential Manager by install.ps1; Android shares upload only after a tap, and the service worker ignores cross-site share posts · secrets never shown; a security review showed any website could otherwise push files in
 - 2026-10-15 · App version 0.7.8 for Phase 7h · versions must keep increasing for the service worker and the badge
+- 2026-10-16 · Phase 7i: the speaker Pi is also an AirPlay (shairport-sync) and Bluetooth (BlueALSA A2DP sink) speaker; no Spotify Connect (needs Premium) and no Google Cast (certified devices only) · Didula's choice: YouTube Music from any phone or PC
+- 2026-10-16 · One source at a time: AirPlay is seen through shairport-sync's metadata pipe (pbeg/pend/snam), Bluetooth through BlueALSA's running PCM; Gedara's music pauses for a phone, and Play in Gedara ends the phone's session after a confirm · a shared dmix lets all three open the card, so nothing fails, but two mixed songs would be noise
+- 2026-10-16 · Bluetooth is invisible and refuses pairing except for 2 minutes opened from Gedara (no-PIN agent only then; what paired is trusted afterwards) · a speaker that anyone nearby could pair with would be a nuisance and a risk
+- 2026-10-16 · The agent never gets root for AirPlay: it writes network.json / airplay-stop and a systemd path unit runs apply-network.sh · same pattern as the normalise setting
+- 2026-10-16 · App version 0.7.9 for Phase 7i

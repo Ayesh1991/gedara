@@ -233,16 +233,16 @@ if ($Music) {
   $tmp = Join-Path $env:TEMP 'gedara-media'
   New-Item -ItemType Directory -Force $tmp | Out-Null
   $utf8 = New-Object System.Text.UTF8Encoding $false
-  foreach ($f in 'setup-media.sh', 'gedara_media_agent.py') {
+  foreach ($f in 'setup-media.sh', 'gedara_media_agent.py', 'gedara_network.py') {
     $text = [IO.File]::ReadAllText((Join-Path $musicDir $f)) -replace "`r`n", "`n"
     [IO.File]::WriteAllText((Join-Path $tmp $f), $text, $utf8)
   }
-  & scp @sshKeyOpts -q (Join-Path $tmp 'setup-media.sh') (Join-Path $tmp 'gedara_media_agent.py') "${target}:/tmp/"
+  & scp @sshKeyOpts -q (Join-Path $tmp 'setup-media.sh') (Join-Path $tmp 'gedara_media_agent.py') (Join-Path $tmp 'gedara_network.py') "${target}:/tmp/"
   if ($LASTEXITCODE -ne 0) { Fail 'copying to the Pi failed' }
   Ok 'setup-media.sh and the agent are on the Pi'
 
   Step "Music 2/3 Setting up the speaker (5-10 minutes; server: $Server)"
-  & ssh @sshKeyOpts -t $target "sudo install -d /opt/gedara-media && sudo install -m 755 /tmp/setup-media.sh /tmp/gedara_media_agent.py /opt/gedara-media/ && sudo MEDIA_SERVER=$Server bash /opt/gedara-media/setup-media.sh"
+  & ssh @sshKeyOpts -t $target "sudo install -d /opt/gedara-media && sudo install -m 755 /tmp/setup-media.sh /tmp/gedara_media_agent.py /tmp/gedara_network.py /opt/gedara-media/ && sudo MEDIA_SERVER=$Server bash /opt/gedara-media/setup-media.sh"
   if ($LASTEXITCODE -ne 0) { Note 'setup-media.sh reported a problem (see the lines above).' }
 
   Step 'Music 3/3 Pairing with Gedara'

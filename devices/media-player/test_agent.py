@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gedara_media_agent as a  # noqa: E402
+import gedara_network as n  # noqa: E402
 
 
 class Sniff(unittest.TestCase):
@@ -79,6 +80,45 @@ class Repeat(unittest.TestCase):
         self.assertEqual(a.player_repeat("0", "0"), "off")
         self.assertEqual(a.player_repeat("1", "0"), "all")
         self.assertEqual(a.player_repeat("1", "1"), "one")
+
+
+def _item(typ: str, code: str, data: bytes = b"") -> bytes:
+    import base64
+    body = f'<item><type>{typ.encode().hex()}</type><code>{code.encode().hex()}</code><length>{len(data)}</length>'
+    if data:
+        body += '\n<data encoding="base64">\n' + base64.b64encode(data).decode() + "</data>"
+    return (body + "</item>\n").encode()
+
+
+class AirPlayMetadata(unittest.TestCase):
+    def test_start_name_stop_from_the_pipe(self):
+        buf = _item("ssnc", "pbeg") + _item("core", "asar", b"Artist") + _item("ssnc", "snam", "Didula's iPhone".encode()) + _item("ssnc", "pend")
+        items, rest = n.metadata_items(buf)
+        events = [e for e in (n.airplay_event(*i) for i in items) if e]
+        self.assertEqual(events, [("start", None), ("name", "Didula's iPhone"), ("stop", None)])
+        self.assertEqual(rest.strip(), b"")
+
+    def test_a_half_item_waits_for_the_rest(self):
+        whole = _item("ssnc", "snam", b"iPad")
+        items, rest = n.metadata_items(whole[:20])
+        self.assertEqual(items, [])
+        items, _ = n.metadata_items(rest + whole[20:])
+        self.assertEqual(n.airplay_event(*items[0]), ("name", "iPad"))
+
+
+class BluetoothLists(unittest.TestCase):
+    def test_paired_and_connected(self):
+        paired = "Device aa:bb:cc:dd:ee:01 Pixel 7\nDevice AA:BB:CC:DD:EE:02 Laptop\nnoise line\n"
+        connected = "Device AA:BB:CC:DD:EE:01 Pixel 7\n"
+        self.assertEqual(n.parse_bt_devices(paired, connected), [
+            {"address": "AA:BB:CC:DD:EE:01", "name": "Pixel 7", "connected": True},
+            {"address": "AA:BB:CC:DD:EE:02", "name": "Laptop", "connected": False},
+        ])
+
+    def test_pairing_window_counts_down_and_closes(self):
+        self.assertEqual(n.pairing_left(1000.0 + 120, 1000.0), 120)
+        self.assertEqual(n.pairing_left(1000.0 + 120, 1121.0), 0)
+        self.assertEqual(n.pairing_left(None, 5.0), 0)
 
 
 if __name__ == "__main__":

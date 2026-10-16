@@ -21,4 +21,11 @@ Cheapest first:
 | Pairing: **"That code doesn't match"** | mistyped, or older than 10 minutes | run the Stage B command again for a new code |
 | A schedule **didn't start** | it's off, or the day isn't ticked; the Pi's clock | check it on the speaker's page; the Pi takes its time from the internet at start-up |
 
+| The speaker **isn't in the iPhone's AirPlay list** | phone on mobile data / guest Wi-Fi, or AirPlay is off | phone on the home Wi-Fi; Gedara → the speaker → Network speaker → AirPlay on; run `install.ps1 -Music` again |
+| AirPlay **drops** now and then | weak Wi-Fi at the phone, or a print being prepared | move closer to the router; classic AirPlay keeps a 2 s buffer |
+| **Bluetooth: no adapter** in Gedara | the USB Bluetooth adapter isn't plugged in, or wasn't when setup ran | plug it in, run `install.ps1 -Music` again |
+| The phone **can't find the speaker** in Bluetooth | pairing isn't open | Gedara → the speaker → *Let a phone or PC pair (2 min)*, then search on the phone within those 2 minutes |
+| A paired phone **won't reconnect** | it was removed, or Bluetooth is off for the speaker | remove the speaker from the phone's Bluetooth list and pair again |
+| Gedara's music **won't start** while a phone plays | that's by design: one source at a time | tap Play → *Play here* |
+
 Still stuck: send me what `install.ps1 -Status` shows, and the speaker's page.

@@ -10,7 +10,9 @@ supabase/functions/_shared/media/protocol.ts):
   * songs dropped into the "Gedara Music" network folder (Samba, /srv/gedara-music/pc) are found
     every 30 s, their tags and covers read, and reported;
   * the sleep timer (with fade-out), the volume limit and wind-down schedules run here, so they
-    work even when the internet is down.
+    work even when the internet is down;
+  * (0.2.0, Phase 7i) it is also an AirPlay and Bluetooth speaker (gedara_network.py): one source
+    plays at a time, Gedara's music pauses for a phone and takes the speaker back on Play.
 
     gedara-media pair     make the key (once) and show the pairing code until Gedara has it
     gedara-media status   what the agent knows (no secrets)
@@ -40,7 +42,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-VERSION = "0.1.0"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gedara_network import AirPlay, Bluetooth  # noqa: E402
+
+VERSION = "0.2.0"
 AGENT = f"gedara-media {VERSION}"
 ROOT = Path(os.environ.get("GEDARA_MEDIA_ROOT", "/"))
 CONF = ROOT / "etc/gedara-media"
@@ -271,6 +276,10 @@ class Agent:
         self.rescan = threading.Event()
         self.report_now = threading.Event()
         self.last_song: tuple[str | None, float] = (None, 0.0)
+        self.external: dict | None = None  # {"source": "airplay" | "bluetooth", "name": str | None}
+        self.network_applied: tuple | None = None
+        self.airplay = AirPlay(lambda on, name: self.on_external("airplay", on, name))
+        self.bt = Bluetooth(lambda on, name: self.on_external("bluetooth", on, name))
         self.mpd = self.connect()
 
     # MPD ──────────────────────────────────────────────────────────────────────
@@ -319,6 +328,8 @@ class Agent:
             "repeat": player_repeat(st.get("repeat", "0"), st.get("single", "0")),
             "queue": self.queue_ids[:500],
             "queue_index": pos if track else None,
+            "source": self.external["source"] if self.external else "gedara",
+            "source_name": (self.external or {}).get("name"),
         }
 
     def status(self) -> dict:
@@ -337,7 +348,46 @@ class Agent:
                "disk_total_mb": du.total // 1048576, "mpd": True, "files": files}
         if temp is not None:
             out["temp_c"] = round(temp, 1)
+        out["airplay"] = bool(self.settings().get("airplay", True))
+        out["bluetooth"] = self.bt.state()
+        if out["bluetooth"] != "none":
+            out["bt_devices"] = self.bt.list_devices()
         return out
+
+    # One source at a time (Phase 7i) ───────────────────────────────────────────
+    def on_external(self, source: str, on: bool, name: str | None) -> None:
+        with self.lock:
+            if on:
+                self.external = {"source": source, "name": name}
+            elif self.external and self.external["source"] == source:
+                self.external = None
+        if on:
+            st = self.call("status") or {}
+            if st.get("state") == "play":
+                self.call("pause", 1)  # Gedara's music makes way for the phone
+            log(f"[SOURCE] {source} from {name or 'a phone'}")
+        self.report_now.set()
+
+    def take_over(self) -> None:
+        with self.lock:
+            ext, self.external = self.external, None
+        if not ext:
+            return
+        if ext["source"] == "airplay":
+            AirPlay.stop_session()
+        else:
+            self.bt.disconnect_active()
+        log(f"[SOURCE] Gedara takes the speaker back from {ext['source']}")
+        time.sleep(0.8)
+
+    def apply_network(self, name: str) -> None:
+        s = self.settings()
+        want = (bool(s.get("airplay", True)), bool(s.get("bluetooth", True)), name)
+        if want == self.network_applied:
+            return
+        self.network_applied = want
+        AirPlay.configure(want[0], name)
+        self.bt.configure(want[1], name)
 
     # One conversation ─────────────────────────────────────────────────────────
     def sync(self, wait: bool) -> dict | None:
@@ -368,6 +418,8 @@ class Agent:
                 self.state["settings"] = r["settings"] or {}
                 self.state["settings_v"] = r.get("settings_v")
                 self.apply_normalise()
+            if r.get("name"):
+                threading.Thread(target=self.apply_network, args=(r["name"],), daemon=True).start()
             if "schedules" in r:
                 self.state["schedules"] = r["schedules"] or []
                 self.state["schedules_v"] = r.get("schedules_v")
@@ -393,6 +445,8 @@ class Agent:
     # Commands ─────────────────────────────────────────────────────────────────
     def run_command(self, name: str, a: dict) -> None:
         cap = int(self.settings()["volume_max"])
+        if name in ("play", "resume") and self.external:
+            self.take_over()
         if name == "play":
             self.load_queue(a.get("queue") or [])
             self.call("random", 1 if a.get("shuffle") else 0)
@@ -453,6 +507,10 @@ class Agent:
             self.test_tone()
         elif name == "rescan":
             self.rescan.set()
+        elif name == "bt_pair":
+            self.bt.open_pairing(int(a.get("seconds", 120)))
+        elif name == "bt_forget":
+            self.bt.forget(str(a.get("address", "")))
         else:
             raise ValueError(f"unknown command {name}")
 
@@ -700,7 +758,7 @@ class Agent:
 
     def run(self) -> None:
         log(f"{AGENT} → {self.url.split('//')[1].split('.')[0]}")
-        for fn in (self.watcher, self.reporter, self.clocks, self.folder_loop):
+        for fn in (self.watcher, self.reporter, self.clocks, self.folder_loop, self.airplay.loop, self.bt.loop):
             threading.Thread(target=fn, daemon=True).start()
         backoff = 1.0
         while True:
