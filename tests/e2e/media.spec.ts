@@ -66,6 +66,9 @@ test('pair a speaker, add a song, play it within 2 s, pause, sleep, no answer, d
     // Add a song.
     await page.goto('/music');
     await expect(page.getByRole('heading', { name: 'Music', level: 1 })).toBeVisible();
+    // The household may have a real speaker too: everything here goes to the test speaker only.
+    const chooser = page.getByRole('combobox', { name: 'Speaker' });
+    if (await chooser.count()) await chooser.selectOption({ label: `${PREFIX} Speaker` });
     await page.getByRole('button', { name: 'Add music' }).first().click();
     await page.getByTestId('music-file-input').setInputFiles({ name: 'rain.mp3', mimeType: 'audio/mpeg', buffer: tinyMp3(title, 'E2E Nature') });
     await expect(page.getByTestId('music-uploads')).toContainText(title);

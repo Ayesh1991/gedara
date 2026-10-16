@@ -68,7 +68,11 @@ export class SpeakerSim {
   private deleted: string[] = [];
   private running = false;
 
-  constructor(readonly url: string) {}
+  readonly url: string;
+
+  constructor(url: string) {
+    this.url = url; // (no parameter property: Node runs this file directly)
+  }
 
   private async post(body: Record<string, unknown>, withKey = true): Promise<SimReply> {
     const res = await fetch(this.url, {

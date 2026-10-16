@@ -1778,6 +1778,54 @@ export type Database = {
           },
         ]
       }
+      media_bt_device: {
+        Row: {
+          address: string
+          connected: boolean
+          created_at: string
+          device_id: string
+          household_id: string
+          id: string
+          last_seen_at: string | null
+          name: string
+        }
+        Insert: {
+          address: string
+          connected?: boolean
+          created_at?: string
+          device_id: string
+          household_id: string
+          id?: string
+          last_seen_at?: string | null
+          name: string
+        }
+        Update: {
+          address?: string
+          connected?: boolean
+          created_at?: string
+          device_id?: string
+          household_id?: string
+          id?: string
+          last_seen_at?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_bt_device_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "media_bt_device_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_command: {
         Row: {
           args: Json
@@ -1873,6 +1921,8 @@ export type Database = {
           repeat: string
           shuffle: boolean
           sleep_until: string | null
+          source: string
+          source_name: string | null
           state: string
           track_id: string | null
           updated_at: string
@@ -1889,6 +1939,8 @@ export type Database = {
           repeat?: string
           shuffle?: boolean
           sleep_until?: string | null
+          source?: string
+          source_name?: string | null
           state?: string
           track_id?: string | null
           updated_at?: string
@@ -1905,6 +1957,8 @@ export type Database = {
           repeat?: string
           shuffle?: boolean
           sleep_until?: string | null
+          source?: string
+          source_name?: string | null
           state?: string
           track_id?: string | null
           updated_at?: string

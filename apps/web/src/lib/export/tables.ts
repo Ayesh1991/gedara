@@ -71,6 +71,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'media_schedule', order: ['id'], scope: 'household' },
   { name: 'media_player', order: ['device_id'], scope: 'household' },
   { name: 'media_command', order: ['id'], scope: 'household' },
+  { name: 'media_bt_device', order: ['id'], scope: 'household' },
   { name: 'export_run', order: ['id'], scope: 'household' },
 ];
 
