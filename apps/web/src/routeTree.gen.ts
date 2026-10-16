@@ -22,6 +22,7 @@ import { Route as AppMoneyBudgetsRouteImport } from './routes/_app/money/budgets
 import { Route as AppMoneyImportRouteImport } from './routes/_app/money/import'
 import { Route as AppMoneyInboxRouteImport } from './routes/_app/money/inbox'
 import { Route as AppMoneyRecurringRouteImport } from './routes/_app/money/recurring'
+import { Route as AppMusicIndexRouteImport } from './routes/_app/music/index'
 import { Route as AppPantryIndexRouteImport } from './routes/_app/pantry/index'
 import { Route as AppPantryProductIdRouteImport } from './routes/_app/pantry/$productId'
 import { Route as AppPantryJournalRouteImport } from './routes/_app/pantry/journal'
@@ -50,7 +51,9 @@ import { Route as AppThingsPendingRouteImport } from './routes/_app/things/pendi
 import { Route as AppMoneyAccountsIndexRouteImport } from './routes/_app/money/accounts/index'
 import { Route as AppMoneyAccountsAccountIdRouteImport } from './routes/_app/money/accounts/$accountId'
 import { Route as AppMoneyTxTxIdRouteImport } from './routes/_app/money/tx.$txId'
+import { Route as AppMusicPlaylistPlaylistIdRouteImport } from './routes/_app/music/playlist.$playlistId'
 import { Route as AppSettingsScaleDeviceIdRouteImport } from './routes/_app/settings/scale.$deviceId'
+import { Route as AppSettingsSpeakerDeviceIdRouteImport } from './routes/_app/settings/speaker.$deviceId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -114,6 +117,11 @@ const AppMoneyInboxRoute = AppMoneyInboxRouteImport.update({
 const AppMoneyRecurringRoute = AppMoneyRecurringRouteImport.update({
   id: '/money/recurring',
   path: '/money/recurring',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMusicIndexRoute = AppMusicIndexRouteImport.update({
+  id: '/music/',
+  path: '/music/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPantryIndexRoute = AppPantryIndexRouteImport.update({
@@ -258,10 +266,22 @@ const AppMoneyTxTxIdRoute = AppMoneyTxTxIdRouteImport.update({
   path: '/money/tx/$txId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMusicPlaylistPlaylistIdRoute =
+  AppMusicPlaylistPlaylistIdRouteImport.update({
+    id: '/music/playlist/$playlistId',
+    path: '/music/playlist/$playlistId',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSettingsScaleDeviceIdRoute =
   AppSettingsScaleDeviceIdRouteImport.update({
     id: '/settings/scale/$deviceId',
     path: '/settings/scale/$deviceId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppSettingsSpeakerDeviceIdRoute =
+  AppSettingsSpeakerDeviceIdRouteImport.update({
+    id: '/settings/speaker/$deviceId',
+    path: '/settings/speaker/$deviceId',
     getParentRoute: () => AppRoute,
   } as any)
 
@@ -299,13 +319,16 @@ export interface FileRoutesByFullPath {
   '/things/pending': typeof AppThingsPendingRoute
   '/insights/': typeof AppInsightsIndexRoute
   '/money/': typeof AppMoneyIndexRoute
+  '/music/': typeof AppMusicIndexRoute
   '/pantry/': typeof AppPantryIndexRoute
   '/places/': typeof AppPlacesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/things/': typeof AppThingsIndexRoute
   '/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/money/tx/$txId': typeof AppMoneyTxTxIdRoute
+  '/music/playlist/$playlistId': typeof AppMusicPlaylistPlaylistIdRoute
   '/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
+  '/settings/speaker/$deviceId': typeof AppSettingsSpeakerDeviceIdRoute
   '/money/accounts/': typeof AppMoneyAccountsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -342,13 +365,16 @@ export interface FileRoutesByTo {
   '/things/pending': typeof AppThingsPendingRoute
   '/insights': typeof AppInsightsIndexRoute
   '/money': typeof AppMoneyIndexRoute
+  '/music': typeof AppMusicIndexRoute
   '/pantry': typeof AppPantryIndexRoute
   '/places': typeof AppPlacesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
   '/things': typeof AppThingsIndexRoute
   '/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/money/tx/$txId': typeof AppMoneyTxTxIdRoute
+  '/music/playlist/$playlistId': typeof AppMusicPlaylistPlaylistIdRoute
   '/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
+  '/settings/speaker/$deviceId': typeof AppSettingsSpeakerDeviceIdRoute
   '/money/accounts': typeof AppMoneyAccountsIndexRoute
 }
 export interface FileRoutesById {
@@ -387,13 +413,16 @@ export interface FileRoutesById {
   '/_app/things/pending': typeof AppThingsPendingRoute
   '/_app/insights/': typeof AppInsightsIndexRoute
   '/_app/money/': typeof AppMoneyIndexRoute
+  '/_app/music/': typeof AppMusicIndexRoute
   '/_app/pantry/': typeof AppPantryIndexRoute
   '/_app/places/': typeof AppPlacesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/things/': typeof AppThingsIndexRoute
   '/_app/money/accounts/$accountId': typeof AppMoneyAccountsAccountIdRoute
   '/_app/money/tx/$txId': typeof AppMoneyTxTxIdRoute
+  '/_app/music/playlist/$playlistId': typeof AppMusicPlaylistPlaylistIdRoute
   '/_app/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
+  '/_app/settings/speaker/$deviceId': typeof AppSettingsSpeakerDeviceIdRoute
   '/_app/money/accounts/': typeof AppMoneyAccountsIndexRoute
 }
 export interface FileRouteTypes {
@@ -432,13 +461,16 @@ export interface FileRouteTypes {
     | '/things/pending'
     | '/insights/'
     | '/money/'
+    | '/music/'
     | '/pantry/'
     | '/places/'
     | '/settings/'
     | '/things/'
     | '/money/accounts/$accountId'
     | '/money/tx/$txId'
+    | '/music/playlist/$playlistId'
     | '/settings/scale/$deviceId'
+    | '/settings/speaker/$deviceId'
     | '/money/accounts/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -475,13 +507,16 @@ export interface FileRouteTypes {
     | '/things/pending'
     | '/insights'
     | '/money'
+    | '/music'
     | '/pantry'
     | '/places'
     | '/settings'
     | '/things'
     | '/money/accounts/$accountId'
     | '/money/tx/$txId'
+    | '/music/playlist/$playlistId'
     | '/settings/scale/$deviceId'
+    | '/settings/speaker/$deviceId'
     | '/money/accounts'
   id:
     | '__root__'
@@ -519,13 +554,16 @@ export interface FileRouteTypes {
     | '/_app/things/pending'
     | '/_app/insights/'
     | '/_app/money/'
+    | '/_app/music/'
     | '/_app/pantry/'
     | '/_app/places/'
     | '/_app/settings/'
     | '/_app/things/'
     | '/_app/money/accounts/$accountId'
     | '/_app/money/tx/$txId'
+    | '/_app/music/playlist/$playlistId'
     | '/_app/settings/scale/$deviceId'
+    | '/_app/settings/speaker/$deviceId'
     | '/_app/money/accounts/'
   fileRoutesById: FileRoutesById
 }
@@ -626,6 +664,13 @@ declare module '@tanstack/react-router' {
       path: '/money/recurring'
       fullPath: '/money/recurring'
       preLoaderRoute: typeof AppMoneyRecurringRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/music/': {
+      id: '/_app/music/'
+      path: '/music'
+      fullPath: '/music/'
+      preLoaderRoute: typeof AppMusicIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/pantry/': {
@@ -824,11 +869,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMoneyTxTxIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/music/playlist/$playlistId': {
+      id: '/_app/music/playlist/$playlistId'
+      path: '/music/playlist/$playlistId'
+      fullPath: '/music/playlist/$playlistId'
+      preLoaderRoute: typeof AppMusicPlaylistPlaylistIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/scale/$deviceId': {
       id: '/_app/settings/scale/$deviceId'
       path: '/settings/scale/$deviceId'
       fullPath: '/settings/scale/$deviceId'
       preLoaderRoute: typeof AppSettingsScaleDeviceIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/speaker/$deviceId': {
+      id: '/_app/settings/speaker/$deviceId'
+      path: '/settings/speaker/$deviceId'
+      fullPath: '/settings/speaker/$deviceId'
+      preLoaderRoute: typeof AppSettingsSpeakerDeviceIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
@@ -866,13 +925,16 @@ interface AppRouteChildren {
   AppThingsPendingRoute: typeof AppThingsPendingRoute
   AppInsightsIndexRoute: typeof AppInsightsIndexRoute
   AppMoneyIndexRoute: typeof AppMoneyIndexRoute
+  AppMusicIndexRoute: typeof AppMusicIndexRoute
   AppPantryIndexRoute: typeof AppPantryIndexRoute
   AppPlacesIndexRoute: typeof AppPlacesIndexRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
   AppThingsIndexRoute: typeof AppThingsIndexRoute
   AppMoneyAccountsAccountIdRoute: typeof AppMoneyAccountsAccountIdRoute
   AppMoneyTxTxIdRoute: typeof AppMoneyTxTxIdRoute
+  AppMusicPlaylistPlaylistIdRoute: typeof AppMusicPlaylistPlaylistIdRoute
   AppSettingsScaleDeviceIdRoute: typeof AppSettingsScaleDeviceIdRoute
+  AppSettingsSpeakerDeviceIdRoute: typeof AppSettingsSpeakerDeviceIdRoute
   AppMoneyAccountsIndexRoute: typeof AppMoneyAccountsIndexRoute
 }
 
@@ -908,13 +970,16 @@ const AppRouteChildren: AppRouteChildren = {
   AppThingsPendingRoute: AppThingsPendingRoute,
   AppInsightsIndexRoute: AppInsightsIndexRoute,
   AppMoneyIndexRoute: AppMoneyIndexRoute,
+  AppMusicIndexRoute: AppMusicIndexRoute,
   AppPantryIndexRoute: AppPantryIndexRoute,
   AppPlacesIndexRoute: AppPlacesIndexRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
   AppThingsIndexRoute: AppThingsIndexRoute,
   AppMoneyAccountsAccountIdRoute: AppMoneyAccountsAccountIdRoute,
   AppMoneyTxTxIdRoute: AppMoneyTxTxIdRoute,
+  AppMusicPlaylistPlaylistIdRoute: AppMusicPlaylistPlaylistIdRoute,
   AppSettingsScaleDeviceIdRoute: AppSettingsScaleDeviceIdRoute,
+  AppSettingsSpeakerDeviceIdRoute: AppSettingsSpeakerDeviceIdRoute,
   AppMoneyAccountsIndexRoute: AppMoneyAccountsIndexRoute,
 }
 

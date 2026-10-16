@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.7.9 — Phase 7i: the speaker as a network speaker
+- **AirPlay** (iPhone, iPad, Mac) and **Bluetooth** (Android, laptops, PCs) on the Gedara speaker:
+  YouTube Music or any app plays straight to it, one source at a time.
+- **In Gedara:**
+  - Music and the mini player show "Playing from AirPlay · <phone>", and Play asks before taking the speaker back.
+  - The speaker's page has a **Network speaker** card: AirPlay and Bluetooth switches, and **"Let a phone or PC pair (2 min)"** (the speaker is otherwise invisible to Bluetooth and refuses pairing), plus paired devices with Remove.
+- Migration 73 (`media_player.source`, `media_bt_device`, `bt_pair` / `bt_forget`, settings `airplay` / `bluetooth`); schema_version 73. Edge Function `media-agent-2`.
+- Pi: shairport-sync, BlueALSA (A2DP sink) and a shared dmix output, set up by `install.ps1 -Music`; agent 0.2.0 (`gedara_network.py`). Docs: `docs/media-player/network-speaker.md`.
+
+## 0.7.8 — Phase 7h: Gedara Music
+- **Music** (sidebar; Home card and mini player on the phone). The Raspberry Pi that shares the
+  printer is also the household's speaker.
+  - Now playing: the cover on a glow of its own colours, gold Play/Pause, volume (up to a household
+    limit), shuffle/repeat, and a sleep timer that fades out.
+  - Up next with drag to reorder; the library (songs, albums, artists, playlists, search); playlist pages.
+  - A mini player on every screen.
+- **Adding songs:**
+  - "Add music" in Gedara (types checked by their first bytes, tags and covers read in the browser, 300 MB on their way at most);
+  - Android Share → Gedara (after a tap on Add);
+  - the PC's "Gedara Music" network folder.
+- **Settings › Devices › Music speakers:** pairing with an 8-digit code (no key to copy). Each
+  speaker's page has health, a test sound, the volume limit, the fade, "even out loud and quiet
+  songs" and wind-down schedules (run by the Pi itself).
+- Diagnostics: a speaker card and `media-agent` in the edge check. Export: the music tables.
+- Migrations 70–72 (`media_device`, `media_library`, `media_player`); schema_version 72. Edge
+  Function `media-agent-1`.
+- Pi: `devices/media-player` (agent, `setup-media.sh`), installed by `install.ps1 -Music`; docs in `docs/media-player`.
+
 ## 0.7.7 — Phase 7f: merge products, brand-aware bill matching
 - **Merge into…** on every product page: pick the product to keep ("Freelan Mustard Seeds" → "Mustard
   seeds") and everything moves to it in one step — stock and its history, bill prices, learned bill

@@ -106,12 +106,37 @@ registerRoute(
 const SHARE_CACHE = 'gedara-share';
 const SHARE_KEY = new URL('/__shared-text', self.registration.scope).href;
 const SHARE_MAX = 2 * 1024 * 1024;
+// Songs shared to Gedara (Phase 7h) are kept the same way, up to 20 of at most 60 MB, for ONE read
+// by Music, which uploads them to the speaker. (Their real type is checked there, by first bytes.)
+const SHARE_AUDIO_INDEX = new URL('/__shared-audio', self.registration.scope).href;
+const SHARE_AUDIO_MAX = 60 * 1024 * 1024;
+const AUDIO_NAME = /\.(mp3|m4a|aac|flac|ogg|opus|wav)$/i;
 registerRoute(
   ({ url, request }) => url.origin === self.location.origin && url.pathname === '/share-target' && request.method === 'POST',
   async ({ request }) => {
+    // A real share comes from the phone's share sheet (no initiator: "none"). A form on another
+    // website posting here is cross-site: ignore it, so no page can push files into Gedara.
+    const site = request.headers.get('sec-fetch-site');
+    if (site && site !== 'none' && site !== 'same-origin') {
+      return Response.redirect(new URL('/', self.registration.scope).href, 303);
+    }
     let text: string;
     try {
       const form = await request.formData();
+      const songs = form
+        .getAll('files')
+        .filter((f): f is File => f instanceof File && f.size > 0 && f.size <= SHARE_AUDIO_MAX && (f.type.startsWith('audio/') || AUDIO_NAME.test(f.name)))
+        .slice(0, 20);
+      if (songs.length) {
+        const cache = await caches.open(SHARE_CACHE);
+        const names: string[] = [];
+        for (const [i, song] of songs.entries()) {
+          await cache.put(`${SHARE_AUDIO_INDEX}/${i}`, new Response(song, { headers: { 'Content-Type': song.type || 'application/octet-stream' } }));
+          names.push(song.name);
+        }
+        await cache.put(SHARE_AUDIO_INDEX, new Response(JSON.stringify(names), { headers: { 'Content-Type': 'application/json' } }));
+        return Response.redirect(new URL(`/music?shared=${Date.now()}`, self.registration.scope).href, 303);
+      }
       const file = form.getAll('files').find((f): f is File => f instanceof File && f.size > 0 && f.size <= SHARE_MAX);
       if (file && /^(application\/json|text\/plain|)$/.test(file.type)) text = await file.text();
       else text = [form.get('text'), form.get('url')].filter((v): v is string => typeof v === 'string').join(' ');

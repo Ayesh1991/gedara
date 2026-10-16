@@ -11,6 +11,7 @@ import { env } from '@/lib/env';
 import { pushStatusQuery } from '@/lib/insights/queries';
 import { schemaVersionQuery } from '@/lib/queries';
 import { deviceOnline, formatLatency } from '@/lib/scale/format';
+import { speakerOnline, speakersQuery } from '@/lib/media/queries';
 import { scalesQuery } from '@/lib/scale/queries';
 import { supabase } from '@/lib/supabase';
 import { APP_VERSION, BUILD_TIME, GIT_SHA } from '@/lib/version';
@@ -147,6 +148,7 @@ function DiagnosticsPage() {
 
       <PushStatusCard householdId={membership.household.id} />
       <ScaleStatusCard householdId={membership.household.id} />
+      <SpeakerStatusCard householdId={membership.household.id} />
 
       <Button className="w-full" onClick={() => void clearCacheAndReload()}>
         <RefreshCw className="h-4 w-4" aria-hidden />
@@ -231,6 +233,50 @@ function ScaleStatusCard({ householdId }: { householdId: string }) {
                   })}
                 </div>
                 {st.err && <div className="text-xs text-red">{st.err}</div>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+}
+
+/** The music speaker(s) (Phase 7h): online, agent version, sound output, space on the card, temperature. */
+function SpeakerStatusCard({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 15_000 });
+  const list = speakers.data ?? [];
+  if (list.length === 0) return null;
+  return (
+    <Card>
+      <CardTitle>{t('diagnostics.speaker.title')}</CardTitle>
+      <ul className="flex flex-col gap-3 text-[14.5px]" data-testid="diag-speaker">
+        {list.map((s) => {
+          const online = speakerOnline(s);
+          const st = s.status ?? {};
+          return (
+            <li key={s.id} className="flex items-start gap-3">
+              {online ? (
+                <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-teal" aria-hidden />
+              ) : (
+                <CircleX className="mt-0.5 h-5 w-5 shrink-0 text-red" aria-hidden />
+              )}
+              <div className="min-w-0 flex-1">
+                <Link to="/settings/speaker/$deviceId" params={{ deviceId: s.id }} className="font-medium text-accent-b">
+                  {s.name}
+                </Link>
+                <div className="tabular text-xs text-muted">
+                  {t('diagnostics.speaker.line', {
+                    seen: s.last_seen_at ? new Date(s.last_seen_at).toLocaleString() : t('diagnostics.push.notYet'),
+                    agent: s.fw_version ?? '—',
+                    output: st.output ?? '—',
+                    free: st.disk_free_mb != null ? (st.disk_free_mb / 1024).toFixed(1) : '—',
+                    temp: st.temp_c != null ? Math.round(st.temp_c) : '—',
+                  })}
+                  {` · AirPlay ${st.airplay ? '✓' : '—'} · Bluetooth ${st.bluetooth ?? '—'}`}
+                </div>
+                {st.error && <div className="text-xs text-red">{st.error}</div>}
               </div>
             </li>
           );
