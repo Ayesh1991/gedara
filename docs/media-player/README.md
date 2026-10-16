@@ -35,8 +35,8 @@ on any phone, the iPad or the PC. Nothing plays from the phone itself.
   (plugged in before setup) sounds much cleaner, and the setup picks it by itself. Use a **powered**
   speaker; an unpowered one will be very quiet.
 - **Space:** a 16 GB card holds roughly 2,000 MP3s. Gedara's speaker page shows the space left.
-- **Formats:** MP3, M4A/AAC, FLAC, OGG/Opus and WAV, up to 60 MB each when added in Gedara (the PC
-  folder takes any size).
+- **Formats:** MP3, M4A/AAC, FLAC, OGG/Opus and WAV, up to 50 MB each when added in Gedara (the limit of
+  Supabase's free plan). The PC folder takes any size.
 - **Security:** the Pi has its own key, made on the Pi and never shown or copied; you pair it by
   typing an 8-digit code. The folder password is stored in Windows' Credential Manager by the
   installer. Everything is reachable from the home network only.

@@ -14,6 +14,7 @@ Cheapest first:
 | **Hiss** or crackle | the Pi 2's own 3.5 mm jack | use a USB sound card (Stage A) |
 | Music **stutters** during a phone print | very large print job on the Pi 2 | normal for a moment; PC prints don't do this |
 | A song stays **"On its way to the speaker"** | the Pi is offline, or its card is full | bring it online; Settings → Devices → the speaker → *Space on the card* |
+| **"Bigger than 50 MB"** | Supabase's free plan takes at most 50 MB per file | drop it into the **Gedara Music** folder on the PC (no size limit); it appears in Gedara within a minute |
 | **"Not a song this speaker can play"** | the file isn't MP3/M4A/FLAC/OGG/WAV (whatever its name says) | convert it to MP3 first |
 | **"Waiting: the speaker is still collecting earlier songs"** | more than 300 MB on its way at once | nothing: Gedara carries on by itself |
 | Songs dropped in the PC folder **don't appear** | still copying, or not songs | wait a minute; Settings → Devices → the speaker → *Check the PC folder now* |

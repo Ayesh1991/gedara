@@ -2789,7 +2789,7 @@
       "button": "Add music",
       "title": "Add music",
       "drop": "Drop songs here for {{name}}",
-      "formats": "MP3, M4A, FLAC, OGG / Opus or WAV, up to 60 MB each",
+      "formats": "MP3, M4A, FLAC, OGG / Opus or WAV, up to 50 MB each (bigger: the PC's Gedara Music folder)",
       "choose": "Choose songs",
       "uploading": "Uploading… {{pct}} %",
       "inProgress": "Adding",
@@ -2807,7 +2807,7 @@
         "sent": "On its way to the speaker",
         "duplicate": "Already on the speaker",
         "unsupported": "Not a song this speaker can play",
-        "tooLarge": "Bigger than 60 MB",
+        "tooLarge": "Bigger than 50 MB: put it in the PC's Gedara Music folder instead",
         "failed": "Couldn't upload. Try again."
       }
     },

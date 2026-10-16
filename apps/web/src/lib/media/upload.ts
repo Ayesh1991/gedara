@@ -12,7 +12,8 @@ import { sha256Hex } from '../scale/espImage';
 import { supabase } from '../supabase';
 import { readTags, sniffFile, titleFromFileName } from './tags';
 
-export const MAX_SONG_BYTES = 60 * 1024 * 1024;
+// Supabase's free plan takes at most 50 MB per file (bigger songs: the PC's Gedara Music folder).
+export const MAX_SONG_BYTES = 50 * 1024 * 1024;
 
 export type UploadStatus =
   | 'checking'

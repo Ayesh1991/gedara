@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.10 — songs up to 50 MB in Gedara
+- "Add music" says the real limit, 50 MB (Supabase's free plan), and points bigger songs to the PC's
+  Gedara Music folder, which has no limit.
+
 ## 0.7.9 — Phase 7i: the speaker as a network speaker
 - **AirPlay** (iPhone, iPad, Mac) and **Bluetooth** (Android, laptops, PCs) on the Gedara speaker:
   YouTube Music or any app plays straight to it, one source at a time.
