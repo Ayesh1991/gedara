@@ -20,7 +20,6 @@ Cheapest first:
 | The **Gedara Music** folder asks for a password | Credential Manager entry missing (new PC, or a new card) | run `install.ps1 -MusicFolder` on that PC |
 | Pairing: **"That code doesn't match"** | mistyped, or older than 10 minutes | run the Stage B command again for a new code |
 | A schedule **didn't start** | it's off, or the day isn't ticked; the Pi's clock | check it on the speaker's page; the Pi takes its time from the internet at start-up |
-
 | The speaker **isn't in the iPhone's AirPlay list** | phone on mobile data / guest Wi-Fi, or AirPlay is off | phone on the home Wi-Fi; Gedara → the speaker → Network speaker → AirPlay on; run `install.ps1 -Music` again |
 | AirPlay **drops** now and then | weak Wi-Fi at the phone, or a print being prepared | move closer to the router; classic AirPlay keeps a 2 s buffer |
 | **Bluetooth: no adapter** in Gedara | the USB Bluetooth adapter isn't plugged in, or wasn't when setup ran | plug it in, run `install.ps1 -Music` again |
