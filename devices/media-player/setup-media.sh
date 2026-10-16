@@ -272,7 +272,8 @@ EOF
 systemd-tmpfiles --create /etc/tmpfiles.d/gedara-media.conf
 
 # AirPlay: plays to the shared output; tells the agent (metadata pipe) when a phone starts / stops.
-NAME=$(python3 -c 'import json; print(json.load(open("/var/lib/gedara-media/network.json")).get("name","Gedara speaker"))' 2>/dev/null || echo "Gedara speaker")
+# Same filter as apply-network.sh: letters, digits, space . ' - only (it goes into a config file).
+NAME=$(python3 -c 'import json,re; n=json.load(open("/var/lib/gedara-media/network.json")).get("name","Gedara speaker"); print(re.sub(r"[^\w .\x27-]", "", str(n))[:40] or "Gedara speaker")' 2>/dev/null || echo "Gedara speaker")
 cat > /etc/shairport-sync.conf <<EOF
 // Gedara speaker (devices/media-player/setup-media.sh). The name follows the speaker's name in Gedara.
 general = {
