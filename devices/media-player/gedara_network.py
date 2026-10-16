@@ -73,6 +73,19 @@ def parse_bt_devices(paired: str, connected: str) -> list[dict]:
     return [{"address": a, "name": n, "connected": a in con} for a, n in sorted(lines(paired).items())][:20]
 
 
+SAFE_NAME = re.compile(r"[^\w .'-]")
+
+
+def safe_name(name: str) -> str:
+    """A speaker name that is safe in shairport-sync.conf and bluetoothctl (same filter as apply-network.sh)."""
+    return SAFE_NAME.sub("", str(name))[:40].strip() or "Gedara speaker"
+
+
+def newly_paired(before: set[str], now: list[dict]) -> list[str]:
+    """Addresses that paired since the window opened."""
+    return [d["address"] for d in now if d["address"] not in before]
+
+
 def pairing_left(until: float | None, now: float) -> int:
     return max(0, int(round(until - now))) if until else 0
 
@@ -129,7 +142,7 @@ class AirPlay:
     @staticmethod
     def configure(enabled: bool, name: str) -> None:
         """AirPlay on/off and its name; written only when it changed (the path unit acts on writes)."""
-        want = json.dumps({"airplay": bool(enabled), "name": name[:40]}, sort_keys=True)
+        want = json.dumps({"airplay": bool(enabled), "name": safe_name(name)}, sort_keys=True)
         try:
             if NETWORK_FILE.exists() and NETWORK_FILE.read_text() == want:
                 return
@@ -154,6 +167,7 @@ class Bluetooth:
         self.agent: subprocess.Popen | None = None
         self.enabled = True
         self.active_addr: str | None = None
+        self.paired_before: set[str] = set()
         self.devices: list[dict] = []
         self.lock = threading.Lock()
 
@@ -174,7 +188,7 @@ class Bluetooth:
         self.enabled = enabled
         btctl("power", "on" if enabled else "off")
         if enabled:
-            btctl("system-alias", name[:40])
+            btctl("system-alias", safe_name(name))
         else:
             self.close_pairing()
 
@@ -186,6 +200,9 @@ class Bluetooth:
                 # A no-PIN ("Just Works") agent only while the window is open.
                 self.agent = subprocess.Popen(["bt-agent", "--capability=NoInputNoOutput"],
                                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # Remember who was already paired: only a device that pairs now is trusted, and the window
+            # closes as soon as one has (one new phone per window; it then shows in Gedara with Remove).
+            self.paired_before = {d["address"] for d in self.list_devices()}
             btctl("pairable", "on")
             btctl("discoverable", "on")
             self.pairing_until = time.time() + max(10, min(int(seconds), 300))
@@ -197,10 +214,12 @@ class Bluetooth:
             if self.agent is not None:
                 self.agent.terminate()
                 self.agent = None
+            was_open = self.pairing_until is not None
             self.pairing_until = None
-        # Whatever paired in the window may reconnect later by itself.
-        for d in self.list_devices():
-            btctl("trust", d["address"])
+        if was_open:
+            # Only what paired in this window may reconnect later by itself.
+            for address in newly_paired(self.paired_before, self.list_devices())[:1]:
+                btctl("trust", address)
 
     def forget(self, address: str) -> None:
         a = address.upper()
@@ -237,7 +256,8 @@ class Bluetooth:
     def loop(self) -> None:
         while True:
             try:
-                if self.pairing_until and time.time() >= self.pairing_until:
+                if self.pairing_until and (time.time() >= self.pairing_until
+                                           or newly_paired(self.paired_before, self.list_devices())):
                     self.close_pairing()
                 addr = self.streaming() if self.enabled else None
                 if addr != self.active_addr:

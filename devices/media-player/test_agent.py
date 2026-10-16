@@ -115,6 +115,17 @@ class BluetoothLists(unittest.TestCase):
             {"address": "AA:BB:CC:DD:EE:02", "name": "Laptop", "connected": False},
         ])
 
+    def test_only_new_devices_count_as_paired_in_the_window(self):
+        before = {"AA:BB:CC:DD:EE:01"}
+        now = [{"address": "AA:BB:CC:DD:EE:01"}, {"address": "AA:BB:CC:DD:EE:02"}]
+        self.assertEqual(n.newly_paired(before, now), ["AA:BB:CC:DD:EE:02"])
+        self.assertEqual(n.newly_paired({"AA:BB:CC:DD:EE:01", "AA:BB:CC:DD:EE:02"}, now), [])
+
+    def test_names_are_safe_for_config_files(self):
+        self.assertEqual(n.safe_name('Living room"; x = "y'), "Living room x y")
+        self.assertEqual(n.safe_name("Didula's speaker"), "Didula's speaker")
+        self.assertEqual(n.safe_name('"\\'), "Gedara speaker")
+
     def test_pairing_window_counts_down_and_closes(self):
         self.assertEqual(n.pairing_left(1000.0 + 120, 1000.0), 120)
         self.assertEqual(n.pairing_left(1000.0 + 120, 1121.0), 0)
