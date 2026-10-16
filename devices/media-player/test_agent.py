@@ -131,6 +131,13 @@ class BluetoothLists(unittest.TestCase):
         self.assertEqual(n.pairing_left(1000.0 + 120, 1121.0), 0)
         self.assertEqual(n.pairing_left(None, 5.0), 0)
 
+    def test_adapter_seen_without_asking_bluetoothd(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertFalse(n.has_adapter(Path(d)))
+            (Path(d) / "hci0").mkdir()
+            self.assertTrue(n.has_adapter(Path(d)))
+        self.assertFalse(n.has_adapter(Path(d) / "gone"))
+
 
 if __name__ == "__main__":
     unittest.main()

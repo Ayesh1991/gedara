@@ -3,6 +3,12 @@
 ## 0.7.10 — songs up to 50 MB in Gedara
 - "Add music" says the real limit, 50 MB (Supabase's free plan), and points bigger songs to the PC's
   Gedara Music folder, which has no limit.
+- Speaker software 0.2.1:
+  - With no Bluetooth adapter plugged in, every status report waited about 10 s on Bluetooth, so Gedara said
+    "The speaker didn't answer" even though the song played. The adapter check is now instant, and
+    reports never wait on Bluetooth.
+  - Setup waits for the Pi's own automatic updates instead of skipping AirPlay ("could not get lock").
+  - The network module is installed before the agent restarts (no crash loop on the first run).
 
 ## 0.7.9 — Phase 7i: the speaker as a network speaker
 - **AirPlay** (iPhone, iPad, Mac) and **Bluetooth** (Android, laptops, PCs) on the Gedara speaker:

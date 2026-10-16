@@ -9,7 +9,8 @@ Cheapest first:
 | You see | Likely cause | Do this |
 |---|---|---|
 | Speaker **Offline** in Gedara | Pi off or not on the network; the agent stopped | unplug the Pi for 10 s; still offline: run `install.ps1 -Music` again (songs stay) |
-| Tapping Play says **"The speaker didn't answer"** | the Pi is offline or busy restarting | wait a minute; check Online as above |
+| Tapping Play says **"The speaker didn't answer"** (but the song plays) | speaker software older than 0.2.1 waited on Bluetooth with no adapter plugged in | run `install.ps1 -Music` again (no new pairing code needed) |
+| Tapping Play says **"The speaker didn't answer"** (nothing plays) | the Pi is offline or busy restarting | wait a minute; check Online as above |
 | **No sound**, but Gedara shows it playing | speaker off / volume 0 / wrong output | speaker on and volume up; *Play a test sound*; using the jack: restart the Pi once after setup (`sudo reboot`); plugged a USB sound card in later: run `install.ps1 -Music` again so it's chosen |
 | **Hiss** or crackle | the Pi 2's own 3.5 mm jack | use a USB sound card (Stage A) |
 | Music **stutters** during a phone print | very large print job on the Pi 2 | normal for a moment; PC prints don't do this |
@@ -21,7 +22,7 @@ Cheapest first:
 | The **Gedara Music** folder asks for a password | Credential Manager entry missing (new PC, or a new card) | run `install.ps1 -MusicFolder` on that PC |
 | Pairing: **"That code doesn't match"** | mistyped, or older than 10 minutes | run the Stage B command again for a new code |
 | A schedule **didn't start** | it's off, or the day isn't ticked; the Pi's clock | check it on the speaker's page; the Pi takes its time from the internet at start-up |
-| The speaker **isn't in the iPhone's AirPlay list** | phone on mobile data / guest Wi-Fi, or AirPlay is off | phone on the home Wi-Fi; Gedara → the speaker → Network speaker → AirPlay on; run `install.ps1 -Music` again |
+| The speaker **isn't in the iPhone's AirPlay list** | phone on mobile data / guest Wi-Fi, or AirPlay is off | phone on the home Wi-Fi; Gedara → the speaker → Network speaker → AirPlay on; run `install.ps1 -Music` again and check stage 7/7 says OK (if it says "could not install", the Pi was updating itself: run it again) |
 | AirPlay **drops** now and then | weak Wi-Fi at the phone, or a print being prepared | move closer to the router; classic AirPlay keeps a 2 s buffer |
 | **Bluetooth: no adapter** in Gedara | the USB Bluetooth adapter isn't plugged in, or wasn't when setup ran | plug it in, run `install.ps1 -Music` again |
 | The phone **can't find the speaker** in Bluetooth | pairing isn't open | Gedara → the speaker → *Let a phone or PC pair (2 min)*, then search on the phone within those 2 minutes |

@@ -28,14 +28,15 @@ die() { printf '\n\033[31mPROBLEM: %s\033[0m\n' "$*"; exit 1; }
 
 [ "$(id -u)" -eq 0 ] || die "run me with sudo (install.ps1 does this for you)"
 [ -f "$HERE/gedara_media_agent.py" ] || die "gedara_media_agent.py must be next to this script"
+[ -f "$HERE/gedara_network.py" ] || die "gedara_network.py must be next to this script"
 exec > >(tee -a "$LOG") 2>&1
 echo "---- $(date -Is) setup-media.sh on $(hostname)"
 export DEBIAN_FRONTEND=noninteractive
 
 # ── 1. Software ───────────────────────────────────────────────────────────────
 say "1/7 Installing the music software"
-apt-get update -q || die "apt-get update failed - is the Pi on the internet?"
-apt-get -y -q install mpd python3-mpd python3-mutagen python3-pil samba alsa-utils \
+apt-get -o DPkg::Lock::Timeout=600 update -q || die "apt-get update failed - is the Pi on the internet?"
+apt-get -o DPkg::Lock::Timeout=600 -y -q install mpd python3-mpd python3-mutagen python3-pil samba alsa-utils \
   || die "could not install the music software"
 ok "mpd, python3-mpd, mutagen, pillow, samba, alsa-utils"
 
@@ -58,6 +59,7 @@ esac
 chmod 0640 /etc/gedara-media/server && chgrp gedara-media /etc/gedara-media/server
 install -d -m 0755 "$LIB" /usr/local/share/gedara-media
 install -m 0644 "$HERE/gedara_media_agent.py" "$LIB/gedara_media_agent.py"
+install -m 0644 "$HERE/gedara_network.py" "$LIB/gedara_network.py"  # before the agent (re)starts in stage 6
 cat > /usr/local/bin/gedara-media <<'EOF'
 #!/bin/sh
 exec /usr/bin/python3 /usr/local/lib/gedara-media/gedara_media_agent.py "$@"
@@ -260,9 +262,8 @@ fi
 
 # ── 7. Network speaker: AirPlay + Bluetooth (Phase 7i) ────────────────────────
 say "7/7 Network speaker: AirPlay and Bluetooth"
-apt-get -y -q install shairport-sync bluez bluez-alsa-utils bluez-tools >/dev/null \
+apt-get -o DPkg::Lock::Timeout=600 -y -q install shairport-sync bluez bluez-alsa-utils bluez-tools >/dev/null \
   || warn "could not install AirPlay / Bluetooth software"
-install -m 0644 "$HERE/gedara_network.py" "$LIB/gedara_network.py"
 usermod -aG bluetooth gedara-media 2>/dev/null || true
 id shairport-sync >/dev/null 2>&1 && usermod -aG gedara-music,audio shairport-sync
 cat > /etc/tmpfiles.d/gedara-media.conf <<'EOF'
