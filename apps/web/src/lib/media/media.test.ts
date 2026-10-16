@@ -112,8 +112,10 @@ describe('progress', () => {
     expect(formatLength(38 * 60, { h: 'h', min: 'min' })).toBe('38 min');
     expect(formatLength(72 * 60, { h: 'h', min: 'min' })).toBe('1 h 12 min');
   });
-  it('counts sleep minutes up', () => {
-    expect(sleepMinutesLeft(new Date(t0 + 61_000).toISOString(), t0)).toBe(2);
+  it('counts sleep minutes to the nearest minute, never below 1', () => {
+    expect(sleepMinutesLeft(new Date(t0 + 30 * 60_000 + 14_000).toISOString(), t0)).toBe(30);
+    expect(sleepMinutesLeft(new Date(t0 + 91_000).toISOString(), t0)).toBe(2);
+    expect(sleepMinutesLeft(new Date(t0 + 10_000).toISOString(), t0)).toBe(1);
     expect(sleepMinutesLeft(new Date(t0 - 1).toISOString(), t0)).toBeNull();
     expect(sleepMinutesLeft(null, t0)).toBeNull();
   });

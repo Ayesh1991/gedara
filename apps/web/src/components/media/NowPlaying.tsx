@@ -130,7 +130,7 @@ function SleepChips({ player, onSleep, disabled }: { player: Player; onSleep: (m
         <Moon className="h-4 w-4" aria-hidden />
         {left != null ? <span className="text-text">{t('music.sleep.left', { count: left })}</span> : t('music.sleep.title')}
       </div>
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="group" aria-label={t('music.sleep.title')}>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t('music.sleep.title')}>
         {SLEEP.map((m) => (
           <button key={m} type="button" disabled={disabled} className={chip(false)} onClick={() => onSleep(m)}>
             {t('music.sleep.minutes', { count: m })}
@@ -169,7 +169,7 @@ export function NowPlaying({ speaker, online, player, track, artUrl, canWrite, h
           <AuroraArt url={artUrl} title={track?.title ?? speaker.name} playing={playing} />
         </div>
 
-        <div className="w-full text-center" aria-live="polite">
+        <div className="relative z-10 w-full text-center" aria-live="polite">
           <h2 className="truncate font-display text-[24px] font-semibold leading-tight tracking-tight lg:text-[26px]">{title}</h2>
           <p className="mt-1 truncate text-[14.5px] text-muted">
             {track ? [track.artist, track.album].filter(Boolean).join(' · ') || t('music.library.unknownArtist') : t('music.player.pickBelow')}
@@ -177,7 +177,7 @@ export function NowPlaying({ speaker, online, player, track, artUrl, canWrite, h
         </div>
 
         {track ? (
-          <div className="flex w-full flex-col gap-5">
+          <div className="relative z-10 flex w-full flex-col gap-5">
             <ProgressLine player={player} disabled={disabled} onSeek={(s) => void command('seek', { s })} />
             <div className="flex items-center justify-between px-1">
               <button
@@ -224,7 +224,7 @@ export function NowPlaying({ speaker, online, player, track, artUrl, canWrite, h
           </div>
         ) : (
           hasSongs && (
-            <div className="flex w-full flex-col items-center gap-3">
+            <div className="relative z-10 flex w-full flex-col items-center gap-3">
               <button
                 type="button"
                 disabled={disabled}

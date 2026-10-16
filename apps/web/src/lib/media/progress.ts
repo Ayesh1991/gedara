@@ -40,9 +40,10 @@ export function formatLength(seconds: number, units: { h: string; min: string })
   return `${Math.floor(m / 60)} ${units.h} ${m % 60} ${units.min}`;
 }
 
-/** Minutes left on a sleep timer, rounded up (null: no timer). */
+/** Minutes left on a sleep timer, to the nearest minute and at least 1 (null: no timer). Nearest,
+ * not up: the screen's clock ticks every 15 s, so "30 min" just set must not read 31. */
 export function sleepMinutesLeft(sleepUntil: string | null, now: number): number | null {
   if (!sleepUntil) return null;
   const left = Date.parse(sleepUntil) - now;
-  return left > 0 ? Math.ceil(left / 60_000) : null;
+  return left > 0 ? Math.max(1, Math.round(left / 60_000)) : null;
 }

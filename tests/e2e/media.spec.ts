@@ -53,9 +53,11 @@ test('pair a speaker, add a song, play it within 2 s, pause, sleep, no answer, d
   await page.goto('/settings/devices');
   await expect(page.getByRole('heading', { name: 'Music speakers', level: 2 })).toBeVisible();
   await page.getByRole('button', { name: 'Add speaker' }).click();
-  await page.getByTestId('pair-code').fill(code);
-  await page.getByLabel('Name').last().fill(`${PREFIX} Speaker`);
-  await page.getByRole('button', { name: 'Pair', exact: true }).click();
+  const sheet = page.getByRole('dialog', { name: 'Add a music speaker' });
+  await sheet.getByTestId('pair-code').fill(code);
+  await expect(sheet.getByTestId('pair-code')).toHaveValue(`${code.slice(0, 4)} ${code.slice(4)}`);
+  await sheet.getByLabel('Name', { exact: true }).fill(`${PREFIX} Speaker`);
+  await sheet.getByRole('button', { name: 'Pair', exact: true }).click();
   await expect(page.getByTestId('speaker-row').filter({ hasText: `${PREFIX} Speaker` })).toBeVisible();
   await expect.poll(() => sim.pairPoll()).toBe('paired');
   sim.start();
@@ -83,6 +85,19 @@ test('pair a speaker, add a song, play it within 2 s, pause, sleep, no answer, d
     console.log(`[${testInfo.project.name}] tap → speaker: ${latency} ms`);
     expect(latency).toBeLessThan(2000);
     await expect(page.getByRole('heading', { name: title, level: 2 })).toBeVisible();
+
+    // How it looks while playing: phone, iPad, desktop (attached to the report; rule 10).
+    for (const [label, size] of [['phone-375', { width: 375, height: 812 }], ['ipad', { width: 1024, height: 1366 }], ['desktop', { width: 1440, height: 900 }]] as const) {
+      await page.setViewportSize(size);
+      await page.waitForTimeout(600);
+      await page.screenshot({ path: testInfo.outputPath(`music-${label}.png`), fullPage: label === 'phone-375' });
+    }
+    await page.goto('/');
+    await page.setViewportSize({ width: 375, height: 812 });
+    await expect(page.getByTestId('mini-player')).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('mini-player-375.png') });
+    await page.setViewportSize({ width: 1024, height: 1366 });
+    await page.goto('/music');
 
     // Pause, then a sleep timer.
     await page.getByRole('button', { name: 'Pause', exact: true }).first().click();
