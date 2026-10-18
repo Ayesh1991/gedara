@@ -358,7 +358,7 @@ export function Library({
   const total = mine.reduce((s, x) => s + (x.duration_s ?? 0), 0);
 
   return (
-    <section aria-label={t('music.library.title')} className="flex flex-col gap-4">
+    <section aria-label={t('music.library.title')} className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex-1">
           <h2 className="font-display text-[22px] font-semibold">{t('music.library.title')}</h2>

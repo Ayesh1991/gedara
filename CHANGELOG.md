@@ -3,6 +3,8 @@
 ## 0.7.10 — songs up to 50 MB in Gedara
 - "Add music" says the real limit, 50 MB (Supabase's free plan), and points bigger songs to the PC's
   Gedara Music folder, which has no limit.
+- **Music on phones:** a long song title made the page wider than the screen (it ran off the right
+  edge). Long titles are now cut with … and the page always fits; the e2e test checks it at 375 px.
 - Speaker software 0.2.2:
   - **Sound on the 3.5 mm jack:** the shared-output setting from 0.7.9 (a dmix with fixed buffer sizes)
     never starts on the Pi 2's own jack, so the test sound (and music through it) hung and Gedara said

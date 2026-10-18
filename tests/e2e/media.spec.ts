@@ -46,7 +46,8 @@ test('pair a speaker, add a song, play it within 2 s, pause, sleep, no answer, d
   test.skip(testInfo.project.name !== 'ipad-1024', 'one speaker at a time (a household may have at most 2)');
   test.setTimeout(180_000);
   const sim = new SpeakerSim(ingestUrl());
-  const title = `${PREFIX} Rain`;
+  // Long, like real downloads: it must be cut with … and never widen the page on a phone.
+  const title = `${PREFIX} Rain - Relaxing Music to Relieve Stress, Anxiety and Depression, Mind Body Soul`;
 
   // Pairing: the code the installer would show.
   const code = await sim.pairStart();
@@ -94,6 +95,8 @@ test('pair a speaker, add a song, play it within 2 s, pause, sleep, no answer, d
       await page.setViewportSize(size);
       await page.waitForTimeout(600);
       await page.screenshot({ path: testInfo.outputPath(`music-${label}.png`), fullPage: label === 'phone-375' });
+      const wider = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(wider, `${label}: nothing wider than the screen`).toBeLessThanOrEqual(0);
     }
     await page.goto('/');
     await page.setViewportSize({ width: 375, height: 812 });
