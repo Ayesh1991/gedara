@@ -30,13 +30,13 @@ function SpeakerChip({ view }: { view: ReturnType<typeof useSpeaker> }) {
   const { t } = useTranslation();
   if (!view.speaker) return null;
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 max-w-full items-center gap-2">
       {view.speakers.length > 1 ? (
         <select
           value={view.speaker.id}
           onChange={(e) => view.choose(e.target.value)}
           aria-label={t('music.player.speaker')}
-          className="glass h-10 rounded-full px-3 text-[13.5px]"
+          className="glass h-10 min-w-0 max-w-[60vw] truncate rounded-full px-3 text-[13.5px]"
         >
           {view.speakers.map((s) => (
             <option key={s.id} value={s.id}>
@@ -45,13 +45,13 @@ function SpeakerChip({ view }: { view: ReturnType<typeof useSpeaker> }) {
           ))}
         </select>
       ) : (
-        <span className="glass flex h-10 items-center gap-2 rounded-full px-3.5 text-[13.5px]">
-          <SpeakerIcon className="h-4 w-4 text-muted" aria-hidden />
-          {view.speaker.name}
+        <span className="glass flex h-10 min-w-0 items-center gap-2 rounded-full px-3.5 text-[13.5px]">
+          <SpeakerIcon className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+          <span className="truncate">{view.speaker.name}</span>
         </span>
       )}
       <span
-        className={cn('h-2.5 w-2.5 rounded-full', view.online ? 'bg-teal shadow-[0_0_10px_var(--teal)]' : 'bg-caution')}
+        className={cn('h-2.5 w-2.5 shrink-0 rounded-full', view.online ? 'bg-teal shadow-[0_0_10px_var(--teal)]' : 'bg-caution')}
         title={view.online ? t('music.devices.online') : t('music.devices.offline')}
         aria-label={view.online ? t('music.devices.online') : t('music.devices.offline')}
       />
@@ -153,8 +153,10 @@ function MusicPage() {
           }
         />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(340px,420px)_1fr] lg:items-start">
-          <div className="flex flex-col gap-6 lg:sticky lg:top-6">
+        // minmax(0, …) columns + min-w-0: a long song title (truncated, so one unbreakable line) must not
+        // widen the page past the phone's screen.
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(340px,420px)_minmax(0,1fr)] lg:items-start">
+          <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-6">
             <NowPlaying
               speaker={view.speaker}
               online={view.online}

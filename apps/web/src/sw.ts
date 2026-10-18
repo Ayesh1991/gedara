@@ -106,10 +106,10 @@ registerRoute(
 const SHARE_CACHE = 'gedara-share';
 const SHARE_KEY = new URL('/__shared-text', self.registration.scope).href;
 const SHARE_MAX = 2 * 1024 * 1024;
-// Songs shared to Gedara (Phase 7h) are kept the same way, up to 20 of at most 60 MB, for ONE read
+// Songs shared to Gedara (Phase 7h) are kept the same way, up to 20 of at most 50 MB, for ONE read
 // by Music, which uploads them to the speaker. (Their real type is checked there, by first bytes.)
 const SHARE_AUDIO_INDEX = new URL('/__shared-audio', self.registration.scope).href;
-const SHARE_AUDIO_MAX = 60 * 1024 * 1024;
+const SHARE_AUDIO_MAX = 50 * 1024 * 1024;
 const AUDIO_NAME = /\.(mp3|m4a|aac|flac|ogg|opus|wav)$/i;
 registerRoute(
   ({ url, request }) => url.origin === self.location.origin && url.pathname === '/share-target' && request.method === 'POST',

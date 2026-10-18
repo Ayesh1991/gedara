@@ -242,7 +242,7 @@ export function AppShell({ membership, children }: { membership: Membership; chi
           </Link>
         </div>
 
-        <main className="mx-auto w-full max-w-[1180px] flex-1 px-4 pt-5 pb-[calc(var(--nav-h)+env(safe-area-inset-bottom)+2.5rem)] lg:px-9 lg:pt-6 lg:pb-10">
+        <main className="mx-auto w-full min-w-0 max-w-[1180px] flex-1 px-4 pt-5 pb-[calc(var(--nav-h)+env(safe-area-inset-bottom)+2.5rem)] lg:px-9 lg:pt-6 lg:pb-10">
           <OfflineBanner />
           <div key={pathname} className="page-enter">
             {children}

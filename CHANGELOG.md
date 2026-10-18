@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.10 — songs up to 50 MB in Gedara
+- "Add music" says the real limit, 50 MB (Supabase's free plan), and points bigger songs to the PC's
+  Gedara Music folder, which has no limit.
+- **Music on phones:** a long song title made the page wider than the screen (it ran off the right
+  edge). Long titles are now cut with … and the page always fits; the e2e test checks it at 375 px.
+- Speaker software 0.2.2:
+  - **Sound on the 3.5 mm jack:** the shared-output setting from 0.7.9 (a dmix with fixed buffer sizes)
+    never starts on the Pi 2's own jack, so the test sound (and music through it) hung and Gedara said
+    "The speaker didn't answer". The jack mixes up to 8 sounds in its own chip, so it is now used directly;
+    a USB sound card gets a dmix with its own settings. Setup plays a short beep to prove it.
+  - The test sound gives up after 3 s, so Gedara gets an answer in time either way.
+  - Setup finishes an install that was cut off earlier (`dpkg --configure -a`).
+  - With no Bluetooth adapter plugged in, every status report waited about 10 s on Bluetooth, so Gedara said
+    "The speaker didn't answer" even though the song played. The adapter check is now instant, and
+    reports never wait on Bluetooth.
+  - Setup waits for the Pi's own automatic updates instead of skipping AirPlay ("could not get lock").
+  - The network module is installed before the agent restarts (no crash loop on the first run).
+
 ## 0.7.9 — Phase 7i: the speaker as a network speaker
 - **AirPlay** (iPhone, iPad, Mac) and **Bluetooth** (Android, laptops, PCs) on the Gedara speaker:
   YouTube Music or any app plays straight to it, one source at a time.

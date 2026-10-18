@@ -26,6 +26,7 @@ RUN = Path(os.environ.get("GEDARA_MEDIA_RUN", "/run/gedara-media"))
 METADATA_PIPE = RUN / "shairport-metadata"
 NETWORK_FILE = Path(os.environ.get("GEDARA_MEDIA_STATE", "/var/lib/gedara-media")) / "network.json"
 AIRPLAY_STOP = RUN / "airplay-stop"
+BT_SYS = Path(os.environ.get("GEDARA_BT_SYS", "/sys/class/bluetooth"))
 ADDRESS = re.compile(r"^([0-9A-F]{2}:){5}[0-9A-F]{2}$")
 ITEM = re.compile(rb"<item><type>([0-9a-f]{8})</type><code>([0-9a-f]{8})</code><length>(\d+)</length>(?:\s*<data encoding=\"base64\">\s*([A-Za-z0-9+/=\s]*?)</data>)?</item>")
 
@@ -90,6 +91,15 @@ def pairing_left(until: float | None, now: float) -> int:
     return max(0, int(round(until - now))) if until else 0
 
 
+def has_adapter(sys_dir: Path = BT_SYS) -> bool:
+    """A Bluetooth adapter is plugged in (the kernel lists hci0 …). Instant, and never asks bluetoothd:
+    without an adapter the Pi's bluetoothd isn't running and every bluetoothctl call hangs."""
+    try:
+        return any(sys_dir.glob("hci*"))
+    except OSError:
+        return False
+
+
 # ── AirPlay ───────────────────────────────────────────────────────────────────
 class AirPlay:
     """Reads shairport-sync's metadata pipe in a thread; on_change(active, name) when it changes."""
@@ -152,7 +162,7 @@ class AirPlay:
 
 
 # ── Bluetooth ─────────────────────────────────────────────────────────────────
-def btctl(*args: str, timeout: float = 10) -> str:
+def btctl(*args: str, timeout: float = 4) -> str:
     try:
         r = subprocess.run(["bluetoothctl", *args], capture_output=True, text=True, timeout=timeout)
         return r.stdout
@@ -169,11 +179,12 @@ class Bluetooth:
         self.active_addr: str | None = None
         self.paired_before: set[str] = set()
         self.devices: list[dict] = []
+        self.last_state = "none"  # kept fresh by loop(); status reports read it, never wait on Bluetooth
         self.lock = threading.Lock()
 
     @staticmethod
     def adapter() -> bool:
-        return "Controller" in btctl("list")
+        return has_adapter()
 
     def state(self) -> str:
         if not self.adapter():
@@ -232,6 +243,9 @@ class Bluetooth:
             btctl("disconnect", self.active_addr)
 
     def list_devices(self) -> list[dict]:
+        if not self.adapter():
+            self.devices = []
+            return self.devices
         self.devices = parse_bt_devices(btctl("devices", "Paired"), btctl("devices", "Connected"))
         return self.devices
 
@@ -256,6 +270,11 @@ class Bluetooth:
     def loop(self) -> None:
         while True:
             try:
+                self.last_state = self.state()
+                if self.last_state == "none":
+                    self.devices = []
+                    time.sleep(5)
+                    continue
                 if self.pairing_until and (time.time() >= self.pairing_until
                                            or newly_paired(self.paired_before, self.list_devices())):
                     self.close_pairing()
@@ -266,4 +285,5 @@ class Bluetooth:
                     self.on_change(addr is not None, name)
             except Exception:  # noqa: BLE001 — Bluetooth hiccups never stop the speaker
                 pass
+            self.list_devices()
             time.sleep(2)

@@ -28,14 +28,19 @@ die() { printf '\n\033[31mPROBLEM: %s\033[0m\n' "$*"; exit 1; }
 
 [ "$(id -u)" -eq 0 ] || die "run me with sudo (install.ps1 does this for you)"
 [ -f "$HERE/gedara_media_agent.py" ] || die "gedara_media_agent.py must be next to this script"
+[ -f "$HERE/gedara_network.py" ] || die "gedara_network.py must be next to this script"
 exec > >(tee -a "$LOG") 2>&1
 echo "---- $(date -Is) setup-media.sh on $(hostname)"
 export DEBIAN_FRONTEND=noninteractive
 
 # ── 1. Software ───────────────────────────────────────────────────────────────
 say "1/7 Installing the music software"
-apt-get update -q || die "apt-get update failed - is the Pi on the internet?"
-apt-get -y -q install mpd python3-mpd python3-mutagen python3-pil samba alsa-utils \
+# The Pi updates itself in the background (unattended-upgrades): wait for it (up to 10 min), then
+# finish any install that was cut off earlier (power, a closed window): apt refuses to work until then.
+for _ in $(seq 120); do fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock >/dev/null 2>&1 || break; sleep 5; done
+dpkg --configure -a || warn "could not finish an earlier install (dpkg --configure -a)"
+apt-get -o DPkg::Lock::Timeout=600 update -q || die "apt-get update failed - is the Pi on the internet?"
+apt-get -o DPkg::Lock::Timeout=600 -y -q install mpd python3-mpd python3-mutagen python3-pil samba alsa-utils \
   || die "could not install the music software"
 ok "mpd, python3-mpd, mutagen, pillow, samba, alsa-utils"
 
@@ -58,6 +63,7 @@ esac
 chmod 0640 /etc/gedara-media/server && chgrp gedara-media /etc/gedara-media/server
 install -d -m 0755 "$LIB" /usr/local/share/gedara-media
 install -m 0644 "$HERE/gedara_media_agent.py" "$LIB/gedara_media_agent.py"
+install -m 0644 "$HERE/gedara_network.py" "$LIB/gedara_network.py"  # before the agent (re)starts in stage 6
 cat > /usr/local/bin/gedara-media <<'EOF'
 #!/bin/sh
 exec /usr/bin/python3 /usr/local/lib/gedara-media/gedara_media_agent.py "$@"
@@ -95,25 +101,31 @@ else
   CARD=0; OUTPUT=none
   warn "no sound card found: plug in the USB sound card or check the jack, then run install.ps1 -Music again"
 fi
-# "default" is a dmix on that card, so MPD, AirPlay and Bluetooth (Phase 7i) can all open it; the
-# agent makes sure only one of them is heard at a time.
+# MPD, AirPlay and Bluetooth (Phase 7i) must all be able to open "default"; the agent makes sure only
+# one of them is heard at a time. The Pi's own jack (bcm2835) mixes up to 8 streams in its firmware,
+# so it gets a plain plug: a dmix on it never starts (aplay hangs, "unable to open slave"; seen on the
+# real Pi 2, 2026-10-18). A USB sound card has one stream, so it is shared through a dmix, with the
+# card's own rate and buffer sizes (fixed ones are what broke the jack).
+SUBS=$(ls -d /proc/asound/card$CARD/pcm0p/sub* 2>/dev/null | wc -l)
+if [ "${SUBS:-0}" -gt 1 ]; then
+  SLAVE="hw:$CARD,0"
+  MIX=""
+else
+  SLAVE="gedara_mix"
+  MIX="pcm.gedara_mix {
+  type dmix
+  ipc_key 4242
+  ipc_perm 0666
+  slave.pcm \"hw:$CARD,0\"
+}"
+fi
 cat > /etc/asound.conf <<EOF
 # Gedara music speaker: the output setup-media.sh chose ($OUTPUT), shared by MPD, AirPlay, Bluetooth.
 pcm.!default {
   type plug
-  slave.pcm "gedara_mix"
+  slave.pcm "$SLAVE"
 }
-pcm.gedara_mix {
-  type dmix
-  ipc_key 4242
-  ipc_perm 0666
-  slave {
-    pcm "hw:$CARD,0"
-    rate 44100
-    period_size 1024
-    buffer_size 8192
-  }
-}
+$MIX
 ctl.!default {
   type hw
   card $CARD
@@ -122,6 +134,11 @@ EOF
 echo "$OUTPUT" > /etc/gedara-media/output
 chmod 0644 /etc/gedara-media/output
 ok "sound output: $OUTPUT (card $CARD)"
+if [ -f /usr/local/share/gedara-media/test-tone.wav ] && [ "$OUTPUT" != none ]; then
+  timeout 6 aplay -q /usr/local/share/gedara-media/test-tone.wav >/dev/null 2>&1 \
+    && ok "a short beep played through the speaker" \
+    || warn "the speaker could not play a test sound (check the cable and the speaker's power)"
+fi
 
 # ── 4. MPD ────────────────────────────────────────────────────────────────────
 say "4/7 MPD, the player"
@@ -260,9 +277,8 @@ fi
 
 # ── 7. Network speaker: AirPlay + Bluetooth (Phase 7i) ────────────────────────
 say "7/7 Network speaker: AirPlay and Bluetooth"
-apt-get -y -q install shairport-sync bluez bluez-alsa-utils bluez-tools >/dev/null \
+apt-get -o DPkg::Lock::Timeout=600 -y -q install shairport-sync bluez bluez-alsa-utils bluez-tools >/dev/null \
   || warn "could not install AirPlay / Bluetooth software"
-install -m 0644 "$HERE/gedara_network.py" "$LIB/gedara_network.py"
 usermod -aG bluetooth gedara-media 2>/dev/null || true
 id shairport-sync >/dev/null 2>&1 && usermod -aG gedara-music,audio shairport-sync
 cat > /etc/tmpfiles.d/gedara-media.conf <<'EOF'
