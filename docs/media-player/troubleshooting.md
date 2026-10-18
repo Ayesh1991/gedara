@@ -9,7 +9,7 @@ Cheapest first:
 | You see | Likely cause | Do this |
 |---|---|---|
 | Speaker **Offline** in Gedara | Pi off or not on the network; the agent stopped | unplug the Pi for 10 s; still offline: run `install.ps1 -Music` again (songs stay) |
-| Tapping Play says **"The speaker didn't answer"** (but the song plays) | speaker software older than 0.2.1 waited on Bluetooth with no adapter plugged in | run `install.ps1 -Music` again (no new pairing code needed) |
+| Tapping Play says **"The speaker didn't answer"** (but the song plays) | speaker software older than 0.2.2 (it waited on Bluetooth with no adapter, and its sound setting hung on the 3.5 mm jack) | run `install.ps1 -Music` again (no new pairing code needed) |
 | Tapping Play says **"The speaker didn't answer"** (nothing plays) | the Pi is offline or busy restarting | wait a minute; check Online as above |
 | **No sound**, but Gedara shows it playing | speaker off / volume 0 / wrong output | speaker on and volume up; *Play a test sound*; using the jack: restart the Pi once after setup (`sudo reboot`); plugged a USB sound card in later: run `install.ps1 -Music` again so it's chosen |
 | **Hiss** or crackle | the Pi 2's own 3.5 mm jack | use a USB sound card (Stage A) |

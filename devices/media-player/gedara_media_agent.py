@@ -45,7 +45,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gedara_network import AirPlay, Bluetooth  # noqa: E402
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 AGENT = f"gedara-media {VERSION}"
 ROOT = Path(os.environ.get("GEDARA_MEDIA_ROOT", "/"))
 CONF = ROOT / "etc/gedara-media"
@@ -535,9 +535,11 @@ class Agent:
         if was_playing:
             self.call("pause", 1)
             time.sleep(0.4)
-        subprocess.run(["aplay", "-q", str(TEST_TONE)], check=True, timeout=10)
-        if was_playing:
-            self.call("pause", 0)
+        try:  # a 1 s tone; well inside the 5 s Gedara waits for an answer
+            subprocess.run(["aplay", "-q", str(TEST_TONE)], check=True, timeout=3)
+        finally:
+            if was_playing:
+                self.call("pause", 0)
 
     def apply_normalise(self) -> None:
         """MPD's volume normalisation is a config setting: write it; a systemd path unit
