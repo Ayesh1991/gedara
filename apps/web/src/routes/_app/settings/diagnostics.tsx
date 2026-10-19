@@ -202,7 +202,7 @@ function PushStatusCard({ householdId }: { householdId: string }) {
 /** The kitchen scale(s) (MASTER_PLAN §7b Diagnostics): online, firmware, Wi-Fi, queue, last error, latency. */
 function ScaleStatusCard({ householdId }: { householdId: string }) {
   const { t } = useTranslation();
-  const scales = useQuery({ ...scalesQuery(householdId), refetchInterval: 15_000 });
+  const scales = useQuery({ ...scalesQuery(householdId), refetchInterval: 30_000 });
   const active = (scales.data ?? []).filter((d) => !d.revoked_at);
   if (active.length === 0) return null;
   return (
@@ -245,7 +245,7 @@ function ScaleStatusCard({ householdId }: { householdId: string }) {
 /** The music speaker(s) (Phase 7h): online, agent version, sound output, space on the card, temperature. */
 function SpeakerStatusCard({ householdId }: { householdId: string }) {
   const { t } = useTranslation();
-  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 15_000 });
+  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 30_000 });
   const list = speakers.data ?? [];
   if (list.length === 0) return null;
   return (

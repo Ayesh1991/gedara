@@ -58,7 +58,7 @@ function DevicesPage() {
   const householdId = membership.household.id;
   const isOwner = membership.role === 'owner';
   // Polls while the page is open, so "last seen" updates as soon as the phone sends its first alert.
-  const devices = useQuery({ ...devicesQuery(householdId), refetchInterval: 10_000 });
+  const devices = useQuery({ ...devicesQuery(householdId), refetchInterval: 30_000 });
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<{ name: string; token: string } | null>(null);

@@ -48,7 +48,7 @@ function CopyToken({ token }: { token: string }) {
 export function ScaleDevicesSection({ householdId, isOwner, locale, timezone }: { householdId: string; isOwner: boolean; locale: string; timezone: string }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const scales = useQuery({ ...scalesQuery(householdId), refetchInterval: 15_000 });
+  const scales = useQuery({ ...scalesQuery(householdId), refetchInterval: 30_000 });
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<{ id: string; name: string; token: string } | null>(null);

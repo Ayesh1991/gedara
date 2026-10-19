@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.7.10 — songs up to 50 MB in Gedara
+## 0.7.10 — songs up to 50 MB in Gedara, fewer logs
+- **About 7× fewer logged requests from the music speaker** (Supabase's free-plan Log Ingestion was nearly
+  full): the speaker's wait for a command now happens inside the database (migration 74, `rpc_media_wait`,
+  function `media-agent-3`) instead of a check every 0.7 s. Taps still reach the speaker in about a second,
+  and the Pi needs no update. The function logs a sync only when something happened, and the device pages
+  refresh every 30 s instead of every 10–20 s. Database schema 74.
 - "Add music" says the real limit, 50 MB (Supabase's free plan), and points bigger songs to the PC's
   Gedara Music folder, which has no limit.
 - **Music on phones:** a long song title made the page wider than the screen (it ran off the right

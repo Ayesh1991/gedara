@@ -205,3 +205,8 @@ Format: date · decision · why. Append-only.
 - 2026-10-16 · Bluetooth is invisible and refuses pairing except for 2 minutes opened from Gedara (no-PIN agent only then; what paired is trusted afterwards) · a speaker that anyone nearby could pair with would be a nuisance and a risk
 - 2026-10-16 · The agent never gets root for AirPlay: it writes network.json / airplay-stop and a systemd path unit runs apply-network.sh · same pattern as the normalise setting
 - 2026-10-16 · App version 0.7.9 for Phase 7i
+- 2026-10-19 · The speaker's long-poll waits inside Postgres (rpc_media_wait, ≤ 7 s a call, then rpc_media_pending only when there is something) instead of the function calling rpc_media_pending every 0.7 s · Log Ingestion (1 GB/cycle on the free plan, staging + prod together) is the only quota Gedara is near, and every API request is a log line: ~37 → ~5 requests per quiet 25 s
+- 2026-10-19 · rpc_media_wait finds the speaker without private.media_device_by_token · that one locks the device row FOR UPDATE, which would hold the speaker's own reports and Gedara's commands for the whole wait
+- 2026-10-19 · 7 s per wait call · PostgREST's authenticator role has statement_timeout = 8s (service_role sets none, and a function can't re-arm the timer of the statement running it)
+- 2026-10-19 · media-agent logs a sync only when something happened; device/speaker/scale pages refresh every 30 s (was 10–20 s) · same log budget; Realtime already keeps the live state instant
+- 2026-10-19 · e2e on staging: only the spec a change touches; full suites before a release · the full-suite days were the biggest log spikes
