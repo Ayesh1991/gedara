@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotInvitedRouteImport } from './routes/not-invited'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAttentionRouteImport } from './routes/_app/attention'
+import { Route as AppHouseRouteImport } from './routes/_app/house'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
 import { Route as AppInsightsIndexRouteImport } from './routes/_app/insights/index'
 import { Route as AppInsightsAreaRouteImport } from './routes/_app/insights/$area'
@@ -41,6 +42,7 @@ import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/d
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings/diagnostics'
 import { Route as AppSettingsExportRouteImport } from './routes/_app/settings/export'
 import { Route as AppSettingsFieldsRouteImport } from './routes/_app/settings/fields'
+import { Route as AppSettingsHomeAssistantRouteImport } from './routes/_app/settings/home-assistant'
 import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings/notifications'
 import { Route as AppSettingsPlaceTypesRouteImport } from './routes/_app/settings/place-types'
 import { Route as AppSettingsStorageRouteImport } from './routes/_app/settings/storage'
@@ -77,6 +79,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppAttentionRoute = AppAttentionRouteImport.update({
   id: '/attention',
   path: '/attention',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHouseRoute = AppHouseRouteImport.update({
+  id: '/house',
+  path: '/house',
   getParentRoute: () => AppRoute,
 } as any)
 const AppScanRoute = AppScanRouteImport.update({
@@ -214,6 +221,12 @@ const AppSettingsFieldsRoute = AppSettingsFieldsRouteImport.update({
   path: '/settings/fields',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsHomeAssistantRoute =
+  AppSettingsHomeAssistantRouteImport.update({
+    id: '/settings/home-assistant',
+    path: '/settings/home-assistant',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSettingsNotificationsRoute =
   AppSettingsNotificationsRouteImport.update({
     id: '/settings/notifications',
@@ -290,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/attention': typeof AppAttentionRoute
+  '/house': typeof AppHouseRoute
   '/scan': typeof AppScanRoute
   '/insights/$area': typeof AppInsightsAreaRoute
   '/money/budgets': typeof AppMoneyBudgetsRoute
@@ -311,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/export': typeof AppSettingsExportRoute
   '/settings/fields': typeof AppSettingsFieldsRoute
+  '/settings/home-assistant': typeof AppSettingsHomeAssistantRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/settings/storage': typeof AppSettingsStorageRoute
@@ -335,6 +350,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/attention': typeof AppAttentionRoute
+  '/house': typeof AppHouseRoute
   '/scan': typeof AppScanRoute
   '/': typeof AppIndexRoute
   '/insights/$area': typeof AppInsightsAreaRoute
@@ -357,6 +373,7 @@ export interface FileRoutesByTo {
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/settings/export': typeof AppSettingsExportRoute
   '/settings/fields': typeof AppSettingsFieldsRoute
+  '/settings/home-assistant': typeof AppSettingsHomeAssistantRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/settings/storage': typeof AppSettingsStorageRoute
@@ -383,6 +400,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/_app/attention': typeof AppAttentionRoute
+  '/_app/house': typeof AppHouseRoute
   '/_app/scan': typeof AppScanRoute
   '/_app/': typeof AppIndexRoute
   '/_app/insights/$area': typeof AppInsightsAreaRoute
@@ -405,6 +423,7 @@ export interface FileRoutesById {
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
   '/_app/settings/export': typeof AppSettingsExportRoute
   '/_app/settings/fields': typeof AppSettingsFieldsRoute
+  '/_app/settings/home-assistant': typeof AppSettingsHomeAssistantRoute
   '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
   '/_app/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/_app/settings/storage': typeof AppSettingsStorageRoute
@@ -432,6 +451,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/attention'
+    | '/house'
     | '/scan'
     | '/insights/$area'
     | '/money/budgets'
@@ -453,6 +473,7 @@ export interface FileRouteTypes {
     | '/settings/diagnostics'
     | '/settings/export'
     | '/settings/fields'
+    | '/settings/home-assistant'
     | '/settings/notifications'
     | '/settings/place-types'
     | '/settings/storage'
@@ -477,6 +498,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/attention'
+    | '/house'
     | '/scan'
     | '/'
     | '/insights/$area'
@@ -499,6 +521,7 @@ export interface FileRouteTypes {
     | '/settings/diagnostics'
     | '/settings/export'
     | '/settings/fields'
+    | '/settings/home-assistant'
     | '/settings/notifications'
     | '/settings/place-types'
     | '/settings/storage'
@@ -524,6 +547,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/_app/attention'
+    | '/_app/house'
     | '/_app/scan'
     | '/_app/'
     | '/_app/insights/$area'
@@ -546,6 +570,7 @@ export interface FileRouteTypes {
     | '/_app/settings/diagnostics'
     | '/_app/settings/export'
     | '/_app/settings/fields'
+    | '/_app/settings/home-assistant'
     | '/_app/settings/notifications'
     | '/_app/settings/place-types'
     | '/_app/settings/storage'
@@ -608,6 +633,13 @@ declare module '@tanstack/react-router' {
       path: '/attention'
       fullPath: '/attention'
       preLoaderRoute: typeof AppAttentionRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/house': {
+      id: '/_app/house'
+      path: '/house'
+      fullPath: '/house'
+      preLoaderRoute: typeof AppHouseRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/scan': {
@@ -799,6 +831,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsFieldsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/home-assistant': {
+      id: '/_app/settings/home-assistant'
+      path: '/settings/home-assistant'
+      fullPath: '/settings/home-assistant'
+      preLoaderRoute: typeof AppSettingsHomeAssistantRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/notifications': {
       id: '/_app/settings/notifications'
       path: '/settings/notifications'
@@ -895,6 +934,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAttentionRoute: typeof AppAttentionRoute
+  AppHouseRoute: typeof AppHouseRoute
   AppScanRoute: typeof AppScanRoute
   AppIndexRoute: typeof AppIndexRoute
   AppInsightsAreaRoute: typeof AppInsightsAreaRoute
@@ -917,6 +957,7 @@ interface AppRouteChildren {
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
   AppSettingsExportRoute: typeof AppSettingsExportRoute
   AppSettingsFieldsRoute: typeof AppSettingsFieldsRoute
+  AppSettingsHomeAssistantRoute: typeof AppSettingsHomeAssistantRoute
   AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
   AppSettingsPlaceTypesRoute: typeof AppSettingsPlaceTypesRoute
   AppSettingsStorageRoute: typeof AppSettingsStorageRoute
@@ -940,6 +981,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAttentionRoute: AppAttentionRoute,
+  AppHouseRoute: AppHouseRoute,
   AppScanRoute: AppScanRoute,
   AppIndexRoute: AppIndexRoute,
   AppInsightsAreaRoute: AppInsightsAreaRoute,
@@ -962,6 +1004,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,
   AppSettingsExportRoute: AppSettingsExportRoute,
   AppSettingsFieldsRoute: AppSettingsFieldsRoute,
+  AppSettingsHomeAssistantRoute: AppSettingsHomeAssistantRoute,
   AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
   AppSettingsPlaceTypesRoute: AppSettingsPlaceTypesRoute,
   AppSettingsStorageRoute: AppSettingsStorageRoute,

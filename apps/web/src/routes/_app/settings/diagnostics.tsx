@@ -12,6 +12,7 @@ import { pushStatusQuery } from '@/lib/insights/queries';
 import { schemaVersionQuery } from '@/lib/queries';
 import { deviceOnline, formatLatency } from '@/lib/scale/format';
 import { speakerOnline, speakersQuery } from '@/lib/media/queries';
+import { bridgeOnline, bridgeQuery } from '@/lib/home/queries';
 import { scalesQuery } from '@/lib/scale/queries';
 import { supabase } from '@/lib/supabase';
 import { APP_VERSION, BUILD_TIME, GIT_SHA } from '@/lib/version';
@@ -149,6 +150,7 @@ function DiagnosticsPage() {
       <PushStatusCard householdId={membership.household.id} />
       <ScaleStatusCard householdId={membership.household.id} />
       <SpeakerStatusCard householdId={membership.household.id} />
+      <HomeBridgeStatusCard householdId={membership.household.id} />
 
       <Button className="w-full" onClick={() => void clearCacheAndReload()}>
         <RefreshCw className="h-4 w-4" aria-hidden />
@@ -238,6 +240,38 @@ function ScaleStatusCard({ householdId }: { householdId: string }) {
           );
         })}
       </ul>
+    </Card>
+  );
+}
+
+/** The Home Assistant bridge (Phase 8): online, its version, Home Assistant reachable, what it found. */
+function HomeBridgeStatusCard({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const bridge = useQuery({ ...bridgeQuery(householdId), refetchInterval: 30_000 });
+  const b = bridge.data;
+  if (!b) return null;
+  const online = bridgeOnline(b);
+  const ok = online && b.status?.ha === 'connected';
+  return (
+    <Card>
+      <CardTitle>{t('diagnostics.homeBridge.title')}</CardTitle>
+      <div className="flex items-start gap-3 text-[14.5px]" data-testid="diag-home-bridge">
+        {ok ? <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-teal" aria-hidden /> : <CircleX className="mt-0.5 h-5 w-5 shrink-0 text-red" aria-hidden />}
+        <div className="min-w-0 flex-1">
+          <Link to="/settings/home-assistant" className="font-medium text-accent-b">
+            {b.name}
+          </Link>
+          <div className="tabular text-xs text-muted">
+            {t('diagnostics.homeBridge.line', {
+              seen: b.last_seen_at ? new Date(b.last_seen_at).toLocaleString() : t('diagnostics.push.notYet'),
+              agent: b.fw_version ?? '—',
+              ha: b.status?.ha ?? '—',
+              version: b.status?.ha_version ?? '—',
+              entities: b.status?.entities ?? '—',
+            })}
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }

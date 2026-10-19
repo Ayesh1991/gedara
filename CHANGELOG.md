@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0 — Phase 8: Home Assistant in Gedara
+- **House** page: every room from Home Assistant with its doors and windows (open in amber, closed in
+  teal, "Open · 12:41"), lights, the AC (on/off, mode, − 24° +, room temperature) and switches such as the
+  mosquito vaporizer and the emergency lights. One line on top says what matters ("Everything closed",
+  or "Open: Bedroom Window 2"), and a House card on Home. Owner and members control; viewers look.
+- **Settings › Devices › Home Assistant:** connect with an 8-digit code (`install.ps1 -HomeAssistant`),
+  the bridge's health, and the chooser: Show / Control / a short name for everything, by room.
+- **The bridge** (`devices/home-bridge`) runs on the Gedara Pi: Home Assistant's websocket API on the home
+  network with a non-admin user's token that never leaves the Pi, outbound only. It can only switch
+  lights and switches and set the AC's power, mode and temperature; nothing else in Home Assistant can be
+  controlled from Gedara. Built for the log budget (a few MB a day).
+- Database: migrations 75–76 (`home_token`, `home_entity`, `home_command`, `rpc_home_*`), schema 76;
+  function `home-agent-1`. Diagnostics shows the bridge; Export includes its tables.
+
 ## 0.7.10 — songs up to 50 MB in Gedara, fewer logs
 - **About 7× fewer logged requests from the music speaker** (Supabase's free-plan Log Ingestion was nearly
   full): the speaker's wait for a command now happens inside the database (migration 74, `rpc_media_wait`,

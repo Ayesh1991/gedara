@@ -10,6 +10,7 @@ import { fieldLabel } from '@/components/money/bits';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { HomeAssistantSection } from '@/components/home/HomeAssistantSection';
 import { SpeakerDevicesSection } from '@/components/media/SpeakerDevicesSection';
 import { ScaleDevicesSection } from '@/components/scale/ScaleDevicesSection';
 import { moneyErrorKey } from '@/lib/money/queries';
@@ -118,6 +119,8 @@ function DevicesPage() {
       />
 
       <SpeakerDevicesSection householdId={householdId} isOwner={isOwner} />
+
+      <HomeAssistantSection householdId={householdId} isOwner={isOwner} />
 
       <div className="mt-2">
         <h2 className="font-display text-[21px] font-semibold">{t('devices.title')}</h2>

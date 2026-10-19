@@ -20,7 +20,8 @@ Vite + React + TS (strict) + Tailwind + shadcn/ui · TanStack Router/Query · su
 Supabase (Postgres, Auth email-OTP, Storage, Realtime, Edge Functions/Deno, pg_cron) ·
 vite-plugin-pwa (NetworkFirst) · Vercel · Vitest + Playwright · PlatformIO (ESP32-S3, C++) for `devices/kitchen-scale` ·
 Raspberry Pi OS + CUPS (bash, PowerShell installer) for `devices/print-server` · MPD + Python 3 agent
-(stdlib, python-mpd2, mutagen) for `devices/media-player`.
+(stdlib, python-mpd2, mutagen) for `devices/media-player` · Python 3 bridge (stdlib, python3-websocket)
+for `devices/home-bridge` (Home Assistant).
 
 ## Commands
 - `pnpm dev` · `pnpm test` · `pnpm e2e` · `pnpm typecheck` · `pnpm lint`

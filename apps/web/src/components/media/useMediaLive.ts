@@ -39,9 +39,10 @@ function open(householdId: string, qc: QueryClient): Sub {
       });
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'media_track', filter: `household_id=eq.${householdId}` }, tracksSoon)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'device', filter: `household_id=eq.${householdId}` }, () =>
-      invalidateMedia(qc, householdId, 'speakers'),
-    )
+    // Only speakers' rows (not the Home Assistant bridge's or the scale's check-ins: log budget).
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'device', filter: `household_id=eq.${householdId}` }, (p) => {
+      if ((p.new as { kind?: string } | undefined)?.kind === 'media') void invalidateMedia(qc, householdId, 'speakers');
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'media_bt_device', filter: `household_id=eq.${householdId}` }, () =>
       invalidateMedia(qc, householdId, 'bt'),
     )

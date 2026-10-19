@@ -125,6 +125,7 @@
     "places": "Places",
     "insights": "Insights",
     "music": "Music",
+    "house": "House",
     "settings": "Settings",
     "main": "Main navigation"
   },
@@ -287,6 +288,10 @@
     "allGreen": "All green",
     "someFailed": "{{count}} check(s) failed",
     "clearCache": "Clear cache & reload",
+    "homeBridge": {
+      "title": "Home Assistant bridge",
+      "line": "seen {{seen}} · {{agent}} · Home Assistant {{ha}} ({{version}}) · {{entities}} found"
+    },
     "speaker": {
       "title": "Music speaker",
       "line": "seen {{seen}} · {{agent}} · output {{output}} · {{free}} GB free · {{temp}} °C"
@@ -2900,6 +2905,125 @@
       "wrongCode": "That code doesn't match a speaker waiting to pair (codes last 10 minutes).",
       "notAllowed": "You can't change this.",
       "rejected": "That wasn't accepted.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
+  "house": {
+    "title": "House",
+    "loading": "Reading the house…",
+    "nothingShown": "Nothing is shown yet. The owner chooses what appears here in Settings › Devices › Home Assistant.",
+    "choose": "Choose what shows here",
+    "otherRoom": "Other",
+    "switchLabel": "{{name}} on or off",
+    "empty": {
+      "title": "Home Assistant isn't connected yet",
+      "bodyOwner": "Connect your Home Assistant to see every room's doors, windows and lights here, and switch the AC, the vaporizer and the emergency lights. Nothing is opened to the internet at home, and Home Assistant's key stays on the Gedara Pi.",
+      "body": "Once the owner connects Home Assistant, every room's doors, windows and lights show here.",
+      "action": "Connect Home Assistant"
+    },
+    "summary": {
+      "closed": "Everything closed",
+      "open": "{{count}} open: {{names}}",
+      "open_one": "Open: {{names}}",
+      "lights": "{{count}} lights on",
+      "lights_one": "1 light on",
+      "lightsOff": "Lights off",
+      "acOn": "AC: {{mode}} {{t}}°",
+      "acOff": "AC off",
+      "unavailable": "{{count}} unavailable in Home Assistant",
+      "unavailable_one": "1 unavailable in Home Assistant"
+    },
+    "room": {
+      "open": "{{count}} open",
+      "closed": "All closed"
+    },
+    "state": {
+      "open": "Open",
+      "openSince": "Open · {{time}}",
+      "closed": "Closed",
+      "on": "On",
+      "off": "Off",
+      "unavailable": "Unavailable"
+    },
+    "mode": {
+      "off": "Off",
+      "cool": "Cool",
+      "heat": "Heat",
+      "dry": "Dry",
+      "fan_only": "Fan",
+      "auto": "Auto",
+      "heat_cool": "Auto"
+    },
+    "ac": {
+      "room": "room {{t}}°",
+      "power": "{{name}} on or off",
+      "colder": "One step colder",
+      "warmer": "One step warmer",
+      "modes": "AC mode"
+    },
+    "bridge": {
+      "online": "Online",
+      "offline": "Offline",
+      "never": "never",
+      "offlineSince": "Offline since {{when}}",
+      "offlineBody": "The Home Assistant bridge on the Gedara Pi hasn't been heard from since {{when}}: what you see may be out of date. Is the Pi on?",
+      "haLabel": "Home Assistant",
+      "haVersion": "Its version",
+      "found": "Found",
+      "shown": "Shown here",
+      "ha": {
+        "connected": "Connected to Home Assistant.",
+        "connecting": "The bridge is connecting to Home Assistant…",
+        "auth_failed": "Home Assistant refused the bridge's token. Make a new one and run the installer with -HomeAssistant again.",
+        "unreachable": "The bridge can't reach Home Assistant on the home network. Is it on? What you see may be out of date."
+      },
+      "haShort": {
+        "connected": "connected",
+        "connecting": "connecting",
+        "auth_failed": "token refused",
+        "unreachable": "not reachable"
+      }
+    },
+    "devices": {
+      "title": "Home Assistant",
+      "intro": "Your home automation inside Gedara: doors, windows, lights, the AC and switches, by room. A small bridge on the Gedara Pi talks to Home Assistant on the home network.",
+      "none": "Not connected.",
+      "add": "Connect",
+      "addTitle": "Connect Home Assistant",
+      "step1": "In Home Assistant, make a user called \"Gedara\" (not an administrator), sign in as it once, and make a long-lived token in its profile (docs/home-assistant/setup.md shows each click).",
+      "step2": "On the PC, in the gedara-handoff folder, run:",
+      "step3": "The Pi asks for Home Assistant's address and the token (it stays on the Pi), then shows an 8-digit code. Type it here.",
+      "code": "Pairing code",
+      "name": "Name",
+      "defaultName": "Home Assistant",
+      "connect": "Connect",
+      "paired": "Home Assistant is connected. It shows doors, windows, lights and the AC; tick the vaporizer and emergency lights in its page.",
+      "remove": "Disconnect Home Assistant",
+      "removeBody": "Gedara forgets the bridge and everything it reported. Home Assistant itself isn't changed. To connect again, run the installer again.",
+      "removeConfirm": "Yes, disconnect"
+    },
+    "chooser": {
+      "title": "What the House page shows",
+      "intro": "Everything Home Assistant has that Gedara can show, by room. Show puts it on the House page; Control lets you and Sandeepani switch it. Type a short name to replace Home Assistant's.",
+      "introMember": "What Home Assistant has, by room. Only the owner changes what shows and what can be switched.",
+      "nothing": "The bridge hasn't reported anything yet.",
+      "show": "Show",
+      "control": "Control",
+      "showLabel": "Show {{name}}",
+      "controlLabel": "Control {{name}} from Gedara",
+      "shortName": "Short name for {{name}}"
+    },
+    "security": {
+      "title": "How it's kept safe",
+      "body": "Nothing is opened to the internet at home: the bridge only calls out. Home Assistant's token stays on the Gedara Pi and never comes to Gedara. Gedara can only switch lights and switches on or off and set the AC's power, mode and temperature, and only for what you mark Control here. Locks, alarms, cameras, scripts and automations can never be controlled from Gedara, whatever happens."
+    },
+    "errors": {
+      "noAnswer": "Home Assistant didn't answer. Is the Gedara Pi on?",
+      "failed": "Home Assistant didn't do it: {{why}}",
+      "slowDown": "Too many taps at once. Wait a minute.",
+      "wrongCode": "No bridge is waiting with that code. Check it, or run the installer again for a new one.",
+      "notAllowed": "You can't do that here.",
+      "rejected": "Home Assistant can't do that right now (unavailable, or out of range).",
       "generic": "Something went wrong. Try again."
     }
   }
