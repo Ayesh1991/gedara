@@ -5726,6 +5726,10 @@ export type Database = {
         Returns: Json
       }
       rpc_media_upload_done: { Args: { p_id: string }; Returns: Json }
+      rpc_media_wait: {
+        Args: { p_ms: number; p_token_hash: string }
+        Returns: boolean
+      }
       rpc_move: {
         Args: {
           p_client_at?: string

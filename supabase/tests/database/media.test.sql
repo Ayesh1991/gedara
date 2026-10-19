@@ -8,7 +8,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(57);
+select plan(64);
 
 create temp table t_c (k text primary key, v jsonb) on commit drop;
 grant all on t_c to public;
@@ -192,6 +192,31 @@ select is((select status from media_command where id = (select (v ->> 'id')::uui
   'a command nobody picked up within 60 s expires');
 select is((select count(*)::int from jsonb_array_elements((select v -> 'commands' from t_c where k = 'pend'))), 3,
   'the speaker gets the play, volume and sleep commands, in order, once');
+
+-- Migration 74: the long-poll waits inside Postgres (rpc_media_wait), read-only, at most 7 s a call.
+select ok(not has_function_privilege('authenticated', 'public.rpc_media_wait(text, integer)', 'execute'), 'a signed-in user can''t call the speaker''s wait');
+select ok(not has_function_privilege('anon', 'public.rpc_media_wait(text, integer)', 'execute'), 'nor can anyone signed out');
+set local role service_role;
+select throws_ok($$select rpc_media_wait(repeat('0', 64), 300)$$, '42501', null, 'a key that isn''t a speaker is refused');
+insert into t_c values ('w0', to_jsonb(extract(epoch from clock_timestamp())));
+insert into t_c values ('w1', to_jsonb(rpc_media_wait(pg_temp.k(1), 300)));
+insert into t_c values ('w2', to_jsonb(extract(epoch from clock_timestamp())));
+reset role;
+select is((select v from t_c where k = 'w1'), 'false'::jsonb, 'nothing for the speaker: the wait says no …');
+select ok((select (b.v)::numeric - (a.v)::numeric from t_c a, t_c b where a.k = 'w0' and b.k = 'w2') >= 0.25,
+  '… after waiting the time it was given');
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f7c01","role":"authenticated"}';
+insert into t_c values ('w3', jsonb_build_object('id', rpc_media_command(pg_temp.dev(), 'pause')));
+reset role;
+set local role service_role;
+insert into t_c values ('w4', to_jsonb(extract(epoch from clock_timestamp())));
+insert into t_c values ('w5', to_jsonb(rpc_media_wait(pg_temp.k(1), 7000)));
+insert into t_c values ('w6', to_jsonb(extract(epoch from clock_timestamp())));
+insert into t_c values ('w7', rpc_media_pending(pg_temp.k(1)));  -- picked, so the steps below see no leftover command
+reset role;
+select is((select v from t_c where k = 'w5'), 'true'::jsonb, 'a queued command ends the wait …');
+select ok((select (b.v)::numeric - (a.v)::numeric from t_c a, t_c b where a.k = 'w4' and b.k = 'w6') < 0.25, '… at once');
 
 -- ── Playlists, schedules, delete ──────────────────────────────────────────────
 set local role authenticated;

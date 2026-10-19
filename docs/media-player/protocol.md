@@ -15,9 +15,12 @@ Shapes: `supabase/functions/_shared/media/protocol.ts` (Zod; shared with the web
 ## Sync
 `POST {action:"sync", v:1, agent, up, wait?, status?, player?, done?, downloaded?, deleted?, pc_added?, pc_removed?, played?, art?, known?}`
 with `X-Gedara-Device`.
-- `wait:true` and nothing to report: the function holds the request for up to 25 s, checking for commands
-  every 0.7 s (`rpc_media_pending`). The reply comes as soon as there is a command, or with
-  `sync_now:true` when a song is waiting to be collected. About 1 invocation per 25 s.
+- `wait:true` and nothing to report: the function holds the request for up to 25 s. The waiting is done
+  inside Postgres (`rpc_media_wait`, migration 74): it checks every 0.3 s, read-only and without locks,
+  for at most 7 s per call (PostgREST's `statement_timeout` is 8 s), and only when it finds something
+  does the function call `rpc_media_pending` to pick the commands. The reply comes as soon as there is a
+  command, or with `sync_now:true` when a song is waiting to be collected. A quiet 25 s costs about
+  5 logged requests (it was about 37 with the 0.7 s polling before media-agent-3).
 - State changes (MPD `idle`) are reported at once by a second, short sync (`wait:false`).
 - The reply carries:
   - `commands` (resolved: a `play` carries `queue: [{id, file}]` of songs on the card);

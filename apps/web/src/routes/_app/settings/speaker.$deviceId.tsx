@@ -287,7 +287,7 @@ function SpeakerPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   useMediaLive(householdId);
-  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 20_000 });
+  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 30_000 });
   const tracks = useQuery(tracksQuery(householdId));
   const [testing, setTesting] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);

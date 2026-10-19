@@ -141,7 +141,7 @@ function ScalePage() {
   const householdId = membership.household.id;
   const isOwner = membership.role === 'owner';
   const canWrite = membership.role !== 'viewer';
-  const scales = useQuery({ ...scalesQuery(householdId), refetchInterval: 15_000 });
+  const scales = useQuery({ ...scalesQuery(householdId), refetchInterval: 30_000 });
   const readings = useQuery(readingsQuery(householdId, { deviceId, limit: 20 }));
   const [calibrating, setCalibrating] = useState(false);
   useScaleLive(householdId);

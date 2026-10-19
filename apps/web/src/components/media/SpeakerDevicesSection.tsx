@@ -105,7 +105,7 @@ function PairSheet({ open, onClose, householdId }: { open: boolean; onClose: () 
 
 export function SpeakerDevicesSection({ householdId, isOwner }: { householdId: string; isOwner: boolean }) {
   const { t } = useTranslation();
-  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 15_000 });
+  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 30_000 });
   const [adding, setAdding] = useState(false);
   const list = speakers.data ?? [];
 
