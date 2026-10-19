@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(5);
 
-select is(schema_version(), 74, 'schema_version is 74 after the speaker log fix (rpc_media_wait)');
+select is(schema_version(), 76, 'schema_version is 76 after Phase 8 (Home Assistant bridge)');
 
 set local role anon;
-select is(schema_version(), 74, 'anon can call schema_version()');
+select is(schema_version(), 76, 'anon can call schema_version()');
 select throws_ok($$select * from app_meta$$, '42501', null, 'anon cannot read app_meta');
 
 reset role;

@@ -446,3 +446,8 @@ verify_jwt = false
 [functions.media-agent]
 enabled = true
 verify_jwt = false
+
+# The Home Assistant bridge (Gedara Pi, Phase 8): no Supabase session; its own key in X-Gedara-Device.
+[functions.home-agent]
+enabled = true
+verify_jwt = false
