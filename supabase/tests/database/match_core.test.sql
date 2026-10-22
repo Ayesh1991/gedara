@@ -6,7 +6,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(45);
+select plan(46);
 
 create function pg_temp.u(p_code text) returns uuid language sql stable as
   $$ select id from public.unit where household_id is null and code = p_code $$;
@@ -74,6 +74,8 @@ select throws_ok($$select rpc_match_request('00000000-0000-0000-0000-0000000fd1a
   'not again within a minute');
 select throws_ok($$select rpc_match_request('00000000-0000-0000-0000-0000000fd1aa', 'eval')$$, '42501', null,
   'only the owner runs the accuracy test');
+select throws_ok($$select rpc_match_request('00000000-0000-0000-0000-0000000fd1aa', 'check')$$, '42501', null,
+  'only the owner tests the AI keys (paid calls)');
 select throws_ok($$select rpc_match_bundle('00000000-0000-0000-0000-0000000fd1aa', (select id from match_run limit 1))$$,
   '42501', null, 'members cannot read a bundle (service role only)');
 select throws_ok($$select rpc_match_save('00000000-0000-0000-0000-0000000fd1aa', (select id from match_run limit 1), '{}')$$,

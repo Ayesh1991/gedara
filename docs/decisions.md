@@ -242,3 +242,4 @@ Format: date · decision · why. Append-only.
 - 2026-10-23 · Accuracy test = questions with a known answer (lines whose product a person chose, alert expenses whose category a person chose), learned names left out; runs in batches of 24 per task while the Settings page is open (one call per 20 s) · honest numbers on Didula's own data before anything books itself (9c needs ≥ 99 % of "sure" answers right on ≥ 30)
 - 2026-10-23 · Import-time AI suggestions (while a bill is being imported) are left for later; new bills' lines get suggestions at the next run · one less moving part in 9b; the backlog is the bigger win
 - 2026-10-23 · App version 0.9.1 for Phase 9b
+- 2026-10-23 · "Test the AI keys" has its own trigger 'check' (migration 82): owner only, once a minute, refused when the month's cost cap is reached · a security review found members could start paid AI calls past the cap through it

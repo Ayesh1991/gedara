@@ -6,7 +6,8 @@
 //     { household_id, mode: 'run' }       → "Check now" (at most once a minute)
 //     { household_id, mode: 'eval' }      → one batch of the accuracy test (owner); the page asks again while
 //                                           `remaining` > 0
-//     { household_id, mode: 'check' }     → one tiny question to every model of the ladder: are the keys right?
+//     { household_id, mode: 'check' }     → one tiny question to every model of the ladder: are the keys right? (owner,
+//                                           once a minute, within the monthly cap)
 //
 // The work is in ../_shared/match/run.ts (rules first, then the AI ladder in ../_shared/ai). The bundle
 // the database gives (rpc_match_bundle) never contains an SMS body, and every request to an AI passes the
@@ -21,7 +22,7 @@ import type { ModelRef, Provider } from '../_shared/ai/providers.ts';
 import { KEY_NAMES } from '../_shared/ai/providers.ts';
 import { runEval, runMatching, type Bundle, type RunOutput } from '../_shared/match/run.ts';
 
-const FN_VERSION = 'match-agent-1';
+const FN_VERSION = 'match-agent-2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -132,13 +133,21 @@ async function fromUser(req: Request, auth: string) {
   // The database decides who may do what, and how often (rpc_match_request).
   const { data: runId, error } = await user.rpc('rpc_match_request', {
     p_household: householdId,
-    p_trigger: mode === 'eval' ? 'eval' : 'user',
+    p_trigger: mode === 'run' ? 'user' : mode, // 'run' is "Check now" ('user'); 'eval' and 'check' are the owner's
   });
   if (error) return json({ error: error.code === 'GDRTE' ? 'too often' : 'not allowed' }, rpcStatus(error.code));
   const db = service();
   try {
     if (mode === 'check') {
-      const { data: setting } = await db.from('match_setting').select('steps').eq('household_id', householdId).maybeSingle();
+      const { data: setting } = await db.from('match_setting').select('steps, monthly_cap_usd').eq('household_id', householdId).maybeSingle();
+      // the key test costs a fraction of a cent, but it still respects the owner's monthly cap
+      const { data: spent } = await db.from('v_ai_cost_month').select('cost_usd').eq('household_id', householdId)
+        .eq('month', new Date().toISOString().slice(0, 7) + '-01');
+      const monthCost = (spent ?? []).reduce((a, r) => a + Number(r.cost_usd), 0);
+      if (monthCost >= Number(setting?.monthly_cap_usd ?? 3)) {
+        await db.rpc('rpc_match_save', { p_household: householdId, p_run: runId, p: { stats: { check: true, capped: true } } });
+        return json({ error: 'monthly cap reached' }, 429);
+      }
       const steps = ((setting?.steps as ModelRef[] | undefined) ?? []).length
         ? (setting!.steps as ModelRef[])
         : [{ provider: 'groq', model: 'openai/gpt-oss-120b' }, { provider: 'gemini', model: 'gemini-2.5-flash' }, { provider: 'openai', model: 'gpt-5.4-mini' }] as ModelRef[];

@@ -25,7 +25,8 @@
 - Attention shows "N matches to check"; Diagnostics shows `match-agent-1` and how many AI keys are set.
 - Database: migrations 80–81 (`match_setting`, `match_suggestion`, `match_run`, `ai_usage`,
   `match_eval`, report views, `rpc_match_*`, `rpc_line_link_product`, `rpc_line_category`, cron
-  `gedara-match`), schema 81; function `match-agent-1`; `scripts/ai-secrets.mjs` sets the keys from a
+  `gedara-match`) and 82 (the key test is the owner's, once a minute, within the cap), schema 82;
+  function `match-agent-2`; `scripts/ai-secrets.mjs` sets the keys from a
   hidden prompt. The matching engines moved to `supabase/functions/_shared/match` (the app imports them).
 
 ## 0.9.0 — Phase 9a: safer and smarter bank alerts (no AI yet)
