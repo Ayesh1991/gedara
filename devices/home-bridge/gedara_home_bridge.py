@@ -612,7 +612,16 @@ def cmd_pair() -> int:
             except (LookupError, OSError):
                 pass
     url = server_url()
-    r = post(url, {"action": "pair_start", "key_hash": hashlib.sha256(key.encode()).hexdigest(), "hint": key[-4:], "agent": AGENT}, None, 20)
+    try:
+        r = post(url, {"action": "pair_start", "key_hash": hashlib.sha256(key.encode()).hexdigest(), "hint": key[-4:], "agent": AGENT}, None, 20)
+    except HttpError as e:
+        if e.status == 404:
+            name = url.split("//")[1].split(".")[0]
+            print(f"PROBLEM: this Gedara ({'the real site' if name == SERVERS['gedara'].split('//')[1].split('.')[0] else 'the preview'}) "
+                  "doesn't have the Home Assistant part yet. To try it on the preview first, run the installer again "
+                  "with -Server gedara-staging at the end.")
+            return 1
+        raise
     if r.get("status") == "paired":
         p = post(url, {"action": "pair_poll"}, key, 20)
         print(f"PAIRED: already paired as '{p.get('name')}' in '{p.get('household')}'")
