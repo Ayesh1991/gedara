@@ -123,6 +123,66 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          at: string
+          cost_usd: number
+          error: string | null
+          household_id: string
+          id: string
+          input_tokens: number
+          model: string
+          ok: boolean
+          output_tokens: number
+          provider: string
+          run_id: string | null
+          task: string
+        }
+        Insert: {
+          at?: string
+          cost_usd?: number
+          error?: string | null
+          household_id: string
+          id?: string
+          input_tokens?: number
+          model: string
+          ok: boolean
+          output_tokens?: number
+          provider: string
+          run_id?: string | null
+          task: string
+        }
+        Update: {
+          at?: string
+          cost_usd?: number
+          error?: string | null
+          household_id?: string
+          id?: string
+          input_tokens?: number
+          model?: string
+          ok?: boolean
+          output_tokens?: number
+          provider?: string
+          run_id?: string | null
+          task?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_household_id_run_id_fkey"
+            columns: ["household_id", "run_id"]
+            isOneToOne: false
+            referencedRelation: "match_run"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
       app_meta: {
         Row: {
           key: string
@@ -1995,6 +2055,232 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "household"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_eval: {
+        Row: {
+          ai: Json | null
+          ai_correct: boolean | null
+          created_at: string
+          household_id: string
+          id: string
+          rule: Json | null
+          rule_correct: boolean | null
+          target_key: string
+          task: string
+          truth: Json
+        }
+        Insert: {
+          ai?: Json | null
+          ai_correct?: boolean | null
+          created_at?: string
+          household_id: string
+          id?: string
+          rule?: Json | null
+          rule_correct?: boolean | null
+          target_key: string
+          task: string
+          truth: Json
+        }
+        Update: {
+          ai?: Json | null
+          ai_correct?: boolean | null
+          created_at?: string
+          household_id?: string
+          id?: string
+          rule?: Json | null
+          rule_correct?: boolean | null
+          target_key?: string
+          task?: string
+          truth?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_eval_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_run: {
+        Row: {
+          finished_at: string | null
+          household_id: string
+          id: string
+          started_at: string
+          started_by: string | null
+          stats: Json
+          trigger: string
+        }
+        Insert: {
+          finished_at?: string | null
+          household_id: string
+          id?: string
+          started_at?: string
+          started_by?: string | null
+          stats?: Json
+          trigger: string
+        }
+        Update: {
+          finished_at?: string | null
+          household_id?: string
+          id?: string
+          started_at?: string
+          started_by?: string | null
+          stats?: Json
+          trigger?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_run_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_setting: {
+        Row: {
+          ai_enabled: boolean
+          daily_requests: number
+          household_id: string
+          monthly_cap_usd: number
+          steps: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ai_enabled?: boolean
+          daily_requests?: number
+          household_id: string
+          monthly_cap_usd?: number
+          steps?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ai_enabled?: boolean
+          daily_requests?: number
+          household_id?: string
+          monthly_cap_usd?: number
+          steps?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_setting_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: true
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_suggestion: {
+        Row: {
+          confidence: number
+          correction: Json | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          household_id: string
+          id: string
+          input_hash: string
+          line_id: string | null
+          models: string[]
+          pattern: string
+          proposal: Json
+          sms_id: string | null
+          status: string
+          target_key: string
+          task: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: number
+          correction?: Json | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          household_id: string
+          id?: string
+          input_hash: string
+          line_id?: string | null
+          models?: string[]
+          pattern: string
+          proposal: Json
+          sms_id?: string | null
+          status?: string
+          target_key: string
+          task: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          correction?: Json | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          household_id?: string
+          id?: string
+          input_hash?: string
+          line_id?: string | null
+          models?: string[]
+          pattern?: string
+          proposal?: Json
+          sms_id?: string | null
+          status?: string
+          target_key?: string
+          task?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_suggestion_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_suggestion_household_id_line_id_fkey"
+            columns: ["household_id", "line_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_line"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "match_suggestion_household_id_line_id_fkey"
+            columns: ["household_id", "line_id"]
+            isOneToOne: false
+            referencedRelation: "v_asset_pending_line"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "match_suggestion_household_id_line_id_fkey"
+            columns: ["household_id", "line_id"]
+            isOneToOne: false
+            referencedRelation: "v_line_route"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "match_suggestion_household_id_line_id_fkey"
+            columns: ["household_id", "line_id"]
+            isOneToOne: false
+            referencedRelation: "v_spend_line"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "match_suggestion_household_id_sms_id_fkey"
+            columns: ["household_id", "sms_id"]
+            isOneToOne: false
+            referencedRelation: "sms_message"
+            referencedColumns: ["household_id", "id"]
           },
         ]
       }
@@ -4765,6 +5051,28 @@ export type Database = {
           },
         ]
       }
+      v_ai_cost_month: {
+        Row: {
+          cost_usd: number | null
+          failed: number | null
+          household_id: string | null
+          input_tokens: number | null
+          model: string | null
+          month: string | null
+          output_tokens: number | null
+          provider: string | null
+          requests: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_asset: {
         Row: {
           archived: boolean | null
@@ -5112,6 +5420,68 @@ export type Database = {
           },
           {
             foreignKeyName: "maintenance_plan_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_match_accuracy: {
+        Row: {
+          ai_answered: number | null
+          ai_correct: number | null
+          household_id: string | null
+          n: number | null
+          rule_answered: number | null
+          rule_correct: number | null
+          sure_correct: number | null
+          sure_n: number | null
+          task: string | null
+          tested_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_eval_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_match_accuracy_pattern: {
+        Row: {
+          correct: number | null
+          household_id: string | null
+          n: number | null
+          pattern: string | null
+          task: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_eval_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_match_decisions: {
+        Row: {
+          accepted: number | null
+          changed: number | null
+          household_id: string | null
+          n: number | null
+          pattern: string | null
+          pending: number | null
+          rejected: number | null
+          task: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_suggestion_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "household"
@@ -6011,8 +6381,37 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_line_category: {
+        Args: { p_category: string; p_line: string }
+        Returns: undefined
+      }
+      rpc_line_link_product: {
+        Args: { p_destiny?: string; p_line: string; p_product: string }
+        Returns: undefined
+      }
       rpc_log_maintenance: { Args: { p: Json }; Returns: Json }
       rpc_lot_code: { Args: { p_lot: string }; Returns: string }
+      rpc_match_bundle: {
+        Args: { p_household: string; p_mode?: string; p_run: string }
+        Returns: Json
+      }
+      rpc_match_cron_begin: { Args: { p_token: string }; Returns: Json }
+      rpc_match_decide: {
+        Args: { p_correction?: Json; p_ids: string[]; p_status: string }
+        Returns: number
+      }
+      rpc_match_request: {
+        Args: { p_household: string; p_trigger: string }
+        Returns: string
+      }
+      rpc_match_save: {
+        Args: { p: Json; p_household: string; p_run: string }
+        Returns: Json
+      }
+      rpc_match_settings_save: {
+        Args: { p: Json; p_household: string }
+        Returns: undefined
+      }
       rpc_media_command: {
         Args: { p_args?: Json; p_command: string; p_device: string }
         Returns: string

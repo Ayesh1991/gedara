@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeftRight, CircleAlert, Info, Landmark, Link2, MessageSquareText, Plus, RotateCcw, X } from 'lucide-react';
+import { ArrowLeftRight, CircleAlert, Info, Landmark, Link2, MessageSquareText, Plus, RotateCcw, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import { lineFingerprint } from '@/lib/money/fingerprint';
 import { formatDay } from '@/lib/time';
 import { parseAmount } from '@/lib/money/format';
 import { builtInCategory, learnSoon, merchantMemory, type Memory } from '@/lib/match/memory';
+import { decide, type Suggestion as AiSuggestion } from '@/lib/match/queries';
 import { createAccount, moneyErrorKey, type Account } from '@/lib/money/queries';
 import type { Gap, Suggestion, TxCandidate } from '@/lib/sms/match';
 import { smsSigned } from '@/lib/sms/match';
@@ -77,6 +78,7 @@ export function SmsCard({
   categories,
   candidates,
   memory,
+  ai,
   canWrite,
   onDone,
 }: {
@@ -88,6 +90,8 @@ export function SmsCard({
   categories: CategoryRow[];
   candidates: TxCandidate[];
   memory: Memory | undefined;
+  /** Phase 9b: what the matcher suggests for this alert (a category, or a bill with a close total). */
+  ai?: { category?: AiSuggestion; link?: AiSuggestion };
   canWrite: boolean;
   onDone: () => void;
 }) {
@@ -103,9 +107,18 @@ export function SmsCard({
   const remembered = merchantMemory(memory, memoText);
   const [mode, setMode] = useState<'suggested' | 'new' | 'pick'>(s.kind === 'none' ? 'new' : 'suggested');
   const [busy, setBusy] = useState(false);
+  const aiCategory = ai?.category?.proposal.category_id ?? null;
   const [categoryId, setCategoryId] = useState<string | null>(
-    () => remembered?.category_id ?? builtInCategory(categories, memoText),
+    () => remembered?.category_id ?? builtInCategory(categories, memoText) ?? aiCategory,
   );
+  const usedAi = !remembered?.category_id && !builtInCategory(categories, memoText) && !!aiCategory;
+  /** Tell the matcher what the person did with its suggestion (never blocks the save). */
+  const tell = (sug: AiSuggestion | undefined, chosen: string | null, key: 'category_id' | 'transaction_id') => {
+    if (!sug) return;
+    const proposed = sug.proposal[key] ?? null;
+    void decide([sug.id], chosen === proposed ? 'accepted' : chosen ? 'changed' : 'rejected', chosen ? { [key]: chosen } : undefined)
+      .catch(() => undefined);
+  };
   const [amount, setAmount] = useState(item.lkr.amount !== null ? String(item.lkr.amount) : '');
   const [newAccount, setNewAccount] = useState<string | null>(
     row.account_id ?? (s.kind === 'expense' ? s.account : null) ?? remembered?.account_id ?? null,
@@ -129,6 +142,7 @@ export function SmsCard({
   const linkTo = (txId: string) =>
     run(async () => {
       const r = await smsLink(item.rows.map((x) => x.id), txId);
+      tell(ai?.link, txId, 'transaction_id');
       if (r.moved) toast.message(t('money.inbox.movedTo', { name: account?.name ?? '' }));
     }, t('money.inbox.linked'));
 
@@ -140,6 +154,8 @@ export function SmsCard({
     const name = row.merchant_text || t(`money.inbox.kinds.${row.kind as 'card_charge'}`);
     // the household remembers the category (and, for an alert that names no account, the account)
     learnSoon(qc, householdId, [{ kind: 'merchant', text: memoText, category_id: categoryId, account_id: row.account_id ? null : newAccount }]);
+    if (usedAi) tell(ai?.category, categoryId, 'category_id');
+    tell(ai?.link, null, 'transaction_id');
     return run(
       () =>
         smsPost([row.id], {
@@ -160,7 +176,12 @@ export function SmsCard({
   const saveTransfer = (tr: Extract<Suggestion, { kind: 'transfer' }>) =>
     run(() => smsPost(item.rows.map((x) => x.id), transferPayload(item, tr, householdId, categories)), t('money.inbox.saved'));
 
-  const ignore = () => run(() => smsIgnore(item.rows.map((x) => x.id), true), t('money.inbox.ignored'));
+  const ignore = () =>
+    run(async () => {
+      await smsIgnore(item.rows.map((x) => x.id), true);
+      tell(ai?.category, null, 'category_id');
+      tell(ai?.link, null, 'transaction_id');
+    }, t('money.inbox.ignored'));
   const markSeen = () => run(() => smsIgnore(item.rows.map((x) => x.id), true), t('money.inbox.seen'));
 
   // A loan paid out: a transfer from the loan account (made here once, from the alert itself).
@@ -313,6 +334,24 @@ export function SmsCard({
               {t(s.kind === 'income' ? 'money.inbox.newIncome' : 'money.inbox.newExpense')}
             </p>
           )}
+          {ai?.link && s.kind === 'expense' && ai.link.proposal.transaction_id && (
+            <>
+              <p className="flex items-start gap-2 text-[13.5px]">
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-info" aria-hidden />
+                <span>
+                  {t('match.sameAs', { what: describe(candidates.find((c) => c.id === ai.link!.proposal.transaction_id)) || '…' })}
+                  <span className="block text-[12.5px] text-muted">
+                    {t('match.closeTotal', { pct: Math.round(ai.link.confidence * 100) })}
+                  </span>
+                </span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="secondary" disabled={busy} onClick={() => void linkTo(ai.link!.proposal.transaction_id!)}>
+                  {t('money.inbox.link')}
+                </Button>
+              </div>
+            </>
+          )}
           {s.kind === 'refund' && (
             <p className="flex items-start gap-2 text-[13.5px]">
               <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-teal" aria-hidden />
@@ -394,6 +433,12 @@ export function SmsCard({
             </div>
           </div>
           {item.lkr.estimated && <p className="text-[12.5px] text-muted">{t('money.inbox.fxEstimated')}</p>}
+          {usedAi && ai?.category && (
+            <p className="flex items-center gap-1.5 text-[12.5px] text-info">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {t('match.categoryHint', { pct: Math.round(ai.category.confidence * 100) })}
+            </p>
+          )}
           <div>
             <label className={fieldLabel} htmlFor={`sms-cat-${row.id}`}>
               {t('money.filters.category')}

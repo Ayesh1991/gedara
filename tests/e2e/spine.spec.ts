@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
-import { billNameNorm } from '../../apps/web/src/lib/spine/normalise';
+import { billNameNorm } from '../../supabase/functions/_shared/match/normalise';
 import { STORAGE_STATE, stagingAdmin } from './staging-guard';
 
 // Phase 4 "done when": a Cargills-shaped bill → expense logged, 8 lots created, 3 list items ticked,

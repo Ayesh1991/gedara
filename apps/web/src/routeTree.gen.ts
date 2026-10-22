@@ -23,6 +23,7 @@ import { Route as AppMoneyBudgetsRouteImport } from './routes/_app/money/budgets
 import { Route as AppMoneyImportRouteImport } from './routes/_app/money/import'
 import { Route as AppMoneyInboxRouteImport } from './routes/_app/money/inbox'
 import { Route as AppMoneyRecurringRouteImport } from './routes/_app/money/recurring'
+import { Route as AppMoneyReviewRouteImport } from './routes/_app/money/review'
 import { Route as AppMusicIndexRouteImport } from './routes/_app/music/index'
 import { Route as AppPantryIndexRouteImport } from './routes/_app/pantry/index'
 import { Route as AppPantryProductIdRouteImport } from './routes/_app/pantry/$productId'
@@ -43,6 +44,7 @@ import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settin
 import { Route as AppSettingsExportRouteImport } from './routes/_app/settings/export'
 import { Route as AppSettingsFieldsRouteImport } from './routes/_app/settings/fields'
 import { Route as AppSettingsHomeAssistantRouteImport } from './routes/_app/settings/home-assistant'
+import { Route as AppSettingsMatchingRouteImport } from './routes/_app/settings/matching'
 import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings/notifications'
 import { Route as AppSettingsPlaceTypesRouteImport } from './routes/_app/settings/place-types'
 import { Route as AppSettingsStorageRouteImport } from './routes/_app/settings/storage'
@@ -124,6 +126,11 @@ const AppMoneyInboxRoute = AppMoneyInboxRouteImport.update({
 const AppMoneyRecurringRoute = AppMoneyRecurringRouteImport.update({
   id: '/money/recurring',
   path: '/money/recurring',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMoneyReviewRoute = AppMoneyReviewRouteImport.update({
+  id: '/money/review',
+  path: '/money/review',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMusicIndexRoute = AppMusicIndexRouteImport.update({
@@ -227,6 +234,11 @@ const AppSettingsHomeAssistantRoute =
     path: '/settings/home-assistant',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSettingsMatchingRoute = AppSettingsMatchingRouteImport.update({
+  id: '/settings/matching',
+  path: '/settings/matching',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsNotificationsRoute =
   AppSettingsNotificationsRouteImport.update({
     id: '/settings/notifications',
@@ -310,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
   '/money/recurring': typeof AppMoneyRecurringRoute
+  '/money/review': typeof AppMoneyReviewRoute
   '/pantry/$productId': typeof AppPantryProductIdRoute
   '/pantry/journal': typeof AppPantryJournalRoute
   '/pantry/list': typeof AppPantryListRoute
@@ -326,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/settings/export': typeof AppSettingsExportRoute
   '/settings/fields': typeof AppSettingsFieldsRoute
   '/settings/home-assistant': typeof AppSettingsHomeAssistantRoute
+  '/settings/matching': typeof AppSettingsMatchingRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/settings/storage': typeof AppSettingsStorageRoute
@@ -358,6 +372,7 @@ export interface FileRoutesByTo {
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
   '/money/recurring': typeof AppMoneyRecurringRoute
+  '/money/review': typeof AppMoneyReviewRoute
   '/pantry/$productId': typeof AppPantryProductIdRoute
   '/pantry/journal': typeof AppPantryJournalRoute
   '/pantry/list': typeof AppPantryListRoute
@@ -374,6 +389,7 @@ export interface FileRoutesByTo {
   '/settings/export': typeof AppSettingsExportRoute
   '/settings/fields': typeof AppSettingsFieldsRoute
   '/settings/home-assistant': typeof AppSettingsHomeAssistantRoute
+  '/settings/matching': typeof AppSettingsMatchingRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/settings/storage': typeof AppSettingsStorageRoute
@@ -408,6 +424,7 @@ export interface FileRoutesById {
   '/_app/money/import': typeof AppMoneyImportRoute
   '/_app/money/inbox': typeof AppMoneyInboxRoute
   '/_app/money/recurring': typeof AppMoneyRecurringRoute
+  '/_app/money/review': typeof AppMoneyReviewRoute
   '/_app/pantry/$productId': typeof AppPantryProductIdRoute
   '/_app/pantry/journal': typeof AppPantryJournalRoute
   '/_app/pantry/list': typeof AppPantryListRoute
@@ -424,6 +441,7 @@ export interface FileRoutesById {
   '/_app/settings/export': typeof AppSettingsExportRoute
   '/_app/settings/fields': typeof AppSettingsFieldsRoute
   '/_app/settings/home-assistant': typeof AppSettingsHomeAssistantRoute
+  '/_app/settings/matching': typeof AppSettingsMatchingRoute
   '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
   '/_app/settings/place-types': typeof AppSettingsPlaceTypesRoute
   '/_app/settings/storage': typeof AppSettingsStorageRoute
@@ -458,6 +476,7 @@ export interface FileRouteTypes {
     | '/money/import'
     | '/money/inbox'
     | '/money/recurring'
+    | '/money/review'
     | '/pantry/$productId'
     | '/pantry/journal'
     | '/pantry/list'
@@ -474,6 +493,7 @@ export interface FileRouteTypes {
     | '/settings/export'
     | '/settings/fields'
     | '/settings/home-assistant'
+    | '/settings/matching'
     | '/settings/notifications'
     | '/settings/place-types'
     | '/settings/storage'
@@ -506,6 +526,7 @@ export interface FileRouteTypes {
     | '/money/import'
     | '/money/inbox'
     | '/money/recurring'
+    | '/money/review'
     | '/pantry/$productId'
     | '/pantry/journal'
     | '/pantry/list'
@@ -522,6 +543,7 @@ export interface FileRouteTypes {
     | '/settings/export'
     | '/settings/fields'
     | '/settings/home-assistant'
+    | '/settings/matching'
     | '/settings/notifications'
     | '/settings/place-types'
     | '/settings/storage'
@@ -555,6 +577,7 @@ export interface FileRouteTypes {
     | '/_app/money/import'
     | '/_app/money/inbox'
     | '/_app/money/recurring'
+    | '/_app/money/review'
     | '/_app/pantry/$productId'
     | '/_app/pantry/journal'
     | '/_app/pantry/list'
@@ -571,6 +594,7 @@ export interface FileRouteTypes {
     | '/_app/settings/export'
     | '/_app/settings/fields'
     | '/_app/settings/home-assistant'
+    | '/_app/settings/matching'
     | '/_app/settings/notifications'
     | '/_app/settings/place-types'
     | '/_app/settings/storage'
@@ -696,6 +720,13 @@ declare module '@tanstack/react-router' {
       path: '/money/recurring'
       fullPath: '/money/recurring'
       preLoaderRoute: typeof AppMoneyRecurringRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/money/review': {
+      id: '/_app/money/review'
+      path: '/money/review'
+      fullPath: '/money/review'
+      preLoaderRoute: typeof AppMoneyReviewRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/music/': {
@@ -838,6 +869,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsHomeAssistantRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/matching': {
+      id: '/_app/settings/matching'
+      path: '/settings/matching'
+      fullPath: '/settings/matching'
+      preLoaderRoute: typeof AppSettingsMatchingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/notifications': {
       id: '/_app/settings/notifications'
       path: '/settings/notifications'
@@ -942,6 +980,7 @@ interface AppRouteChildren {
   AppMoneyImportRoute: typeof AppMoneyImportRoute
   AppMoneyInboxRoute: typeof AppMoneyInboxRoute
   AppMoneyRecurringRoute: typeof AppMoneyRecurringRoute
+  AppMoneyReviewRoute: typeof AppMoneyReviewRoute
   AppPantryProductIdRoute: typeof AppPantryProductIdRoute
   AppPantryJournalRoute: typeof AppPantryJournalRoute
   AppPantryListRoute: typeof AppPantryListRoute
@@ -958,6 +997,7 @@ interface AppRouteChildren {
   AppSettingsExportRoute: typeof AppSettingsExportRoute
   AppSettingsFieldsRoute: typeof AppSettingsFieldsRoute
   AppSettingsHomeAssistantRoute: typeof AppSettingsHomeAssistantRoute
+  AppSettingsMatchingRoute: typeof AppSettingsMatchingRoute
   AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
   AppSettingsPlaceTypesRoute: typeof AppSettingsPlaceTypesRoute
   AppSettingsStorageRoute: typeof AppSettingsStorageRoute
@@ -989,6 +1029,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMoneyImportRoute: AppMoneyImportRoute,
   AppMoneyInboxRoute: AppMoneyInboxRoute,
   AppMoneyRecurringRoute: AppMoneyRecurringRoute,
+  AppMoneyReviewRoute: AppMoneyReviewRoute,
   AppPantryProductIdRoute: AppPantryProductIdRoute,
   AppPantryJournalRoute: AppPantryJournalRoute,
   AppPantryListRoute: AppPantryListRoute,
@@ -1005,6 +1046,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsExportRoute: AppSettingsExportRoute,
   AppSettingsFieldsRoute: AppSettingsFieldsRoute,
   AppSettingsHomeAssistantRoute: AppSettingsHomeAssistantRoute,
+  AppSettingsMatchingRoute: AppSettingsMatchingRoute,
   AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
   AppSettingsPlaceTypesRoute: AppSettingsPlaceTypesRoute,
   AppSettingsStorageRoute: AppSettingsStorageRoute,

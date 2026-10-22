@@ -451,3 +451,9 @@ verify_jwt = false
 [functions.home-agent]
 enabled = true
 verify_jwt = false
+
+# Matching (Phase 9b): pg_cron twice a day (token checked in the database) or a signed-in user ("Check
+# now", the accuracy test, "test the keys") — the handler authenticates both itself.
+[functions.match-agent]
+enabled = true
+verify_jwt = false

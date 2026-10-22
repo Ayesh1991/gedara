@@ -134,7 +134,7 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
 
     edge: async () => {
       // All at once: each may be a cold start, and in a row they could pass the 8 s limit.
-      const [ping, sms, push, drive, scale, media] = await Promise.all([
+      const [ping, sms, push, drive, scale, media, match] = await Promise.all([
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('ping', { method: 'POST', body: {} }),
         // Bank-SMS ingest (Phase 2b): its version answers a plain GET.
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('sms-ingest', { method: 'GET' }),
@@ -148,6 +148,8 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('scale-ingest', { method: 'GET' }),
         // Music speaker (Phase 7h): its version answers a plain GET.
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('media-agent', { method: 'GET' }),
+        // Matching (Phase 9b): its version, and which AI keys are set (never the keys).
+        supabase.functions.invoke<{ ok: boolean; fn_version: string; keys: Record<string, boolean> }>('match-agent', { method: 'GET' }),
       ]);
       if (ping.error) throw ping.error;
       if (!ping.data?.ok) throw new Error('ping returned no ok');
@@ -158,7 +160,9 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
       if (!drive.data.configured) throw new CheckError('diagnostics.errors.driveKeys');
       if (scale.error || !scale.data?.ok) throw new CheckError('diagnostics.errors.scaleIngest');
       if (media.error || !media.data?.ok) throw new CheckError('diagnostics.errors.mediaAgent');
-      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version} · ${drive.data.fn_version} · ${scale.data.fn_version} · ${media.data.fn_version}`;
+      if (match.error || !match.data?.ok) throw new CheckError('diagnostics.errors.matchAgent');
+      const keys = Object.values(match.data.keys).filter(Boolean).length;
+      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version} · ${drive.data.fn_version} · ${scale.data.fn_version} · ${media.data.fn_version} · ${match.data.fn_version} (AI keys ${keys}/3)`;
     },
 
     sw: async () => {
