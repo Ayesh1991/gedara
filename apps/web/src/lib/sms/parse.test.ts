@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hash32 as ledgerHash } from '@/lib/money/fingerprint';
-import { FORWARD_TEXT_REGEX, hash32, parseSms, smsFingerprint, type ParsedSms } from '@sms/parse';
+import { FORWARD_TEXT_REGEX, hash32, parseSms, reversedTxnId, smsFingerprint, type ParsedSms } from '@sms/parse';
 
 // Real alert wording (amounts real, account numbers already masked by the banks). Received times are
 // Colombo local (+05:30) written as UTC.
@@ -155,7 +155,7 @@ describe('filters', () => {
       .toEqual({ keep: false, reason: 'no_amount' });
   });
   it('the phone-side regex blocks what the server blocks', () => {
-    const re = new RegExp(FORWARD_TEXT_REGEX.replace('(?is)', ''), 'is');
+    const re = new RegExp(FORWARD_TEXT_REGEX.replace(/^\(\?[a-z]+\)/, ''), 'isu');
     expect(re.test('Your OTP is 123456')).toBe(false);
     expect(re.test('ATM Withdrawal Rs 10000.00 From A/C No XXXXXXXXXX319. Balance available Rs 1.00')).toBe(true);
   });
@@ -172,5 +172,73 @@ describe('fingerprints', () => {
     expect(a).toMatch(/^s[0-9a-z]+$/);
     expect(smsFingerprint('BOC', 'x', '2026-09-05T04:45:59.000Z')).toBe(a);
     expect(smsFingerprint('BOC', 'x', '2026-09-05T04:46:00.000Z')).not.toBe(a);
+  });
+});
+
+describe('v2 formats (Phase 9, from the alerts prod could not read)', () => {
+  it('BOC card payment uses the card digits, not the bank prefix', () => {
+    const s = kept('BOC',
+      'Dear Customer, Thank you for payment of LKR 190354.70 on 14/10/2026 for Credit Card no. 5524 **** **** 8873. Balance Available LKR 250000.00n',
+      '2026-10-15T00:27:18');
+    expect(s).toMatchObject({
+      parser: 'boc.card_payment', kind: 'card_payment', last_digits: '8873', amount: 190354.7, balance_after: 250000,
+      occurred_on: '2026-10-14', occurred_at: null,
+    });
+  });
+  it('BOC ..708 loan money in and pay-offs parse like the savings account', () => {
+    expect(kept('BOC',
+      'Transfer Order Credit Rs 2000000.00 To A/C No XXXXXXXXXX708. Balance available Rs 2000000.00 - Thank you for banking with BOC',
+      '2026-10-14T09:00:00')).toMatchObject({ kind: 'bank_credit', last_digits: '708', amount: 2000000 });
+    expect(kept('BOC',
+      'Online Transfer Debit Rs 190354.70 From A/C No XXXXXXXXXX708. Balance available Rs 1809645.30 - Thank you for banking with BOC',
+      '2026-10-14T23:10:30')).toMatchObject({ kind: 'bank_debit', last_digits: '708', amount: 190354.7 });
+  });
+  it('ETC top-up is a debit with no account digits; a low-balance alert is a note', () => {
+    expect(kept('BOC', 'ETC A/C 1234567 Successfully topup through Internet Banking by Rs. 1000.00', '2026-05-20T20:54:22'))
+      .toMatchObject({ parser: 'boc.etc_topup', kind: 'bank_debit', last_digits: null, amount: 1000, merchant_text: 'ETC top-up' });
+    expect(kept('BOC',
+      'ETC A/C 1234567 Balance dropped to Rs.512.00, below the threshold limit. Please fund the ETC account, if direct debit authorization is not given.',
+      '2026-10-20T08:00:00')).toMatchObject({ parser: 'boc.etc_low', kind: 'info', amount: 512 });
+  });
+  it('Sampath charges in USD cents', () => {
+    expect(kept('SAMPCCTXN',
+      'Cr Crd no..**6577 Auth Pmt USD .99 at APPLE.COM/BILL Avl Bal LKR 99,412.15 Enq Call 0112300604\n- Sampath Bank 03-JUL',
+      '2026-07-03T10:00:00')).toMatchObject({ kind: 'card_charge', currency: 'USD', amount: 0.99, merchant_text: 'APPLE.COM/BILL' });
+  });
+  it("People's notes carry no money of their own", () => {
+    expect(kept('PeoplesCard',
+      'Dear Card Holder, 12-months instalment plan for LKR 123,456.00/= transaction at SRI LANKA INSURANCE CORPO successfully created. Hotline 1961.',
+      '2026-07-20T10:00:00')).toMatchObject({ parser: 'peoples.instalment', kind: 'info', amount: 123456, merchant_text: 'SRI LANKA INSURANCE CORPO' });
+    expect(kept('PeoplesCard',
+      'Peoples Card: Stmt Summary [X-X-X-1913] Stmt.Date: 02-Oct-2026 Stmt.Bal: Rs.123,456.78 Min Pay: Rs.12,345.68 Due on: 27-Oct-2026.',
+      '2026-10-02T10:00:00')).toMatchObject({ parser: 'peoples.statement', kind: 'info', last_digits: '1913', amount: 123456.78, occurred_on: '2026-10-02' });
+    expect(kept('PeoplesCard',
+      'Peoples Card: Re-payment Reminder [X-X-X-1913][Tot.Payable Rs.123,456.78] Min.Payment due Rs.6,172.84 is Due [Jul 16, 2026]. If already settled please ignore',
+      '2026-07-14T10:00:00')).toMatchObject({ parser: 'peoples.reminder', kind: 'info', last_digits: '1913', amount: 123456.78 });
+    for (const body of [
+      'Dear Card Holder, kind notification of the minimum payment Rs 4512.30 of your Peoples Credit Card due by 05-APR-26. Kindly disregard if the payment is made.',
+      'Dear Cardholder, Minimum of Rs 4512.30 of your Peoples Card is due by 16-JUL-26.Please pay minimum amount before due date. Kindly disregard if already paid.',
+    ]) {
+      expect(kept('PeoplesCard', body, '2026-07-10T10:00:00')).toMatchObject({ parser: 'peoples.min_due', kind: 'info', amount: 4512.3 });
+    }
+  });
+  it('Seylan reversal is a refund that points at the original charge', () => {
+    const s = kept('Seylan Bank',
+      'Transaction Reversal (10063001165): Seylan Card ...6029 was credited USD 6.15 on 09/06/2026 08:10:00 AM at TEMU.COM                 +442033454976IE. Avl bal 12,345.67',
+      '2026-06-09T08:10:00');
+    expect(s).toMatchObject({
+      parser: 'seylan.reversal', kind: 'refund', last_digits: '6029', bank_txn_id: 'R10063001165', currency: 'USD', amount: 6.15,
+      occurred_on: '2026-06-09', occurred_at: '08:10:00', merchant_text: 'TEMU.COM +442033454976IE', balance_after: 12345.67,
+    });
+    expect(reversedTxnId(s.bank_txn_id)).toBe('10063001165');
+    expect(reversedTxnId('10063001165')).toBeNull();
+  });
+  it('the BOC Flex promotion is dropped', () => {
+    const v = parseSms({
+      sender: 'BOC',
+      body: 'Exclusive for BOC Flex & Dialog Users!\nGet 50% Bonus Reload on Prepaid Reloads and FREE 5GB Data with Postpaid Bill Payments of Rs.500 or above via BOC Flex.\nOffer valid only on 26th June 2026.\n#PayDigital',
+      receivedAt: at('2026-06-20T10:00:00'),
+    });
+    expect(v).toEqual({ keep: false, reason: 'promo' });
   });
 });

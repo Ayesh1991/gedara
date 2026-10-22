@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(5);
 
-select is(schema_version(), 76, 'schema_version is 76 after Phase 8 (Home Assistant bridge)');
+select is(schema_version(), 79, 'schema_version is 79 after Phase 9a (OTP detector v2, re-parse, matching memories)');
 
 set local role anon;
-select is(schema_version(), 76, 'anon can call schema_version()');
+select is(schema_version(), 79, 'anon can call schema_version()');
 select throws_ok($$select * from app_meta$$, '42501', null, 'anon cannot read app_meta');
 
 reset role;

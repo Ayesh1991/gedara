@@ -33,6 +33,8 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'meter_reading', order: ['id'], scope: 'household' },
   { name: 'budget', order: ['id'], scope: 'household' },
   { name: 'sms_message', order: ['id'], scope: 'household' },
+  { name: 'merchant_memory', order: ['id'], scope: 'household' },
+  { name: 'line_memory', order: ['id'], scope: 'household' },
   { name: 'location', order: ['id'], scope: 'household' },
   { name: 'place_type', order: ['id'], scope: 'household' },
   { name: 'floor_plan', order: ['id'], scope: 'household' },

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.9.0 — Phase 9a: safer and smarter bank alerts (no AI yet)
+- **OTPs can never be stored:** a new detector, the same in the app, the `sms-ingest` function and the
+  database, drops one-time codes and passwords in English, Sinhala and Tamil wording, also written right
+  after "OTP" (`OTP482913`), spaced out (`4 8 2 9 1 3`) or in Sinhala / Tamil / full-width digits; and,
+  failing safe, any code-like number a bank alert doesn't explain. Tested with a shared corpus in both
+  TypeScript and SQL; all 387 real prod alerts are still kept. Settings › Devices shows the stricter
+  filter to paste into the phone app.
+- **Every alert format seen so far is read:** BOC card payments (they used the card's bank prefix as its
+  number), the new BOC ..708 account and its loan money, ETC top-ups (Transport › Parking & tolls) and
+  low-balance notes, People's instalment plans, statements and reminders (notes: no money of their own),
+  Seylan reversals (refunds, matched to the purchase they undo), Sampath charges in US cents. Alerts
+  already in the inbox are read again with the new parser the first time the inbox opens.
+- **Alerts follow your accounts:** "New account seen: BOC ··708 (17 alerts)" — one tap adds it and its
+  alerts point to it at once; a large "Transfer Order Credit" is offered as a loan (a Loan account and a
+  transfer), never as income; 708 → card pay-offs pair up as transfers like the savings account's.
+- **Gedara remembers for the whole household:** a shop's category and usual card, and a bill line's
+  category when you change it, are now shared by every device (they were kept per phone before; this
+  device's old memories move over on their own).
+- "Accept clear matches" also marks notes as seen.
+- Database: migrations 77–79 (`sms_is_secret` v2, alert kinds `refund` / `info`, `rpc_sms_reparse` +
+  account re-matching, `merchant_memory`, `line_memory`, `rpc_memory_learn`), schema 79; function
+  `sms-ingest-2`. Export includes the new tables.
+
 ## 0.8.0 — Phase 8: Home Assistant in Gedara
 - **House** page: every room from Home Assistant with its doors and windows (open in amber, closed in
   teal, "Open · 12:41"), lights, the AC (on/off, mode, − 24° +, room temperature) and switches such as the

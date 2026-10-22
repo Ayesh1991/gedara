@@ -1,5 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeftRight, CircleAlert, Link2, MessageSquareText, Plus, X } from 'lucide-react';
+import { ArrowLeftRight, CircleAlert, Info, Landmark, Link2, MessageSquareText, Plus, RotateCcw, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -9,17 +10,11 @@ import { findSub, type CategoryRow } from '@/lib/money/categoriesMap';
 import { lineFingerprint } from '@/lib/money/fingerprint';
 import { formatDay } from '@/lib/time';
 import { parseAmount } from '@/lib/money/format';
-import { moneyErrorKey, type Account } from '@/lib/money/queries';
+import { builtInCategory, learnSoon, merchantMemory, type Memory } from '@/lib/match/memory';
+import { createAccount, moneyErrorKey, type Account } from '@/lib/money/queries';
 import type { Gap, Suggestion, TxCandidate } from '@/lib/sms/match';
 import { smsSigned } from '@/lib/sms/match';
-import {
-  categoryForMerchant,
-  rememberCategory,
-  smsIgnore,
-  smsLink,
-  smsPost,
-  type InboxRow,
-} from '@/lib/sms/queries';
+import { smsIgnore, smsLink, smsPost, type InboxRow } from '@/lib/sms/queries';
 import { cn } from '@/lib/utils';
 import { AccountDot, AccountSelect, CategorySelect, Money, fieldLabel } from './bits';
 
@@ -43,6 +38,11 @@ export async function applyConfident(
   }
   if (s.kind === 'transfer' && s.confident) {
     await smsPost(ids, transferPayload(item, s, ctx.householdId, ctx.categories));
+    return true;
+  }
+  if (s.kind === 'note' && s.confident) {
+    // a note moves no money: "seen" is all it needs
+    await smsIgnore(ids, true);
     return true;
   }
   return false;
@@ -76,6 +76,7 @@ export function SmsCard({
   accounts,
   categories,
   candidates,
+  memory,
   canWrite,
   onDone,
 }: {
@@ -86,20 +87,29 @@ export function SmsCard({
   accounts: Account[];
   categories: CategoryRow[];
   candidates: TxCandidate[];
+  memory: Memory | undefined;
   canWrite: boolean;
   onDone: () => void;
 }) {
   const { t } = useTranslation();
+  const qc = useQueryClient();
   const row = item.rows[0]!;
   const s = item.suggestion;
   const account = accounts.find((a) => a.id === row.account_id);
   const byId = (id: string | null) => accounts.find((a) => a.id === id);
-  const incoming = row.kind === 'bank_credit' || row.kind === 'card_payment';
+  const incoming = row.kind === 'bank_credit' || row.kind === 'card_payment' || row.kind === 'refund';
+  // What the category / account is remembered by: the merchant, or what the matcher says it is ("ETC top-up").
+  const memoText = s.kind === 'expense' ? s.memo : row.merchant_text;
+  const remembered = merchantMemory(memory, memoText);
   const [mode, setMode] = useState<'suggested' | 'new' | 'pick'>(s.kind === 'none' ? 'new' : 'suggested');
   const [busy, setBusy] = useState(false);
-  const [categoryId, setCategoryId] = useState<string | null>(() => categoryForMerchant(row.merchant_text));
+  const [categoryId, setCategoryId] = useState<string | null>(
+    () => remembered?.category_id ?? builtInCategory(categories, memoText),
+  );
   const [amount, setAmount] = useState(item.lkr.amount !== null ? String(item.lkr.amount) : '');
-  const [newAccount, setNewAccount] = useState<string | null>(row.account_id);
+  const [newAccount, setNewAccount] = useState<string | null>(
+    row.account_id ?? (s.kind === 'expense' ? s.account : null) ?? remembered?.account_id ?? null,
+  );
   const [pick, setPick] = useState<string | null>(s.kind === 'link' ? s.txId : null);
 
   const run = async (fn: () => Promise<unknown>, done: string) => {
@@ -122,13 +132,14 @@ export function SmsCard({
       if (r.moved) toast.message(t('money.inbox.movedTo', { name: account?.name ?? '' }));
     }, t('money.inbox.linked'));
 
-  const saveNew = (type: 'expense' | 'income') => {
+  const saveNew = (type: 'expense' | 'income' | 'refund') => {
     const total = parseAmount(amount);
     if (total === null || total <= 0) return toast.error(t('money.inbox.needAmount'));
     if (!categoryId) return toast.error(t('money.inbox.needCategory'));
     if (!newAccount) return toast.error(t('money.form.needAccount'));
     const name = row.merchant_text || t(`money.inbox.kinds.${row.kind as 'card_charge'}`);
-    rememberCategory(row.merchant_text, categoryId);
+    // the household remembers the category (and, for an alert that names no account, the account)
+    learnSoon(qc, householdId, [{ kind: 'merchant', text: memoText, category_id: categoryId, account_id: row.account_id ? null : newAccount }]);
     return run(
       () =>
         smsPost([row.id], {
@@ -150,6 +161,37 @@ export function SmsCard({
     run(() => smsPost(item.rows.map((x) => x.id), transferPayload(item, tr, householdId, categories)), t('money.inbox.saved'));
 
   const ignore = () => run(() => smsIgnore(item.rows.map((x) => x.id), true), t('money.inbox.ignored'));
+  const markSeen = () => run(() => smsIgnore(item.rows.map((x) => x.id), true), t('money.inbox.seen'));
+
+  // A loan paid out: a transfer from the loan account (made here once, from the alert itself).
+  const saveLoan = (loan: Extract<Suggestion, { kind: 'loan' }>, loanAccount: string) =>
+    run(
+      () =>
+        smsPost([row.id], {
+          household_id: householdId,
+          type: 'transfer',
+          account_id: loanAccount,
+          to_account_id: loan.account,
+          occurred_on: row.occurred_on,
+          occurred_at: row.occurred_at,
+          total: loan.total,
+          lines: [],
+          fee: null,
+        }),
+      t('money.inbox.saved'),
+    );
+  const addLoanAccount = (loan: Extract<Suggestion, { kind: 'loan' }>) =>
+    run(
+      () =>
+        createAccount(householdId, {
+          name: t('money.inbox.loanName', { bank: row.institution ?? '' }).trim(),
+          kind: 'loan',
+          institution: row.institution,
+          last4: null,
+          credit_limit: loan.total,
+        }),
+      t('money.inbox.loanAdded'),
+    );
 
   // Same amount, ±7 days: what "Pick another" offers.
   const sameAmount = candidates
@@ -168,7 +210,9 @@ export function SmsCard({
           .filter(Boolean)
           .join(' · ')
       : '';
-  const kindForNew: 'expense' | 'income' = incoming ? 'income' : 'expense';
+  const newType: 'expense' | 'income' | 'refund' = row.kind === 'refund' ? 'refund' : incoming ? 'income' : 'expense';
+  const kindForNew: 'expense' | 'income' = newType === 'income' ? 'income' : 'expense';
+  const saveLabel = { expense: 'money.inbox.saveExpense', income: 'money.inbox.saveIncome', refund: 'money.inbox.saveRefund' } as const;
 
   return (
     <li className="flex flex-col gap-3 px-3.5 py-3.5 sm:px-4">
@@ -269,11 +313,60 @@ export function SmsCard({
               {t(s.kind === 'income' ? 'money.inbox.newIncome' : 'money.inbox.newExpense')}
             </p>
           )}
+          {s.kind === 'refund' && (
+            <p className="flex items-start gap-2 text-[13.5px]">
+              <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-teal" aria-hidden />
+              <span>
+                {t('money.inbox.refund')}
+                <span className={cn('block text-[12.5px]', s.confident ? 'text-muted' : 'text-caution')}>
+                  {t(s.chargeSmsId ? 'money.inbox.refundFound' : 'money.inbox.refundNoCharge')}
+                </span>
+              </span>
+            </p>
+          )}
+          {s.kind === 'note' && (
+            <>
+              <p className="flex items-start gap-2 text-[13.5px]">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" aria-hidden />
+                <span>{t(`money.inbox.note.${s.reason}`)}</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="accent" disabled={busy} onClick={() => void markSeen()}>
+                  {t('money.inbox.markSeen')}
+                </Button>
+              </div>
+            </>
+          )}
+          {s.kind === 'loan' && (
+            <>
+              <p className="flex items-start gap-2 text-[13.5px]">
+                <Landmark className="mt-0.5 h-4 w-4 shrink-0 text-due" aria-hidden />
+                <span>
+                  {s.loanAccount
+                    ? t('money.inbox.transfer', { from: byId(s.loanAccount)?.name ?? '?', to: byId(s.account)?.name ?? '?' })
+                    : t('money.inbox.loanLooks')}
+                  <span className="block text-[12.5px] text-muted">{t('money.inbox.loanNotIncome')}</span>
+                </span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {s.loanAccount ? (
+                  <Button size="sm" variant="accent" disabled={busy} onClick={() => void saveLoan(s, s.loanAccount!)}>
+                    {t('money.inbox.saveTransfer')}
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="accent" disabled={busy} onClick={() => void addLoanAccount(s)}>
+                    {t('money.inbox.addLoan')}
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={() => setMode('new')}>{t('money.inbox.createNew')}</Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* Create a new expense / income from the alert */}
-      {canWrite && item.rows.length === 1 && (mode === 'new' || (mode === 'suggested' && (s.kind === 'expense' || s.kind === 'income'))) && (
+      {canWrite && item.rows.length === 1 && (mode === 'new' || (mode === 'suggested' && (s.kind === 'expense' || s.kind === 'income' || s.kind === 'refund'))) && (
         <div className="flex flex-col gap-2.5 rounded-2xl bg-white/[0.035] p-3">
           <div className="grid grid-cols-2 gap-2.5">
             <div>
@@ -308,8 +401,8 @@ export function SmsCard({
             <CategorySelect id={`sms-cat-${row.id}`} categories={categories} value={categoryId} onChange={setCategoryId} kind={kindForNew} />
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="accent" disabled={busy} onClick={() => void saveNew(kindForNew)}>
-              {t(kindForNew === 'income' ? 'money.inbox.saveIncome' : 'money.inbox.saveExpense')}
+            <Button size="sm" variant="accent" disabled={busy} onClick={() => void saveNew(newType)}>
+              {t(saveLabel[newType])}
             </Button>
             {s.kind !== 'none' && mode === 'new' && (
               <Button size="sm" variant="ghost" onClick={() => setMode('suggested')}>{t('money.inbox.back')}</Button>

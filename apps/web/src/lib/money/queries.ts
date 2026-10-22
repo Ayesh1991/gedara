@@ -361,7 +361,6 @@ export function moneyErrorKey(
 // ── Small per-device conveniences (never needed for correctness) ─────────────
 
 const LAST_ACCOUNT = 'gedara.money.lastAccount';
-const MERCHANT_ACCOUNT = 'gedara.money.merchantAccount';
 
 export function lastAccount(): string | null {
   try {
@@ -371,26 +370,12 @@ export function lastAccount(): string | null {
   }
 }
 
-export function rememberAccount(accountId: string, merchant?: string | null) {
+/** This device's last-used account. A shop's usual account is a household memory (lib/match/memory.ts). */
+export function rememberAccount(accountId: string) {
   try {
     localStorage.setItem(LAST_ACCOUNT, accountId);
-    if (merchant) {
-      const map = JSON.parse(localStorage.getItem(MERCHANT_ACCOUNT) ?? '{}') as Record<string, string>;
-      map[merchant.toLowerCase().trim()] = accountId;
-      localStorage.setItem(MERCHANT_ACCOUNT, JSON.stringify(map));
-    }
   } catch {
     /* storage unavailable: defaults just aren't remembered */
-  }
-}
-
-export function accountForMerchant(merchant: string | null | undefined): string | null {
-  if (!merchant) return null;
-  try {
-    const map = JSON.parse(localStorage.getItem(MERCHANT_ACCOUNT) ?? '{}') as Record<string, string>;
-    return map[merchant.toLowerCase().trim()] ?? null;
-  } catch {
-    return null;
   }
 }
 

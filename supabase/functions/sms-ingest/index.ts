@@ -9,11 +9,12 @@
 // verify_jwt is off (the phone has no Supabase session); this handler authenticates both paths itself.
 // Filtered texts (OTP, promo, unknown sender) are counted, never stored; replies and logs never
 // contain message text. Bump FN_VERSION on every deploy of this function.
+// sms-ingest-2 (Phase 9a): parser v2 and the OTP detector v2 (../_shared/sms/secret.ts).
 import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { z } from 'npm:zod@4.6.5';
 import { type DropReason, type ParsedSms, parseSms } from '../_shared/sms/parse.ts';
 
-const FN_VERSION = 'sms-ingest-1';
+const FN_VERSION = 'sms-ingest-2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
