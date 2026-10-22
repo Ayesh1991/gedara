@@ -17,6 +17,9 @@ TCP/IP port to the Pi (port 9100), and (5) prints test pages. Run it again any t
     -Music [-Server gedara-staging]  also set up the music speaker (Phase 7h, docs/media-player): MPD,
                             the agent, the "Gedara Music" folder; shows the 8-digit pairing code
     -MusicFolder            only the "Gedara Music" folder on this PC (e.g. the laptop; this file is enough)
+    -HomeAssistant [-Server gedara-staging]  also set up the Home Assistant bridge (Phase 8,
+                            docs/home-assistant): asks on the Pi for HA's address and the token (hidden),
+                            then shows the 8-digit pairing code
 Nothing secret is stored in the repo or printed. The SSH key lives in %USERPROFILE%\.ssh\gedara_print_ed25519.
 #>
 param(
@@ -28,6 +31,7 @@ param(
   [switch]$ThisPcOnly,
   [switch]$Music,
   [switch]$MusicFolder,
+  [switch]$HomeAssistant,
   [ValidateSet('gedara', 'gedara-staging')]
   [string]$Server = 'gedara',
   # Used when the script restarts itself as administrator for the Windows printer part.
@@ -224,6 +228,39 @@ if ($Status) {
 
 if ($MusicFolder) {
   Add-MusicFolder $ip
+  exit 0
+}
+
+if ($HomeAssistant) {
+  Step 'Home 1/4 Copying the Home Assistant bridge to the Pi'
+  $homeDir = Join-Path (Split-Path $PSScriptRoot -Parent) 'home-bridge'
+  $tmp = Join-Path $env:TEMP 'gedara-home'
+  New-Item -ItemType Directory -Force $tmp | Out-Null
+  $utf8 = New-Object System.Text.UTF8Encoding $false
+  foreach ($f in 'setup-home.sh', 'gedara_home_bridge.py') {
+    $text = [IO.File]::ReadAllText((Join-Path $homeDir $f)) -replace "`r`n", "`n"
+    [IO.File]::WriteAllText((Join-Path $tmp $f), $text, $utf8)
+  }
+  & scp @sshKeyOpts -q (Join-Path $tmp 'setup-home.sh') (Join-Path $tmp 'gedara_home_bridge.py') "${target}:/tmp/"
+  if ($LASTEXITCODE -ne 0) { Fail 'copying to the Pi failed' }
+  Ok 'setup-home.sh and the bridge are on the Pi'
+
+  Step "Home 2/4 Setting up the bridge (2-5 minutes; server: $Server)"
+  & ssh @sshKeyOpts -t $target "sudo install -d /opt/gedara-home && sudo install -m 755 /tmp/setup-home.sh /tmp/gedara_home_bridge.py /opt/gedara-home/ && sudo HOME_SERVER=$Server bash /opt/gedara-home/setup-home.sh"
+  if ($LASTEXITCODE -ne 0) { Fail 'setup-home.sh reported a problem (see the lines above)' }
+
+  Step 'Home 3/4 Home Assistant'
+  Note 'The Pi asks for Home Assistant''s address and the Gedara user''s token (docs/home-assistant/setup.md, step 2).'
+  & ssh @sshKeyOpts -t $target 'sudo gedara-home setup-ha'
+  if ($LASTEXITCODE -ne 0) { Fail 'the bridge cannot use Home Assistant yet (see the line above), so it is not paired' }
+
+  Step 'Home 4/4 Pairing with Gedara'
+  Note 'In Gedara: Settings > Devices > Home Assistant > Connect, then type the code below.'
+  & ssh @sshKeyOpts -t $target 'sudo gedara-home pair && sudo chown gedara-home:gedara-home /etc/gedara-home/key && sudo chmod 600 /etc/gedara-home/key && sudo systemctl restart gedara-home'
+  if ($LASTEXITCODE -ne 0) { Fail 'the bridge is not paired yet: run this again for a new code' }
+  Ok 'the bridge is paired and running'
+  Write-Host ''
+  Write-Host 'Home Assistant is connected: open Gedara > House, and choose what to show in Settings > Devices > Home Assistant.' -ForegroundColor Green
   exit 0
 }
 

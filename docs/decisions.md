@@ -210,3 +210,13 @@ Format: date · decision · why. Append-only.
 - 2026-10-19 · 7 s per wait call · PostgREST's authenticator role has statement_timeout = 8s (service_role sets none, and a function can't re-arm the timer of the statement running it)
 - 2026-10-19 · media-agent logs a sync only when something happened; device/speaker/scale pages refresh every 30 s (was 10–20 s) · same log budget; Realtime already keeps the live state instant
 - 2026-10-19 · e2e on staging: only the spec a change touches; full suites before a release · the full-suite days were the biggest log spikes
+- 2026-10-20 · Phase 8: Home Assistant shows and is controlled in Gedara through a bridge on the existing Gedara Pi 2 (systemd service gedara-home), not an HA add-on · reuses install.ps1, SSH, pairing and updates; nothing installed inside HA, HA unaffected if Gedara is down
+- 2026-10-20 · The bridge talks to HA's websocket API with a long-lived token of a non-admin HA user "Gedara"; the token is typed (hidden) into a prompt on the Pi in the installer's window and stays in /etc/gedara-home/ha-token · never in Supabase, the web app, the PC or the chat (rule 8)
+- 2026-10-20 · Two allow-lists: the bridge's code only ever calls switch/light on-off and climate on-off/set_temperature/set_hvac_mode (temperature in the entity's range, a mode it has); in Gedara the owner chooses Show / Control per entity · Gedara can never reach locks, alarms, covers, scripts, automations, scenes or homeassistant.*, whatever the database says
+- 2026-10-20 · Shown: doors/windows (binary_sensor door/window/opening/garage_door), lights, switches, climate; defaults: shown except switches, AC controllable · Didula: show every window, door and light; control AC, vaporizer, emergency lights
+- 2026-10-20 · Sandeepani (member) may control; viewers only look; choosing is owner-only · Didula's answer
+- 2026-10-20 · No notifications from Gedara for doors/windows/motion · Home Assistant already sends them (Didula)
+- 2026-10-20 · Log budget: changes batched ~1 s, an AC's room temperature at most every 5 min, the long-poll waits inside Postgres (rpc_home_wait ≤ 7 s, like migration 74), no report when nothing changed · Log Ingestion is the tight free-plan quota
+- 2026-10-20 · One bridge per household; rpc_device_pair gets p_kind so a bridge's code typed into Add speaker is "wrong code" · simple and unambiguous
+- 2026-10-20 · Installer switch is -HomeAssistant, not -Home · $Home is PowerShell's built-in home-folder variable
+- 2026-10-20 · App version 0.8.0 for Phase 8

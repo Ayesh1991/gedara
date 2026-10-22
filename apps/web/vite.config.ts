@@ -46,6 +46,8 @@ export default defineConfig({
       // Kitchen-scale protocol (Zod) shared with the scale-ingest Edge Function and the simulator.
       '@scale': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scale'),
       '@media': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/media'),
+      // Home Assistant bridge protocol (Phase 8) shared with the home-agent Edge Function and the simulator.
+      '@home': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/home'),
       zod: path.resolve(import.meta.dirname, 'node_modules/zod'),
     },
   },

@@ -1138,6 +1138,181 @@ export type Database = {
           },
         ]
       }
+      home_command: {
+        Row: {
+          action: string
+          args: Json
+          created_at: string
+          created_by: string | null
+          device_id: string
+          done_at: string | null
+          entity: string
+          entity_id: string
+          error: string | null
+          household_id: string
+          id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          action: string
+          args?: Json
+          created_at?: string
+          created_by?: string | null
+          device_id: string
+          done_at?: string | null
+          entity: string
+          entity_id: string
+          error?: string | null
+          household_id: string
+          id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          action?: string
+          args?: Json
+          created_at?: string
+          created_by?: string | null
+          device_id?: string
+          done_at?: string | null
+          entity?: string
+          entity_id?: string
+          error?: string | null
+          household_id?: string
+          id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_command_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "home_command_household_id_entity_fkey"
+            columns: ["household_id", "entity"]
+            isOneToOne: false
+            referencedRelation: "home_entity"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "home_command_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_entity: {
+        Row: {
+          area: string | null
+          attrs: Json
+          changed_at: string | null
+          controllable: boolean
+          device_class: string | null
+          device_id: string
+          domain: string
+          entity_id: string
+          ha_name: string
+          household_id: string
+          id: string
+          kind: string
+          label: string | null
+          shown: boolean
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          attrs?: Json
+          changed_at?: string | null
+          controllable?: boolean
+          device_class?: string | null
+          device_id: string
+          domain: string
+          entity_id: string
+          ha_name: string
+          household_id: string
+          id?: string
+          kind: string
+          label?: string | null
+          shown?: boolean
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          attrs?: Json
+          changed_at?: string | null
+          controllable?: boolean
+          device_class?: string | null
+          device_id?: string
+          domain?: string
+          entity_id?: string
+          ha_name?: string
+          household_id?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          shown?: boolean
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_entity_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "home_entity_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_token: {
+        Row: {
+          device_id: string
+          household_id: string
+          token_hash: string
+        }
+        Insert: {
+          device_id: string
+          household_id: string
+          token_hash: string
+        }
+        Update: {
+          device_id?: string
+          household_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_token_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "device"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_token_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household: {
         Row: {
           created_at: string
@@ -5656,7 +5831,12 @@ export type Database = {
         Returns: string
       }
       rpc_device_pair: {
-        Args: { p_code: string; p_household: string; p_name: string }
+        Args: {
+          p_code: string
+          p_household: string
+          p_kind?: string
+          p_name: string
+        }
         Returns: Json
       }
       rpc_device_revoke: { Args: { p_id: string }; Returns: undefined }
@@ -5673,6 +5853,27 @@ export type Database = {
           p_with_files: boolean
         }
         Returns: string
+      }
+      rpc_home_command: {
+        Args: { p_action: string; p_args?: Json; p_entity: string }
+        Returns: string
+      }
+      rpc_home_entity_set: { Args: { p: Json; p_id: string }; Returns: Json }
+      rpc_home_pair_poll: { Args: { p_token_hash: string }; Returns: Json }
+      rpc_home_pair_start: {
+        Args: {
+          p_agent?: string
+          p_hint: string
+          p_source?: string
+          p_token_hash: string
+        }
+        Returns: Json
+      }
+      rpc_home_pending: { Args: { p_token_hash: string }; Returns: Json }
+      rpc_home_sync: { Args: { p: Json; p_token_hash: string }; Returns: Json }
+      rpc_home_wait: {
+        Args: { p_ms: number; p_token_hash: string }
+        Returns: boolean
       }
       rpc_import_bills: {
         Args: { p_bills: Json; p_household: string }

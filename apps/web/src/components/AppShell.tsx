@@ -4,6 +4,7 @@ import {
   Bell as BellIcon,
   ChartNoAxesColumn,
   House,
+  HousePlug,
   MapPin,
   Music,
   Package,
@@ -30,7 +31,7 @@ import { ShortcutsHelp } from './ShortcutsHelp';
 import { WedgeListener } from './scan/WedgeListener';
 import { VersionBadge } from './VersionBadge';
 
-type NavKey = 'home' | 'money' | 'scan' | 'pantry' | 'things' | 'places' | 'insights' | 'music' | 'settings';
+type NavKey = 'home' | 'money' | 'scan' | 'pantry' | 'things' | 'places' | 'insights' | 'music' | 'house' | 'settings';
 
 interface NavItem {
   key: NavKey;
@@ -55,6 +56,7 @@ const RAIL: NavItem[] = [
   { key: 'places', to: '/places', icon: MapPin },
   { key: 'insights', to: '/insights', icon: ChartNoAxesColumn },
   { key: 'music', to: '/music', icon: Music },
+  { key: 'house', to: '/house', icon: HousePlug },
   { key: 'settings', to: '/settings', icon: Settings },
 ];
 

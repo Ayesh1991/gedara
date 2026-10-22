@@ -7,6 +7,7 @@
 //   device_token      kitchen-scale token hashes — secrets (Phase 6b)
 //   media_token, device_pairing, device_pair_attempt, media_inbox_trash
 //                     music-speaker key hashes, waiting pairings, wrong-code tries, files to delete (Phase 7h)
+//   home_token        Home Assistant bridge key hashes — secrets (Phase 8)
 // Pure (no Supabase import) so the test can read it.
 
 export interface ExportTable {
@@ -72,6 +73,8 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'media_player', order: ['device_id'], scope: 'household' },
   { name: 'media_command', order: ['id'], scope: 'household' },
   { name: 'media_bt_device', order: ['id'], scope: 'household' },
+  { name: 'home_entity', order: ['id'], scope: 'household' },
+  { name: 'home_command', order: ['id'], scope: 'household' },
   { name: 'export_run', order: ['id'], scope: 'household' },
 ];
 
@@ -85,6 +88,7 @@ export const EXCLUDED_TABLES = [
   'device_pairing',
   'device_pair_attempt',
   'media_inbox_trash',
+  'home_token',
 ];
 
 /** One row → CSV-friendly values (objects/arrays as JSON text). */

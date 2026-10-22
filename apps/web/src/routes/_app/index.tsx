@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronRight, CircleCheck, ListChecks, MapPin, Music } from 'lucide-react';
+import { ChevronRight, CircleCheck, HousePlug, ListChecks, MapPin, Music } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
@@ -10,10 +10,12 @@ import { AttentionRow } from '@/components/attention/AttentionRow';
 import { TargetLink } from '@/components/insights/Num';
 import { Money } from '@/components/money/bits';
 import { useDriveSync } from '@/components/scan/useDriveSync';
+import { useHomeLive } from '@/components/home/useHomeLive';
 import { useShoppingList } from '@/components/spine/useShopping';
 import { Card } from '@/components/ui/card';
 import { knownItems } from '@/lib/attention';
 import { activityQuery, attentionQuery, budgetMonthQuery } from '@/lib/insights/queries';
+import { bridgeQuery, displayName, entitiesQuery, summaryOf } from '@/lib/home/queries';
 import { formatLKR } from '@/lib/money/format';
 import { cashflowQuery, type MonthFlow } from '@/lib/money/queries';
 import { productsQuery } from '@/lib/pantry/queries';
@@ -240,6 +242,36 @@ function PlacesCard({ householdId }: { householdId: string }) {
   );
 }
 
+/** House (Phase 8): only once the Home Assistant bridge is paired; what's open, or "Everything closed". */
+function HouseCard({ householdId }: { householdId: string }) {
+  const { t } = useTranslation();
+  const bridge = useQuery(bridgeQuery(householdId));
+  const entities = useQuery({ ...entitiesQuery(householdId), enabled: !!bridge.data });
+  useHomeLive(householdId, !!bridge.data);
+  if (!bridge.data) return null;
+  const s = summaryOf(entities.data ?? []);
+  return (
+    <Link to="/house" className="block" data-testid="house-card">
+      <Card className="flex items-center gap-4 transition-colors hover:border-white/25">
+        <div className="brand-gradient flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-[#05070F]">
+          <HousePlug className="h-6 w-6" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-[17px] font-semibold">{t('nav.house')}</div>
+          <div className={`tabular truncate text-[13px] ${s.open.length ? 'text-caution' : 'text-muted'}`}>
+            {entities.data
+              ? s.open.length
+                ? t('house.summary.open', { count: s.open.length, names: s.open.slice(0, 2).map(displayName).join(', ') + (s.open.length > 2 ? '…' : '') })
+                : t('house.summary.closed')
+              : t('house.loading')}
+          </div>
+        </div>
+        <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
+      </Card>
+    </Link>
+  );
+}
+
 /** Music (Phase 7h): only once a speaker is set up; shows what it plays, or the library size. */
 function MusicCard({ householdId }: { householdId: string }) {
   const { t } = useTranslation();
@@ -326,6 +358,7 @@ function Pulse() {
 
       <PlacesCard householdId={membership.household.id} />
       <MusicCard householdId={membership.household.id} />
+      <HouseCard householdId={membership.household.id} />
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
         <Card className="flex flex-col gap-3">
