@@ -1,8 +1,15 @@
 // Suggestions for the bank-SMS review inbox. Pure functions: the database only enforces the rules
 // (one household, not reviewed twice); what an alert probably IS gets worked out here, and a person
 // confirms it. Amounts are compared in cents.
+//
+// Phase 9a: refunds (a Seylan reversal names the charge it undoes), notes with no money of their own
+// (instalment plans, statements, reminders, low ETC balance, an ETC top-up already seen as a bank
+// debit), a large "Transfer Order Credit" that looks like a loan, and alerts for an account Gedara
+// doesn't know yet (grouped as "new account seen").
+import type { SmsKind } from '@sms/parse';
+import { reversedTxnId } from '@sms/parse';
 
-export type SmsKind = 'card_charge' | 'card_payment' | 'bank_debit' | 'bank_credit' | 'atm' | 'unknown';
+export type { SmsKind };
 
 export interface SmsRow {
   id: string;
@@ -18,6 +25,8 @@ export interface SmsRow {
   currency: string;
   balance_after: number | null;
   merchant_text: string | null;
+  bank_txn_id: string | null;
+  parser: string | null;
   occurred_on: string;
   occurred_at: string | null;
   transaction_id: string | null;
@@ -41,14 +50,33 @@ export interface AccountLite {
   is_suspense: boolean;
   archived: boolean;
   credit_limit: number | null;
+  institution?: string | null;
 }
+
+/** Why an alert is only a note (it adds or moves no money of its own). */
+export type NoteReason = 'instalment' | 'statement' | 'reminder' | 'low_balance' | 'same_as';
 
 export type Suggestion =
   | { kind: 'link'; txId: string; confident: boolean; moves: boolean; others: string[] }
   | { kind: 'transfer'; from: string; to: string; total: number; fee: number; pairId: string | null; confident: boolean }
-  | { kind: 'expense'; account: string; total: number | null; estimated: boolean }
+  /** memo: the text a remembered / built-in category is looked up by (the merchant, or "ETC top-up"). */
+  | { kind: 'expense'; account: string | null; total: number | null; estimated: boolean; memo: string | null }
   | { kind: 'income'; account: string; total: number }
+  /** Money back on a card; chargeSmsId = the purchase alert it undoes, when there is one. */
+  | { kind: 'refund'; account: string; total: number | null; estimated: boolean; chargeTxId: string | null; chargeSmsId: string | null; confident: boolean }
+  /** A large credit that looks like a loan paid out: a transfer from the loan account, once there is one. */
+  | { kind: 'loan'; account: string; total: number; loanAccount: string | null }
+  | { kind: 'note'; reason: NoteReason; relatedSmsId: string | null; confident: boolean }
   | { kind: 'none' };
+
+/** Alerts for digits no account has: "BOC ..708 — 17 alerts". */
+export interface UnknownAccount {
+  institution: string;
+  digits: string;
+  /** what the alerts say it is: card alerts → credit card, account alerts → bank */
+  kind: 'bank' | 'credit_card';
+  count: number;
+}
 
 export interface Gap {
   expected: number;
@@ -60,11 +88,18 @@ export interface InboxAnalysis {
   gaps: Map<string, Gap>;
   /** LKR value of each alert (fx charges: from the available-balance change, when it's clean). */
   lkr: Map<string, { amount: number | null; estimated: boolean }>;
+  unknownAccounts: UnknownAccount[];
 }
 
 const DAY = 86_400_000;
 const PAIR_WINDOW = 36 * 60 * 60 * 1000;
 const MAX_FEE = 50;
+/** An ETC top-up and the bank debit that paid it arrive within minutes of each other. */
+const SAME_PAYMENT_WINDOW = 15 * 60 * 1000;
+/** A "Transfer Order Credit" this large is a loan paid out, not income (BOC loan, 2026-10). */
+export const LOAN_AT = 500_000;
+const REFUND_DAYS = 60;
+const CARD_KINDS = new Set(['card_charge', 'card_payment', 'refund']);
 const cents = (n: number) => Math.round(n * 100);
 const isNew = (s: SmsRow) => !s.ignored && !s.transaction_id;
 
@@ -87,10 +122,25 @@ function balanceEffect(s: SmsRow, lkr: number | null): number | null {
       return -lkr;
     case 'bank_credit':
     case 'card_payment':
+    case 'refund':
       return lkr;
     default:
       return null;
   }
+}
+
+/** The alerts' own view of accounts Gedara doesn't have yet (only alerts still waiting count). */
+export function unknownAccounts(sms: SmsRow[]): UnknownAccount[] {
+  const groups = new Map<string, UnknownAccount>();
+  for (const s of sms) {
+    if (!isNew(s) || s.account_id || !s.last_digits || !s.institution || s.kind === 'info' || s.kind === 'unknown') continue;
+    const key = `${s.institution}|${s.last_digits}`;
+    const g = groups.get(key) ?? { institution: s.institution, digits: s.last_digits, kind: 'bank' as const, count: 0 };
+    g.count += 1;
+    if (CARD_KINDS.has(s.kind)) g.kind = 'credit_card';
+    groups.set(key, g);
+  }
+  return [...groups.values()].sort((a, b) => b.count - a.count);
 }
 
 export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set<string>, accounts: AccountLite[]): InboxAnalysis {
@@ -98,6 +148,7 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
   const suspense = new Set(accounts.filter((a) => a.is_suspense).map((a) => a.id));
   const cash = accounts.find((a) => a.kind === 'cash' && !a.archived)?.id ?? null;
   const bank = accounts.find((a) => a.kind === 'bank' && !a.archived && !a.is_suspense)?.id ?? null;
+  const loanAccounts = accounts.filter((a) => a.kind === 'loan' && !a.archived);
 
   // ── 1. LKR amounts + balance chain, per account, oldest first ─────────────────
   const lkr = new Map<string, { amount: number | null; estimated: boolean }>();
@@ -162,9 +213,47 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
     suggestions.set(p.id, { ...t, pairId: d.id });
   }
 
-  // ── 3. Everything else: an existing transaction, or a new one ─────────────────
+  // ── 3. Notes: no money of their own ───────────────────────────────────────────
+  const etcDebits = new Set<string>();
+  const at = (s: SmsRow) => Date.parse(s.received_at);
+  for (const s of fresh) {
+    if (suggestions.has(s.id)) continue;
+    if (s.kind === 'info') {
+      const reason: NoteReason =
+        s.parser === 'peoples.instalment' ? 'instalment'
+        : s.parser === 'peoples.statement' ? 'statement'
+        : s.parser === 'boc.etc_low' ? 'low_balance'
+        : 'reminder';
+      // An instalment plan converts a purchase already charged: point at it (same amount, before).
+      const charge = reason === 'instalment' && s.amount !== null
+        ? sms.find((c) => c.kind === 'card_charge' && c.institution === s.institution && c.amount !== null &&
+            cents(c.amount) === cents(s.amount!) && at(c) <= at(s) && at(s) - at(c) <= REFUND_DAYS * DAY)
+        : undefined;
+      suggestions.set(s.id, { kind: 'note', reason, relatedSmsId: charge?.id ?? null, confident: true });
+    } else if (s.parser === 'boc.etc_topup' && s.amount !== null) {
+      // The same top-up may also arrive as a BOC "Online Transfer Debit" minutes apart: that debit is
+      // the expense (Transport › tolls); this alert is then only a note on it.
+      const debit = sms.find((d) => d.id !== s.id && d.kind === 'bank_debit' && d.parser !== 'boc.etc_topup' &&
+        d.amount !== null && cents(d.amount) === cents(s.amount!) && Math.abs(at(d) - at(s)) <= SAME_PAYMENT_WINDOW);
+      if (debit) {
+        suggestions.set(s.id, { kind: 'note', reason: 'same_as', relatedSmsId: debit.id, confident: true });
+        etcDebits.add(debit.id);
+      }
+    }
+  }
+
+  // ── 4. Everything else: an existing transaction, or a new one ─────────────────
   const available = txs.filter((t) => !linkedTxIds.has(t.id));
   for (const s of fresh) {
+    if (suggestions.has(s.id)) continue; // a transfer pair or a note
+    if (s.parser === 'boc.etc_topup' && s.amount !== null) {
+      // Paid by internet banking from a BOC account the alert doesn't name: ask which.
+      const boc = accounts.filter((a) => a.kind === 'bank' && !a.archived && !a.is_suspense && a.institution === 'BOC');
+      suggestions.set(s.id, {
+        kind: 'expense', account: boc.length === 1 ? boc[0]!.id : bank, total: s.amount, estimated: false, memo: 'ETC top-up',
+      });
+      continue;
+    }
     if (!s.account_id || s.kind === 'unknown') {
       suggestions.set(s.id, { kind: 'none' });
       continue;
@@ -182,6 +271,7 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
             return t.type === 'expense' && cents(t.total) === wanted && (t.account_id === s.account_id || suspense.has(t.account_id));
           }
           if (s.kind === 'bank_credit') return t.type === 'income' && cents(t.total) === wanted && t.account_id === s.account_id;
+          if (s.kind === 'refund') return t.type === 'refund' && cents(t.total) === wanted && t.account_id === s.account_id;
           if (s.kind === 'card_payment') return t.type === 'transfer' && t.to_account_id === s.account_id && cents(t.total) === wanted;
           if (s.kind === 'atm') return t.type === 'transfer' && t.account_id === s.account_id && cents(t.total) === wanted;
           // bank_debit: a transfer out (the fee may be booked separately) or an expense of that amount
@@ -202,16 +292,38 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
         continue;
       }
     }
-    if (suggestions.has(s.id)) continue; // part of a transfer pair
-
     switch (s.kind) {
       case 'card_charge':
       case 'bank_debit':
-        suggestions.set(s.id, { kind: 'expense', account: s.account_id, total: amount, estimated: lkr.get(s.id)?.estimated ?? false });
+        suggestions.set(s.id, {
+          kind: 'expense', account: s.account_id, total: amount, estimated: lkr.get(s.id)?.estimated ?? false,
+          memo: etcDebits.has(s.id) ? 'ETC top-up' : s.merchant_text,
+        });
         break;
       case 'bank_credit':
+        if (amount !== null && amount >= LOAN_AT && /transfer order credit/i.test(s.merchant_text ?? '')) {
+          suggestions.set(s.id, {
+            kind: 'loan', account: s.account_id, total: amount,
+            loanAccount: loanAccounts.length === 1 ? loanAccounts[0]!.id : null,
+          });
+          break;
+        }
         suggestions.set(s.id, amount !== null ? { kind: 'income', account: s.account_id, total: amount } : { kind: 'none' });
         break;
+      case 'refund': {
+        // A Seylan reversal names the charge it undoes by its bank id; others: same card + amount, before.
+        const original = reversedTxnId(s.bank_txn_id);
+        const charge = sms.find((c) => c.kind === 'card_charge' && c.account_id === s.account_id &&
+          (original
+            ? c.bank_txn_id === original
+            : c.amount !== null && s.amount !== null && cents(c.amount) === cents(s.amount) && c.currency === s.currency &&
+              at(c) <= at(s) && at(s) - at(c) <= REFUND_DAYS * DAY));
+        suggestions.set(s.id, {
+          kind: 'refund', account: s.account_id, total: amount, estimated: lkr.get(s.id)?.estimated ?? false,
+          chargeTxId: charge?.transaction_id ?? null, chargeSmsId: charge?.id ?? null, confident: !!charge,
+        });
+        break;
+      }
       case 'atm':
         suggestions.set(
           s.id,
@@ -233,7 +345,7 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
         suggestions.set(s.id, { kind: 'none' });
     }
   }
-  return { suggestions, gaps, lkr };
+  return { suggestions, gaps, lkr, unknownAccounts: unknownAccounts(sms) };
 }
 
 /** The fingerprint rpc_sms_post will use: the earliest alert's (same order as the SQL). */
@@ -244,5 +356,5 @@ export function postFingerprint(rows: Pick<SmsRow, 'received_at' | 'fingerprint'
 
 /** Signed amount as it affects the household: money out negative. */
 export function smsSigned(s: Pick<SmsRow, 'kind'>, amount: number): number {
-  return s.kind === 'bank_credit' || s.kind === 'card_payment' ? amount : -amount;
+  return s.kind === 'bank_credit' || s.kind === 'card_payment' || s.kind === 'refund' ? amount : -amount;
 }

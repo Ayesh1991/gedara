@@ -10,6 +10,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { findSub, type CategoryRow } from '@/lib/money/categoriesMap';
 import { lineFingerprint, manualFingerprint } from '@/lib/money/fingerprint';
 import { parseAmount } from '@/lib/money/format';
+import { learnSoon } from '@/lib/match/memory';
 import { lastAccount, pickableAccounts, rememberAccount, type Account } from '@/lib/money/queries';
 import {
   deleteLog,
@@ -184,7 +185,10 @@ function LogServiceBody({
           : undefined,
         link_transaction_id: money === 'link' ? linkId! : undefined,
       });
-      if (withExpense && accountId) rememberAccount(accountId, payee);
+      if (withExpense && accountId) {
+        rememberAccount(accountId);
+        learnSoon(qc, householdId, [{ kind: 'merchant', text: payee, account_id: accountId }]);
+      }
       await invalidateThings(qc, householdId);
       toast.success(withExpense ? t('maintenance.log.savedWithExpense') : t('maintenance.log.saved'), {
         duration: UNDO_MS,

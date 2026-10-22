@@ -1,14 +1,24 @@
 // Bank / card SMS alerts → parsed rows for the review inbox (Phase 2b).
 // Shared by the sms-ingest Edge Function (Deno) and the web app (SMS-backup preview, via the `@sms`
-// alias), so it must stay plain TypeScript with NO imports. Formats are Didula's real alerts
+// alias), so it must stay plain TypeScript (no package imports; ./secret.ts only). Formats are Didula's real alerts
 // (docs/sms-forwarder-setup.md lists them). Bump PARSER_VERSION when a parser's output changes.
 //
 // Safety: only allow-listed senders are parsed; OTP / PIN / promo texts are dropped before parsing
-// and are never stored (the database drops OTP-looking text again).
+// and are never stored (the database drops OTP-looking text again). The OTP check lives in
+// ./secret.ts (Phase 9) so the AI gateway uses exactly the same one.
+//
+// v2 (Phase 9): BOC card payments, ETC top-ups, People's instalment plans / reminders / statements,
+// Seylan reversals, amounts written ".99". `info` = a note with no money of its own; `refund` = money
+// back on a card.
 
-export const PARSER_VERSION = 1;
+import { isSecret } from './secret.ts';
 
-export type SmsKind = 'card_charge' | 'card_payment' | 'bank_debit' | 'bank_credit' | 'atm' | 'unknown';
+export { FORWARD_TEXT_REGEX, isSecret, secretReason } from './secret.ts';
+
+export const PARSER_VERSION = 2;
+
+export type SmsKind =
+  | 'card_charge' | 'card_payment' | 'bank_debit' | 'bank_credit' | 'atm' | 'refund' | 'info' | 'unknown';
 
 /** One SMS as the phone saw it. receivedAt = ISO timestamp (or epoch ms) of arrival. */
 export interface RawSms {
@@ -64,22 +74,13 @@ export function institutionFor(sender: string): string | null {
 }
 
 // ── Filters ──────────────────────────────────────────────────────────────────
-const SECRET_RE =
-  /\b(otp|one[ -]?time|pass ?code|password|verification code|security code|pin|do not share|never share)\b|\bcode (is|:)\s*\d{4,8}\b/i;
-const PROMO_RE = /NOPROM|STOP ?SMS|unsubscribe|\b\d{1,2}% ?(off|discount|cash ?back|savings?)\b|\benjoy\b.*\d{1,2}%/i;
-const AMOUNT_RE = /\b(LKR|Rs\.?|USD|EUR|GBP|SGD|AUD|INR)\s?\d[\d,]*(\.\d{1,2})?/i;
-
-export function isSecret(body: string): boolean {
-  return SECRET_RE.test(body);
-}
+const PROMO_RE =
+  /NOPROM|STOP ?SMS|unsubscribe|\b\d{1,2}% ?(off|discount|cash ?back|savings?|bonus)\b|\benjoy\b.*\d{1,2}%|\boffer valid\b|\bexclusive for\b|#[a-z]{3,}/i;
+const AMOUNT_RE = /\b(LKR|Rs\.?|USD|EUR|GBP|SGD|AUD|INR)\s?(?:\d[\d,]*(\.\d{1,2})?|\.\d{1,2})/i;
 
 export function isPromo(body: string): boolean {
   return PROMO_RE.test(body);
 }
-
-/** For the forwarder app's "text filter": forward only texts that are NOT secret-looking. */
-export const FORWARD_TEXT_REGEX =
-  '(?is)^(?!.*\\b(otp|one[ -]?time|pass ?code|password|verification code|security code|pin|do not share|never share)\\b).*$';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const COLOMBO_OFFSET_MS = 5.5 * 60 * 60 * 1000; // Sri Lanka: UTC+05:30, no DST
@@ -102,8 +103,8 @@ export function smsFingerprint(sender: string, body: string, receivedAtIso: stri
 /** "25,000.00" / "Rs.35,000.00" → 25000 (cents-rounded); null when not a number. */
 export function parseMoney(text: string | undefined): number | null {
   if (!text) return null;
-  const cleaned = text.replace(/[,\s]/g, '').replace(/^(rs\.?|lkr)/i, '').replace(/\.$/, '');
-  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  const cleaned = text.replace(/[,\s]/g, '').replace(/^(rs\.?|lkr)/i, '').replace(/\/=$/, '').replace(/\.$/, '');
+  if (!/^(\d+(\.\d{1,2})?|\.\d{1,2})$/.test(cleaned)) return null;
   return Math.round(Number(cleaned) * 100) / 100;
 }
 
@@ -161,7 +162,9 @@ type Fields = Pick<
 
 type Parser = (body: string, receivedDate: string) => Fields | null;
 
-const N = '([\\d,]+(?:\\.\\d{1,2})?)'; // an amount
+const N = '(\\d[\\d,]*(?:\\.\\d{1,2})?|\\.\\d{1,2})'; // an amount ("1,000.00", "25000", ".99")
+const DMY = '(\\d{1,2}\\/\\d{1,2}\\/\\d{4})';
+const T12 = '(\\d{1,2}:\\d{2}(?::\\d{2})?\\s*[AP]M)';
 
 // ── BOC ──────────────────────────────────────────────────────────────────────
 // "CEFT Transfer Debit Rs 50025.00 From A/C No XXXXXXXXXX319. Balance available Rs 16441.81 - …"
@@ -178,8 +181,41 @@ const BOC_CARD_RE = new RegExp(
   'i',
 );
 
+// "Dear Customer, Thank you for payment of LKR 25000.00 on 28/04/2026 for Credit Card no. 5524 **** ****
+//  8873. Balance Available LKR 54605.28" (the first four digits are the card's bank prefix, not the card)
+const BOC_CARD_PAYMENT_RE = new RegExp(
+  `Thank you for payment of\\s+(?:LKR|Rs\\.?)\\s*${N}\\s+on\\s+${DMY}\\s+for Credit Card no\\.?\\s*[\\d* ]*?(\\d{4})\\.?\\s*Balance Available (?:LKR|Rs\\.?)\\s*${N}`,
+  'i',
+);
+// "ETC A/C 1234567 Successfully topup through Internet Banking by Rs. 1000.00" (expressway E-tag; the
+// tag's own number is not a bank account, so no digits are kept)
+const BOC_ETC_TOPUP_RE = new RegExp(`^ETC A\\/C\\s*\\d+\\s+Successfully top-?up through (.+?) by\\s+Rs\\.?\\s*${N}`, 'i');
+// "ETC A/C 1234567 Balance dropped to Rs.512.00, below the threshold limit. …"
+const BOC_ETC_LOW_RE = new RegExp(`^ETC A\\/C\\s*\\d+\\s+Balance dropped to\\s+Rs\\.?\\s*${N}`, 'i');
+
 const boc: Parser = (body) => {
-  let m = BOC_CARD_RE.exec(body);
+  let m = BOC_CARD_PAYMENT_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'boc.card_payment', kind: 'card_payment', last_digits: m[3]!, currency: 'LKR', amount: parseMoney(m[1]),
+      merchant_text: 'Payment received', balance_after: parseMoney(m[4]), bank_txn_id: null, occurred_on: dmy(m[2]!),
+    };
+  }
+  m = BOC_ETC_TOPUP_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'boc.etc_topup', kind: 'bank_debit', last_digits: null, currency: 'LKR', amount: parseMoney(m[2]),
+      merchant_text: 'ETC top-up', balance_after: null, bank_txn_id: null,
+    };
+  }
+  m = BOC_ETC_LOW_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'boc.etc_low', kind: 'info', last_digits: null, currency: 'LKR', amount: parseMoney(m[1]),
+      merchant_text: 'ETC balance low', balance_after: parseMoney(m[1]), bank_txn_id: null,
+    };
+  }
+  m = BOC_CARD_RE.exec(body);
   if (m) {
     return {
       parser: 'boc.card_purchase', kind: 'card_charge', last_digits: m[1]!, currency: m[2]!.toUpperCase(),
@@ -247,8 +283,60 @@ const PEOPLES_PAYMENT_RE = new RegExp(
   'i',
 );
 
+// Notes with no money of their own (kind `info`):
+// "Dear Card Holder, 12-months instalment plan for LKR 123,456.00/= transaction at SRI LANKA INSURANCE
+//  CORPO successfully created. Hotline 1961." — the purchase was already counted when it was charged.
+const PEOPLES_INSTALMENT_RE = new RegExp(
+  `(\\d{1,3})-months? instal+ment plan for\\s+(?:LKR|Rs\\.?)\\s*${N}(?:\\/=)?\\s+transaction at\\s+(.+?)\\s+successfully created`,
+  'i',
+);
+// "Peoples Card: Stmt Summary [X-X-X-1913] Stmt.Date: 02-Oct-2026 Stmt.Bal: Rs.123,456.78 Min Pay: …"
+const PEOPLES_STATEMENT_RE = new RegExp(
+  `Stmt Summary\\s*\\[X-X-X-(\\d{4})\\]\\s*Stmt\\.?\\s*Date:?\\s*(\\d{1,2})-([A-Za-z]{3})-(\\d{4})\\s*Stmt\\.?\\s*Bal:?\\s*(?:Rs\\.?|LKR)\\s*${N}`,
+  'i',
+);
+// "Peoples Card: Re-payment Reminder [X-X-X-1913][Tot.Payable Rs.123,456.78] Min.Payment due …"
+const PEOPLES_REMINDER_RE = new RegExp(
+  `Re-?payment Reminder\\s*\\[X-X-X-(\\d{4})\\]\\s*\\[Tot\\.?\\s*Payable\\s*(?:Rs\\.?|LKR)\\s*${N}\\]`,
+  'i',
+);
+// "Dear Card Holder, kind notification of the minimum payment Rs 1234.56 of your Peoples Credit Card due by …"
+// "Dear Cardholder, Minimum of Rs 1234.56 of your Peoples Card is due by …"
+const PEOPLES_MIN_DUE_RE = new RegExp(
+  `(?:minimum payment|Minimum of)\\s+(?:Rs\\.?|LKR)\\s*${N}\\s+of your Peoples (?:Credit )?Card`,
+  'i',
+);
+
 const peoples: Parser = (body) => {
-  let m = PEOPLES_CHARGE_RE.exec(body);
+  let m = PEOPLES_INSTALMENT_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'peoples.instalment', kind: 'info', last_digits: null, currency: 'LKR', amount: parseMoney(m[2]),
+      merchant_text: clean(m[3]), balance_after: null, bank_txn_id: null,
+    };
+  }
+  m = PEOPLES_STATEMENT_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'peoples.statement', kind: 'info', last_digits: m[1]!, currency: 'LKR', amount: parseMoney(m[5]),
+      merchant_text: 'Statement', balance_after: null, bank_txn_id: null, occurred_on: dayMonth(m[2]!, m[3]!, '', m[4]),
+    };
+  }
+  m = PEOPLES_REMINDER_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'peoples.reminder', kind: 'info', last_digits: m[1]!, currency: 'LKR', amount: parseMoney(m[2]),
+      merchant_text: 'Payment reminder', balance_after: null, bank_txn_id: null,
+    };
+  }
+  m = PEOPLES_MIN_DUE_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'peoples.min_due', kind: 'info', last_digits: null, currency: 'LKR', amount: parseMoney(m[1]),
+      merchant_text: 'Minimum payment due', balance_after: null, bank_txn_id: null,
+    };
+  }
+  m = PEOPLES_CHARGE_RE.exec(body);
   if (m) {
     return {
       parser: 'peoples.charge', kind: 'card_charge', last_digits: m[1]!, currency: m[2]!.toUpperCase(),
@@ -272,16 +360,36 @@ const peoples: Parser = (body) => {
 // "Seylan Credit Card Services - Thank you for your payment of LKR 25,000.00 made to Card # ...6029 on
 //  25/08/2026 06:30:18 PM. Avl bal 36,644.16"
 const SEYLAN_TXN_RE = new RegExp(
-  `Seylan Card\\s*\\.*(\\d{4})\\s+(debit|credit)\\s+Txn\\s+(\\d+)\\s+of\\s+([A-Z]{3})\\s*${N}\\s+done on\\s+(\\d{1,2}\\/\\d{1,2}\\/\\d{4})\\s+(\\d{1,2}:\\d{2}(?::\\d{2})?\\s*[AP]M)\\s+at\\s+(.+?)\\.?\\s+Avl bal\\s*(?:LKR|Rs\\.?)?\\s*${N}`,
+  `Seylan Card\\s*\\.*(\\d{4})\\s+(debit|credit)\\s+Txn\\s+(\\d+)\\s+of\\s+([A-Z]{3})\\s*${N}\\s+done on\\s+${DMY}\\s+${T12}\\s+at\\s+(.+?)\\.?\\s+Avl bal\\s*(?:LKR|Rs\\.?)?\\s*${N}`,
   'i',
 );
 const SEYLAN_PAYMENT_RE = new RegExp(
-  `Thank you for your payment of\\s+([A-Z]{3})\\s*${N}\\s+made to Card\\s*#?\\s*\\.*(\\d{4})\\s+on\\s+(\\d{1,2}\\/\\d{1,2}\\/\\d{4})\\s+(\\d{1,2}:\\d{2}(?::\\d{2})?\\s*[AP]M)\\.?\\s*Avl bal\\s*(?:LKR|Rs\\.?)?\\s*${N}`,
+  `Thank you for your payment of\\s+([A-Z]{3})\\s*${N}\\s+made to Card\\s*#?\\s*\\.*(\\d{4})\\s+on\\s+${DMY}\\s+${T12}\\.?\\s*Avl bal\\s*(?:LKR|Rs\\.?)?\\s*${N}`,
+  'i',
+);
+// "Transaction Reversal (10063001165): Seylan Card ...6029 was credited USD 6.15 on 09/06/2026 08:10:00 AM
+//  at TEMU.COM +442033454976IE. Avl bal 12,345.67" — the id in brackets is the ORIGINAL charge's Txn id,
+// so it is stored as "R<id>" (the inbox keeps bank ids unique) and the matcher finds the charge by it.
+const SEYLAN_REVERSAL_RE = new RegExp(
+  `Transaction Reversal\\s*\\((\\d+)\\):?\\s*Seylan Card\\s*\\.*(\\d{4})\\s+was credited\\s+([A-Z]{3})\\s*${N}\\s+on\\s+${DMY}\\s+${T12}\\s+at\\s+(.+?)\\.?\\s+Avl bal\\s*(?:LKR|Rs\\.?)?\\s*${N}`,
   'i',
 );
 
+/** "R10063001165" (a Seylan reversal) → the original charge's bank txn id. */
+export function reversedTxnId(bankTxnId: string | null): string | null {
+  return bankTxnId && /^R\d+$/.test(bankTxnId) ? bankTxnId.slice(1) : null;
+}
+
 const seylan: Parser = (body) => {
-  let m = SEYLAN_TXN_RE.exec(body);
+  let m = SEYLAN_REVERSAL_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'seylan.reversal', kind: 'refund', bank_txn_id: `R${m[1]!}`, last_digits: m[2]!,
+      currency: m[3]!.toUpperCase(), amount: parseMoney(m[4]), occurred_on: dmy(m[5]!), occurred_at: time12(m[6]!),
+      merchant_text: clean(m[7]), balance_after: parseMoney(m[8]),
+    };
+  }
+  m = SEYLAN_TXN_RE.exec(body);
   if (m) {
     const debit = m[2]!.toLowerCase() === 'debit';
     return {

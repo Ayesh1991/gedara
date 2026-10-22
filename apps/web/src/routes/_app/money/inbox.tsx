@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, CircleCheck, MessageSquareText, Undo2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, CircleCheck, CreditCard, Landmark, MessageSquareText, Undo2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -11,9 +11,10 @@ import { SmsCard, applyConfident, type CardItem } from '@/components/money/SmsCa
 import { useMoneyBasics } from '@/components/money/useMoney';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { invalidateMoney, moneyErrorKey } from '@/lib/money/queries';
-import { analyseInbox, smsSigned } from '@/lib/sms/match';
-import { smsCandidatesQuery, smsIgnore, smsQuery, smsUnlink, type InboxRow } from '@/lib/sms/queries';
+import { memoryQuery, migrateLocalMemories } from '@/lib/match/memory';
+import { createAccount, invalidateMoney, moneyErrorKey } from '@/lib/money/queries';
+import { analyseInbox, smsSigned, type UnknownAccount } from '@/lib/sms/match';
+import { smsCandidatesQuery, smsIgnore, smsQuery, smsReparse, smsUnlink, type InboxRow } from '@/lib/sms/queries';
 import { supabase } from '@/lib/supabase';
 import { formatDay, todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -40,6 +41,28 @@ function InboxPage() {
 
   const { accounts, categories } = useMoneyBasics(householdId);
   const sms = useQuery(smsQuery(householdId));
+  const memory = useQuery(memoryQuery(householdId));
+
+  // Once per visit (Phase 9a): alerts an older parser read are read again, and this device's old
+  // per-device memories move to the household. Both are quick no-ops after the first time.
+  const tidied = useRef(false);
+  useEffect(() => {
+    if (!canWrite || tidied.current || !sms.data || !categories.data || !accounts.data) return;
+    tidied.current = true;
+    const rows = sms.data;
+    const cats = new Set(categories.data.map((c) => c.id));
+    const accs = new Set(accounts.data.map((a) => a.id));
+    void (async () => {
+      try {
+        if (await smsReparse(householdId, rows)) void invalidateMoney(qc, householdId);
+        if (await migrateLocalMemories(householdId, cats, accs)) {
+          void qc.invalidateQueries({ queryKey: memoryQuery(householdId).queryKey });
+        }
+      } catch {
+        /* tried again on the next visit */
+      }
+    })();
+  }, [canWrite, sms.data, categories.data, accounts.data, householdId, qc]);
   const fresh = useMemo(() => (sms.data ?? []).filter((s) => !s.ignored && !s.transaction_id), [sms.data]);
   const reviewed = useMemo(
     () =>
@@ -75,9 +98,14 @@ function InboxPage() {
   );
   const openCandidates = useMemo(() => (cands.data ?? []).filter((c) => !linked.has(c.id)), [cands.data, linked]);
 
+  const analysis = useMemo(
+    () => (!sms.data || !accounts.data || (from && !cands.data) ? null : analyseInbox(sms.data, cands.data ?? [], linked, accounts.data)),
+    [sms.data, accounts.data, cands.data, from, linked],
+  );
+
   const items = useMemo((): CardItem[] => {
-    if (!sms.data || !accounts.data || (from && !cands.data)) return [];
-    const a = analyseInbox(sms.data, cands.data ?? [], linked, accounts.data);
+    const a = analysis;
+    if (!a) return [];
     const byId = new Map(fresh.map((s) => [s.id, s]));
     const used = new Set<string>();
     const out: CardItem[] = [];
@@ -95,10 +123,12 @@ function InboxPage() {
       });
     }
     return out;
-  }, [sms.data, accounts.data, cands.data, from, fresh, linked]);
+  }, [analysis, fresh]);
 
   const confident = items.filter(
-    (i) => (i.suggestion.kind === 'link' || i.suggestion.kind === 'transfer') && i.suggestion.confident,
+    (i) =>
+      (i.suggestion.kind === 'link' || i.suggestion.kind === 'transfer' || i.suggestion.kind === 'note') &&
+      i.suggestion.confident,
   );
 
   const refresh = () => void invalidateMoney(qc, householdId);
@@ -131,7 +161,7 @@ function InboxPage() {
     else groups.push({ day, items: [it] });
   }
 
-  const loading = sms.isPending || accounts.isPending || categories.isPending || (!!from && cands.isPending);
+  const loading = sms.isPending || accounts.isPending || categories.isPending || memory.isPending || (!!from && cands.isPending);
 
   return (
     <div className="flex flex-col gap-5">
@@ -186,6 +216,13 @@ function InboxPage() {
           />
         ) : (
           <>
+            {canWrite && (analysis?.unknownAccounts.length ?? 0) > 0 && (
+              <ul className="flex flex-col gap-2" aria-label={t('money.inbox.newAccounts')}>
+                {analysis!.unknownAccounts.map((u) => (
+                  <NewAccountRow key={`${u.institution}|${u.digits}`} found={u} householdId={householdId} onDone={refresh} />
+                ))}
+              </ul>
+            )}
             {canWrite && confident.length > 0 && (
               <Button variant="primary" disabled={!!accepting} onClick={() => void acceptAll()}>
                 <CircleCheck className="h-5 w-5" aria-hidden />
@@ -210,6 +247,7 @@ function InboxPage() {
                       accounts={accounts.data ?? []}
                       categories={categories.data ?? []}
                       candidates={openCandidates}
+                      memory={memory.data}
                       canWrite={canWrite}
                       onDone={refresh}
                     />
@@ -229,6 +267,49 @@ function InboxPage() {
         </ul>
       )}
     </div>
+  );
+}
+
+/** Alerts arrive for digits no account has (e.g. a new BOC account): one tap adds it. */
+function NewAccountRow({ found, householdId, onDone }: { found: UnknownAccount; householdId: string; onDone: () => void }) {
+  const { t } = useTranslation();
+  const [busy, setBusy] = useState(false);
+  const Icon = found.kind === 'credit_card' ? CreditCard : Landmark;
+  const add = async () => {
+    setBusy(true);
+    try {
+      await createAccount(householdId, {
+        name: `${found.institution} ··${found.digits}`,
+        kind: found.kind,
+        institution: found.institution,
+        last4: found.digits,
+        credit_limit: null,
+      });
+      toast.success(t('money.inbox.accountAdded', { name: `${found.institution} ··${found.digits}` }));
+      onDone();
+    } catch (err) {
+      toast.error(t(`money.errors.${moneyErrorKey(err)}`));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <li className="glass flex items-center gap-3 rounded-[var(--r)] px-3.5 py-3 sm:px-4">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-due/15 text-due">
+        <Icon className="h-[18px] w-[18px]" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-medium">
+          {t('money.inbox.newAccountSeen', { bank: found.institution, digits: found.digits })}
+        </div>
+        <div className="text-[12.5px] text-muted">
+          {t(found.kind === 'credit_card' ? 'money.inbox.newAccountCard' : 'money.inbox.newAccountBank', { count: found.count })}
+        </div>
+      </div>
+      <Button size="sm" variant="secondary" disabled={busy} onClick={() => void add()}>
+        {t('money.inbox.addAccount')}
+      </Button>
+    </li>
   );
 }
 

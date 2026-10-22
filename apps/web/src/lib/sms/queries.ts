@@ -1,6 +1,7 @@
 // Bank-SMS inbox data access. Reads straight from the tables/views (RLS); writes are RPCs, and the
 // SMS-backup upload goes through the sms-ingest Edge Function (the same parser as the phone path).
 import { queryOptions } from '@tanstack/react-query';
+import { PARSER_VERSION, parseSms } from '@sms/parse';
 import { env } from '../env';
 import { supabase } from '../supabase';
 import type { Json } from '../db.types';
@@ -8,10 +9,10 @@ import { moneyKey, type SavePayload } from '../money/queries';
 import type { BackupSms } from './backupXml';
 import type { SmsRow, TxCandidate } from './match';
 
-const SMS_COLUMNS = `id, sender, body, received_at, fingerprint, kind, institution, last_digits, account_id, amount,
-  currency, balance_after, merchant_text, occurred_on, occurred_at, transaction_id, ignored, reviewed_at, channel`;
+const SMS_COLUMNS = `id, sender, body, received_at, fingerprint, kind, parser, parser_version, institution, last_digits, account_id, amount,
+  currency, balance_after, merchant_text, bank_txn_id, occurred_on, occurred_at, transaction_id, ignored, reviewed_at, channel`;
 
-export type InboxRow = SmsRow & { reviewed_at: string | null; channel: string };
+export type InboxRow = SmsRow & { reviewed_at: string | null; channel: string; parser_version: number | null };
 
 /** Every alert (a household gets a few hundred a year); the page splits new / reviewed. */
 export const smsQuery = (householdId: string) =>
@@ -118,6 +119,35 @@ export async function smsPost(smsIds: string[], p: Omit<SavePayload, 'id' | 'fin
   return data as { id: string };
 }
 
+/**
+ * Phase 9a: alerts stored by an older parser are read again with today's, and the database re-checks
+ * them (OTP detector, version, account). Returns how many alerts changed.
+ */
+export async function smsReparse(householdId: string, rows: InboxRow[]): Promise<number> {
+  const old = rows.filter((r) => (r.parser_version ?? 0) < PARSER_VERSION);
+  const payload = old.map((r) => {
+    const v = parseSms({ sender: r.sender, body: r.body, receivedAt: r.received_at });
+    if (!v.keep) return { id: r.id, parser_version: PARSER_VERSION, drop: v.reason };
+    const m = v.sms;
+    return {
+      id: r.id, parser: m.parser, parser_version: m.parser_version, kind: m.kind, institution: m.institution,
+      last_digits: m.last_digits, amount: m.amount, currency: m.currency, balance_after: m.balance_after,
+      merchant_text: m.merchant_text, bank_txn_id: m.bank_txn_id, occurred_on: m.occurred_on, occurred_at: m.occurred_at,
+    };
+  });
+  let changed = 0;
+  for (let i = 0; i < payload.length; i += 500) {
+    const { data, error } = await supabase.rpc('rpc_sms_reparse', {
+      p_household: householdId,
+      p_rows: payload.slice(i, i + 500) as unknown as Json,
+    });
+    if (error) throw error;
+    const r = data as { updated: number; ignored: number; removed: number };
+    changed += r.updated + r.ignored + r.removed;
+  }
+  return changed;
+}
+
 export async function smsIgnore(ids: string[], ignored: boolean): Promise<number> {
   const { data, error } = await supabase.rpc('rpc_sms_ignore', { p_ids: ids, p_ignored: ignored });
   if (error) throw error;
@@ -174,28 +204,4 @@ export async function uploadBackup(
 /** The ingest URL the phone posts to. */
 export function ingestUrl(): string {
   return `${env.VITE_SUPABASE_URL.replace(/\/$/, '')}/functions/v1/sms-ingest`;
-}
-
-// ── Per-device convenience: the category last used for a merchant's alerts ────
-const MERCHANT_CATEGORY = 'gedara.sms.merchantCategory';
-
-export function categoryForMerchant(merchant: string | null | undefined): string | null {
-  if (!merchant) return null;
-  try {
-    const map = JSON.parse(localStorage.getItem(MERCHANT_CATEGORY) ?? '{}') as Record<string, string>;
-    return map[merchant.toLowerCase().trim()] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export function rememberCategory(merchant: string | null | undefined, categoryId: string) {
-  if (!merchant) return;
-  try {
-    const map = JSON.parse(localStorage.getItem(MERCHANT_CATEGORY) ?? '{}') as Record<string, string>;
-    map[merchant.toLowerCase().trim()] = categoryId;
-    localStorage.setItem(MERCHANT_CATEGORY, JSON.stringify(map));
-  } catch {
-    /* storage unavailable: nothing remembered */
-  }
 }

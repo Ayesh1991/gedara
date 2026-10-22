@@ -19,8 +19,8 @@ import {
 } from '@/lib/money/billSchema';
 import type { CategoryRow } from '@/lib/money/categoriesMap';
 import { formatLKR, sumAmounts } from '@/lib/money/format';
+import { learnSoon, lineMemory, memoryQuery, merchantMemory, type LearnItem } from '@/lib/match/memory';
 import {
-  accountForMerchant,
   deleteTransaction,
   existingFingerprints,
   importBills,
@@ -73,6 +73,7 @@ export function BillImport({
   const navigate = useNavigate();
   const spine = useSpineData(householdId);
   const list = useQuery(shoppingListQuery(householdId));
+  const memory = useQuery(memoryQuery(householdId));
   const [text, setTextRaw] = useState(initialText ?? '');
   const [fileError, setFileError] = useState<{ kind: 'type' | 'size' } | null>(null);
   // Per-bill edits (account, categories), valid only for the text they were made on.
@@ -94,7 +95,7 @@ export function BillImport({
   const choices = pickableAccounts(accounts).concat(suspense ? [suspense] : []);
 
   function defaultAccount(b: ScannedBill): string {
-    const remembered = accountForMerchant(b.shop || b.store);
+    const remembered = merchantMemory(memory.data, b.shop || b.store)?.account_id;
     if (remembered && choices.some((a) => a.id === remembered)) return remembered;
     if (paidByCard(b.payment_method)) return suspense?.id ?? choices[0]!.id;
     return cash?.id ?? choices[0]!.id;
@@ -102,13 +103,23 @@ export function BillImport({
 
   // Parse on every change of the text (paste, or a file's contents).
   const parsed = useMemo(() => (text.trim() ? parseBillText(text) : null), [text]);
+  // Categories: the scanner's / ledger rules' guess, then what the household taught for that bill name
+  // (Phase 9a line memory). ruleCats keeps the rules' guess so a correction can be learned on import.
   const built = useMemo(
     () =>
       parsed && 'bills' in parsed
-        ? parsed.bills.map((scanned) => ({ scanned, bill: scannedToImport(scanned, categories, defaultAccount(scanned)) }))
+        ? parsed.bills.map((scanned) => {
+            const bill = scannedToImport(scanned, categories, defaultAccount(scanned));
+            const ruleCats = bill.lines.map((l) => l.category_id);
+            const lines = bill.lines.map((l) => {
+              const taught = l.synthetic ? null : lineMemory(memory.data, l.raw_name);
+              return taught && categories.some((c) => c.id === taught) ? { ...l, category_id: taught, guessed: false } : l;
+            });
+            return { scanned, bill: { ...bill, lines }, ruleCats };
+          })
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps -- account defaults are read once per parse
-    [parsed, categories],
+    [parsed, categories, memory.data],
   );
 
   // Which of these bills are already in Gedara ("Already imported").
@@ -248,9 +259,20 @@ export function BillImport({
         };
       });
       const results = await importBills(householdId, payload);
-      for (const { d } of toImport) {
-        if (d.bill.account_id !== suspense?.id) rememberAccount(d.bill.account_id, d.bill.payee_text);
+      const taught: LearnItem[] = [];
+      for (const { d, i } of toImport) {
+        if (d.bill.account_id !== suspense?.id) {
+          rememberAccount(d.bill.account_id);
+          taught.push({ kind: 'merchant', text: d.bill.payee_text, account_id: d.bill.account_id });
+        }
+        // a line whose category was changed from the rules' guess teaches that bill name
+        d.bill.lines.forEach((l, j) => {
+          if (!l.synthetic && l.category_id && l.category_id !== built?.[i]?.ruleCats[j]) {
+            taught.push({ kind: 'line', text: l.raw_name, category_id: l.category_id });
+          }
+        });
       }
+      learnSoon(qc, householdId, taught);
       const imported = results.filter((r) => r.status === 'imported');
       const lots = imported.reduce((a, r) => a + (r.lots ?? 0), 0);
       const ticked = imported.reduce((a, r) => a + (r.ticked ?? 0), 0);

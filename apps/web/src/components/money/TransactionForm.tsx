@@ -21,6 +21,7 @@ import {
   type SavePayload,
   type Transaction,
 } from '@/lib/money/queries';
+import { learnSoon } from '@/lib/match/memory';
 import { timeNowIn, todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { AccountSelect, CategorySelect, Money, fieldLabel } from './bits';
@@ -236,7 +237,8 @@ function FormBody({
         if (!payload) return;
         try {
           const saved = await saveTransaction(payload);
-          rememberAccount(payload.account_id, payload.payee_text);
+          rememberAccount(payload.account_id);
+          learnSoon(qc, householdId, [{ kind: 'merchant', text: payload.payee_text, account_id: payload.account_id }]);
           await invalidateMoney(qc, householdId);
           toast.success(t(tx ? 'money.form.saved' : 'money.form.created', { amount: formatLKR(payload.total) }));
           onSaved?.(saved.id);

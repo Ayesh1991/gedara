@@ -1644,6 +1644,51 @@ export type Database = {
           },
         ]
       }
+      line_memory: {
+        Row: {
+          category_id: string
+          created_at: string
+          hits: number
+          household_id: string
+          id: string
+          last_used_at: string
+          name_norm: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          hits?: number
+          household_id: string
+          id?: string
+          last_used_at?: string
+          name_norm: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          hits?: number
+          household_id?: string
+          id?: string
+          last_used_at?: string
+          name_norm?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "line_memory_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "line_memory_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       location: {
         Row: {
           climate: string | null
@@ -2485,6 +2530,82 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "merchant_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_memory: {
+        Row: {
+          account_id: string | null
+          category_id: string | null
+          created_at: string
+          hits: number
+          household_id: string
+          id: string
+          last_used_at: string
+          merchant_norm: string
+        }
+        Insert: {
+          account_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          hits?: number
+          household_id: string
+          id?: string
+          last_used_at?: string
+          merchant_norm: string
+        }
+        Update: {
+          account_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          hits?: number
+          household_id?: string
+          id?: string
+          last_used_at?: string
+          merchant_norm?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_memory_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "merchant_memory_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "merchant_memory_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_month_end"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "merchant_memory_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_balance_check"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "merchant_memory_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "merchant_memory_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "household"
@@ -5931,6 +6052,10 @@ export type Database = {
         Args: { p_ms: number; p_token_hash: string }
         Returns: boolean
       }
+      rpc_memory_learn: {
+        Args: { p_household: string; p_items: Json }
+        Returns: number
+      }
       rpc_move: {
         Args: {
           p_client_at?: string
@@ -6051,6 +6176,10 @@ export type Database = {
         Returns: Json
       }
       rpc_sms_post: { Args: { p: Json; p_sms_ids: string[] }; Returns: Json }
+      rpc_sms_reparse: {
+        Args: { p_household: string; p_rows: Json }
+        Returns: Json
+      }
       rpc_sms_unlink: { Args: { p_ids: string[] }; Returns: number }
       rpc_stock_op: {
         Args: {
