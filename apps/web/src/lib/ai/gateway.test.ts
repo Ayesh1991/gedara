@@ -145,6 +145,24 @@ describe('ladder: cheap first, stronger only when unsure', () => {
   });
 });
 
+describe('rate limits', () => {
+  it('a 429 with a short Retry-After is waited out once', async () => {
+    vi.useFakeTimers();
+    let n = 0;
+    const fn = vi.fn(async () => {
+      n++;
+      if (n === 1) return new Response('{}', { status: 429, headers: { 'retry-after': '2' } });
+      return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ items: [line(0)] }) } }], usage: { prompt_tokens: 10, completion_tokens: 5 } }), { status: 200 });
+    });
+    const p = decide({ task: 'lines', items: items(1), shared, steps: [GROQ], keys: KEYS, budget: open, labelOk, fetchImpl: fn });
+    await vi.advanceTimersByTimeAsync(2_500);
+    const { decisions } = await p;
+    vi.useRealTimers();
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(decisions.get(0)?.answer?.product).toBe('P1');
+  });
+});
+
 describe('answers', () => {
   it('Zod drops malformed answers, unknown ids and indexes answered twice', () => {
     const text = JSON.stringify({ items: [line(0), { i: 1, destiny: 'fridge' }, line(2, { category: 'C9' }), line(3), line(3, { product: 'P2' }), line(7)] });
@@ -155,5 +173,7 @@ describe('answers', () => {
   it('costs follow the price list; Groq free is free', () => {
     expect(costOf(GROQ, 1_000_000, 1_000_000)).toBe(0);
     expect(costOf(OPENAI, 1_000_000, 1_000_000)).toBeCloseTo(5.25);
+    // a model not on the price list counts as expensive, so the monthly cap still holds
+    expect(costOf({ provider: 'gemini', model: 'gemini-9-ultra' }, 1_000_000, 1_000_000)).toBeCloseTo(35);
   });
 });

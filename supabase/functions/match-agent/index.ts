@@ -22,7 +22,7 @@ import type { ModelRef, Provider } from '../_shared/ai/providers.ts';
 import { KEY_NAMES } from '../_shared/ai/providers.ts';
 import { runEval, runMatching, type Bundle, type RunOutput } from '../_shared/match/run.ts';
 
-const FN_VERSION = 'match-agent-2';
+const FN_VERSION = 'match-agent-4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -150,7 +150,7 @@ async function fromUser(req: Request, auth: string) {
       }
       const steps = ((setting?.steps as ModelRef[] | undefined) ?? []).length
         ? (setting!.steps as ModelRef[])
-        : [{ provider: 'groq', model: 'openai/gpt-oss-120b' }, { provider: 'gemini', model: 'gemini-2.5-flash' }, { provider: 'openai', model: 'gpt-5.4-mini' }] as ModelRef[];
+        : [{ provider: 'groq', model: 'openai/gpt-oss-120b' }, { provider: 'gemini', model: 'gemini-3.8-flash' }, { provider: 'openai', model: 'gpt-5.4-mini' }] as ModelRef[];
       const { results, usage } = await check(steps);
       const { error: saveErr } = await db.rpc('rpc_match_save', { p_household: householdId, p_run: runId, p: { usage, stats: { check: true } } });
       if (saveErr) throw saveErr;

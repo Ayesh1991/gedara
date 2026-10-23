@@ -65,7 +65,7 @@ export const DEFAULT_SETTING: MatchSetting = {
   ai_enabled: false,
   steps: [
     { provider: 'groq', model: 'openai/gpt-oss-120b' },
-    { provider: 'gemini', model: 'gemini-2.5-flash' },
+    { provider: 'gemini', model: 'gemini-3.8-flash' },
     { provider: 'openai', model: 'gpt-5.4-mini' },
   ],
   monthly_cap_usd: 3,

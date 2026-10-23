@@ -18,6 +18,9 @@ export const PRICES: Record<string, { input: number; output: number; free?: bool
   'gemini/gemini-2.5-flash': { input: 0.3, output: 2.5 },
   'gemini/gemini-2.5-flash-lite': { input: 0.1, output: 0.4 },
   'gemini/gemini-3.1-flash-lite': { input: 0.25, output: 1.5 },
+  // 3.6 / 3.8 Flash: introductory price until 2026-12-31, then $1.50 / $7.50 — counted at the higher one
+  'gemini/gemini-3.6-flash': { input: 1.5, output: 7.5 },
+  'gemini/gemini-3.8-flash': { input: 1.5, output: 7.5 },
   'openai/gpt-5.4-mini': { input: 0.75, output: 4.5 },
   'openai/gpt-5.4-nano': { input: 0.2, output: 1.25 },
   'openai/gpt-5-mini': { input: 0.25, output: 2.0 },
@@ -50,9 +53,12 @@ export interface CallResult {
 
 export type Fetch = (input: string, init: RequestInit) => Promise<Response>;
 
+/** A model missing from the list is counted at this (high) price, so the monthly cap still holds. */
+const UNKNOWN_PRICE = { input: 5, output: 30 };
+
 export function costOf(ref: ModelRef, inputTokens: number, outputTokens: number): number {
-  const p = PRICES[`${ref.provider}/${ref.model}`];
-  if (!p || p.free) return 0;
+  const p = PRICES[`${ref.provider}/${ref.model}`] ?? UNKNOWN_PRICE;
+  if (p.free) return 0;
   return (inputTokens * p.input + outputTokens * p.output) / 1_000_000;
 }
 
@@ -127,6 +133,14 @@ async function callOpenAiStyle(ref: ModelRef, input: CallInput, key: string, fet
     body.max_completion_tokens = input.maxOutputTokens + 2048;
   }
   let res = await post(fetchImpl, url, { Authorization: `Bearer ${key}` }, body, timeoutMs);
+  if (res.status === 429) {
+    // Groq's free plan counts tokens per minute: wait as long as it asks (up to 20 s), once
+    const wait = Number(res.headers.get('retry-after') ?? '');
+    if (wait > 0 && wait <= 20) {
+      await new Promise((ok) => setTimeout(ok, wait * 1000));
+      res = await post(fetchImpl, url, { Authorization: `Bearer ${key}` }, body, timeoutMs);
+    }
+  }
   if (res.status === 400) {
     // a model that doesn't take a reasoning effort: once more without it
     delete body.reasoning_effort;

@@ -122,7 +122,7 @@ const SUGGEST_AT = 0.5;
 const MAX = { lines: 48, other: 36, sms: 40, link: 20, things: 20, eval: 24 };
 const DEFAULT_STEPS: ModelRef[] = [
   { provider: 'groq', model: 'openai/gpt-oss-120b' },
-  { provider: 'gemini', model: 'gemini-2.5-flash' },
+  { provider: 'gemini', model: 'gemini-3.8-flash' },
   { provider: 'openai', model: 'gpt-5.4-mini' },
 ];
 
