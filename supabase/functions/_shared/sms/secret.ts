@@ -67,12 +67,15 @@ const CUR = '(?:lkr|rs|usd|eur|gbp|sgd|aud|inr|aed|jpy|cny|රු|ரூ|₨)';
 // Spans a real bank alert explains, blanked out (order matters: longest first).
 const EXPLAINED: RegExp[] = [
   // amounts with a currency: "Rs. 1,000.00", "LKR .99", "USD 4.73", "Rs.999/="
-  new RegExp(`${CUR}\\.?\\s*:?\\s*(?:\\d[\\d,]*(?:\\.\\d{1,2})?|\\.\\d{1,2})(?:\\s*/=)?`, 'g'),
+  // (the currency word on its own: "offers. 482913" is not "Rs 482913" — Phase 9b.1)
+  new RegExp(`(?<![a-z])${CUR}\\.?\\s*:?\\s*(?:\\d[\\d,]*(?:\\.\\d{1,2})?|\\.\\d{1,2})(?:\\s*/=)?`, 'g'),
   // money without a currency word: thousands commas or two decimals ("Avl bal 14,722.11")
   /\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+\.\d{2}(?!\d)/g,
   // dates: 12/09/2026, 12-09-26, 2026-09-12, 15-Sep-2026, 05-SEP, Sep 16, 2026, 26th June 2026
   /\b\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b/g,
   /\b\d{4}-\d{2}-\d{2}\b/g,
+  // year first with slashes or dots: 2026/09/22 (SLTBILL "on 2026/09/22:02:34:51 AM"), 2026.09.22
+  /\b\d{4}[/.]\d{1,2}[/.]\d{1,2}\b/g,
   new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?[\\s-]*${MON}(?:[\\s,-]*\\d{2,4})?\\b`, 'g'),
   new RegExp(`\\b${MON}\\s*\\d{1,2}(?:st|nd|rd|th)?,?\\s*\\d{4}\\b`, 'g'),
   // times: 01:09:29 PM, 18:40
@@ -81,6 +84,8 @@ const EXPLAINED: RegExp[] = [
   /\d{4}(?:\s*[*x]{4}){2}\s*\d{4}/g,
   /(?:x-){2,}x?-?\d{2,4}/g,
   /[x*.#]{2,}\s?-?\d{2,4}\b/g,
+  // a single X before the last digits (Sampath FD "X2229")
+  /(?<![a-z\d])x\d{3,4}(?!\d)/g,
   // an unmasked account number named as such, longer than a usual code ("ETC A/C 1234567"); bank
   // reference ids only when longer than any code ("Txn 10357428172", "Transaction Reversal (10357428172)")
   /\b(?:a\/c|acc(?:ount)?|card)\.?\s*(?:no\.?|number|#)?\s*:?\s*\d{7,}/g,
@@ -105,22 +110,41 @@ function hasUnexplainedCode(norm: string): boolean {
   return false;
 }
 
+// ── Sender-specific allowances (Phase 9b.1) ─────────────────────────────────
+// Sampath ends every account alert with a fixed safety line; only that exact line, only at the very
+// end, is set aside — anything else in the text is checked as always (a real OTP that carries the same
+// line still has its code and its wording before it).
+const FOOTER = /\s*get protected\s*-\s*do not share otp\.?\s*$/;
+// What a sender's alerts name that would otherwise look like a code: SAMPATHTXN writes the bank's own
+// reference after "for" ("debited from AC **1110 for DORMANT_CHG_052026").
+const SENDER_EXPLAINED: Record<string, RegExp[]> = {
+  SAMPATHTXN: [/\bfor\s+[a-z]{2,}(?:_[a-z]{2,})+_\d{4,8}\b/g],
+};
+const senderKeyOf = (sender: string | null | undefined) => String(sender ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
 // ── Entry points ─────────────────────────────────────────────────────────────
-/** Why a text looks like it carries a one-time code / password, or null when it doesn't. */
-export function secretReason(text: string): SecretReason | null {
-  const norm = normaliseForSecrets(text);
+/**
+ * Why a text looks like it carries a one-time code / password, or null when it doesn't. `sender` adds
+ * only that sender's own allowance (SAMPATHTXN's references); without it the rules are the strictest.
+ */
+export function secretReason(text: string, sender?: string | null): SecretReason | null {
+  const norm = normaliseForSecrets(text).replace(FOOTER, '');
   if (hasSecretWords(norm)) return 'keyword';
-  if (hasUnexplainedCode(norm)) return 'code';
+  let rest = norm;
+  for (const re of SENDER_EXPLAINED[senderKeyOf(sender)] ?? []) rest = rest.replace(re, ' ');
+  if (hasUnexplainedCode(rest)) return 'code';
   return null;
 }
 
-export function isSecret(text: string): boolean {
-  return secretReason(text) !== null;
+export function isSecret(text: string, sender?: string | null): boolean {
+  return secretReason(text, sender) !== null;
 }
 
 /**
  * For the SMS-forwarder app's "text filter" (Java regex on the phone): forward only texts without
- * OTP wording. The phone can't run the number check — sms-ingest and the database do.
+ * OTP wording — except Sampath's fixed closing line "Get protected -Do not Share OTP" at the very end
+ * (tempered match: no wording may start anywhere before it). The phone can't run the number check —
+ * sms-ingest and the database do.
  */
 export const FORWARD_TEXT_REGEX =
-  "(?isu)^(?!.*(?:(?<![a-z])(?:otps?|one ?-?time|pass ?-?code|pass ?-?word|passwd|m?-?pin|t-?pin|e-?pin|tac|cvv|cvc|verification|verify|security code|secret code|access code|activation code|auth(?:entication|ori[sz]ation)? code|approval code|login code|do ?not share|don'?t share|never share|never disclose|do not disclose)(?![a-z])|(?<![a-z])codes?(?![a-z])(?:\\s*(?:is|:|-|=|#))?\\s*\\p{Nd}|මුරපද|මුර පද|එක් ?වරක|රහස|කේත|සත්\u200D?යාපන|බෙදා නොග|කිසිවෙකු|கடவுச் ?சொல்|ஒரு ?முறை|குறியீடு|சரிபார்ப்பு|ரகசிய|பகிர)).*$";
+  "(?isu)^(?:(?!(?:(?<![a-z])(?:otps?|one ?-?time|pass ?-?code|pass ?-?word|passwd|m?-?pin|t-?pin|e-?pin|tac|cvv|cvc|verification|verify|security code|secret code|access code|activation code|auth(?:entication|ori[sz]ation)? code|approval code|login code|do ?not share|don'?t share|never share|never disclose|do not disclose)(?![a-z])|(?<![a-z])codes?(?![a-z])(?:\\s*(?:is|:|-|=|#))?\\s*\\p{Nd}|මුරපද|මුර පද|එක් ?වරක|රහස|කේත|සත්\u200D?යාපන|බෙදා නොග|කිසිවෙකු|கடவுச் ?சொல்|ஒரு ?முறை|குறியீடு|சரிபார்ப்பு|ரகசிய|பகிர)).)*(?:get protected\\s*-\\s*do not share otp\\.?\\s*)?$";

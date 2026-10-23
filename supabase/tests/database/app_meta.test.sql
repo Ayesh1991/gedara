@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(5);
 
-select is(schema_version(), 84, 'schema_version is 84 after Phase 9b (matching in shadow, AI ladder under US$1 a month)');
+select is(schema_version(), 86, 'schema_version is 86 after Phase 9b.1 (evidence before guesses, check past bookings)');
 
 set local role anon;
-select is(schema_version(), 84, 'anon can call schema_version()');
+select is(schema_version(), 86, 'anon can call schema_version()');
 select throws_ok($$select * from app_meta$$, '42501', null, 'anon cannot read app_meta');
 
 reset role;

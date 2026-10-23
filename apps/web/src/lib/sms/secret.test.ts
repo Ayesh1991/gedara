@@ -10,14 +10,23 @@ import { REAL_ALERTS, SECRET_CORPUS, digits } from '@/lib/__fixtures__/secretCor
 describe('secret detector (TypeScript)', () => {
   it.each(SECRET_CORPUS)('drops: %s', (text) => {
     expect(isSecret(text)).toBe(true);
+    // a sender's own allowance (SAMPATHTXN's references, its closing line) never frees a code
+    expect(isSecret(text, 'SAMPATHTXN')).toBe(true);
   });
 
-  it.each(REAL_ALERTS)('keeps the real %s alert', (_sender, body) => {
-    expect(secretReason(body)).toBeNull();
+  it.each(REAL_ALERTS)('keeps the real %s alert', (sender, body) => {
+    expect(secretReason(body, sender)).toBeNull();
+  });
+
+  it("Sampath's reference is allowed only from SAMPATHTXN", () => {
+    const body = 'LKR 50.00 debited from AC **1110 for DORMANT_CHG_052026 04/05/2026 06:36:44';
+    expect(secretReason(body, 'SAMPATHTXN')).toBeNull();
+    expect(secretReason(body, 'BOC')).toBe('code');
+    expect(secretReason(body)).toBe('code');
   });
 
   it('every corpus text is dropped by the parser too, from every allow-listed sender', () => {
-    for (const sender of ['BOC', 'SAMPCCTXN', 'PeoplesCard', 'Seylan Bank']) {
+    for (const sender of ['BOC', 'SAMPCCTXN', 'SAMPATHTXN', 'PeoplesCard', 'Seylan Bank', 'SLTBILL', 'SLT-Mobitel', '5555', 'Star Points', 'LECO BILL']) {
       for (const body of SECRET_CORPUS) {
         expect(parseSms({ sender, body, receivedAt: '2026-10-01T04:30:00Z' })).toEqual({ keep: false, reason: 'otp' });
       }
@@ -25,13 +34,13 @@ describe('secret detector (TypeScript)', () => {
   });
 
   it('a code planted in any position of a real alert is caught', () => {
-    for (const [, body] of REAL_ALERTS) {
+    for (const [sender, body] of REAL_ALERTS) {
       const words = body.split(' ');
       for (let i = 0; i <= words.length; i++) {
         // right after a currency word the number IS an amount ("Rs 482913") — nothing can tell them apart
         if (i > 0 && /^(rs\.?|lkr|usd)$/i.test(words[i - 1]!)) continue;
         const planted = [...words.slice(0, i), '482913', ...words.slice(i)].join(' ');
-        expect(isSecret(planted), planted).toBe(true);
+        expect(isSecret(planted, sender), planted).toBe(true);
       }
     }
   });
@@ -66,6 +75,6 @@ describe('the database runs the same corpus', () => {
   it('supabase/tests/database/sms_secret.test.sql was regenerated from this corpus', () => {
     const sql = readFileSync(new URL('../../../../../supabase/tests/database/sms_secret.test.sql', import.meta.url), 'utf8');
     expect(sql, 'run: node --experimental-strip-types scripts/secret-sql-test.mjs')
-      .toContain(`select plan(${SECRET_CORPUS.length + REAL_ALERTS.length + 3});`);
+      .toContain(`select plan(${2 * SECRET_CORPUS.length + REAL_ALERTS.length + 3});`);
   });
 });

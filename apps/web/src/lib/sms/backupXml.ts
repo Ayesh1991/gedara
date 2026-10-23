@@ -79,7 +79,7 @@ export function scanBackup(text: string, window?: { from?: number; to?: number }
     if (!body || !Number.isFinite(at) || at <= 0) continue;
     if (window?.from !== undefined && at < window.from) continue;
     if (window?.to !== undefined && at > window.to) continue;
-    if (isSecret(body)) {
+    if (isSecret(body, sender)) {
       scan.dropped.secret++;
       continue;
     }

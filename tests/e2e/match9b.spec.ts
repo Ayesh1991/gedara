@@ -104,7 +104,8 @@ test('9b: a matching run suggests a product for an old line; Yes links it withou
   await page.goto('/settings/matching');
   await expect(page.getByRole('heading', { name: 'Matching', level: 1 })).toBeVisible();
   await expect(page.getByRole('switch', { name: 'AI suggestions' })).toBeVisible();
-  await expect(page.getByText('openai/gpt-oss-120b')).toBeVisible();
+  // (the ladder's step; this month's cost table may list the same model)
+  await expect(page.getByRole('listitem').filter({ hasText: 'Groq' }).getByText('openai/gpt-oss-120b')).toBeVisible();
   await expect(page.getByText(/The AI never sees an SMS text/)).toBeVisible();
   const overflow2 = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow2, '/settings/matching').toBeLessThanOrEqual(0);

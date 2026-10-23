@@ -3244,6 +3244,48 @@ export type Database = {
           },
         ]
       }
+      payee_category: {
+        Row: {
+          category_id: string
+          household_id: string
+          id: string
+          payee_norm: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category_id: string
+          household_id: string
+          id?: string
+          payee_norm: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category_id?: string
+          household_id?: string
+          id?: string
+          payee_norm?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payee_category_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "payee_category_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       place_type: {
         Row: {
           archived: boolean
@@ -5431,8 +5473,12 @@ export type Database = {
         Row: {
           ai_answered: number | null
           ai_correct: number | null
+          ai_main_correct: number | null
+          contradicted_n: number | null
+          evidence_n: number | null
           household_id: string | null
           n: number | null
+          no_shop_n: number | null
           rule_answered: number | null
           rule_correct: number | null
           sure_correct: number | null
@@ -6477,6 +6523,10 @@ export type Database = {
       }
       rpc_nfc_tag_unlink: { Args: { p_id: string }; Returns: undefined }
       rpc_open: { Args: { p: Json }; Returns: Json }
+      rpc_payee_category_save: {
+        Args: { p_category: string; p_household: string; p_payee: string }
+        Returns: undefined
+      }
       rpc_product_merge: {
         Args: { p_source: string; p_target: string }
         Returns: Json
@@ -6575,6 +6625,7 @@ export type Database = {
         Returns: Json
       }
       rpc_sms_post: { Args: { p: Json; p_sms_ids: string[] }; Returns: Json }
+      rpc_sms_rebook: { Args: { p: Json }; Returns: Json }
       rpc_sms_reparse: {
         Args: { p_household: string; p_rows: Json }
         Returns: Json

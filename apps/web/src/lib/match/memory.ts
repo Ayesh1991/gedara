@@ -4,7 +4,7 @@
 // rpc_memory_learn. Keys are bill_name_norm — the same as learned product names.
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import type { Json } from '../db.types';
-import { builtInCategory as sharedBuiltIn } from '@match/memory';
+import { builtInCategory as sharedBuiltIn, payeeCategory as sharedPayee } from '@match/memory';
 import type { CategoryRow } from '../money/categoriesMap';
 import { moneyKey } from '../money/queries';
 import { billNameNorm } from '../spine/normalise';
@@ -13,6 +13,8 @@ import { supabase } from '../supabase';
 export interface Memory {
   merchants: Map<string, { category_id: string | null; account_id: string | null }>;
   lines: Map<string, string>;
+  /** Phase 9b.1: the household's own payee → category choices (payee_category); defaults fill the rest. */
+  payees: Map<string, string>;
 }
 
 export type LearnItem =
@@ -23,15 +25,18 @@ export const memoryQuery = (householdId: string) =>
   queryOptions({
     queryKey: moneyKey(householdId, 'memory'),
     queryFn: async (): Promise<Memory> => {
-      const [m, l] = await Promise.all([
+      const [m, l, p] = await Promise.all([
         supabase.from('merchant_memory').select('merchant_norm, category_id, account_id').eq('household_id', householdId).limit(5000),
         supabase.from('line_memory').select('name_norm, category_id').eq('household_id', householdId).limit(5000),
+        supabase.from('payee_category').select('payee_norm, category_id').eq('household_id', householdId).limit(500),
       ]);
       if (m.error) throw m.error;
       if (l.error) throw l.error;
+      if (p.error) throw p.error;
       return {
         merchants: new Map(m.data.map((r) => [r.merchant_norm, { category_id: r.category_id, account_id: r.account_id }])),
         lines: new Map(l.data.map((r) => [r.name_norm, r.category_id])),
+        payees: new Map(p.data.map((r) => [r.payee_norm, r.category_id])),
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -50,6 +55,21 @@ export function lineMemory(memory: Memory | undefined, name: string | null | und
 /** Categories Gedara knows before anyone teaches it (shared with the match-agent run). */
 export function builtInCategory(categories: CategoryRow[], text: string | null | undefined): string | null {
   return sharedBuiltIn(categories, text);
+}
+
+/** What a payee's confirmation says a payment was for (Phase 9b.1, shared with the match-agent run). */
+export function payeeCategory(memory: Memory | undefined, categories: CategoryRow[], payee: string | null | undefined): string | null {
+  return sharedPayee(categories, memory?.payees ?? new Map(), payee);
+}
+
+export async function savePayeeCategory(householdId: string, payee: string, categoryId: string) {
+  const { error } = await supabase.rpc('rpc_payee_category_save', { p_household: householdId, p_payee: payee, p_category: categoryId });
+  if (error) throw error;
+}
+
+export async function deletePayeeCategory(householdId: string, payeeNorm: string) {
+  const { error } = await supabase.from('payee_category').delete().eq('household_id', householdId).eq('payee_norm', payeeNorm);
+  if (error) throw error;
 }
 
 export async function learn(householdId: string, items: LearnItem[]): Promise<number> {

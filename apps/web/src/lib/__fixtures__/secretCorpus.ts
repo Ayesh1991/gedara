@@ -48,6 +48,13 @@ export const SECRET_CORPUS: string[] = [
   'உங்கள் ஒருமுறை கடவுச்சொல் 482913. யாரிடமும் பகிர வேண்டாம்.',
   'பரிவர்த்தனைக்கு 482913 ஐ உள்ளிடவும்',
   'உங்கள் சரிபார்ப்பு குறியீடு 4829',
+  // Sampath's fixed closing line must never free a code (Phase 9b.1)
+  'Your OTP is 482913 for the transfer. Get protected -Do not Share OTP',
+  '482913 is your code. Get protected -Do not Share OTP',
+  'LKR 5,000.00 transfer requested 482913 Get protected -Do not Share OTP',
+  'Get protected -Do not Share OTP. Your login code is 552901',
+  // year-first dates are explained, a code next to one is not
+  'Payment on 2026/09/22 approved with 552901',
 ];
 
 /** Real alert wording seen on prod (amounts and masks as the banks print them) — must be kept. */
@@ -78,4 +85,15 @@ export const REAL_ALERTS: Array<[sender: string, body: string]> = [
   ['Seylan Bank', 'Seylan Credit Card Services - Thank you for your payment of LKR 25,000.00 made to Card # ...6029 on 25/08/2026 06:30:18 PM. Avl bal 36,644.16'],
   ['Seylan Bank', 'Transaction Reversal (10063001165): Seylan Card ...6029 was credited USD 6.15 on 09/06/2026 08:10:00 AM at TEMU.COM                 +442033454976IE. Avl bal 12,345.67'],
   ['Seylan Bank', 'Transaction Reversal (10459616070): Seylan Card ...6029 was credited LKR 2.00 on 14/10/2026 12:48:04 PM at LMT-GO                   BATTARAMULLA LK. Avl bal 45,678.90'],
+  // Phase 9b.1: payees' confirmations and the Sampath bank account / fixed deposit
+  ['SLTBILL', 'Your bill payment Rs.3400.00 has been received to account number 0034847977 (94113602084) on 2026/09/22:02:34:51 AM. Thank you.'],
+  ['LECO BILL', 'Dear Sir/Madam,\n>A payment of Rs. 19,700.00 on A/C: 0103482401 is received by 06-MAY-26 14:40:00'],
+  ['SLT-Mobitel', 'You have recharged Rs. 50.00 Your account balance is Rs. 50.55 ,expires on 13/11/2026 00:00:00AM.'],
+  ['5555', 'You have successfully activated the Rs.198 Any Network Voice plan with 250 mins to Any net (Including local landlines) & 250 Any net SMS, valid for 30 days. Visit https://dlg.lk/mdprp or dial #111#'],
+  ['5555', 'Work & Learn quota of Rs.672 Work & Learn Plan activated on 27/09/2026 is over. You can check your Data balance via http://dlg.lk/dpa. You will be charged 30 cents+tax per MB if no Data quota is available.'],
+  ['Star Points', 'Dear Customer, you have earned 1.98 Star Points for the Dialog Mobile reload of Rs. 198.00/- made on 20/10/2026 18:20:50. Total Star Points balance: 598.91. Visit the MyDialog App https://md.dialog.lk/spsms or dial #141# to check on Star Points offers.'],
+  ['Star Points', 'Dear Customer, you have earned 1.6 Star Points for your transaction at Cargills Rewards on 2026/10/20 21:10:25. Total Star Points balance is 205.35'],
+  ['SAMPATHTXN', 'LKR 50.00 debited from AC **1110 for DORMANT_CHG_052026 04/05/2026 06:36:44 To Inq Call 0112303050 Get protected -Do not Share OTP'],
+  ['SAMPATHTXN', 'LKR 2,104.04 credited to AC **2229 for FD Interest X2229:Int.Pd:21-11-2025 to 20-05-2026 20/05/2026 23:04:21 To Inq Call 0112303050'],
+  ['SAMPATHTXN', 'FD **2229 renewed LKR 61,033.85 for 6 Month(s) 20/05/2026 23:25:20 To Inq Call 0112303050'],
 ];
