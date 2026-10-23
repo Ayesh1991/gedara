@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.3 — Phase 9b.1 fix: Star Points shop notes no longer block an SMS import
+- Star Points' "transaction at Cargills Rewards on …" names a shop and a time but no amount. The database
+  only let `unknown` alerts go without an amount, so this note was refused — and with it the whole batch of
+  up to 200 alerts it was sent in ("Couldn't send the alerts"). Notes (`info`) may now have no amount;
+  money alerts still must have one (migration 87, schema 87; tested).
+- The import's "left out" counts include payee notices again (`sms-ingest-4`).
+
 ## 0.9.2 — Phase 9b.1: evidence before guesses
 - **Payees' own messages are read:** SLTBILL, LECO BILL, SLT-Mobitel, Dialog (5555) and Star Points
   confirm a payment ("Your bill payment Rs.3400.00 has been received", "activated the Rs.198 … plan",

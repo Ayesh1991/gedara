@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(25);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000fe201', 'rcpt-owner-a@test.local'),
@@ -49,6 +49,15 @@ select is(rpc_sms_import('00000000-0000-0000-0000-0000000fe2aa', '[
 select is((select kind || ' ' || merchant_text from sms_message where fingerprint = 'src1'), 'receipt SLT bill', 'the receipt is a receipt');
 select is((select a.name from sms_message s join account a on a.id = s.account_id where s.fingerprint = 'src2'), 'Sampath Savings',
   'the Sampath account alert finds its account');
+-- Star Points names the shop and time but no amount: a note, stored (migration 87); money still needs one
+select is(rpc_sms_import('00000000-0000-0000-0000-0000000fe2aa', '[
+  {"sender":"Star Points","body":"Dear Customer, you have earned 1.6 Star Points for your transaction at Cargills Rewards on 2026/10/20 21:10:25. Total Star Points balance is 205.35",
+   "received_at":"2026-10-20T15:41:00Z","fingerprint":"src5","parser":"starpoints.shop","parser_version":3,"kind":"info","institution":"Star Points",
+   "merchant_text":"Cargills","occurred_on":"2026-10-20","occurred_at":"21:10:25"}
+  ]'::jsonb), '{"stored": 1, "duplicate": 0, "dropped": 0}'::jsonb, 'a Star Points shop note without an amount is stored');
+select throws_ok($$select rpc_sms_import('00000000-0000-0000-0000-0000000fe2aa', '[
+  {"sender":"BOC","body":"Online Transfer Debit","received_at":"2026-10-20T15:42:00Z","fingerprint":"src6","kind":"bank_debit","occurred_on":"2026-10-20"}
+  ]'::jsonb)$$, '23514', null, 'a bank debit without an amount is still refused');
 
 -- ── Payee map ─────────────────────────────────────────────────────────────────
 select lives_ok($$select rpc_payee_category_save('00000000-0000-0000-0000-0000000fe2aa', 'Dialog plan', '00000000-0000-0000-0000-0000000fe0c3')$$,

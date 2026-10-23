@@ -14,7 +14,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { z } from 'npm:zod@4.6.5';
 import { type DropReason, type ParsedSms, parseSms } from '../_shared/sms/parse.ts';
 
-const FN_VERSION = 'sms-ingest-3';
+const FN_VERSION = 'sms-ingest-4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -132,7 +132,7 @@ async function fromUser(req: Request, authHeader: string): Promise<Response> {
   if (!parsed.success) return json({ ok: false, error: 'invalid' }, 400);
 
   const keep: ParsedSms[] = [];
-  const filtered: Record<DropReason, number> = { sender: 0, otp: 0, promo: 0, no_amount: 0, invalid: 0 };
+  const filtered: Record<DropReason, number> = { sender: 0, otp: 0, promo: 0, no_amount: 0, notice: 0, invalid: 0 };
   for (const m of parsed.data.messages) {
     const v = parseSms({ sender: m.sender, body: m.body, receivedAt: m.receivedAt });
     if (v.keep) keep.push(v.sms);
