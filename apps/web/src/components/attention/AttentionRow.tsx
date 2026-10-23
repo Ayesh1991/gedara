@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShoppingCart,
+  Sparkles,
   Tag,
   TrendingDown,
   Wrench,
@@ -40,6 +41,7 @@ const ICON: Record<AttentionKind, LucideIcon> = {
   service_due: Wrench,
   things_pending: Receipt,
   sms_review: MessageSquareText,
+  match_review: Sparkles,
   scan_waiting: CloudDownload,
   backup_due: HardDriveDownload,
   budget_over: PiggyBank,
@@ -81,6 +83,8 @@ export function useAttentionText() {
         return t('attention.kinds.things_pending', { count: Number(i.qty ?? 0) });
       case 'sms_review':
         return t('attention.kinds.sms_review', { count: Number(i.qty ?? 0) });
+      case 'match_review':
+        return t('attention.kinds.match_review', { count: Number(i.qty ?? 0) });
       case 'scan_waiting':
         return t('attention.kinds.scan_waiting', { count: Number(i.qty ?? 0) });
       case 'backup_due':

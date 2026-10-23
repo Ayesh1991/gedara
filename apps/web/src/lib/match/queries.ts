@@ -1,0 +1,210 @@
+// Matching suggestions, settings and the accuracy report (Phase 9b). Reads go straight to the tables /
+// views (RLS); writes are RPCs; runs go through the match-agent Edge Function, which works with the
+// service role after the database said who may ask (rpc_match_request).
+import { queryOptions } from '@tanstack/react-query';
+import type { Json } from '../db.types';
+import { moneyKey } from '../money/queries';
+import { supabase } from '../supabase';
+
+export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link';
+
+export interface Suggestion {
+  id: string;
+  task: MatchTask;
+  target_key: string;
+  line_id: string | null;
+  sms_id: string | null;
+  proposal: {
+    product_id?: string | null;
+    destiny?: 'stock' | 'expense';
+    category_id?: string | null;
+    transaction_id?: string;
+    name?: string;
+    maker?: string | null;
+    model?: string | null;
+  };
+  confidence: number;
+  pattern: string;
+  models: string[];
+  updated_at: string;
+  line: {
+    raw_name: string;
+    amount: number;
+    category_id: string | null;
+    transaction: { id: string; payee_text: string | null; occurred_on: string } | null;
+  } | null;
+}
+
+export const suggestionsQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: moneyKey(householdId, 'match-suggestions'),
+    queryFn: async (): Promise<Suggestion[]> => {
+      const { data, error } = await supabase
+        .from('match_suggestion')
+        .select(`id, task, target_key, line_id, sms_id, proposal, confidence, pattern, models, updated_at,
+          line:transaction_line!match_suggestion_household_id_line_id_fkey(raw_name, amount, category_id,
+            transaction:money_transaction!transaction_line_household_id_transaction_id_fkey(id, payee_text, occurred_on))`)
+        .eq('household_id', householdId)
+        .eq('status', 'pending')
+        .order('confidence', { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data as unknown as Suggestion[];
+    },
+    staleTime: 30 * 1000,
+  });
+
+export interface MatchSetting {
+  ai_enabled: boolean;
+  steps: Array<{ provider: 'groq' | 'gemini' | 'openai'; model: string }>;
+  monthly_cap_usd: number;
+  daily_requests: number;
+}
+
+export const DEFAULT_SETTING: MatchSetting = {
+  ai_enabled: false,
+  steps: [
+    { provider: 'groq', model: 'openai/gpt-oss-120b' },
+    { provider: 'openai', model: 'gpt-6-luna' },
+    { provider: 'gemini', model: 'gemini-3.8-flash' },
+  ],
+  monthly_cap_usd: 0.9,
+  daily_requests: 150,
+};
+
+export const matchSettingQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: moneyKey(householdId, 'match-setting'),
+    queryFn: async (): Promise<MatchSetting> => {
+      const { data, error } = await supabase
+        .from('match_setting')
+        .select('ai_enabled, steps, monthly_cap_usd, daily_requests')
+        .eq('household_id', householdId)
+        .maybeSingle();
+      if (error) throw error;
+      return data
+        ? { ...(data as unknown as MatchSetting), monthly_cap_usd: Number(data.monthly_cap_usd) }
+        : DEFAULT_SETTING;
+    },
+  });
+
+export interface Accuracy {
+  task: string;
+  n: number;
+  rule_answered: number;
+  rule_correct: number;
+  ai_answered: number;
+  ai_correct: number;
+  sure_n: number;
+  sure_correct: number;
+  tested_at: string;
+}
+export interface PatternRow {
+  task: string;
+  pattern: string;
+  n: number;
+  correct: number;
+}
+export interface DecisionRow {
+  task: string;
+  pattern: string;
+  n: number;
+  accepted: number;
+  changed: number;
+  rejected: number;
+  pending: number;
+}
+export interface CostRow {
+  provider: string;
+  model: string;
+  requests: number;
+  failed: number;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+}
+export interface RunRow {
+  id: string;
+  trigger: string;
+  started_at: string;
+  finished_at: string | null;
+  stats: Record<string, number | boolean>;
+}
+
+export const matchReportQuery = (householdId: string, month: string) =>
+  queryOptions({
+    queryKey: moneyKey(householdId, 'match-report', month),
+    queryFn: async () => {
+      const [acc, pat, dec, cost, runs] = await Promise.all([
+        supabase.from('v_match_accuracy').select('task, n, rule_answered, rule_correct, ai_answered, ai_correct, sure_n, sure_correct, tested_at').eq('household_id', householdId),
+        supabase.from('v_match_accuracy_pattern').select('task, pattern, n, correct').eq('household_id', householdId),
+        supabase.from('v_match_decisions').select('task, pattern, n, accepted, changed, rejected, pending').eq('household_id', householdId),
+        supabase.from('v_ai_cost_month').select('provider, model, requests, failed, input_tokens, output_tokens, cost_usd').eq('household_id', householdId).eq('month', month),
+        supabase.from('match_run').select('id, trigger, started_at, finished_at, stats').eq('household_id', householdId).order('started_at', { ascending: false }).limit(8),
+      ]);
+      for (const r of [acc, pat, dec, cost, runs]) if (r.error) throw r.error;
+      return {
+        accuracy: (acc.data ?? []) as Accuracy[],
+        patterns: (pat.data ?? []) as PatternRow[],
+        decisions: (dec.data ?? []) as DecisionRow[],
+        cost: ((cost.data ?? []) as CostRow[]).map((c) => ({ ...c, cost_usd: Number(c.cost_usd) })),
+        runs: (runs.data ?? []) as unknown as RunRow[],
+      };
+    },
+    staleTime: 30 * 1000,
+  });
+
+/** The function's own view: its version and which keys are set (never the keys). */
+export const agentStatusQuery = () =>
+  queryOptions({
+    queryKey: ['match-agent-status'],
+    queryFn: async (): Promise<{ fn_version: string; keys: Record<'groq' | 'gemini' | 'openai', boolean> }> => {
+      const { data, error } = await supabase.functions.invoke('match-agent', { method: 'GET' });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60 * 1000,
+  });
+
+export class TooOften extends Error {}
+
+async function invoke<T>(body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke('match-agent', { body });
+  if (error) {
+    const status = (error as { context?: Response }).context?.status;
+    if (status === 429) throw new TooOften();
+    throw error;
+  }
+  return data as T;
+}
+
+export const checkNow = (householdId: string) =>
+  invoke<{ ok: true; stats: Record<string, number> }>({ household_id: householdId, mode: 'run' });
+export const evalBatch = (householdId: string) =>
+  invoke<{ ok: true; remaining: number; total: number; stats: Record<string, number> }>({ household_id: householdId, mode: 'eval' });
+export const checkKeys = (householdId: string) =>
+  invoke<{ ok: true; results: Array<{ provider: string; model: string; ok: boolean; error: string | null }> }>({ household_id: householdId, mode: 'check' });
+
+export async function saveMatchSetting(householdId: string, p: Partial<MatchSetting>) {
+  const { error } = await supabase.rpc('rpc_match_settings_save', { p_household: householdId, p: p as unknown as Json });
+  if (error) throw error;
+}
+
+export async function decide(ids: string[], status: 'accepted' | 'changed' | 'rejected', correction?: Record<string, unknown>) {
+  const { error } = await supabase.rpc('rpc_match_decide', {
+    p_ids: ids,
+    p_status: status,
+    p_correction: (correction ?? null) as unknown as Json,
+  });
+  if (error) throw error;
+}
+
+export async function linkLineProduct(lineId: string, productId: string | null, destiny: 'stock' | 'expense') {
+  const { error } = await supabase.rpc('rpc_line_link_product', { p_line: lineId, p_product: productId as string, p_destiny: destiny });
+  if (error) throw error;
+}
+
+export async function setLineCategory(lineId: string, categoryId: string) {
+  const { error } = await supabase.rpc('rpc_line_category', { p_line: lineId, p_category: categoryId });
+  if (error) throw error;
+}

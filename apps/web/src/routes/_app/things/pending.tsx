@@ -1,6 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, PackageCheck, Plus, Receipt } from 'lucide-react';
+import { ChevronLeft, PackageCheck, Plus, Receipt, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { AssetForm, initialFromLine } from '@/components/things/AssetForm';
 import { useThings } from '@/components/things/bits';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { decide, suggestionsQuery } from '@/lib/match/queries';
 import { invalidateThings, markNotThings, thingsErrorKey, type PendingLine } from '@/lib/things/queries';
 import { formatDay } from '@/lib/time';
 import { UNDO_MS } from '@/lib/undo';
@@ -30,6 +31,17 @@ function PendingPage() {
   const [entering, setEntering] = useState<PendingLine | null>(null);
   const [busy, setBusy] = useState(false);
   const lines = useMemo(() => things.pending.data ?? [], [things.pending.data]);
+  // Phase 9b: what the matcher suggests for each line (a clear name, maker, model, category).
+  const suggestions = useQuery(suggestionsQuery(householdId));
+  const aiFor = useMemo(
+    () => new Map((suggestions.data ?? []).filter((x) => x.task === 'line_thing' && x.line_id).map((x) => [x.line_id!, x])),
+    [suggestions.data],
+  );
+  const aiOf = (lineId: string | null) => (lineId ? aiFor.get(lineId) : undefined);
+  const decideQuietly = (lineIds: Array<string | null>, status: 'accepted' | 'rejected') => {
+    const ids = lineIds.map((id) => aiOf(id)?.id).filter((x): x is string => !!x);
+    if (ids.length) void decide(ids, status).catch(() => undefined);
+  };
 
   const bills = useMemo(() => {
     const map = new Map<string, PendingLine[]>();
@@ -44,6 +56,7 @@ function PendingPage() {
     setBusy(true);
     try {
       await markNotThings(rows);
+      decideQuietly(rows.map((r) => r.line_id), 'rejected');
       await invalidateThings(qc, householdId);
       toast.success(t('things.pending.notThings', { count: rows.length }), {
         duration: UNDO_MS,
@@ -104,6 +117,15 @@ function PendingPage() {
                     <li key={l.line_id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-white/[0.03] px-3.5 py-3" data-testid="pending-line">
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[15px]">{l.raw_name}</div>
+                        {aiOf(l.line_id)?.proposal.name && (
+                          <div className="flex items-center gap-1 truncate text-[12.5px] text-info">
+                            <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            {t('match.thingHint', {
+                              name: [aiOf(l.line_id)!.proposal.name, aiOf(l.line_id)!.proposal.model].filter(Boolean).join(' · '),
+                              pct: Math.round(aiOf(l.line_id)!.confidence * 100),
+                            })}
+                          </div>
+                        )}
                         <div className="text-[12.5px] text-muted">
                           {l.category_name ?? '—'}
                           {l.qty && Number(l.qty) !== 1 ? ` · ×${Number(l.qty)}` : ''}
@@ -141,10 +163,28 @@ function PendingPage() {
           assets={things.assets.data ?? []}
           tags={things.tags.data ?? []}
           fields={things.fields.data ?? []}
-          initial={entering ? initialFromLine(entering) : null}
-          onSaved={(id) => void navigate({ to: '/things/$assetId', params: { assetId: id } })}
+          initial={entering ? withSuggestion(initialFromLine(entering), aiOf(entering.line_id)?.proposal) : null}
+          onSaved={(id) => {
+            if (entering) decideQuietly([entering.line_id], 'accepted');
+            void navigate({ to: '/things/$assetId', params: { assetId: id } });
+          }}
         />
       )}
     </div>
   );
+}
+
+/** The matcher's name, maker, model and category on top of the bill line's own details. */
+function withSuggestion(
+  initial: ReturnType<typeof initialFromLine>,
+  p: { name?: string; maker?: string | null; model?: string | null; category_id?: string | null } | undefined,
+) {
+  if (!p) return initial;
+  return {
+    ...initial,
+    name: p.name ?? initial.name,
+    maker: p.maker ?? null,
+    model: p.model ?? null,
+    category_id: p.category_id ?? initial.category_id,
+  };
 }

@@ -4,7 +4,8 @@
 // rpc_memory_learn. Keys are bill_name_norm — the same as learned product names.
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import type { Json } from '../db.types';
-import { findSub, subsOf, type CategoryRow } from '../money/categoriesMap';
+import { builtInCategory as sharedBuiltIn } from '@match/memory';
+import type { CategoryRow } from '../money/categoriesMap';
 import { moneyKey } from '../money/queries';
 import { billNameNorm } from '../spine/normalise';
 import { supabase } from '../supabase';
@@ -46,14 +47,9 @@ export function lineMemory(memory: Memory | undefined, name: string | null | und
   return (key && memory?.lines.get(key)) || null;
 }
 
-/** Categories Gedara knows before anyone teaches it (Didula's choices, 2026-10-22). */
+/** Categories Gedara knows before anyone teaches it (shared with the match-agent run). */
 export function builtInCategory(categories: CategoryRow[], text: string | null | undefined): string | null {
-  if (billNameNorm(text) === 'etc top up') {
-    const transport = categories.find((c) => c.parent_id === null && c.key === 'transport');
-    const tolls = transport ? subsOf(categories, transport.id).find((c) => /toll/i.test(c.name)) : undefined;
-    return (tolls ?? findSub(categories, 'transport', 'Other transport'))?.id ?? null;
-  }
-  return null;
+  return sharedBuiltIn(categories, text);
 }
 
 export async function learn(householdId: string, items: LearnItem[]): Promise<number> {

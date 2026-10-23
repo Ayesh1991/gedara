@@ -19,6 +19,8 @@ export default defineConfig({
       '@scale': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scale'),
       '@media': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/media'),
       '@home': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/home'),
+      '@match': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/match'),
+      '@ai': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/ai'),
       zod: path.resolve(import.meta.dirname, 'node_modules/zod'),
     },
   },

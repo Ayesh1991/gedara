@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, FileUp, MessageSquareText, PiggyBank, Plus, Repeat, Search, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileUp, MessageSquareText, PiggyBank, Plus, Repeat, Search, Sparkles, Wallet } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { subsOf } from '@/lib/money/categoriesMap';
 import { cashflowQuery, monthTransactionsQuery, type Account } from '@/lib/money/queries';
+import { suggestionsQuery } from '@/lib/match/queries';
 import { smsQuery } from '@/lib/sms/queries';
 import { addMonths, formatMonth, todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -46,6 +47,8 @@ function MoneyPage() {
   const flow = useQuery(cashflowQuery(householdId));
   const sms = useQuery(smsQuery(householdId));
   const newAlerts = (sms.data ?? []).filter((s) => !s.ignored && !s.transaction_id).length;
+  const suggestions = useQuery(suggestionsQuery(householdId));
+  const toCheck = (suggestions.data ?? []).filter((s) => s.task === 'line_product' || s.task === 'line_category').length;
   const thisMonth = flow.data?.find((f) => f.month === month);
   const hasAnything = (flow.data?.length ?? 0) > 0 || (txs.data?.length ?? 0) > 0;
 
@@ -99,6 +102,13 @@ function MoneyPage() {
               <span className="tabular rounded-full bg-due/20 px-1.5 text-[11.5px] text-due">{newAlerts}</span>
             )}
           </Link>
+          {toCheck > 0 && (
+            <Link to="/money/review" className={buttonVariants({ variant: 'secondary', size: 'sm' })} aria-label={t('match.linkLabel', { count: toCheck })}>
+              <Sparkles className="h-4 w-4" aria-hidden />
+              {t('match.short')}
+              <span className="tabular rounded-full bg-info/20 px-1.5 text-[11.5px] text-info">{toCheck}</span>
+            </Link>
+          )}
           {canWrite && (
             <Link to="/money/import" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
               <FileUp className="h-4 w-4" aria-hidden />

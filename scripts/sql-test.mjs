@@ -35,6 +35,7 @@ const withMigrations = args.includes('--with-migrations');
 const fileArgs = args.filter((a) => !a.startsWith('--'));
 
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+// Supabase CLI pinned: 2.122.0 (2026-10-23) has no Windows build, and plain `npx supabase` picks the newest.
 const shell = process.platform === 'win32';
 
 /** Migration versions already applied to the linked project. */
@@ -42,7 +43,7 @@ function appliedVersions() {
   // Via a file: with shell=true on Windows an inline SQL argument would be split at spaces.
   const q = path.join(mkdtempSync(path.join(tmpdir(), 'gedara-sqlq-')), 'applied.sql');
   writeFileSync(q, 'select version from supabase_migrations.schema_migrations');
-  const out = execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-f', q], {
+  const out = execFileSync(npx, ['--yes', 'supabase@2.121.0', 'db', 'query', '--linked', '-f', q], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     shell,
@@ -111,7 +112,7 @@ for (const file of files) {
 
   let output = '';
   try {
-    output = execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-f', sqlPath], {
+    output = execFileSync(npx, ['--yes', 'supabase@2.121.0', 'db', 'query', '--linked', '-f', sqlPath], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
       shell,

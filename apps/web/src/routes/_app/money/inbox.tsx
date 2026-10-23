@@ -12,6 +12,7 @@ import { useMoneyBasics } from '@/components/money/useMoney';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { memoryQuery, migrateLocalMemories } from '@/lib/match/memory';
+import { suggestionsQuery, type Suggestion as AiSuggestion } from '@/lib/match/queries';
 import { createAccount, invalidateMoney, moneyErrorKey } from '@/lib/money/queries';
 import { analyseInbox, smsSigned, type UnknownAccount } from '@/lib/sms/match';
 import { smsCandidatesQuery, smsIgnore, smsQuery, smsReparse, smsUnlink, type InboxRow } from '@/lib/sms/queries';
@@ -42,6 +43,19 @@ function InboxPage() {
   const { accounts, categories } = useMoneyBasics(householdId);
   const sms = useQuery(smsQuery(householdId));
   const memory = useQuery(memoryQuery(householdId));
+  // Phase 9b: the matcher's suggestions for alerts (a category; a bill with a close total).
+  const aiSuggestions = useQuery(suggestionsQuery(householdId));
+  const aiBySms = useMemo(() => {
+    const map = new Map<string, { category?: AiSuggestion; link?: AiSuggestion }>();
+    for (const s of aiSuggestions.data ?? []) {
+      if (!s.sms_id) continue;
+      const e = map.get(s.sms_id) ?? {};
+      if (s.task === 'sms_category') e.category = s;
+      if (s.task === 'sms_link') e.link = s;
+      map.set(s.sms_id, e);
+    }
+    return map;
+  }, [aiSuggestions.data]);
 
   // Once per visit (Phase 9a): alerts an older parser read are read again, and this device's old
   // per-device memories move to the household. Both are quick no-ops after the first time.
@@ -248,6 +262,7 @@ function InboxPage() {
                       categories={categories.data ?? []}
                       candidates={openCandidates}
                       memory={memory.data}
+                      ai={aiBySms.get(item.rows[0]!.id)}
                       canWrite={canWrite}
                       onDone={refresh}
                     />

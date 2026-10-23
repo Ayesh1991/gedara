@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.9.1 — Phase 9b: matching runs by itself, AI in shadow
+- **Gedara now matches on its own, twice a day** (12:30 and 21:30, and "Check now"): one function run
+  per household looks at old pantry lines without a product, lines left in an "Other …" category, bank
+  alerts that still need a category or whose bill total is only close, and things bought but not
+  entered — Gedara's own rules first (learned names, memories, the inbox rules), an AI only for what
+  they can't decide. **Nothing is booked:** every suggestion waits for a Yes / Change / Skip.
+- **AI ladder, cheapest first, under US$1 a month** (Settings › Matching, owner switches it on): Groq
+  `gpt-oss-120b` (free) asks first; OpenAI `gpt-6-luna` ($0.10 / $0.50 per 1M tokens) only when it is
+  unsure; Gemini 3.8 Flash referees only a disagreement. The answer is what most votes agree on; how sure
+  it is comes from that agreement. A monthly cost cap (US$0.90, costs counted at each model's highest
+  announced price) and a daily request cap stop every call; each call's tokens and cost are recorded,
+  never its content.
+- **Safe by construction:** the AI never gets an SMS text, an account or card number, or a real id —
+  only shop / item names, amounts and dates, with products and categories as short labels. Every text
+  passes the OTP detector again and the finished request once more; if anything looks like a code the
+  request is not sent at all (tested with the whole OTP corpus planted in every field).
+- **Needs you** (Money): bill-line suggestions with how sure and why ("99 % sure · Gedara's rules",
+  "two AIs agree"). Yes on an old line links the product without inventing stock (it was used up long
+  ago) and teaches the bill name. Bank alerts show the AI's category or "probably the same purchase as
+  …"; Bought-not-entered pre-fills name, maker, model and category.
+- **Accuracy report** (Settings › Matching): the accuracy test asks the rules and the AI about lines and
+  alerts you already decided, without telling them the answer, and shows how often each was right —
+  overall, when "sure", per pattern — plus what you did with suggestions, this month's cost, recent runs.
+- Attention shows "N matches to check"; Diagnostics shows `match-agent-1` and how many AI keys are set.
+- Database: migrations 80–81 (`match_setting`, `match_suggestion`, `match_run`, `ai_usage`,
+  `match_eval`, report views, `rpc_match_*`, `rpc_line_link_product`, `rpc_line_category`, cron
+  `gedara-match`) and 82 (the key test is the owner's, once a minute, within the cap), schema 82;
+  function `match-agent-2`; `scripts/ai-secrets.mjs` sets the keys from a
+  hidden prompt. The matching engines moved to `supabase/functions/_shared/match` (the app imports them).
+
 ## 0.9.0 — Phase 9a: safer and smarter bank alerts (no AI yet)
 - **OTPs can never be stored:** a new detector, the same in the app, the `sms-ingest` function and the
   database, drops one-time codes and passwords in English, Sinhala and Tamil wording, also written right

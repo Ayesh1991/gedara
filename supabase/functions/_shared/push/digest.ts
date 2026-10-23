@@ -46,6 +46,8 @@ export function itemPhrase(i: DigestItem): string {
       return n === 1 ? '1 thing to enter' : `${n} things to enter`;
     case 'sms_review':
       return n === 1 ? '1 bank alert to review' : `${n} bank alerts to review`;
+    case 'match_review':
+      return n === 1 ? '1 match to check' : `${n} matches to check`;
     case 'scan_waiting':
       return n === 1 ? '1 scanned file to import' : `${n} scanned files to import`;
     case 'backup_due':
