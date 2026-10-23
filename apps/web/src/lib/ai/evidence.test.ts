@@ -94,6 +94,13 @@ describe('evidence: a payee confirms a payment', () => {
     expect(ev.get(card.id)).toMatchObject({ payee: 'Cargills', fromSmsId: shop.id });
   });
 
+  it('a Star Points shop note never explains a payment elsewhere (fuel, a transfer) at the same time', () => {
+    const fuel = sms({ kind: 'card_charge', amount: 10350, at: '2026-10-07 18:05', account_id: 'peoples', merchant_text: 'NW LOGISTICS AND MANAGEMECOLOMBO 05 LK' });
+    const transfer = ceft(50000, '2026-10-07 18:10', { merchant_text: 'Online Transfer Debit' });
+    const shop = sms({ kind: 'info', amount: null, at: '2026-10-07 18:00', merchant_text: 'Cargills', parser: 'starpoints.shop' });
+    expect(paymentEvidence([fuel, transfer, shop]).size).toBe(0);
+  });
+
   it('payees map to categories; the household’s own choice wins', () => {
     expect(payeeCategory(categories, new Map(), 'SLT bill')).toBe(C.internet);
     expect(payeeCategory(categories, new Map(), 'Mobitel recharge')).toBe(C.mobile);
@@ -215,6 +222,13 @@ describe('Check past bookings', () => {
     // already right → nothing
     expect(checkPastBookings(bundle({ booked: [booked(debit, { transaction_id: 'tx-d', type: 'expense', category_id: C.mobile })] }),
       [debit, receipt], new Map())).toEqual([]);
+  });
+
+  it('the same main category is no contradiction (Grocery vs Grocery › Other grocery)', () => {
+    const card = sms({ kind: 'card_charge', amount: 1950, at: '2026-08-25 10:00', account_id: 'peoples', merchant_text: 'CARGILLS FOODCITY RAJAGIRIYA', transaction_id: 'tx-g' });
+    const shop = sms({ kind: 'info', amount: null, at: '2026-08-25 10:01', merchant_text: 'Cargills', parser: 'starpoints.shop' });
+    expect(checkPastBookings(bundle({ booked: [booked(card, { transaction_id: 'tx-g', type: 'expense', category_id: C.grocery })] }),
+      [card, shop], new Map())).toEqual([]);
   });
 
   it('runMatching saves the audit once and leaves a decided one alone', async () => {

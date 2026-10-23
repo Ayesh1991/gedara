@@ -8,6 +8,7 @@
 // doesn't know yet (grouped as "new account seen").
 import type { SmsKind } from '../sms/parse.ts';
 import { reversedTxnId } from '../sms/parse.ts';
+import { billNameNorm } from './normalise.ts';
 
 export type { SmsKind };
 
@@ -160,7 +161,8 @@ export interface Evidence {
  * Which payment each payee's message confirms, over ALL alerts (also ones already booked or seen):
  *   a receipt (SLT bill, LECO, Mobitel, Dialog …) ↔ a bank debit / card charge of the same amount (or up to
  *   Rs 50 more: a fee) within 36 h — or on the same / next day when the receipt has no time;
- *   a Star Points "transaction at Cargills" note ↔ a card charge / debit within 30 minutes.
+ *   a Star Points "transaction at Cargills" note ↔ a card charge within 30 minutes that names the same
+ *   shop (the note is a loyalty card: the bill may have been paid in cash, so a time alone proves nothing).
  * One payment per message, the closest first.
  */
 /** When an alert's money moved: its own time, else when it arrived. */
@@ -181,7 +183,9 @@ export function paymentEvidence(sms: SmsRow[]): Map<string, Evidence> {
         if ((r.occurred_at && dt <= RECEIPT_WINDOW) || (!r.occurred_at && dt <= DAY)) pairs.push({ r, p, fee, dt });
       }
     } else if (r.parser === 'starpoints.shop' && r.merchant_text) {
+      const shop = billNameNorm(r.merchant_text).split(' ')[0]!;
       for (const p of payments) {
+        if (p.kind !== 'card_charge' || !shop || !billNameNorm(p.merchant_text).split(' ').some((w) => w.startsWith(shop))) continue;
         const dt = Math.abs(when(p) - when(r));
         if (dt <= SHOP_WINDOW) pairs.push({ r, p, fee: 0, dt });
       }

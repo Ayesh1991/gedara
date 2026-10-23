@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.4 — Phase 9b.1 fix: Star Points shop notes only confirm the same shop
+- A Star Points "transaction at Cargills" note is a loyalty card, not a payment: it now explains only a
+  card charge within 30 minutes **that names the same shop**. On prod data it had also "explained" a fuel
+  charge, a Havelock City charge and a Rs 50,000 transfer made around the same time.
+- "Check past bookings" (and the honest accuracy test) treat a main category and one of its own subs as
+  agreeing (Grocery vs Grocery › Other grocery); only a different category is a contradiction.
+- On the prod data the list is now: 7 card payments booked as spending → transfers, and SLT Rs 3,400
+  booked as Other → Internet. Function `match-agent-7`; no database change.
+
 ## 0.9.3 — Phase 9b.1 fix: Star Points shop notes no longer block an SMS import
 - Star Points' "transaction at Cargills Rewards on …" names a shop and a time but no amount. The database
   only let `unknown` alerts go without an amount, so this note was refused — and with it the whole batch of

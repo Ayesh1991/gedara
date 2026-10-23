@@ -199,6 +199,9 @@ const topOf = (categories: CategoryRow[], id: string | null) => {
   return c ? c.parent_id ?? c.id : null;
 };
 const sameMain = (categories: CategoryRow[], a: string | null, b: string | null) => !!a && topOf(categories, a) === topOf(categories, b);
+/** The same category, or a main category and one of its own subs. */
+const agrees = (categories: CategoryRow[], a: string | null, b: string | null) =>
+  categoryMatches(categories, a, b) || categoryMatches(categories, b, a);
 
 // ── Budget: the owner's monthly cap and daily request cap ──────────────────────
 export function makeBudget(bundle: Bundle): Budget & { calls: number; spent: number } {
@@ -683,7 +686,8 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
     if (b.type !== 'expense' || b.lines !== 1 || !b.category_id || !b.line_id || done.has(b.transaction_id)) continue;
     const e = evidence.get(b.sms_id);
     const want = e ? payeeCategory(bundle.categories, payees, e.payee) : null;
-    if (!e || !want || want === b.category_id) continue;
+    // a main category and one of its own subs agree (Grocery vs Grocery › Other grocery); siblings don't
+    if (!e || !want || agrees(bundle.categories, want, b.category_id)) continue;
     done.add(b.transaction_id);
     const proposal = { line_id: b.line_id, transaction_id: b.transaction_id, category_id: want, was_category_id: b.category_id, payee: e.payee, receipt_sms: e.fromSmsId };
     out.push({
@@ -744,7 +748,7 @@ export async function runEval(bundle: Bundle, env: RunEnv): Promise<RunOutput & 
     for (const s of smsBatch) {
       const e = evidence.get(s.id);
       const evCat = e ? payeeCategory(bundle.categories, payees, e.payee) : null;
-      if (evCat && !categoryMatches(bundle.categories, s.category_id, evCat) && !categoryMatches(bundle.categories, evCat, s.category_id)) {
+      if (evCat && !agrees(bundle.categories, s.category_id, evCat)) {
         out.evals.push({ task: 'sms_category', target_key: s.id, truth: { category_id: evCat, chosen: s.category_id, contradicted: true, payee: e!.payee }, rule: null, ai: null, rule_correct: null, ai_correct: null });
         continue;
       }
