@@ -14,7 +14,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { z } from 'npm:zod@4.6.5';
 import { type DropReason, type ParsedSms, parseSms } from '../_shared/sms/parse.ts';
 
-const FN_VERSION = 'sms-ingest-2';
+const FN_VERSION = 'sms-ingest-3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

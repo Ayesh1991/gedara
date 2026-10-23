@@ -12,9 +12,9 @@ import { decide, type AskItem, type Budget, type Decision, type UsageRow } from 
 import type { CallResult, Fetch, ModelRef, Provider } from '../ai/providers.ts';
 import type { AnswerOf } from '../ai/tasks.ts';
 import { hash32 } from '../sms/parse.ts';
-import { builtInCategory } from './memory.ts';
+import { builtInCategory, payeeCategory } from './memory.ts';
 import { billNameNorm } from './normalise.ts';
-import { analyseInbox, type AccountLite, type SmsRow, type TxCandidate } from './sms.ts';
+import { analyseInbox, namesNoShop, paymentEvidence, smsWhen, type AccountLite, type SmsRow, type TxCandidate } from './sms.ts';
 import { buildMatcher, nameScore, trigrams, type AliasRow, type MatchProduct } from './spine.ts';
 
 export interface CategoryRow {
@@ -50,6 +50,21 @@ export interface ThingRow {
   occurred_on: string;
 }
 
+/** How an alert of the last 120 days was booked (rpc_match_bundle, 9b.1). */
+export interface BookedRow {
+  sms_id: string;
+  transaction_id: string;
+  type: string;
+  account_id: string;
+  to_account_id: string | null;
+  total: number;
+  source: string;
+  lines: number;
+  line_id: string | null;
+  category_id: string | null;
+  has_fee: boolean;
+}
+
 export interface Settings {
   ai_enabled: boolean;
   steps?: ModelRef[];
@@ -68,7 +83,9 @@ export interface Bundle {
   merchant_memory: Array<{ merchant_norm: string; category_id: string | null; account_id: string | null }>;
   line_memory: Array<{ name_norm: string; category_id: string }>;
   suggestions: Array<{ task: string; target_key: string; input_hash: string; status: string }>;
+  payee_category?: Array<{ payee_norm: string; category_id: string }>;
   // run
+  booked?: BookedRow[];
   sms?: SmsRow[];
   candidates?: TxCandidate[];
   linked?: string[];
@@ -82,7 +99,7 @@ export interface Bundle {
 }
 
 export interface SuggestionOut {
-  task: 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link';
+  task: 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise';
   target_key: string;
   line_id?: string;
   sms_id?: string;
@@ -120,6 +137,14 @@ export interface RunEnv {
 const SUGGEST_AT = 0.5;
 /** Items per run (each run must finish well inside the function's time limit). */
 const MAX = { lines: 48, other: 36, sms: 40, link: 20, things: 20, eval: 24 };
+/** Your past choices count only when this many agree (and none disagrees); they are never "sure". */
+const HISTORY_AT = 3;
+const HISTORY_CONFIDENCE = 0.7;
+const EVIDENCE_CONFIDENCE = 0.98;
+const AUDIT_CONFIDENCE = 0.95;
+/** A transfer debit and the card payment it paid: at most this far apart, and Rs 0–50 fee. */
+const PAIR_WINDOW = 48 * 60 * 60 * 1000;
+const PAIR_FEE = 50;
 const DEFAULT_STEPS: ModelRef[] = [
   { provider: 'groq', model: 'openai/gpt-oss-120b' },
   { provider: 'openai', model: 'gpt-6-luna' },
@@ -168,6 +193,12 @@ function categoryLabels(categories: CategoryRow[]): Labels {
 /** The predicted category is the known one, or a sub-category of it (a person may have picked a top). */
 const categoryMatches = (categories: CategoryRow[], predicted: string | null, truth: string | null) =>
   !!predicted && !!truth && (predicted === truth || categories.find((c) => c.id === predicted)?.parent_id === truth);
+/** The main category (Services for Services › Internet). */
+const topOf = (categories: CategoryRow[], id: string | null) => {
+  const c = id ? categories.find((x) => x.id === id) : undefined;
+  return c ? c.parent_id ?? c.id : null;
+};
+const sameMain = (categories: CategoryRow[], a: string | null, b: string | null) => !!a && topOf(categories, a) === topOf(categories, b);
 
 // ── Budget: the owner's monthly cap and daily request cap ──────────────────────
 export function makeBudget(bundle: Bundle): Budget & { calls: number; spent: number } {
@@ -387,6 +418,13 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
     const linkRows: Array<{ s: SmsRow; byLabel: Map<string, string>; hash: string }> = [];
     const suspense = new Set(bundle.accounts.filter((a) => a.is_suspense).map((a) => a.id));
     const linkedNow = new Set(bundle.linked ?? []);
+    const payees = new Map((bundle.payee_category ?? []).map((p) => [p.payee_norm, p.category_id]));
+    const audit = checkPastBookings(bundle, sms, payees);
+    for (const a of audit) {
+      open.add(`${a.task}:${a.target_key}`);
+      if (!unchanged(a.task, a.target_key, a.input_hash)) out.suggestions.push(a);
+    }
+    const contradicted = new Set(audit.flatMap((a) => (a.proposal.delete_tx as string[] | undefined) ?? [String(a.proposal.transaction_id)]));
     for (const s of fresh) {
       open.add(`sms_category:${s.id}`);
       open.add(`sms_link:${s.id}`);
@@ -394,12 +432,32 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
       const amount = analysis.lkr.get(s.id)?.amount ?? s.amount;
       if (!sug || amount === null) continue;
 
-      // a merchant nobody taught yet → its category
-      if (sug.kind === 'expense') {
+      // its category: evidence (a payee's confirmation) → memories / built-ins → your past choices → the AI
+      const evidenced = sug.kind === 'expense' && sug.evidence ? payeeCategory(bundle.categories, payees, sug.evidence) : null;
+      if (sug.kind === 'expense' && evidenced) {
+        const hash = hashOf(['evidence', sug.evidence, evidenced]);
+        if (!unchanged('sms_category', s.id, hash)) {
+          out.suggestions.push({
+            task: 'sms_category', target_key: s.id, sms_id: s.id, proposal: { category_id: evidenced, evidence: sug.evidence },
+            confidence: EVIDENCE_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hash,
+          });
+        }
+      } else if (sug.kind === 'expense') {
         const memo = sug.memo ?? s.merchant_text;
-        const remembered = memMerchant.get(billNameNorm(memo))?.category_id ?? builtInCategory(bundle.categories, memo);
+        const noShop = !sug.evidence && namesNoShop(memo);
+        // a bank's own wording ("CEFT Transfer Debit") names no shop: a single remembered choice is no evidence
+        const remembered = noShop ? null : memMerchant.get(billNameNorm(memo))?.category_id ?? builtInCategory(bundle.categories, memo);
+        const past = remembered ? null : pastChoice(bundle.booked ?? [], sms, s, amount, contradicted);
         const hash = hashOf([memo, Math.round(amount), cats.list.length, steps]);
-        if (!remembered && memo && !unchanged('sms_category', s.id, hash) && catItems.length < MAX.sms) {
+        if (past) {
+          const h = hashOf(['history', past.category_id, past.count]);
+          if (!unchanged('sms_category', s.id, h)) {
+            out.suggestions.push({
+              task: 'sms_category', target_key: s.id, sms_id: s.id, proposal: { category_id: past.category_id, past: past.count },
+              confidence: HISTORY_CONFIDENCE, pattern: 'history', models: [], input_hash: h,
+            });
+          }
+        } else if (!remembered && !noShop && memo && !unchanged('sms_category', s.id, hash) && catItems.length < MAX.sms) {
           try {
             catItems.push({ i: catRows.length, payload: { merchant: smsText(memo), amount: Math.round(amount), kind: s.kind } });
             catRows.push(s);
@@ -522,6 +580,120 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
   return out;
 }
 
+// ── Your past choices (a weak hint) ──────────────────────────────────────────
+/**
+ * What you booked before for the same alert wording and a similar amount (±5 %): only when at least
+ * three entries agree and none disagrees, and never ones the evidence contradicts.
+ */
+export function pastChoice(
+  booked: BookedRow[], sms: SmsRow[], s: SmsRow, amount: number, contradicted: ReadonlySet<string>,
+): { category_id: string; count: number } | null {
+  const key = billNameNorm(s.merchant_text);
+  if (!key) return null;
+  const byId = new Map(sms.map((m) => [m.id, m]));
+  const seen = new Set<string>();
+  const votes = new Map<string, number>();
+  for (const b of booked) {
+    if (b.type !== 'expense' || b.lines !== 1 || !b.category_id || b.sms_id === s.id) continue;
+    if (seen.has(b.transaction_id) || contradicted.has(b.transaction_id)) continue;
+    const m = byId.get(b.sms_id);
+    if (!m || m.amount === null || billNameNorm(m.merchant_text) !== key) continue;
+    if (Math.abs(m.amount - amount) > amount * 0.05) continue;
+    seen.add(b.transaction_id);
+    votes.set(b.category_id, (votes.get(b.category_id) ?? 0) + 1);
+  }
+  if (votes.size !== 1) return null;
+  const [category_id, count] = [...votes][0]!;
+  return count >= HISTORY_AT ? { category_id, count } : null;
+}
+
+// ── "Check past bookings": evidence that disagrees with what was booked (9b.1) ──
+/**
+ *   sms_rebook — a transfer debit ("CEFT Transfer Debit Rs 25,025") booked as an expense while a card
+ *     payment of Rs 25,000 (± up to Rs 50 fee) arrived within 48 h: it was a transfer to that card.
+ *     The proposal is rpc_sms_rebook's parameter (join the card payment's transfer, or a new transfer).
+ *   sms_recategorise — a booked expense whose payee's confirmation names another category
+ *     (Dialog says Rs 198 was a reload; the line says Banking & fees).
+ * Nothing changes until a person taps Fix.
+ */
+export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: ReadonlyMap<string, string>): SuggestionOut[] {
+  const booked = bundle.booked ?? [];
+  if (!booked.length) return [];
+  const out: SuggestionOut[] = [];
+  const bySms = new Map(booked.map((b) => [b.sms_id, b]));
+  const smsById = new Map(sms.map((m) => [m.id, m]));
+  const cents = (n: number) => Math.round(n * 100);
+  const services = bundle.categories.find((c) => c.parent_id === null && c.key === 'services');
+  const feeCategory = bundle.categories.find((c) => c.parent_id === services?.id && c.name === 'Banking & fees')?.id ?? null;
+  const done = new Set<string>();
+  const usedPayments = new Set<string>();
+
+  const debits = booked
+    .filter((b) => b.type === 'expense' && b.source === 'sms' && b.lines <= 1)
+    .map((b) => ({ b, d: smsById.get(b.sms_id) }))
+    .filter((x): x is { b: BookedRow; d: SmsRow } =>
+      !!x.d && x.d.kind === 'bank_debit' && x.d.amount !== null && !!x.d.account_id && namesNoShop(x.d.merchant_text));
+  for (const { b, d } of debits) {
+    if (done.has(b.transaction_id)) continue;
+    const hit = sms
+      .filter((p) => p.kind === 'card_payment' && p.amount !== null && !!p.account_id && p.account_id !== d.account_id && !usedPayments.has(p.id))
+      .map((p) => ({ p, fee: cents(d.amount!) - cents(p.amount!), dt: Math.abs(smsWhen(p) - smsWhen(d)) }))
+      .filter((x) => x.fee >= 0 && x.fee <= PAIR_FEE * 100 && x.dt <= PAIR_WINDOW)
+      .sort((x, y) => x.dt - y.dt)[0];
+    if (!hit) continue;
+    const pb = hit.p.transaction_id ? bySms.get(hit.p.id) : undefined;
+    if (hit.p.transaction_id && !pb) continue; // booked before the 120 days: leave it
+    const deleteTx = [b.transaction_id];
+    let transferId: string | null = null;
+    if (pb?.type === 'transfer') {
+      if (cents(pb.total) !== cents(hit.p.amount!)) continue;
+      // the transfer already has its bank side: this debit was something else
+      if (sms.some((m) => m.transaction_id === pb.transaction_id && m.kind === 'bank_debit')) continue;
+      transferId = pb.transaction_id;
+    } else if (pb) {
+      if (pb.type !== 'expense' && pb.type !== 'income') continue;
+      if (pb.source !== 'sms' || pb.lines > 1) continue;
+      if (pb.transaction_id !== b.transaction_id) deleteTx.push(pb.transaction_id);
+    }
+    usedPayments.add(hit.p.id);
+    deleteTx.forEach((t) => done.add(t));
+    const proposal = {
+      debit_sms: d.id,
+      delete_tx: deleteTx,
+      transfer_id: transferId,
+      to_account_id: transferId ? null : hit.p.account_id,
+      payment_sms: transferId ? null : hit.p.id,
+      total: hit.p.amount!,
+      fee: hit.fee / 100,
+      fee_category_id: hit.fee > 0 ? feeCategory : null,
+      // for the person deciding
+      from_account_id: d.account_id,
+      card_account_id: hit.p.account_id,
+      was_category_id: b.category_id,
+      transaction_id: b.transaction_id,
+    };
+    out.push({
+      task: 'sms_rebook', target_key: d.id, sms_id: d.id, proposal,
+      confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['rebook', proposal]),
+    });
+  }
+
+  const evidence = paymentEvidence(sms);
+  for (const b of booked) {
+    if (b.type !== 'expense' || b.lines !== 1 || !b.category_id || !b.line_id || done.has(b.transaction_id)) continue;
+    const e = evidence.get(b.sms_id);
+    const want = e ? payeeCategory(bundle.categories, payees, e.payee) : null;
+    if (!e || !want || want === b.category_id) continue;
+    done.add(b.transaction_id);
+    const proposal = { line_id: b.line_id, transaction_id: b.transaction_id, category_id: want, was_category_id: b.category_id, payee: e.payee, receipt_sms: e.fromSmsId };
+    out.push({
+      task: 'sms_recategorise', target_key: b.sms_id, sms_id: b.sms_id, line_id: b.line_id, proposal,
+      confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['recategorise', proposal]),
+    });
+  }
+  return out;
+}
+
 // ── The accuracy test: questions with a known answer ──────────────────────────
 // Learned names are left out (they'd be right by construction): the test measures the trigram rules
 // and the AI on lines and alerts a person already decided. It runs in batches; `remaining` says how
@@ -563,7 +735,31 @@ export async function runEval(bundle: Bundle, env: RunEnv): Promise<RunOutput & 
     const cats = categoryLabels(bundle.categories);
     const items: AskItem<AnswerOf<'sms_category'>>[] = [];
     const rows: typeof smsBatch = [];
+    // 9b.1: a payee's confirmation outranks what a person picked. Where it disagrees the choice is left
+    // out of the score (it is in "Check past bookings"); where it agrees it is evidence-confirmed. An
+    // alert that names no shop is never asked (the AI could only guess), only counted.
+    const payees = new Map((bundle.payee_category ?? []).map((p) => [p.payee_norm, p.category_id]));
+    const evidence = paymentEvidence(bundle.sms ?? []);
+    const evidenced = new Map<string, string>();
     for (const s of smsBatch) {
+      const e = evidence.get(s.id);
+      const evCat = e ? payeeCategory(bundle.categories, payees, e.payee) : null;
+      if (evCat && !categoryMatches(bundle.categories, s.category_id, evCat) && !categoryMatches(bundle.categories, evCat, s.category_id)) {
+        out.evals.push({ task: 'sms_category', target_key: s.id, truth: { category_id: evCat, chosen: s.category_id, contradicted: true, payee: e!.payee }, rule: null, ai: null, rule_correct: null, ai_correct: null });
+        continue;
+      }
+      if (evCat) {
+        evidenced.set(s.id, evCat);
+        out.evals.push({
+          task: 'sms_category', target_key: s.id, truth: { category_id: s.category_id, evidence: true, payee: e!.payee },
+          rule: { category_id: evCat, sure: true, evidence: true, main_correct: true }, ai: null, rule_correct: true, ai_correct: null,
+        });
+        continue;
+      }
+      if (namesNoShop(s.merchant_text)) {
+        out.evals.push({ task: 'sms_category', target_key: s.id, truth: { category_id: s.category_id, no_shop: true }, rule: null, ai: null, rule_correct: null, ai_correct: null });
+        continue;
+      }
       try {
         items.push({ i: rows.length, payload: { merchant: smsText(s.merchant_text), amount: Math.round(Number(s.amount)), kind: s.kind } });
         rows.push(s);
@@ -583,8 +779,11 @@ export async function runEval(bundle: Bundle, env: RunEnv): Promise<RunOutput & 
       const id = d?.answer ? cats.toId.get(d.answer.category) ?? null : null;
       out.evals.push({
         task: 'sms_category', target_key: s.id, truth: { category_id: s.category_id },
-        rule: built ? { category_id: built, sure: true } : null,
-        ai: d?.answer ? { category_id: id, confidence: d.confidence, pattern: d.pattern, models: d.votes.map((v) => v.model) } : null,
+        rule: built ? { category_id: built, sure: true, main_correct: sameMain(bundle.categories, built, s.category_id) } : null,
+        ai: d?.answer ? {
+          category_id: id, confidence: d.confidence, pattern: d.pattern, models: d.votes.map((v) => v.model),
+          main_correct: sameMain(bundle.categories, id, s.category_id),
+        } : null,
         rule_correct: built ? categoryMatches(bundle.categories, built, s.category_id) : null,
         ai_correct: d?.answer ? categoryMatches(bundle.categories, id, s.category_id) : null,
       });

@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.9.2 — Phase 9b.1: evidence before guesses
+- **Payees' own messages are read:** SLTBILL, LECO BILL, SLT-Mobitel, Dialog (5555) and Star Points
+  confirm a payment ("Your bill payment Rs.3400.00 has been received", "activated the Rs.198 … plan",
+  "reload of Rs. 198.00 made on 20/10/2026 18:20:50", "transaction at Cargills Rewards on …"). They are
+  a new kind, *receipt*: they never become money themselves; anything else from these senders (ads,
+  quota notices) is left out. Sampath savings ··1110 and FD ··2229 (SAMPATHTXN) are read too.
+- **Evidence first:** a bank debit or card charge of the same amount (or up to Rs 50 more: a fee) within
+  36 h of a payee's confirmation is that payment; the payee sets the category (SLT bill → Internet,
+  Mobitel / Dialog → Mobile & telephone, LECO → Electricity, Cargills → Grocery; changeable in Settings ›
+  Matching). Then Gedara's rules; then **your past choices** — only when at least three agree and none
+  disagrees, never "sure"; the AI last. Alerts that name no shop ("CEFT Transfer Debit") are never sent
+  to the AI and no longer reuse a single remembered choice.
+- **Check past bookings** (Needs you): bookings the evidence contradicts are listed. A CEFT debit booked
+  as spending while the card it paid shows the payment (Rs 25,025 vs Rs 25,000) → **Fix** makes it a
+  transfer to that card plus a Rs 25 fee in one database step, both alerts linked; a booked category a
+  payee's confirmation disagrees with → Fix changes it. **Keep** leaves it. Nothing changes without a tap.
+- **Honest accuracy:** the test counts answers confirmed by evidence, leaves out choices the evidence
+  contradicts (they are in Check past bookings) and keeps "no shop named" alerts apart from the AI's
+  score; it also shows main-category accuracy.
+- OTP rule unchanged and re-tested: year-first dates (2026/09/22), a single-X mask (X2229) and Sampath's
+  fixed closing line "Get protected -Do not Share OTP" are explained; a currency word must stand on its
+  own ("offers. 482913" is not "Rs 482913" — a gap found by the new tests); SAMPATHTXN's own references
+  are allowed for that sender only. Every corpus OTP is still dropped, also "as if from SAMPATHTXN".
+- Database: migrations 85 (`sms_is_secret_from`, kind `receipt`, `payee_category` + `rpc_payee_category_save`)
+  and 86 (`rpc_sms_rebook`, tasks `sms_rebook` / `sms_recategorise`, bundle gains bookings and the payee
+  map, accuracy view gains evidence columns), schema 86; functions `sms-ingest-3`, `match-agent-6`.
+
 ## 0.9.1 — Phase 9b: matching runs by itself, AI in shadow
 - **Gedara now matches on its own, twice a day** (12:30 and 21:30, and "Check now"): one function run
   per household looks at old pantry lines without a product, lines left in an "Other …" category, bank

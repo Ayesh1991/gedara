@@ -6,7 +6,7 @@ import type { Json } from '../db.types';
 import { moneyKey } from '../money/queries';
 import { supabase } from '../supabase';
 
-export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link';
+export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise';
 
 export interface Suggestion {
   id: string;
@@ -22,6 +22,24 @@ export interface Suggestion {
     name?: string;
     maker?: string | null;
     model?: string | null;
+    /** sms_category: the payee whose confirmation decided it (pattern evidence); how many past choices agree (history) */
+    evidence?: string;
+    past?: number;
+    /** sms_rebook (rpc_sms_rebook's parameter) / sms_recategorise (Phase 9b.1) */
+    debit_sms?: string;
+    delete_tx?: string[];
+    transfer_id?: string | null;
+    to_account_id?: string | null;
+    payment_sms?: string | null;
+    total?: number;
+    fee?: number;
+    fee_category_id?: string | null;
+    from_account_id?: string;
+    card_account_id?: string;
+    was_category_id?: string | null;
+    line_id?: string;
+    payee?: string;
+    receipt_sms?: string;
   };
   confidence: number;
   pattern: string;
@@ -98,6 +116,11 @@ export interface Accuracy {
   sure_n: number;
   sure_correct: number;
   tested_at: string;
+  /** 9b.1: right main category; confirmed by a payee's evidence; past choices evidence contradicts; no shop named */
+  ai_main_correct: number;
+  evidence_n: number;
+  contradicted_n: number;
+  no_shop_n: number;
 }
 export interface PatternRow {
   task: string;
@@ -136,7 +159,7 @@ export const matchReportQuery = (householdId: string, month: string) =>
     queryKey: moneyKey(householdId, 'match-report', month),
     queryFn: async () => {
       const [acc, pat, dec, cost, runs] = await Promise.all([
-        supabase.from('v_match_accuracy').select('task, n, rule_answered, rule_correct, ai_answered, ai_correct, sure_n, sure_correct, tested_at').eq('household_id', householdId),
+        supabase.from('v_match_accuracy').select('task, n, rule_answered, rule_correct, ai_answered, ai_correct, sure_n, sure_correct, tested_at, ai_main_correct, evidence_n, contradicted_n, no_shop_n').eq('household_id', householdId),
         supabase.from('v_match_accuracy_pattern').select('task, pattern, n, correct').eq('household_id', householdId),
         supabase.from('v_match_decisions').select('task, pattern, n, accepted, changed, rejected, pending').eq('household_id', householdId),
         supabase.from('v_ai_cost_month').select('provider, model, requests, failed, input_tokens, output_tokens, cost_usd').eq('household_id', householdId).eq('month', month),
@@ -201,6 +224,44 @@ export async function decide(ids: string[], status: 'accepted' | 'changed' | 're
 
 export async function linkLineProduct(lineId: string, productId: string | null, destiny: 'stock' | 'expense') {
   const { error } = await supabase.rpc('rpc_line_link_product', { p_line: lineId, p_product: productId as string, p_destiny: destiny });
+  if (error) throw error;
+}
+
+/** "Check past bookings" (9b.1): the alerts a fix is about (parsed fields only). */
+export interface PastAlert {
+  id: string;
+  sender: string;
+  kind: string;
+  amount: number | null;
+  merchant_text: string | null;
+  occurred_on: string;
+  account_id: string | null;
+}
+
+export const pastAlertsQuery = (householdId: string, ids: string[]) =>
+  queryOptions({
+    queryKey: moneyKey(householdId, 'match-past-alerts', ids.slice().sort().join(',')),
+    queryFn: async (): Promise<Map<string, PastAlert>> => {
+      if (!ids.length) return new Map();
+      const { data, error } = await supabase
+        .from('sms_message')
+        .select('id, sender, kind, amount, merchant_text, occurred_on, account_id')
+        .eq('household_id', householdId)
+        .in('id', ids);
+      if (error) throw error;
+      return new Map((data as PastAlert[]).map((a) => [a.id, a]));
+    },
+    staleTime: 30 * 1000,
+  });
+
+/** One database step: the wrong expense goes, the debit joins (or makes) the transfer, the fee is its own expense. */
+export async function rebook(p: NonNullable<Suggestion['proposal']>) {
+  const { error } = await supabase.rpc('rpc_sms_rebook', {
+    p: {
+      debit_sms: p.debit_sms, delete_tx: p.delete_tx ?? [], transfer_id: p.transfer_id ?? null, to_account_id: p.to_account_id ?? null,
+      payment_sms: p.payment_sms ?? null, total: p.total, fee: p.fee ?? 0, fee_category_id: p.fee_category_id ?? null,
+    } as unknown as Json,
+  });
   if (error) throw error;
 }
 

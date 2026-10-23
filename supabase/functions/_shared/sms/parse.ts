@@ -15,10 +15,10 @@ import { isSecret } from './secret.ts';
 
 export { FORWARD_TEXT_REGEX, isSecret, secretReason } from './secret.ts';
 
-export const PARSER_VERSION = 2;
+export const PARSER_VERSION = 3;
 
 export type SmsKind =
-  | 'card_charge' | 'card_payment' | 'bank_debit' | 'bank_credit' | 'atm' | 'refund' | 'info' | 'unknown';
+  | 'card_charge' | 'card_payment' | 'bank_debit' | 'bank_credit' | 'atm' | 'refund' | 'info' | 'receipt' | 'unknown';
 
 /** One SMS as the phone saw it. receivedAt = ISO timestamp (or epoch ms) of arrival. */
 export interface RawSms {
@@ -47,7 +47,8 @@ export interface ParsedSms {
   occurred_at: string | null; // HH:MM:SS, Asia/Colombo
 }
 
-export type DropReason = 'sender' | 'otp' | 'promo' | 'no_amount' | 'invalid';
+/** 'notice': a payee's message that confirms no payment (an ad, a low balance, a quota used up). */
+export type DropReason = 'sender' | 'otp' | 'promo' | 'no_amount' | 'notice' | 'invalid';
 
 export type SmsVerdict = { keep: true; sms: ParsedSms } | { keep: false; reason: DropReason };
 
@@ -56,13 +57,30 @@ export type SmsVerdict = { keep: true; sms: ParsedSms } | { keep: false; reason:
 const SENDERS: Record<string, string> = {
   BOC: 'BOC',
   SAMPCCTXN: 'Sampath',
+  SAMPATHTXN: 'Sampath', // the Sampath bank account and fixed deposit (Phase 9b.1)
   PEOPLESCARD: "People's",
   SEYLANBANK: 'Seylan',
   SEYLAN: 'Seylan',
+  // Payees' own confirmations (Phase 9b.1, kind `receipt`): they explain a bank / card payment, never
+  // money of their own. Only what a receipt parser recognises is kept.
+  SLTBILL: 'SLT',
+  SLTMOBITEL: 'SLT-Mobitel',
+  '5555': 'Dialog',
+  STARPOINTS: 'Star Points',
+  LECOBILL: 'LECO',
 };
+const RECEIPT_SENDERS = new Set(['SLTBILL', 'SLTMOBITEL', '5555', 'STARPOINTS', 'LECOBILL']);
 
 /** The sender ids the phone should forward (for the forwarder's sender regex). */
-export const FORWARD_SENDERS = ['BOC', 'SAMPCCTXN', 'PeoplesCard', 'Seylan Bank'] as const;
+export const FORWARD_SENDERS = [
+  'BOC', 'SAMPCCTXN', 'SAMPATHTXN', 'PeoplesCard', 'Seylan Bank',
+  'SLTBILL', 'SLT-Mobitel', 'SLTMobitel', '5555', 'Star Points', 'LECO BILL',
+] as const;
+
+/** Is this sender a payee that only confirms payments (SLT, Dialog, LECO …)? */
+export function isReceiptSender(sender: string): boolean {
+  return RECEIPT_SENDERS.has(senderKey(sender));
+}
 
 export function senderKey(sender: string): string {
   return sender.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
@@ -135,6 +153,12 @@ function time12(text: string): string | null {
   let h = Number(m[1]) % 12;
   if (m[4]!.toUpperCase() === 'P') h += 12;
   return `${pad(h)}:${m[2]}:${m[3] ?? '00'}`;
+}
+
+/** "06:36:44" (24 h) → "06:36:44". */
+function time24(text: string): string | null {
+  const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(text.trim());
+  return m && Number(m[1]) < 24 ? `${pad(Number(m[1]))}:${m[2]}:${m[3] ?? '00'}` : null;
 }
 
 /** "05" + "SEP" without a year: the year of arrival, or the one before when that would be later. */
@@ -409,7 +433,109 @@ const seylan: Parser = (body) => {
   return null;
 };
 
+// ── Sampath bank account + fixed deposit (SAMPATHTXN, Phase 9b.1) ───────────
+// "LKR 50.00 debited from AC **1110 for DORMANT_CHG_052026 04/05/2026 06:36:44 To Inq Call 0112303050 Get
+//  protected -Do not Share OTP"
+// "LKR 2,104.04 credited to AC **2229 for FD Interest X2229:Int.Pd:21-11-2025 to 20-05-2026 20/05/2026 23:04:21 …"
+// "FD **2229 renewed LKR 61,033.85 for 6 Month(s) 20/05/2026 23:25:20 …"
+const SAMPATH_AC_RE = new RegExp(
+  `^(?:LKR|Rs\\.?)\\s*${N}\\s+(debited from|credited to)\\s+AC\\s*\\**\\s*(\\d{3,4})\\s+for\\s+(.+?)\\s+${DMY}\\s+(\\d{1,2}:\\d{2}:\\d{2})`,
+  'i',
+);
+const SAMPATH_FD_RENEW_RE = new RegExp(`^FD\\s*\\**\\s*(\\d{3,4})\\s+renewed\\s+(?:LKR|Rs\\.?)\\s*${N}`, 'i');
+
+const sampathAccount: Parser = (body) => {
+  let m = SAMPATH_AC_RE.exec(body);
+  if (m) {
+    const debit = m[2]!.toLowerCase().startsWith('debited');
+    // "FD Interest X2229:Int.Pd:…" → "FD Interest"; "DORMANT_CHG_052026" → "DORMANT CHG"
+    const desc = m[4]!.split(/\s+X?\d|:/)[0]!.replace(/_\d+$/, '').replace(/_/g, ' ');
+    return {
+      parser: debit ? 'sampath.account_debit' : 'sampath.account_credit', kind: debit ? 'bank_debit' : 'bank_credit',
+      last_digits: m[3]!, currency: 'LKR', amount: parseMoney(m[1]), merchant_text: clean(desc), balance_after: null,
+      bank_txn_id: null, occurred_on: dmy(m[5]!), occurred_at: time24(m[6]!),
+    };
+  }
+  m = SAMPATH_FD_RENEW_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'sampath.fd_renewed', kind: 'info', last_digits: m[1]!, currency: 'LKR', amount: parseMoney(m[2]),
+      merchant_text: 'FD renewed', balance_after: null, bank_txn_id: null,
+    };
+  }
+  return null;
+};
+
+// ── Payees' confirmations (kind `receipt`, Phase 9b.1) ───────────────────────
+// SLTBILL  "Your bill payment Rs.3400.00 has been received to account number 0034847977 (94113602084) on
+//           2026/09/22:02:34:51 AM. Thank you."
+// LECO     "A payment of Rs. 19,700.00 on A/C: 0103482401 is received by 06-MAY-26 14:40:00"
+// Mobitel  "You have recharged Rs. 50.00 Your account balance is Rs. 50.55 ,expires on 13/11/2026 …"
+// Dialog   "You have successfully activated the Rs.198 Any Network Voice plan …"
+// Star Points "… for the Dialog Mobile reload of Rs. 198.00/- made on 20/10/2026 18:20:50 …"
+//             "… for your transaction at Cargills Rewards on 2026/10/20 21:10:25 …" (a note: no amount)
+const SLT_BILL_RE = new RegExp(
+  `bill payment\\s+Rs\\.?\\s*${N}\\s+has been received.*?\\bon\\s+(\\d{4})\\/(\\d{1,2})\\/(\\d{1,2})[:\\s]+(\\d{1,2}:\\d{2}(?::\\d{2})?\\s*[AP]M)`,
+  'i',
+);
+const LECO_RE = new RegExp(
+  `payment of\\s+Rs\\.?\\s*${N}\\s+on\\s+A\\/C:?\\s*\\d+\\s+is received by\\s+(\\d{1,2})-([A-Za-z]{3})-(\\d{2,4})\\s+(\\d{1,2}:\\d{2}:\\d{2})`,
+  'i',
+);
+const MOBITEL_RECHARGE_RE = new RegExp(`You have recharged\\s+Rs\\.?\\s*${N}`, 'i');
+const DIALOG_PLAN_RE = new RegExp(`successfully activated the\\s+Rs\\.?\\s*${N}\\b`, 'i');
+// "Work & Learn quota of Rs.672 Work & Learn Plan activated on 27/09/2026 is over." — names the purchase
+// and its day (the plan's own activation message may be missing)
+const DIALOG_QUOTA_RE = new RegExp(`quota of\\s+Rs\\.?\\s*${N}\\b.*?\\bactivated on\\s+${DMY}`, 'i');
+const STAR_RELOAD_RE = new RegExp(
+  `(Dialog|Mobitel|Airtel|Hutch)[\\w ]*?reload of\\s+Rs\\.?\\s*${N}\\s*(?:\\/-)?\\s*made on\\s+${DMY}\\s+(\\d{1,2}:\\d{2}:\\d{2})`,
+  'i',
+);
+const STAR_SHOP_RE = /transaction at\s+(.+?)\s+on\s+(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}:\d{2}:\d{2})/i;
+
+const yearFirst = (y: string, m: string, d: string) => `${y}-${pad(Number(m))}-${pad(Number(d))}`;
+const receipt = (parser: string, payee: string, amount: string | undefined, on?: string | null, at?: string | null): Fields => ({
+  parser, kind: 'receipt', last_digits: null, currency: 'LKR', amount: parseMoney(amount), merchant_text: payee,
+  balance_after: null, bank_txn_id: null, occurred_on: on ?? null, occurred_at: at ?? null,
+});
+
+const sltBill: Parser = (body) => {
+  const m = SLT_BILL_RE.exec(body);
+  return m ? receipt('slt.bill', 'SLT bill', m[1], yearFirst(m[2]!, m[3]!, m[4]!), time12(m[5]!)) : null;
+};
+const leco: Parser = (body) => {
+  const m = LECO_RE.exec(body);
+  return m ? receipt('leco.bill', 'LECO electricity', m[1], dayMonth(m[2]!, m[3]!, '', m[4]!.length === 2 ? `20${m[4]}` : m[4]), time24(m[5]!)) : null;
+};
+const mobitel: Parser = (body) => {
+  const m = MOBITEL_RECHARGE_RE.exec(body);
+  return m ? receipt('mobitel.recharge', 'Mobitel recharge', m[1]) : null;
+};
+const dialog: Parser = (body) => {
+  let m = DIALOG_PLAN_RE.exec(body);
+  if (m) return receipt('dialog.plan', 'Dialog plan', m[1]);
+  m = DIALOG_QUOTA_RE.exec(body);
+  return m ? receipt('dialog.plan_used', 'Dialog plan', m[1], dmy(m[2]!)) : null;
+};
+const starPoints: Parser = (body) => {
+  let m = STAR_RELOAD_RE.exec(body);
+  if (m) return receipt('starpoints.reload', `${m[1]} reload`, m[2], dmy(m[3]!), time24(m[4]!));
+  m = STAR_SHOP_RE.exec(body);
+  if (m) {
+    return {
+      parser: 'starpoints.shop', kind: 'info', last_digits: null, currency: 'LKR', amount: null,
+      merchant_text: clean(m[1]!.replace(/\s+Rewards$/i, '')), balance_after: null, bank_txn_id: null,
+      occurred_on: yearFirst(m[2]!, m[3]!, m[4]!), occurred_at: time24(m[5]!),
+    };
+  }
+  return null;
+};
+
 const PARSERS: Record<string, Parser> = { BOC: boc, Sampath: sampath, "People's": peoples, Seylan: seylan };
+/** Senders whose alerts need their own parser (same institution, other formats). */
+const SENDER_PARSERS: Record<string, Parser> = {
+  SAMPATHTXN: sampathAccount, SLTBILL: sltBill, LECOBILL: leco, SLTMOBITEL: mobitel, '5555': dialog, STARPOINTS: starPoints,
+};
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 /** Filter + parse one SMS. Dropped texts come back with a reason only (never their content). */
@@ -421,20 +547,23 @@ export function parseSms(raw: RawSms): SmsVerdict {
 
   const institution = institutionFor(sender);
   if (!institution) return { keep: false, reason: 'sender' };
-  if (isSecret(body)) return { keep: false, reason: 'otp' };
+  if (isSecret(body, sender)) return { keep: false, reason: 'otp' };
   if (isPromo(body)) return { keep: false, reason: 'promo' };
-  if (!AMOUNT_RE.test(body)) return { keep: false, reason: 'no_amount' };
+  const receiptSender = isReceiptSender(sender);
+  if (!receiptSender && !AMOUNT_RE.test(body)) return { keep: false, reason: 'no_amount' };
 
   const received = colomboParts(receivedAt);
   const flat = body.replace(/\s+/g, ' ');
-  const f = PARSERS[institution]?.(flat, received.date) ?? null;
+  const f = (SENDER_PARSERS[senderKey(sender)] ?? PARSERS[institution])?.(flat, received.date) ?? null;
+  // A payee's message is kept only when it confirms a payment (or names a shop at a time).
+  if (receiptSender && (!f || (f.amount === null && f.kind !== 'info'))) return { keep: false, reason: 'notice' };
 
   const base = {
     sender, body, received_at: receivedAt, fingerprint: smsFingerprint(sender, body, receivedAt),
     parser_version: PARSER_VERSION, institution,
   };
 
-  if (!f || f.amount === null) {
+  if (!f || (f.amount === null && f.kind !== 'info')) {
     // Allow-listed, has an amount, but a format we haven't seen: keep it so a new format shows up.
     const am = AMOUNT_RE.exec(flat);
     const cur = am?.[1]?.toUpperCase().startsWith('RS') ? 'LKR' : (am?.[1]?.toUpperCase() ?? 'LKR');

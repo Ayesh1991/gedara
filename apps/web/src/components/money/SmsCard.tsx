@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeftRight, CircleAlert, Info, Landmark, Link2, MessageSquareText, Plus, RotateCcw, Sparkles, X } from 'lucide-react';
+import { ArrowLeftRight, BadgeCheck, CircleAlert, Info, Landmark, Link2, MessageSquareText, Plus, RotateCcw, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -10,11 +10,11 @@ import { findSub, type CategoryRow } from '@/lib/money/categoriesMap';
 import { lineFingerprint } from '@/lib/money/fingerprint';
 import { formatDay } from '@/lib/time';
 import { parseAmount } from '@/lib/money/format';
-import { builtInCategory, learnSoon, merchantMemory, type Memory } from '@/lib/match/memory';
+import { builtInCategory, learnSoon, merchantMemory, payeeCategory, type Memory } from '@/lib/match/memory';
 import { decide, type Suggestion as AiSuggestion } from '@/lib/match/queries';
 import { createAccount, moneyErrorKey, type Account } from '@/lib/money/queries';
 import type { Gap, Suggestion, TxCandidate } from '@/lib/sms/match';
-import { smsSigned } from '@/lib/sms/match';
+import { namesNoShop, smsSigned } from '@/lib/sms/match';
 import { smsIgnore, smsLink, smsPost, type InboxRow } from '@/lib/sms/queries';
 import { cn } from '@/lib/utils';
 import { AccountDot, AccountSelect, CategorySelect, Money, fieldLabel } from './bits';
@@ -108,10 +108,14 @@ export function SmsCard({
   const [mode, setMode] = useState<'suggested' | 'new' | 'pick'>(s.kind === 'none' ? 'new' : 'suggested');
   const [busy, setBusy] = useState(false);
   const aiCategory = ai?.category?.proposal.category_id ?? null;
-  const [categoryId, setCategoryId] = useState<string | null>(
-    () => remembered?.category_id ?? builtInCategory(categories, memoText) ?? aiCategory,
-  );
-  const usedAi = !remembered?.category_id && !builtInCategory(categories, memoText) && !!aiCategory;
+  // Phase 9b.1: a payee's confirmation ("Dialog reload") decides first; a bank's own wording that names
+  // no shop ("CEFT Transfer Debit") doesn't reuse one remembered choice (it may have been a guess).
+  const evidence = s.kind === 'expense' ? s.evidence ?? null : null;
+  const evidenceCategory = evidence ? payeeCategory(memory, categories, evidence) : null;
+  const noShop = s.kind === 'expense' && !evidence && namesNoShop(memoText);
+  const ruleCategory = evidenceCategory ?? (noShop ? null : remembered?.category_id) ?? builtInCategory(categories, memoText);
+  const [categoryId, setCategoryId] = useState<string | null>(() => ruleCategory ?? aiCategory);
+  const usedAi = !ruleCategory && !!aiCategory;
   /** Tell the matcher what the person did with its suggestion (never blocks the save). */
   const tell = (sug: AiSuggestion | undefined, chosen: string | null, key: 'category_id' | 'transaction_id') => {
     if (!sug) return;
@@ -367,7 +371,14 @@ export function SmsCard({
             <>
               <p className="flex items-start gap-2 text-[13.5px]">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" aria-hidden />
-                <span>{t(`money.inbox.note.${s.reason}`)}</span>
+                <span>
+                  {t(`money.inbox.note.${s.reason}`)}
+                  {(s.reason === 'receipt' || s.reason === 'shop') && (
+                    <span className="block text-[12.5px] text-muted">
+                      {s.relatedSmsId ? t('money.inbox.note.explains') : t('money.inbox.note.waiting')}
+                    </span>
+                  )}
+                </span>
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="accent" disabled={busy} onClick={() => void markSeen()}>
@@ -433,12 +444,21 @@ export function SmsCard({
             </div>
           </div>
           {item.lkr.estimated && <p className="text-[12.5px] text-muted">{t('money.inbox.fxEstimated')}</p>}
+          {evidence && (
+            <p className="flex items-center gap-1.5 text-[12.5px] text-teal">
+              <BadgeCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {t('match.evidenceHint', { payee: evidence })}
+            </p>
+          )}
           {usedAi && ai?.category && (
             <p className="flex items-center gap-1.5 text-[12.5px] text-info">
               <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {t('match.categoryHint', { pct: Math.round(ai.category.confidence * 100) })}
+              {ai.category.pattern === 'history'
+                ? t('match.historyHint', { count: Number(ai.category.proposal.past ?? 0) })
+                : t('match.categoryHint', { pct: Math.round(ai.category.confidence * 100) })}
             </p>
           )}
+          {noShop && !ai?.category && <p className="text-[12.5px] text-muted">{t('match.noShopHint')}</p>}
           <div>
             <label className={fieldLabel} htmlFor={`sms-cat-${row.id}`}>
               {t('money.filters.category')}

@@ -29,9 +29,14 @@ function lit(text) {
   return `E'${out}'`;
 }
 
-const secrets = SECRET_CORPUS.map((t, i) => `select ok(private.sms_is_secret(${lit(t)}), 'drops corpus #${i + 1}');`);
+// Every corpus text: dropped by the strictest check AND "as if from SAMPATHTXN" (whose own allowance
+// must never free a code). Real alerts are checked with their sender, as they are stored.
+const secrets = SECRET_CORPUS.flatMap((t, i) => [
+  `select ok(private.sms_is_secret(${lit(t)}), 'drops corpus #${i + 1}');`,
+  `select ok(private.sms_is_secret_from('SAMPATHTXN', ${lit(t)}), 'drops corpus #${i + 1} from SAMPATHTXN too');`,
+]);
 const real = REAL_ALERTS.map(([sender, body], i) =>
-  `select ok(not private.sms_is_secret(${lit(body)}), 'keeps real ${sender} alert #${i + 1}');`);
+  `select ok(not private.sms_is_secret_from(${lit(sender)}, ${lit(body)}), 'keeps real ${sender} alert #${i + 1}');`);
 
 // Texts the import checks below send straight to the RPC.
 const firstOtp = SECRET_CORPUS[0];

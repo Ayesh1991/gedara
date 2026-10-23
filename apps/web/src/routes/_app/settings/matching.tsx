@@ -1,14 +1,17 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronLeft, FlaskConical, KeyRound, ShieldCheck, Sparkles } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { BadgeCheck, ChevronLeft, FlaskConical, KeyRound, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { KNOWN_PAYEES, payeeCategory as defaultPayeeCategory } from '@match/memory';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { fieldLabel } from '@/components/money/bits';
+import { CategorySelect, fieldLabel } from '@/components/money/bits';
+import { useMoneyBasics } from '@/components/money/useMoney';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Toggle } from '@/components/ui/toggle';
+import { deletePayeeCategory, memoryQuery, savePayeeCategory } from '@/lib/match/memory';
 import {
   TooOften,
   agentStatusQuery,
@@ -20,6 +23,8 @@ import {
   suggestionsQuery,
   type Accuracy,
 } from '@/lib/match/queries';
+import type { CategoryRow } from '@/lib/money/categoriesMap';
+import { billNameNorm } from '@/lib/spine/normalise';
 import { todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +50,8 @@ function MatchingPage() {
   const { membership } = Route.useRouteContext();
   const { id: householdId, timezone } = membership.household;
   const isOwner = membership.role === 'owner';
+  const canWrite = membership.role !== 'viewer';
+  const { categories } = useMoneyBasics(householdId);
   const month = `${todayIn(timezone).slice(0, 7)}-01`;
   const setting = useQuery(matchSettingQuery(householdId));
   const status = useQuery(agentStatusQuery());
@@ -287,6 +294,8 @@ function MatchingPage() {
         )}
       </Card>
 
+      <PayeeCard householdId={householdId} canWrite={canWrite} categories={categories.data ?? []} />
+
       {/* Recent runs */}
       <Card className="flex flex-col gap-2">
         <h2 className="font-display text-[18px] font-semibold">{t('matching.runsTitle')}</h2>
@@ -318,14 +327,85 @@ function MatchingPage() {
   );
 }
 
+/**
+ * Payee → category (9b.1): what a payee's confirmation means. Gedara's defaults are shown; changing one
+ * saves the household's own choice (payee_category), Reset goes back to the default.
+ */
+function PayeeCard({ householdId, canWrite, categories }: { householdId: string; canWrite: boolean; categories: CategoryRow[] }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const memory = useQuery(memoryQuery(householdId));
+  const [busy, setBusy] = useState<string | null>(null);
+  const own = memory.data?.payees;
+  const rows = useMemo(() => {
+    const names = new Map<string, string>(KNOWN_PAYEES.map((p) => [billNameNorm(p), p]));
+    for (const key of own?.keys() ?? []) if (!names.has(key)) names.set(key, key);
+    return [...names].map(([key, name]) => ({
+      key, name, own: own?.get(key) ?? null, fallback: defaultPayeeCategory(categories, new Map(), name),
+    }));
+  }, [own, categories]);
+
+  const change = async (key: string, fn: () => Promise<void>) => {
+    setBusy(key);
+    try {
+      await fn();
+      toast.success(t('matching.saved'));
+      void qc.invalidateQueries({ queryKey: memoryQuery(householdId).queryKey });
+    } catch {
+      toast.error(t('matching.saveFailed'));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <h2 className="flex items-center gap-2 font-display text-[18px] font-semibold">
+        <BadgeCheck className="h-[18px] w-[18px] text-teal" aria-hidden />
+        {t('matching.payeesTitle')}
+      </h2>
+      <p className="text-[13px] text-muted">{t('matching.payeesIntro')}</p>
+      <ul className="flex flex-col gap-2">
+        {rows.map((r) => (
+          <li key={r.key} className="flex flex-col gap-1.5 rounded-2xl bg-white/[0.035] px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 font-medium">{r.name}</span>
+              {r.own ? (
+                canWrite && (
+                  <Button size="sm" variant="ghost" className="text-muted" disabled={busy === r.key}
+                    onClick={() => void change(r.key, () => deletePayeeCategory(householdId, r.key))}>
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                    {t('matching.payeeReset')}
+                  </Button>
+                )
+              ) : (
+                <span className="text-[12px] text-muted">{t('matching.payeeDefault')}</span>
+              )}
+            </div>
+            <label className="sr-only" htmlFor={`payee-${r.key}`}>{t('money.filters.category')}</label>
+            <CategorySelect id={`payee-${r.key}`} categories={categories} value={r.own ?? r.fallback} kind="expense"
+              onChange={(id) => { if (canWrite && id && busy === null) void change(r.key, () => savePayeeCategory(householdId, r.name, id)); }} />
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 function AccuracyRow({ a }: { a: Accuracy }) {
   const { t } = useTranslation();
   const ready = a.sure_n >= AUTO_AT.min && a.sure_correct / a.sure_n >= AUTO_AT.precision;
+  const apart = a.evidence_n + a.contradicted_n + a.no_shop_n;
   return (
     <tr className="border-t border-line align-top">
       <td className="py-1.5">
         {t(`matching.tasks.${a.task}` as 'matching.tasks.line_product')}
         <span className="block text-[11.5px] text-muted">{t('matching.tested', { count: a.n })}</span>
+        {apart > 0 && (
+          <span className="block text-[11.5px] text-muted">
+            {t('matching.evidenceSplit', { evidence: a.evidence_n, contradicted: a.contradicted_n, noShop: a.no_shop_n })}
+          </span>
+        )}
       </td>
       <td>
         {pct(a.rule_correct, a.rule_answered)}
@@ -334,6 +414,9 @@ function AccuracyRow({ a }: { a: Accuracy }) {
       <td>
         {pct(a.ai_correct, a.ai_answered)}
         <span className="block text-[11.5px] text-muted">{t('matching.answered', { n: a.ai_answered, of: a.n })}</span>
+        {a.task === 'sms_category' && a.ai_answered > 0 && (
+          <span className="block text-[11.5px] text-muted">{t('matching.mainCategory', { pct: pct(a.ai_main_correct, a.ai_answered) })}</span>
+        )}
       </td>
       <td>
         {pct(a.sure_correct, a.sure_n)}

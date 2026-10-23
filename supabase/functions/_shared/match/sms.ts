@@ -54,13 +54,14 @@ export interface AccountLite {
 }
 
 /** Why an alert is only a note (it adds or moves no money of its own). */
-export type NoteReason = 'instalment' | 'statement' | 'reminder' | 'low_balance' | 'same_as';
+export type NoteReason = 'instalment' | 'statement' | 'reminder' | 'low_balance' | 'same_as' | 'receipt' | 'shop';
 
 export type Suggestion =
   | { kind: 'link'; txId: string; confident: boolean; moves: boolean; others: string[] }
   | { kind: 'transfer'; from: string; to: string; total: number; fee: number; pairId: string | null; confident: boolean }
   /** memo: the text a remembered / built-in category is looked up by (the merchant, or "ETC top-up"). */
-  | { kind: 'expense'; account: string | null; total: number | null; estimated: boolean; memo: string | null }
+  /** evidence: the payee a confirmation SMS names for this payment ("SLT bill", "Dialog reload", "Cargills"). */
+  | { kind: 'expense'; account: string | null; total: number | null; estimated: boolean; memo: string | null; evidence?: string }
   | { kind: 'income'; account: string; total: number }
   /** Money back on a card; chargeSmsId = the purchase alert it undoes, when there is one. */
   | { kind: 'refund'; account: string; total: number | null; estimated: boolean; chargeTxId: string | null; chargeSmsId: string | null; confident: boolean }
@@ -143,6 +144,65 @@ export function unknownAccounts(sms: SmsRow[]): UnknownAccount[] {
   return [...groups.values()].sort((a, b) => b.count - a.count);
 }
 
+// ── Evidence: a payee's confirmation explains a payment (Phase 9b.1) ─────────
+const RECEIPT_WINDOW = 36 * 60 * 60 * 1000;
+const SHOP_WINDOW = 30 * 60 * 1000;
+
+export interface Evidence {
+  payee: string;
+  /** the receipt / shop note that says so */
+  fromSmsId: string;
+  /** what the payment carried on top (a bank fee), in rupees */
+  fee: number;
+}
+
+/**
+ * Which payment each payee's message confirms, over ALL alerts (also ones already booked or seen):
+ *   a receipt (SLT bill, LECO, Mobitel, Dialog …) ↔ a bank debit / card charge of the same amount (or up to
+ *   Rs 50 more: a fee) within 36 h — or on the same / next day when the receipt has no time;
+ *   a Star Points "transaction at Cargills" note ↔ a card charge / debit within 30 minutes.
+ * One payment per message, the closest first.
+ */
+/** When an alert's money moved: its own time, else when it arrived. */
+export function smsWhen(s: SmsRow): number {
+  return s.occurred_at ? instant(s.occurred_on, s.occurred_at) : Date.parse(s.received_at);
+}
+
+export function paymentEvidence(sms: SmsRow[]): Map<string, Evidence> {
+  const when = smsWhen;
+  const payments = sms.filter((p) => (p.kind === 'bank_debit' || p.kind === 'card_charge') && p.amount !== null && p.parser !== 'boc.etc_topup');
+  const pairs: Array<{ r: SmsRow; p: SmsRow; fee: number; dt: number }> = [];
+  for (const r of sms) {
+    if (r.kind === 'receipt' && r.amount !== null) {
+      for (const p of payments) {
+        const fee = cents(p.amount!) - cents(r.amount);
+        if (fee < 0 || fee > MAX_FEE * 100) continue;
+        const dt = r.occurred_at ? Math.abs(when(p) - when(r)) : daysApart(p.occurred_on, r.occurred_on) * DAY;
+        if ((r.occurred_at && dt <= RECEIPT_WINDOW) || (!r.occurred_at && dt <= DAY)) pairs.push({ r, p, fee, dt });
+      }
+    } else if (r.parser === 'starpoints.shop' && r.merchant_text) {
+      for (const p of payments) {
+        const dt = Math.abs(when(p) - when(r));
+        if (dt <= SHOP_WINDOW) pairs.push({ r, p, fee: 0, dt });
+      }
+    }
+  }
+  pairs.sort((a, b) => Number(a.fee > 0) - Number(b.fee > 0) || a.dt - b.dt);
+  const out = new Map<string, Evidence>();
+  const used = new Set<string>();
+  for (const { r, p, fee } of pairs) {
+    if (out.has(p.id) || used.has(r.id)) continue;
+    out.set(p.id, { payee: r.merchant_text!, fromSmsId: r.id, fee: fee / 100 });
+    used.add(r.id);
+  }
+  return out;
+}
+
+/** Bank wording that names no shop: only evidence (or a person) can say what it was for. */
+export function namesNoShop(text: string | null | undefined): boolean {
+  return !text || /\b(transfer (debit|credit)|transfer order|ceft|slips|atm withdrawal|no book deposit|cash deposit|standing order|dormant chg)\b/i.test(text);
+}
+
 export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set<string>, accounts: AccountLite[]): InboxAnalysis {
   const acct = new Map(accounts.map((a) => [a.id, a]));
   const suspense = new Set(accounts.filter((a) => a.is_suspense).map((a) => a.id));
@@ -216,9 +276,16 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
   // ── 3. Notes: no money of their own ───────────────────────────────────────────
   const etcDebits = new Set<string>();
   const at = (s: SmsRow) => Date.parse(s.received_at);
+  const evidence = paymentEvidence(sms);
+  const explains = new Map([...evidence].map(([paymentId, e]) => [e.fromSmsId, paymentId]));
   for (const s of fresh) {
     if (suggestions.has(s.id)) continue;
-    if (s.kind === 'info') {
+    if (s.kind === 'receipt' || s.parser === 'starpoints.shop') {
+      // A payee's confirmation: it explains the payment it matches (or waits for one).
+      suggestions.set(s.id, {
+        kind: 'note', reason: s.kind === 'receipt' ? 'receipt' : 'shop', relatedSmsId: explains.get(s.id) ?? null, confident: true,
+      });
+    } else if (s.kind === 'info') {
       const reason: NoteReason =
         s.parser === 'peoples.instalment' ? 'instalment'
         : s.parser === 'peoples.statement' ? 'statement'
@@ -297,7 +364,8 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
       case 'bank_debit':
         suggestions.set(s.id, {
           kind: 'expense', account: s.account_id, total: amount, estimated: lkr.get(s.id)?.estimated ?? false,
-          memo: etcDebits.has(s.id) ? 'ETC top-up' : s.merchant_text,
+          memo: evidence.get(s.id)?.payee ?? (etcDebits.has(s.id) ? 'ETC top-up' : s.merchant_text),
+          ...(evidence.has(s.id) ? { evidence: evidence.get(s.id)!.payee } : {}),
         });
         break;
       case 'bank_credit':
