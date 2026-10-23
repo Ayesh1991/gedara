@@ -54,7 +54,7 @@ export interface CallResult {
 export type Fetch = (input: string, init: RequestInit) => Promise<Response>;
 
 /** A model missing from the list is counted at this (high) price, so the monthly cap still holds. */
-const UNKNOWN_PRICE = { input: 5, output: 30 };
+const UNKNOWN_PRICE: { input: number; output: number; free?: boolean } = { input: 5, output: 30 };
 
 export function costOf(ref: ModelRef, inputTokens: number, outputTokens: number): number {
   const p = PRICES[`${ref.provider}/${ref.model}`] ?? UNKNOWN_PRICE;
