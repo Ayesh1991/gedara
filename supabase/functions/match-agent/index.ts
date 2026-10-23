@@ -22,7 +22,7 @@ import type { ModelRef, Provider } from '../_shared/ai/providers.ts';
 import { KEY_NAMES } from '../_shared/ai/providers.ts';
 import { runEval, runMatching, type Bundle, type RunOutput } from '../_shared/match/run.ts';
 
-const FN_VERSION = 'match-agent-4';
+const FN_VERSION = 'match-agent-5';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -144,13 +144,13 @@ async function fromUser(req: Request, auth: string) {
       const { data: spent } = await db.from('v_ai_cost_month').select('cost_usd').eq('household_id', householdId)
         .eq('month', new Date().toISOString().slice(0, 7) + '-01');
       const monthCost = (spent ?? []).reduce((a, r) => a + Number(r.cost_usd), 0);
-      if (monthCost >= Number(setting?.monthly_cap_usd ?? 3)) {
+      if (monthCost >= Number(setting?.monthly_cap_usd ?? 0.9)) {
         await db.rpc('rpc_match_save', { p_household: householdId, p_run: runId, p: { stats: { check: true, capped: true } } });
         return json({ error: 'monthly cap reached' }, 429);
       }
       const steps = ((setting?.steps as ModelRef[] | undefined) ?? []).length
         ? (setting!.steps as ModelRef[])
-        : [{ provider: 'groq', model: 'openai/gpt-oss-120b' }, { provider: 'gemini', model: 'gemini-3.8-flash' }, { provider: 'openai', model: 'gpt-5.4-mini' }] as ModelRef[];
+        : [{ provider: 'groq', model: 'openai/gpt-oss-120b' }, { provider: 'openai', model: 'gpt-6-luna' }, { provider: 'gemini', model: 'gemini-3.8-flash' }] as ModelRef[];
       const { results, usage } = await check(steps);
       const { error: saveErr } = await db.rpc('rpc_match_save', { p_household: householdId, p_run: runId, p: { usage, stats: { check: true } } });
       if (saveErr) throw saveErr;

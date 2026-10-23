@@ -122,8 +122,8 @@ const SUGGEST_AT = 0.5;
 const MAX = { lines: 48, other: 36, sms: 40, link: 20, things: 20, eval: 24 };
 const DEFAULT_STEPS: ModelRef[] = [
   { provider: 'groq', model: 'openai/gpt-oss-120b' },
+  { provider: 'openai', model: 'gpt-6-luna' },
   { provider: 'gemini', model: 'gemini-3.8-flash' },
-  { provider: 'openai', model: 'gpt-5.4-mini' },
 ];
 
 // ── Labels: nothing real leaves Gedara, only P1 / C3 / T2 ─────────────────────
@@ -171,7 +171,7 @@ const categoryMatches = (categories: CategoryRow[], predicted: string | null, tr
 
 // ── Budget: the owner's monthly cap and daily request cap ──────────────────────
 export function makeBudget(bundle: Bundle): Budget & { calls: number; spent: number } {
-  const cap = Number(bundle.settings.monthly_cap_usd ?? 3);
+  const cap = Number(bundle.settings.monthly_cap_usd ?? 0.9);
   const daily = Number(bundle.settings.daily_requests ?? 150);
   const today = { ...bundle.usage.today };
   const b = {

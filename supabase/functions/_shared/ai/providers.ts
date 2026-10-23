@@ -2,7 +2,7 @@
 // Plain fetch, no SDKs. Every call asks for structured output (a strict JSON schema) and the answer is
 // validated with Zod by the caller anyway. Keys come from the Edge Function's secrets only.
 //
-// Prices are per 1M tokens (USD) from the providers' pricing pages, 2026-10-22. Groq's free plan
+// Prices are per 1M tokens (USD) from the providers' pricing pages, 2026-10-22 / 23 (Didula's PDFs). Groq's free plan
 // costs nothing (its limits are per day, see the daily request cap).
 
 export type Provider = 'groq' | 'gemini' | 'openai';
@@ -21,6 +21,7 @@ export const PRICES: Record<string, { input: number; output: number; free?: bool
   // 3.6 / 3.8 Flash: introductory price until 2026-12-31, then $1.50 / $7.50 — counted at the higher one
   'gemini/gemini-3.6-flash': { input: 1.5, output: 7.5 },
   'gemini/gemini-3.8-flash': { input: 1.5, output: 7.5 },
+  'openai/gpt-6-luna': { input: 0.1, output: 0.5 },
   'openai/gpt-5.4-mini': { input: 0.75, output: 4.5 },
   'openai/gpt-5.4-nano': { input: 0.2, output: 1.25 },
   'openai/gpt-5-mini': { input: 0.25, output: 2.0 },

@@ -58,7 +58,8 @@ set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000fd101","role":"authenticated"}';
 select lives_ok($$select rpc_match_settings_save('00000000-0000-0000-0000-0000000fd1aa', '{"ai_enabled": true, "monthly_cap_usd": 2}')$$,
   'owner turns AI suggestions on with a $2 cap');
-select is((select ai_enabled || ' ' || monthly_cap_usd || ' ' || jsonb_array_length(steps) from match_setting), 'true 2.00 3',
+select is((select ai_enabled || ' ' || monthly_cap_usd || ' ' || jsonb_array_length(steps) || ' ' || (steps -> 1 ->> 'model') from match_setting
+             where household_id = '00000000-0000-0000-0000-0000000fd1aa'), 'true 2.00 3 gpt-6-luna',
   'saved with the default three-model ladder');
 select throws_ok($$select rpc_match_settings_save('00000000-0000-0000-0000-0000000fd1aa', '{"steps": [{"provider":"evil","model":"x"}]}')$$,
   '23514', null, 'only known providers');

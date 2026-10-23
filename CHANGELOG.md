@@ -6,10 +6,11 @@
   alerts that still need a category or whose bill total is only close, and things bought but not
   entered — Gedara's own rules first (learned names, memories, the inbox rules), an AI only for what
   they can't decide. **Nothing is booked:** every suggestion waits for a Yes / Change / Skip.
-- **AI ladder, cheap first** (Settings › Matching, owner switches it on): Groq `gpt-oss-120b` (free)
-  asks first; Gemini 2.5 Flash only when it is unsure; OpenAI `gpt-5.4-mini` referees a disagreement.
-  The answer is what most votes agree on; how sure it is comes from that agreement. A monthly cost cap
-  (default US$3) and a daily request cap stop every call; each call's tokens and cost are recorded,
+- **AI ladder, cheapest first, under US$1 a month** (Settings › Matching, owner switches it on): Groq
+  `gpt-oss-120b` (free) asks first; OpenAI `gpt-6-luna` ($0.10 / $0.50 per 1M tokens) only when it is
+  unsure; Gemini 3.8 Flash referees only a disagreement. The answer is what most votes agree on; how sure
+  it is comes from that agreement. A monthly cost cap (US$0.90, costs counted at each model's highest
+  announced price) and a daily request cap stop every call; each call's tokens and cost are recorded,
   never its content.
 - **Safe by construction:** the AI never gets an SMS text, an account or card number, or a real id —
   only shop / item names, amounts and dates, with products and categories as short labels. Every text

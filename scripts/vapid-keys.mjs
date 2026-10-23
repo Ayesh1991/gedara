@@ -26,7 +26,8 @@ try {
   execFileSync(
     npx,
     [
-      'supabase',
+      '--yes',
+      'supabase@2.121.0', // pinned: 2.122.0 has no Windows build
       'secrets',
       'set',
       '--project-ref',

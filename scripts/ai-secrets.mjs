@@ -139,8 +139,9 @@ const envFile = path.join(dir, 'ai.env');
 writeFileSync(envFile, `${lines.join('\n')}\n`, { mode: 0o600 });
 lines.length = 0;
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+// Supabase CLI pinned: 2.122.0 (2026-10-23) has no Windows build, and plain `npx supabase` picks the newest.
 try {
-  execFileSync(npx, ['supabase', 'secrets', 'set', '--project-ref', refs[target], '--env-file', envFile], {
+  execFileSync(npx, ['--yes', 'supabase@2.121.0', 'secrets', 'set', '--project-ref', refs[target], '--env-file', envFile], {
     stdio: ['ignore', 'ignore', 'inherit'],
     shell: process.platform === 'win32',
   });
