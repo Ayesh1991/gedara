@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.8 — Settings › Devices shows both phone filters
+- For a phone set up earlier, Settings › Devices showed only the new OTP text filter; the sender filter
+  (now with BOCONLINE, SAMPATHTXN and the payees) appeared only while adding a new phone. The card
+  "Filters for the phone" now shows both, each with a copy button.
+
 ## 0.9.7 — Phase 9b.2: BOC Flex Tap & Pay and the wallet
 - **BOCONLINE is read.** "Your Tap & Pay transaction of LKR 2252.00 from XXXX3399 at GUNASEKARA & COMPANY
   was successful. Ref: VC_…" is a payment from the BOC Flex wallet; "New account seen" offers **BOC Flex

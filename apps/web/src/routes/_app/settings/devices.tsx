@@ -180,12 +180,14 @@ function DevicesPage() {
         <Card className="text-[14px] text-muted">{t('devices.ownerOnly')}</Card>
       )}
 
-      {/* Phase 9a: a stricter OTP filter (Sinhala / Tamil wording, codes glued to the word) for phones
-          set up earlier — the server drops OTPs anyway, this keeps them on the phone. */}
+      {/* Phones set up earlier: both filters as they are now (9a: a stricter OTP filter; 9b.1–9b.2: more
+          senders — payees, SAMPATHTXN, BOCONLINE). The server drops OTPs anyway; the text filter keeps them
+          on the phone. */}
       {isOwner && active.length > 0 && !created && (
         <Card className="flex flex-col gap-2.5">
           <h3 className="font-display text-[16px] font-semibold">{t('devices.filterUpdatedTitle')}</h3>
           <p className="text-[13.5px] text-muted">{t('devices.filterUpdatedBody')}</p>
+          <CopyField label={t('devices.senderRegex')} value={SENDER_REGEX} />
           <CopyField label={t('devices.textRegex')} value={FORWARD_TEXT_REGEX} />
         </Card>
       )}
