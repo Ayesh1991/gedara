@@ -1442,8 +1442,8 @@
     "revoked": "{{name}} ඉවත් කළා",
     "revokedCount": "ඉවත් කළ දුරකථන {{count}}",
     "revokedCount_one": "ඉවත් කළ දුරකථන 1",
-    "filterUpdatedTitle": "දුරකථනය සඳහා නව OTP පෙරහන (2026 ඔක්තෝබර්)",
-    "filterUpdatedBody": "එය සිංහල සහ දෙමළ OTP වචන සහ \"OTP\" ට පසුව එකවරම ලියූ කේතද අවහිර කරයි. SMS to URL Forwarder හි Gedara නීතිය විවෘත කර, පෙළ පෙරහන මෙයින් ප්‍රතිස්ථාපනය කර සුරකින්න. Gedara ද තමන්ගේ පැත්තෙන් OTP ඉවත් කරයි, එබැවින් ඒ අතරතුර කිසිදු අවදානමක් නැත."
+    "filterUpdatedTitle": "දුරකථනය සඳහා පෙරහන් (2026 ඔක්තෝබර් යාවත්කාලීනයි)",
+    "filterUpdatedBody": "කලින් සකසා තිබේද? SMS to URL Forwarder හි Gedara නීතිය විවෘත කර, පෙරහන් දෙකම මේ දෙකින් ප්‍රතිස්ථාපනය කර සුරකින්න. යවන්නන්ගේ ලැයිස්තුවට දැන් BOC Flex (BOCONLINE), Sampath ගිණුම (SAMPATHTXN) සහ ගෙවීම් තහවුරු කරන ආයතන (SLT, Mobitel, Dialog 5555, LECO, Star Points) ද ඇතුළත්ය. පෙළ පෙරහන සෑම OTP එකක්ම දුරකථනයේම තබයි (සිංහල සහ දෙමළ වචනද); Gedara ද තමන්ගේ පැත්තෙන් OTP ඉවත් කරයි."
   },
   "spine": {
     "scanBarcode": "පැකට්ටුවේ බාර්කෝඩය ස්කෑන් කරන්න",
