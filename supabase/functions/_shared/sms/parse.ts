@@ -15,7 +15,7 @@ import { isSecret } from './secret.ts';
 
 export { FORWARD_TEXT_REGEX, isSecret, secretReason } from './secret.ts';
 
-export const PARSER_VERSION = 4;
+export const PARSER_VERSION = 5;
 
 export type SmsKind =
   | 'card_charge' | 'card_payment' | 'bank_debit' | 'bank_credit' | 'atm' | 'refund' | 'info' | 'receipt' | 'unknown';
@@ -542,7 +542,17 @@ const BOC_TAP_PAY_RE = new RegExp(
   'i',
 );
 
+// "Hey there, You have received LKR 5,000.00. from DR (MRS) …" — money into the wallet (no card digits)
+const BOC_FLEX_RECEIVED_RE = new RegExp(`^Hey there,?\\s*You have received\\s+(LKR|Rs\\.?)\\s*${N}\\.?\\s+from\\s+(.+?)\\.?\\s*$`, 'i');
+
 const bocOnline: Parser = (body) => {
+  const r = BOC_FLEX_RECEIVED_RE.exec(body);
+  if (r) {
+    return {
+      parser: 'boconline.received', kind: 'bank_credit', last_digits: null, currency: 'LKR', amount: parseMoney(r[2]),
+      merchant_text: clean(r[3]), balance_after: null, bank_txn_id: null,
+    };
+  }
   const m = BOC_TAP_PAY_RE.exec(body);
   if (!m) return null;
   const currency = /^rs/i.test(m[1]!) ? 'LKR' : m[1]!.toUpperCase();

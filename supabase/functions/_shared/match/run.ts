@@ -710,6 +710,10 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
  * sms_topup (9b.2) — the BOC Flex wallet is topped up in the app and no SMS says so. A BOC account's
  * "Balance available" then drops by more than its alerts explain: that missing amount is proposed as a
  * top-up of the wallet (one wallet only), unless such a transfer is already booked in that stretch.
+ * Real BOC data has many other gaps, so only a clean one counts (prod check, 2026-10-25):
+ *   * a round amount (whole hundreds): Rs 5 is the ATM fee, Rs 25,025 a transfer + fee whose alert is missing;
+ *   * the alerts on both sides agree with the balance (a −98,892 / +78,897 pair is alerts out of order);
+ *   * while the wallet is in use (from a week before its first Tap & Pay alert).
  */
 export function walletTopups(bundle: Bundle, sms: SmsRow[]): SuggestionOut[] {
   const wallets = bundle.accounts.filter((a) => a.kind === 'wallet' && !a.archived);
@@ -717,8 +721,26 @@ export function walletTopups(bundle: Bundle, sms: SmsRow[]): SuggestionOut[] {
   const wallet = wallets[0]!;
   const fromBoc = new Set(bundle.accounts.filter((a) => a.kind === 'bank' && !a.archived && /^boc$/i.test(a.institution ?? '')).map((a) => a.id));
   if (!fromBoc.size) return [];
+  const walletDays = sms.filter((m) => m.account_id === wallet.id).map((m) => m.occurred_on).sort();
+  if (!walletDays.length) return [];
+  const inUseFrom = new Date(Date.parse(`${walletDays[0]}T00:00:00Z`) - 7 * 86_400_000).toISOString().slice(0, 10);
   const byId = new Map(sms.map((m) => [m.id, m]));
   const { gaps } = analyseInbox(sms, [], new Set(), bundle.accounts);
+  // each account's balance chain, to see whether the alert after a gap agrees again
+  const nextInChain = new Map<string, string>();
+  const chains = new Map<string, SmsRow[]>();
+  for (const m of sms) {
+    if (m.account_id && m.balance_after !== null) chains.set(m.account_id, [...(chains.get(m.account_id) ?? []), m]);
+  }
+  for (const list of chains.values()) {
+    list.sort((a, b) => a.received_at.localeCompare(b.received_at));
+    list.forEach((m, i) => list[i + 1] && nextInChain.set(m.id, list[i + 1]!.id));
+  }
+  // a fee-sized gap (the Rs 5 ATM fee) is not a sign of alerts out of order
+  const offBy = (id: string) => {
+    const g = gaps.get(id);
+    return !!g && Math.abs(g.expected - g.reported) > PAIR_FEE;
+  };
   const out: SuggestionOut[] = [];
   for (const [smsId, gap] of gaps) {
     const s = byId.get(smsId);
@@ -726,6 +748,11 @@ export function walletTopups(bundle: Bundle, sms: SmsRow[]): SuggestionOut[] {
     if (!s?.account_id || !since || !fromBoc.has(s.account_id)) continue;
     const missing = Math.round((gap.expected - gap.reported) * 100);
     if (missing <= 0) continue; // money came in that no alert explains: not a top-up
+    if (missing % 10000 !== 0) continue; // not whole hundreds: a fee, or a transfer + fee whose alert is missing
+    if (offBy(since.id)) continue; // the chain was already off before it
+    const next = nextInChain.get(s.id);
+    if (next && offBy(next)) continue; // and is off right after: alerts out of order, not a top-up
+    if (since.occurred_on < inUseFrom) continue;
     const booked = (bundle.candidates ?? []).some((t) => t.type === 'transfer' && t.account_id === s.account_id
       && t.to_account_id === wallet.id && Math.round(Number(t.total) * 100) === missing
       && t.occurred_on >= since.occurred_on && t.occurred_on <= s.occurred_on);
