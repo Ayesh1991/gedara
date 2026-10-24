@@ -99,7 +99,7 @@ export interface Bundle {
 }
 
 export interface SuggestionOut {
-  task: 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise';
+  task: 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup';
   target_key: string;
   line_id?: string;
   sms_id?: string;
@@ -145,6 +145,8 @@ const AUDIT_CONFIDENCE = 0.95;
 /** A transfer debit and the card payment it paid: at most this far apart, and Rs 0–50 fee. */
 const PAIR_WINDOW = 48 * 60 * 60 * 1000;
 const PAIR_FEE = 50;
+/** A wallet top-up is only a guess from a balance gap: never "sure". */
+const TOPUP_CONFIDENCE = 0.7;
 const DEFAULT_STEPS: ModelRef[] = [
   { provider: 'groq', model: 'openai/gpt-oss-120b' },
   { provider: 'openai', model: 'gpt-6-luna' },
@@ -427,7 +429,7 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
       open.add(`${a.task}:${a.target_key}`);
       if (!unchanged(a.task, a.target_key, a.input_hash)) out.suggestions.push(a);
     }
-    const contradicted = new Set(audit.flatMap((a) => (a.proposal.delete_tx as string[] | undefined) ?? [String(a.proposal.transaction_id)]));
+    const contradicted = new Set(audit.flatMap((a) => (a.proposal.delete_tx as string[] | undefined) ?? (a.proposal.transaction_id ? [String(a.proposal.transaction_id)] : [])));
     for (const s of fresh) {
       // A suggestion stays open only while this run still stands by it; one whose reason is gone (evidence
       // that no longer pairs, a category now remembered, a bank text that names no shop) goes stale.
@@ -625,7 +627,7 @@ export function pastChoice(
  */
 export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: ReadonlyMap<string, string>): SuggestionOut[] {
   const booked = bundle.booked ?? [];
-  if (!booked.length) return [];
+  if (!booked.length) return walletTopups(bundle, sms);
   const out: SuggestionOut[] = [];
   const bySms = new Map(booked.map((b) => [b.sms_id, b]));
   const smsById = new Map(sms.map((m) => [m.id, m]));
@@ -685,6 +687,8 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
     });
   }
 
+  out.push(...walletTopups(bundle, sms));
+
   const evidence = paymentEvidence(sms);
   for (const b of booked) {
     if (b.type !== 'expense' || b.lines !== 1 || !b.category_id || !b.line_id || done.has(b.transaction_id)) continue;
@@ -697,6 +701,42 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
     out.push({
       task: 'sms_recategorise', target_key: b.sms_id, sms_id: b.sms_id, line_id: b.line_id, proposal,
       confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['recategorise', proposal]),
+    });
+  }
+  return out;
+}
+
+/**
+ * sms_topup (9b.2) — the BOC Flex wallet is topped up in the app and no SMS says so. A BOC account's
+ * "Balance available" then drops by more than its alerts explain: that missing amount is proposed as a
+ * top-up of the wallet (one wallet only), unless such a transfer is already booked in that stretch.
+ */
+export function walletTopups(bundle: Bundle, sms: SmsRow[]): SuggestionOut[] {
+  const wallets = bundle.accounts.filter((a) => a.kind === 'wallet' && !a.archived);
+  if (wallets.length !== 1) return [];
+  const wallet = wallets[0]!;
+  const fromBoc = new Set(bundle.accounts.filter((a) => a.kind === 'bank' && !a.archived && /^boc$/i.test(a.institution ?? '')).map((a) => a.id));
+  if (!fromBoc.size) return [];
+  const byId = new Map(sms.map((m) => [m.id, m]));
+  const { gaps } = analyseInbox(sms, [], new Set(), bundle.accounts);
+  const out: SuggestionOut[] = [];
+  for (const [smsId, gap] of gaps) {
+    const s = byId.get(smsId);
+    const since = gap.sinceSmsId ? byId.get(gap.sinceSmsId) : undefined;
+    if (!s?.account_id || !since || !fromBoc.has(s.account_id)) continue;
+    const missing = Math.round((gap.expected - gap.reported) * 100);
+    if (missing <= 0) continue; // money came in that no alert explains: not a top-up
+    const booked = (bundle.candidates ?? []).some((t) => t.type === 'transfer' && t.account_id === s.account_id
+      && t.to_account_id === wallet.id && Math.round(Number(t.total) * 100) === missing
+      && t.occurred_on >= since.occurred_on && t.occurred_on <= s.occurred_on);
+    if (booked) continue;
+    const proposal = {
+      from_account_id: s.account_id, to_account_id: wallet.id, total: missing / 100,
+      since: since.occurred_on, occurred_on: s.occurred_on, expected: gap.expected, reported: gap.reported,
+    };
+    out.push({
+      task: 'sms_topup', target_key: s.id, sms_id: s.id, proposal,
+      confidence: TOPUP_CONFIDENCE, pattern: 'balance', models: [], input_hash: hashOf(['topup', proposal]),
     });
   }
   return out;

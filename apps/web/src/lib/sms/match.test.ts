@@ -102,7 +102,7 @@ describe('balances', () => {
     const b = sms({ kind: 'bank_debit', account_id: 'boc', amount: 100, balance_after: 15000, received_at: '2026-09-06T06:00:00Z' });
     const c = sms({ kind: 'bank_credit', account_id: 'boc', amount: 1000, balance_after: 16000, received_at: '2026-09-07T06:00:00Z' });
     const { gaps } = analyseInbox([a, b, c], [], new Set(), accounts);
-    expect(gaps.get(b.id)).toEqual({ expected: 16143.81, reported: 15000 });
+    expect(gaps.get(b.id)).toEqual({ expected: 16143.81, reported: 15000, sinceSmsId: a.id });
     expect(gaps.has(c.id)).toBe(false);
   });
 });

@@ -119,6 +119,8 @@ const FOOTER = /\s*get protected\s*-\s*do not share otp\.?\s*$/;
 // reference after "for" ("debited from AC **1110 for DORMANT_CHG_052026").
 const SENDER_EXPLAINED: Record<string, RegExp[]> = {
   SAMPATHTXN: [/\bfor\s+[a-z]{2,}(?:_[a-z]{2,})+_\d{4,8}\b/g],
+  // BOC Flex Tap & Pay "Ref: VC_7760QQS8" (Phase 9b.2): letters AND digits, so "Ref: VC_482913" stays a code
+  BOCONLINE: [/\bref\s*:?\s*vc_(?=[a-z0-9]*[a-z])(?=[a-z0-9]*\d)[a-z0-9]{6,12}\b/g],
 };
 const senderKeyOf = (sender: string | null | undefined) => String(sender ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 

@@ -55,6 +55,13 @@ export const SECRET_CORPUS: string[] = [
   'Get protected -Do not Share OTP. Your login code is 552901',
   // year-first dates are explained, a code next to one is not
   'Payment on 2026/09/22 approved with 552901',
+  // BOC Flex (BOCONLINE, Phase 9b.2): its OTPs, and an OTP dressed up as a Tap & Pay reference
+  'BOC Flex Fund Transfer - LKR 500,000.00. Please use OTP 589421 to authorize the Transaction. Do not share this OTP with anyone.',
+  'Dear user, please use OTP for limit change: 850359. Do not share this OTP with anyone.',
+  'BOC Flex Save New Payee - Please use OTP 002909 to save the payee. Do not share this OTP with anyone.',
+  'Dear Customer, Please use 503684 as your OTP for BOC Flex Wallet Online Transfer. This OTP is valid only for 2 minutes. DO NOT share this',
+  'Your Tap & Pay transaction of LKR 1480.00 from XXXX3399 at CARGILLS - KURANA was successful. Ref: VC_482913',
+  'Your Tap & Pay transaction was successful. Ref: VC_7760QQS8 482913',
 ];
 
 /** Real alert wording seen on prod (amounts and masks as the banks print them) — must be kept. */
@@ -96,4 +103,6 @@ export const REAL_ALERTS: Array<[sender: string, body: string]> = [
   ['SAMPATHTXN', 'LKR 50.00 debited from AC **1110 for DORMANT_CHG_052026 04/05/2026 06:36:44 To Inq Call 0112303050 Get protected -Do not Share OTP'],
   ['SAMPATHTXN', 'LKR 2,104.04 credited to AC **2229 for FD Interest X2229:Int.Pd:21-11-2025 to 20-05-2026 20/05/2026 23:04:21 To Inq Call 0112303050'],
   ['SAMPATHTXN', 'FD **2229 renewed LKR 61,033.85 for 6 Month(s) 20/05/2026 23:25:20 To Inq Call 0112303050'],
+  ['BOCONLINE', 'Your Tap & Pay transaction of LKR 2252.00 from XXXX3399 at GUNASEKARA & COMPANY was successful. Ref: VC_7760QQS8'],
+  ['BOCONLINE', 'Your Tap & Pay transaction of LKR 1480.00 from XXXX3399 at CARGILLS - KURANA was successful. Ref: VC_8805TAX8'],
 ];

@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(5);
 
-select is(schema_version(), 88, 'schema_version is 88 after Phase 9b.1 (a bank alert line is not a pantry item)');
+select is(schema_version(), 89, 'schema_version is 89 after Phase 9b.2 (BOC Flex Tap & Pay, wallet top-ups)');
 
 set local role anon;
-select is(schema_version(), 88, 'anon can call schema_version()');
+select is(schema_version(), 89, 'anon can call schema_version()');
 select throws_ok($$select * from app_meta$$, '42501', null, 'anon cannot read app_meta');
 
 reset role;

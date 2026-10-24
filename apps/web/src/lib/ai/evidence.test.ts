@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { payeeCategory } from '@match/memory';
-import { checkPastBookings, runEval, runMatching, type BookedRow, type Bundle } from '@match/run';
+import { checkPastBookings, runEval, runMatching, walletTopups, type BookedRow, type Bundle } from '@match/run';
 import { analyseInbox, namesNoShop, paymentEvidence, type SmsRow } from '@match/sms';
 
 // Phase 9b.1: evidence before guesses. A payee's confirmation (Dialog, SLT, LECO, Star Points) explains a
@@ -275,5 +275,35 @@ describe('the accuracy test is honest', () => {
     expect(by(slt.id)).toMatchObject({ truth: { evidence: true }, rule_correct: true });
     expect(by(blank.id)).toMatchObject({ truth: { no_shop: true }, rule_correct: null, ai_correct: null });
     expect(out.remaining).toBe(0);
+  });
+});
+
+describe('BOC Flex wallet top-ups (9b.2): no SMS, so the bank balance tells', () => {
+  const withWallet = (p: Partial<Bundle> = {}) => bundle({
+    accounts: [
+      { id: 'boc', kind: 'bank', is_suspense: false, archived: false, credit_limit: null, institution: 'BOC' },
+      { id: 'wallet', kind: 'wallet', is_suspense: false, archived: false, credit_limit: null, institution: 'BOC Flex' },
+    ],
+    ...p,
+  });
+
+  it('a BOC balance that dropped Rs 5,000 more than its alerts explain → a top-up of the wallet', () => {
+    const a = ceft(1000, '2026-10-20 09:00', { balance_after: 50000, merchant_text: 'ATM Withdrawal' });
+    const b = ceft(2000, '2026-10-22 09:00', { balance_after: 43000 });
+    const out = walletTopups(withWallet(), [a, b]);
+    expect(out).toEqual([expect.objectContaining({
+      task: 'sms_topup', target_key: b.id, confidence: 0.7, pattern: 'balance',
+      proposal: expect.objectContaining({ from_account_id: 'boc', to_account_id: 'wallet', total: 5000, since: '2026-10-20', occurred_on: '2026-10-22' }),
+    })]);
+  });
+
+  it('nothing when it is already booked, when money came in, or without exactly one wallet', () => {
+    const a = ceft(1000, '2026-10-20 09:00', { balance_after: 50000 });
+    const b = ceft(2000, '2026-10-22 09:00', { balance_after: 43000 });
+    const topup = { id: 't', type: 'transfer', account_id: 'boc', to_account_id: 'wallet', payee_text: null, occurred_on: '2026-10-21', occurred_at: null, total: 5000 };
+    expect(walletTopups(withWallet({ candidates: [topup] }), [a, b])).toEqual([]);
+    const up = ceft(2000, '2026-10-22 09:00', { balance_after: 53000 });
+    expect(walletTopups(withWallet(), [a, up])).toEqual([]);
+    expect(walletTopups(bundle(), [a, b])).toEqual([]);
   });
 });

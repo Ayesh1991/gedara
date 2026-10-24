@@ -24,8 +24,9 @@ import {
   type Suggestion,
 } from '@/lib/match/queries';
 import type { CategoryRow } from '@/lib/money/categoriesMap';
+import { manualFingerprint } from '@/lib/money/fingerprint';
 import { formatLKR } from '@/lib/money/format';
-import { invalidateMoney, moneyErrorKey, type Account } from '@/lib/money/queries';
+import { invalidateMoney, moneyErrorKey, saveTransaction, type Account } from '@/lib/money/queries';
 import { productsQuery } from '@/lib/pantry/queries';
 import { formatDay, todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -58,7 +59,7 @@ function ReviewPage() {
   );
   // Phase 9b.1: past bookings the evidence disagrees with
   const past = useMemo(
-    () => (suggestions.data ?? []).filter((s) => s.task === 'sms_rebook' || s.task === 'sms_recategorise'),
+    () => (suggestions.data ?? []).filter((s) => s.task === 'sms_rebook' || s.task === 'sms_recategorise' || s.task === 'sms_topup'),
     [suggestions.data],
   );
   const pastIds = useMemo(
@@ -158,6 +159,7 @@ function ReviewPage() {
                 <PastBooking
                   key={s.id}
                   s={s}
+                  householdId={householdId}
                   locale={locale}
                   today={today}
                   canWrite={canWrite}
@@ -198,6 +200,7 @@ function ReviewPage() {
  */
 function PastBooking({
   s,
+  householdId,
   locale,
   today,
   canWrite,
@@ -207,6 +210,7 @@ function PastBooking({
   onDone,
 }: {
   s: Suggestion;
+  householdId: string;
   locale: string;
   today: string;
   canWrite: boolean;
@@ -244,13 +248,28 @@ function PastBooking({
   const fix = () =>
     act(async () => {
       if (s.task === 'sms_rebook') await rebook(p);
-      else await setLineCategory(p.line_id!, p.category_id!);
+      else if (s.task === 'sms_topup') {
+        // the wallet top-up no SMS reported (9b.2): a transfer, dated where the balance shows it
+        await saveTransaction({
+          household_id: householdId, type: 'transfer', account_id: p.from_account_id!, to_account_id: p.to_account_id!,
+          occurred_on: p.occurred_on!, total: p.total!, notes: t('match.past.topupNote'), lines: [],
+          fingerprint: manualFingerprint({ type: 'transfer', date: p.occurred_on!, accountId: p.from_account_id!, payee: `topup ${p.to_account_id}`, total: p.total! }),
+        });
+      } else await setLineCategory(p.line_id!, p.category_id!);
       await decide([s.id], 'accepted');
     }, t('match.done'));
   const keep = () => act(() => decide([s.id], 'rejected'), t('match.past.kept'));
 
   const what =
-    s.task === 'sms_rebook'
+    s.task === 'sms_topup'
+      ? t('match.past.topup', {
+          from: accountName(p.from_account_id),
+          to: accountName(p.to_account_id),
+          paid: money(p.total),
+          since: p.since ? formatDay(p.since, locale, today.slice(0, 4)) : '?',
+          day: p.occurred_on ? formatDay(p.occurred_on, locale, today.slice(0, 4)) : '?',
+        })
+      : s.task === 'sms_rebook'
       ? t(p.fee ? 'match.past.rebookFee' : 'match.past.rebook', {
           was: catName(p.was_category_id),
           card: accountName(p.card_account_id),

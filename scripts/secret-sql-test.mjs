@@ -29,11 +29,12 @@ function lit(text) {
   return `E'${out}'`;
 }
 
-// Every corpus text: dropped by the strictest check AND "as if from SAMPATHTXN" (whose own allowance
-// must never free a code). Real alerts are checked with their sender, as they are stored.
+// Every corpus text: dropped by the strictest check AND "as if from SAMPATHTXN" / "from BOCONLINE" (whose
+// own allowances must never free a code). Real alerts are checked with their sender, as they are stored.
 const secrets = SECRET_CORPUS.flatMap((t, i) => [
   `select ok(private.sms_is_secret(${lit(t)}), 'drops corpus #${i + 1}');`,
   `select ok(private.sms_is_secret_from('SAMPATHTXN', ${lit(t)}), 'drops corpus #${i + 1} from SAMPATHTXN too');`,
+  `select ok(private.sms_is_secret_from('BOCONLINE', ${lit(t)}), 'drops corpus #${i + 1} from BOCONLINE too');`,
 ]);
 const real = REAL_ALERTS.map(([sender, body], i) =>
   `select ok(not private.sms_is_secret_from(${lit(sender)}, ${lit(body)}), 'keeps real ${sender} alert #${i + 1}');`);
