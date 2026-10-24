@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.6 — Phase 9b.1 fix: suggestions whose reason is gone are cleared
+- A bank-alert suggestion now stays open only while a matching run still stands by it. One whose reason
+  has gone (evidence that no longer pairs, a category now remembered, a bank text that names no shop)
+  goes stale at the next run — e.g. the leftover "Cargills → Other grocery" on the Rs 50,000 transfer of
+  21 Oct, made by the shop-note rule fixed in 0.9.4. Function `match-agent-8`; no database change.
+
 ## 0.9.5 — Phase 9b.1 fix: a bank alert's line is the whole bill, not a pantry item
 - A bank alert saved as a Grocery expense gets one line named after the shop. It inherited Grocery's
   "goes to the pantry", so Needs you offered it a product; one Yes on prod linked a Cargills alert to

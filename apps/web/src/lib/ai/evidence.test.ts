@@ -141,6 +141,14 @@ describe('runMatching: evidence first, past choices weak, no-shop alerts never t
     expect(out.suggestions).toEqual([]);
   });
 
+  it('a suggestion whose reason is gone goes stale (old "Cargills" evidence on a Rs 50,000 transfer)', async () => {
+    const debit = ceft(50000, '2026-10-21 18:00', { merchant_text: 'Online Transfer Debit' });
+    const out = await runMatching(bundle({
+      sms: [debit], suggestions: [{ task: 'sms_category', target_key: debit.id, input_hash: 'hold', status: 'pending' }],
+    }), { keys: KEYS, fetchImpl: noAi() });
+    expect(out.stale).toEqual([{ task: 'sms_category', target_key: debit.id }]);
+  });
+
   it('three agreeing past choices (±5 %) are a hint at 0.7; a disagreeing one cancels it', async () => {
     const past = [ceft(2000, '2026-08-01 10:00'), ceft(2050, '2026-08-15 10:00'), ceft(1980, '2026-09-01 10:00')]
       .map((s, i) => ({ ...s, transaction_id: `t${i}` }));

@@ -429,8 +429,8 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
     }
     const contradicted = new Set(audit.flatMap((a) => (a.proposal.delete_tx as string[] | undefined) ?? [String(a.proposal.transaction_id)]));
     for (const s of fresh) {
-      open.add(`sms_category:${s.id}`);
-      open.add(`sms_link:${s.id}`);
+      // A suggestion stays open only while this run still stands by it; one whose reason is gone (evidence
+      // that no longer pairs, a category now remembered, a bank text that names no shop) goes stale.
       const sug = analysis.suggestions.get(s.id);
       const amount = analysis.lkr.get(s.id)?.amount ?? s.amount;
       if (!sug || amount === null) continue;
@@ -438,6 +438,7 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
       // its category: evidence (a payee's confirmation) → memories / built-ins → your past choices → the AI
       const evidenced = sug.kind === 'expense' && sug.evidence ? payeeCategory(bundle.categories, payees, sug.evidence) : null;
       if (sug.kind === 'expense' && evidenced) {
+        open.add(`sms_category:${s.id}`);
         const hash = hashOf(['evidence', sug.evidence, evidenced]);
         if (!unchanged('sms_category', s.id, hash)) {
           out.suggestions.push({
@@ -453,6 +454,7 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
         const past = remembered ? null : pastChoice(bundle.booked ?? [], sms, s, amount, contradicted);
         const hash = hashOf([memo, Math.round(amount), cats.list.length, steps]);
         if (past) {
+          open.add(`sms_category:${s.id}`);
           const h = hashOf(['history', past.category_id, past.count]);
           if (!unchanged('sms_category', s.id, h)) {
             out.suggestions.push({
@@ -460,7 +462,8 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
               confidence: HISTORY_CONFIDENCE, pattern: 'history', models: [], input_hash: h,
             });
           }
-        } else if (!remembered && !noShop && memo && !unchanged('sms_category', s.id, hash) && catItems.length < MAX.sms) {
+        } else if (!remembered && !noShop && memo) open.add(`sms_category:${s.id}`);
+        if (!past && !remembered && !noShop && memo && !unchanged('sms_category', s.id, hash) && catItems.length < MAX.sms) {
           try {
             catItems.push({ i: catRows.length, payload: { merchant: smsText(memo), amount: Math.round(amount), kind: s.kind } });
             catRows.push(s);
@@ -482,6 +485,7 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
           .sort((a, b) => Math.abs(a.total - amount) - Math.abs(b.total - amount))
           .slice(0, 5);
         if (!close.length) continue;
+        open.add(`sms_link:${s.id}`);
         const hash = hashOf([s.merchant_text, amount, close.map((t) => t.id), steps]);
         if (unchanged('sms_link', s.id, hash)) continue;
         try {
