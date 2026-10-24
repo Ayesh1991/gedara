@@ -12,6 +12,7 @@ describe('secret detector (TypeScript)', () => {
     expect(isSecret(text)).toBe(true);
     // a sender's own allowance (SAMPATHTXN's references, its closing line) never frees a code
     expect(isSecret(text, 'SAMPATHTXN')).toBe(true);
+    expect(isSecret(text, 'BOCONLINE')).toBe(true);
   });
 
   it.each(REAL_ALERTS)('keeps the real %s alert', (sender, body) => {
@@ -25,8 +26,15 @@ describe('secret detector (TypeScript)', () => {
     expect(secretReason(body)).toBe('code');
   });
 
+  it("BOC Flex's Tap & Pay reference is allowed only from BOCONLINE, and only with letters in it", () => {
+    const body = 'Your Tap & Pay transaction of LKR 2252.00 from XXXX3399 at GUNASEKARA & COMPANY was successful. Ref: VC_7760QQS8';
+    expect(secretReason(body, 'BOCONLINE')).toBeNull();
+    expect(secretReason(body, 'BOC')).toBe('code');
+    expect(secretReason(body.replace('VC_7760QQS8', 'VC_77604821'), 'BOCONLINE')).toBe('code');
+  });
+
   it('every corpus text is dropped by the parser too, from every allow-listed sender', () => {
-    for (const sender of ['BOC', 'SAMPCCTXN', 'SAMPATHTXN', 'PeoplesCard', 'Seylan Bank', 'SLTBILL', 'SLT-Mobitel', '5555', 'Star Points', 'LECO BILL']) {
+    for (const sender of ['BOC', 'BOCONLINE', 'SAMPCCTXN', 'SAMPATHTXN', 'PeoplesCard', 'Seylan Bank', 'SLTBILL', 'SLT-Mobitel', '5555', 'Star Points', 'LECO BILL']) {
       for (const body of SECRET_CORPUS) {
         expect(parseSms({ sender, body, receivedAt: '2026-10-01T04:30:00Z' })).toEqual({ keep: false, reason: 'otp' });
       }
@@ -75,6 +83,6 @@ describe('the database runs the same corpus', () => {
   it('supabase/tests/database/sms_secret.test.sql was regenerated from this corpus', () => {
     const sql = readFileSync(new URL('../../../../../supabase/tests/database/sms_secret.test.sql', import.meta.url), 'utf8');
     expect(sql, 'run: node --experimental-strip-types scripts/secret-sql-test.mjs')
-      .toContain(`select plan(${2 * SECRET_CORPUS.length + REAL_ALERTS.length + 3});`);
+      .toContain(`select plan(${3 * SECRET_CORPUS.length + REAL_ALERTS.length + 3});`);
   });
 });

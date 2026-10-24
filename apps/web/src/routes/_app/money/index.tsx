@@ -48,7 +48,7 @@ function MoneyPage() {
   const sms = useQuery(smsQuery(householdId));
   const newAlerts = (sms.data ?? []).filter((s) => !s.ignored && !s.transaction_id).length;
   const suggestions = useQuery(suggestionsQuery(householdId));
-  const toCheck = (suggestions.data ?? []).filter((s) => ['line_product', 'line_category', 'sms_rebook', 'sms_recategorise'].includes(s.task)).length;
+  const toCheck = (suggestions.data ?? []).filter((s) => ['line_product', 'line_category', 'sms_rebook', 'sms_recategorise', 'sms_topup'].includes(s.task)).length;
   const thisMonth = flow.data?.find((f) => f.month === month);
   const hasAnything = (flow.data?.length ?? 0) > 0 || (txs.data?.length ?? 0) > 0;
 

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, CircleCheck, CreditCard, Landmark, MessageSquareText, Undo2 } from 'lucide-react';
+import { ChevronLeft, CircleCheck, CreditCard, Landmark, MessageSquareText, Undo2, Wallet } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -289,7 +289,7 @@ function InboxPage() {
 function NewAccountRow({ found, householdId, onDone }: { found: UnknownAccount; householdId: string; onDone: () => void }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
-  const Icon = found.kind === 'credit_card' ? CreditCard : Landmark;
+  const Icon = found.kind === 'credit_card' ? CreditCard : found.kind === 'wallet' ? Wallet : Landmark;
   const add = async () => {
     setBusy(true);
     try {
@@ -318,7 +318,11 @@ function NewAccountRow({ found, householdId, onDone }: { found: UnknownAccount; 
           {t('money.inbox.newAccountSeen', { bank: found.institution, digits: found.digits })}
         </div>
         <div className="text-[12.5px] text-muted">
-          {t(found.kind === 'credit_card' ? 'money.inbox.newAccountCard' : 'money.inbox.newAccountBank', { count: found.count })}
+          {t(
+            found.kind === 'credit_card' ? 'money.inbox.newAccountCard'
+              : found.kind === 'wallet' ? 'money.inbox.newAccountWallet' : 'money.inbox.newAccountBank',
+            { count: found.count },
+          )}
         </div>
       </div>
       <Button size="sm" variant="secondary" disabled={busy} onClick={() => void add()}>

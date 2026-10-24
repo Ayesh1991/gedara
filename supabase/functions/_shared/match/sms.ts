@@ -75,14 +75,16 @@ export type Suggestion =
 export interface UnknownAccount {
   institution: string;
   digits: string;
-  /** what the alerts say it is: card alerts → credit card, account alerts → bank */
-  kind: 'bank' | 'credit_card';
+  /** what the alerts say it is: card alerts → credit card, BOC Flex Tap & Pay → wallet, account alerts → bank */
+  kind: 'bank' | 'credit_card' | 'wallet';
   count: number;
 }
 
 export interface Gap {
   expected: number;
   reported: number;
+  /** the alert the chain last agreed with (where the gap starts; Phase 9b.2) */
+  sinceSmsId?: string;
 }
 
 export interface InboxAnalysis {
@@ -140,6 +142,7 @@ export function unknownAccounts(sms: SmsRow[]): UnknownAccount[] {
     const g = groups.get(key) ?? { institution: s.institution, digits: s.last_digits, kind: 'bank' as const, count: 0 };
     g.count += 1;
     if (CARD_KINDS.has(s.kind)) g.kind = 'credit_card';
+    else if (s.parser?.startsWith('boconline.')) g.kind = 'wallet';
     groups.set(key, g);
   }
   return [...groups.values()].sort((a, b) => b.count - a.count);
@@ -240,7 +243,7 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
         const effect = balanceEffect(s, s.amount);
         if (effect !== null) {
           const expected = cents(prev.balance_after) + cents(effect);
-          if (expected !== cents(s.balance_after)) gaps.set(s.id, { expected: expected / 100, reported: s.balance_after });
+          if (expected !== cents(s.balance_after)) gaps.set(s.id, { expected: expected / 100, reported: s.balance_after, sinceSmsId: prev.id });
         }
       }
       prev = s.kind === 'unknown' ? null : s; // an unknown alert breaks the chain rather than faking a gap

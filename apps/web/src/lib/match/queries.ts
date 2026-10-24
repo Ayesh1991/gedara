@@ -6,7 +6,7 @@ import type { Json } from '../db.types';
 import { moneyKey } from '../money/queries';
 import { supabase } from '../supabase';
 
-export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise';
+export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup';
 
 export interface Suggestion {
   id: string;
@@ -40,6 +40,9 @@ export interface Suggestion {
     line_id?: string;
     payee?: string;
     receipt_sms?: string;
+    /** sms_topup (9b.2): the stretch of the bank's balance chain the money went missing in */
+    since?: string;
+    occurred_on?: string;
   };
   confidence: number;
   pattern: string;

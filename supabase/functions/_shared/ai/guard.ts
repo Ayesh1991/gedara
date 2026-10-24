@@ -43,18 +43,19 @@ function unsafe(text: string): 'keyword' | 'code' | null {
 
 /** Text that came out of a bank alert (merchant, description): strictest rules. Throws when unsafe. */
 export function smsText(text: string | null | undefined, max = 80): string {
-  const t = tidy(text, max);
-  const why = secretReason(t); // before masking: a code must stop the item, not be hidden in it
+  // the whole text, before shortening and masking: a code must stop the item, not be cut or hidden in it
+  const why = secretReason(tidy(text, 2000));
   if (why) throw new UnsafePrompt(why);
+  const t = tidy(text, max);
   return t.replace(CARD, '****').replace(/\p{Nd}{4,}/gu, (m) => '#'.repeat(m.length));
 }
 
 /** Text from a scanned bill or the household's own names. Throws when unsafe; masks 9+-digit numbers. */
 export function billText(text: string | null | undefined, max = 100): string {
-  const t = tidy(text, max).replace(CARD, '****').replace(/\p{Nd}{9,}/gu, (m) => '#'.repeat(m.length));
-  const why = unsafe(t);
+  const mask = (x: string) => x.replace(CARD, '****').replace(/\p{Nd}{9,}/gu, (m) => '#'.repeat(m.length));
+  const why = unsafe(mask(tidy(text, 2000))); // the whole text, before shortening
   if (why) throw new UnsafePrompt(why);
-  return t;
+  return mask(tidy(text, max));
 }
 
 /** A calendar day, and nothing else. */

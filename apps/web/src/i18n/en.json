@@ -1324,6 +1324,8 @@
       "newAccountBank_one": "Bank account · 1 alert waiting",
       "newAccountCard": "Credit card · {{count}} alerts waiting",
       "newAccountCard_one": "Credit card · 1 alert waiting",
+      "newAccountWallet": "Wallet · {{count}} alerts waiting",
+      "newAccountWallet_one": "Wallet · 1 alert waiting",
       "addAccount": "Add account",
       "accountAdded": "{{name}} added: its alerts now point to it"
     }
@@ -3074,6 +3076,8 @@
       "rebook": "Booked as spending ({{was}}), but {{card}} received {{paid}}: probably a transfer to that card, not spending.",
       "rebookFee": "Booked as spending ({{was}}), but {{card}} received {{paid}}: probably a transfer to that card plus a {{fee}} bank fee.",
       "recategorise": "Booked as {{was}}, but {{payee}} confirms this payment: {{to}}.",
+      "topup": "{{from}}'s balance fell {{paid}} more than its alerts explain between {{since}} and {{day}}: probably a top-up of {{to}} (it sends no SMS).",
+      "topupNote": "Wallet top-up (no SMS; found from the bank balance)",
       "paymentSeen": "The {{card}} payment alert is from {{day}}."
     },
     "evidenceHint": "{{payee}} confirms this payment",
@@ -3177,6 +3181,7 @@
     "tasks": {
       "sms_rebook": "Past booking → transfer",
       "sms_recategorise": "Past booking → category",
+      "sms_topup": "Bank balance → wallet top-up",
       "line_product": "Bill line → product",
       "line_category": "Bill line → category",
       "line_thing": "Bill line → thing",

@@ -15,7 +15,7 @@ import { isSecret } from './secret.ts';
 
 export { FORWARD_TEXT_REGEX, isSecret, secretReason } from './secret.ts';
 
-export const PARSER_VERSION = 3;
+export const PARSER_VERSION = 4;
 
 export type SmsKind =
   | 'card_charge' | 'card_payment' | 'bank_debit' | 'bank_credit' | 'atm' | 'refund' | 'info' | 'receipt' | 'unknown';
@@ -58,6 +58,7 @@ const SENDERS: Record<string, string> = {
   BOC: 'BOC',
   SAMPCCTXN: 'Sampath',
   SAMPATHTXN: 'Sampath', // the Sampath bank account and fixed deposit (Phase 9b.1)
+  BOCONLINE: 'BOC Flex', // BOC Flex: Tap & Pay from the wallet (Phase 9b.2); its OTPs are dropped like any
   PEOPLESCARD: "People's",
   SEYLANBANK: 'Seylan',
   SEYLAN: 'Seylan',
@@ -73,7 +74,7 @@ const RECEIPT_SENDERS = new Set(['SLTBILL', 'SLTMOBITEL', '5555', 'STARPOINTS', 
 
 /** The sender ids the phone should forward (for the forwarder's sender regex). */
 export const FORWARD_SENDERS = [
-  'BOC', 'SAMPCCTXN', 'SAMPATHTXN', 'PeoplesCard', 'Seylan Bank',
+  'BOC', 'BOCONLINE', 'SAMPCCTXN', 'SAMPATHTXN', 'PeoplesCard', 'Seylan Bank',
   'SLTBILL', 'SLT-Mobitel', 'SLTMobitel', '5555', 'Star Points', 'LECO BILL',
 ] as const;
 
@@ -533,7 +534,26 @@ const starPoints: Parser = (body) => {
 
 const PARSERS: Record<string, Parser> = { BOC: boc, Sampath: sampath, "People's": peoples, Seylan: seylan };
 /** Senders whose alerts need their own parser (same institution, other formats). */
+// ── BOC Flex (BOCONLINE, Phase 9b.2) ─────────────────────────────────────────
+// "Your Tap & Pay transaction of LKR 2252.00 from XXXX3399 at GUNASEKARA & COMPANY was successful. Ref: VC_7760QQS8"
+// The wallet (··3399) is topped up in the BOC Flex app; that top-up sends no SMS (see the balance gaps).
+const BOC_TAP_PAY_RE = new RegExp(
+  `^Your Tap\\s*&\\s*Pay transaction of\\s+(LKR|Rs\\.?|USD)\\s*${N}\\s+from\\s+[X*x]+(\\d{4})\\s+at\\s+(.+?)\\s+was successful\\.?\\s*(?:Ref\\s*:?\\s*(VC_[A-Z0-9]+))?`,
+  'i',
+);
+
+const bocOnline: Parser = (body) => {
+  const m = BOC_TAP_PAY_RE.exec(body);
+  if (!m) return null;
+  const currency = /^rs/i.test(m[1]!) ? 'LKR' : m[1]!.toUpperCase();
+  return {
+    parser: 'boconline.tap_pay', kind: 'bank_debit', last_digits: m[3]!, currency, amount: parseMoney(m[2]),
+    merchant_text: clean(m[4]), balance_after: null, bank_txn_id: m[5] ? m[5].toUpperCase() : null,
+  };
+};
+
 const SENDER_PARSERS: Record<string, Parser> = {
+  BOCONLINE: bocOnline,
   SAMPATHTXN: sampathAccount, SLTBILL: sltBill, LECOBILL: leco, SLTMOBITEL: mobitel, '5555': dialog, STARPOINTS: starPoints,
 };
 

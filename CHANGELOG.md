@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.7 — Phase 9b.2: BOC Flex Tap & Pay and the wallet
+- **BOCONLINE is read.** "Your Tap & Pay transaction of LKR 2252.00 from XXXX3399 at GUNASEKARA & COMPANY
+  was successful. Ref: VC_…" is a payment from the BOC Flex wallet; "New account seen" offers **BOC Flex
+  ··3399** as a wallet in one tap. The shop name goes through the usual rules (and Star Points' Cargills note).
+- **OTPs stay out.** BOCONLINE's own reference ("Ref: VC_7760QQS8") is explained for that sender only and
+  only with letters in it; every BOC Flex OTP (fund transfer, new payee, limit change, wallet transfer) is
+  dropped by its words, in the app and in the database (migration 89). The phone's text filter keeps them
+  on the phone. The AI guard now checks a text's whole length before shortening it.
+- **Wallet top-ups send no SMS**, so the bank balance tells: when a BOC account's "Balance available" falls
+  more than its alerts explain, Check past bookings proposes "probably a top-up of BOC Flex ··3399" and Fix
+  books the transfer (only with exactly one wallet; never "sure").
+- Settings › Devices adds BOCONLINE to the sender filter. Database: migration 89 (schema 89); functions
+  `sms-ingest-5`, `match-agent-9`.
+
 ## 0.9.6 — Phase 9b.1 fix: suggestions whose reason is gone are cleared
 - A bank-alert suggestion now stays open only while a matching run still stands by it. One whose reason
   has gone (evidence that no longer pairs, a category now remembered, a bank text that names no shop)
