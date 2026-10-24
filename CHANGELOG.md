@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.5 — Phase 9b.1 fix: a bank alert's line is the whole bill, not a pantry item
+- A bank alert saved as a Grocery expense gets one line named after the shop. It inherited Grocery's
+  "goes to the pantry", so Needs you offered it a product; one Yes on prod linked a Cargills alert to
+  Carrot and taught "cargills foodcity …" → Carrot, which came back as a 99 % rule for other Cargills
+  alerts. Now such a line is made as not-pantry, a product can't be linked to it, its shop name is never
+  learned as a product name, and the matcher leaves it out of pantry questions and the accuracy test.
+- Repair (migration 88, schema 88): bank-alert lines that never fed the pantry lose their product (no
+  stock was ever made for them), the names learned from them as products are forgotten, and their open
+  product suggestions are dropped.
+
 ## 0.9.4 — Phase 9b.1 fix: Star Points shop notes only confirm the same shop
 - A Star Points "transaction at Cargills" note is a loyalty card, not a payment: it now explains only a
   card charge within 30 minutes **that names the same shop**. On prod data it had also "explained" a fuel
