@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.13 — Loans entered as owed; an entry can change its type
+- A loan's starting balance and Reconcile take **what is owed**. They used the card rule ("available
+  credit") because a loan has a limit too, so 0 meant "the whole loan owed" — and with the payout booked
+  on top, the BOC loan showed Rs 4,000,000 owed instead of Rs 2,000,000. A loan now shows "Rs X owed of
+  the Rs Y loan" in a calm colour.
+- **Edit** offers Expense / Income / Transfer for a plain entry, so a bank debit booked as spending can
+  become a transfer (e.g. a debt repaid to a person, kept in an "Owed to …" loan account). Entries whose
+  lines feed the pantry or Things keep their type.
+- No database or function change.
+
 ## 0.9.12 — Transfers between your own accounts; card payments paired more carefully
 - **The inbox pairs money moved between your own accounts**: a "… Transfer Debit" on one bank / wallet /
   cash account and a "… Transfer Credit" of the same amount (+ up to Rs 50 fee) on another within 36 h →

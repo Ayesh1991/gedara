@@ -1122,6 +1122,7 @@
       "owed": "owed",
       "limitUsed": "Credit limit used",
       "availableOf": "Rs {{available}} available of Rs {{limit}}",
+      "loanOf": "Rs {{owed}} owed of the Rs {{limit}} loan",
       "toMatch": "{{count}} to match",
       "toMatchHint": "move them to the right card",
       "countingFrom": "Balance counts entries after {{date}}.",
