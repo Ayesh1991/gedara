@@ -207,6 +207,18 @@ export function paymentEvidence(sms: SmsRow[]): Map<string, Evidence> {
   return out;
 }
 
+/**
+ * One side of a transfer between your own accounts (9b.2): a bank debit or credit whose own words say
+ * "transfer" (not a salary deposit, not the loan paid out), on a bank / wallet / cash account.
+ */
+export function isOwnTransfer(s: SmsRow, accounts: AccountLite[]): boolean {
+  if ((s.kind !== 'bank_debit' && s.kind !== 'bank_credit') || !s.account_id || s.amount === null) return false;
+  if (!/\btransfer\b/i.test(s.merchant_text ?? '')) return false;
+  if (s.kind === 'bank_credit' && s.amount >= LOAN_AT) return false; // the loan paid out has its own path
+  const kind = accounts.find((a) => a.id === s.account_id)?.kind;
+  return kind === 'bank' || kind === 'wallet' || kind === 'cash';
+}
+
 /** Bank wording that names no shop: only evidence (or a person) can say what it was for. */
 export function namesNoShop(text: string | null | undefined): boolean {
   return !text || /\b(transfer (debit|credit)|transfer order|ceft|slips|atm withdrawal|no book deposit|cash deposit|standing order|dormant chg)\b/i.test(text);
@@ -253,17 +265,20 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
   }
   const lkrOf = (s: SmsRow) => lkr.get(s.id)?.amount ?? null;
 
-  // ── 2. Transfer pairs: bank debit ↔ card payment within 36 h, fee 0–50 ────────
+  // ── 2. Transfer pairs: bank debit ↔ card payment, or ↔ a transfer credit on another of your own
+  //       accounts (··708 → Savings, 9b.2), within 36 h, fee 0–50 ─────────────────────────────────
   const suggestions = new Map<string, Suggestion>();
   const fresh = sms.filter(isNew);
   const debits = fresh.filter((s) => s.kind === 'bank_debit' && s.account_id && s.amount !== null);
-  const payments = fresh.filter((s) => s.kind === 'card_payment' && s.account_id && s.amount !== null);
+  const payments = fresh.filter((s) => s.account_id && s.amount !== null &&
+    (s.kind === 'card_payment' || isOwnTransfer(s, accounts)));
   const pairs: Array<{ d: SmsRow; p: SmsRow; apart: number }> = [];
   for (const d of debits) {
     for (const p of payments) {
       const fee = cents(d.amount!) - cents(p.amount!);
       const apart = Math.abs(Date.parse(d.received_at) - Date.parse(p.received_at));
-      if (fee >= 0 && fee <= MAX_FEE * 100 && apart <= PAIR_WINDOW && d.account_id !== p.account_id) {
+      const ok = p.kind === 'card_payment' || isOwnTransfer(d, accounts);
+      if (ok && fee >= 0 && fee <= MAX_FEE * 100 && apart <= PAIR_WINDOW && d.account_id !== p.account_id) {
         pairs.push({ d, p, apart });
       }
     }

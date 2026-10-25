@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.12 — Transfers between your own accounts; card payments paired more carefully
+- **The inbox pairs money moved between your own accounts**: a "… Transfer Debit" on one bank / wallet /
+  cash account and a "… Transfer Credit" of the same amount (+ up to Rs 50 fee) on another within 36 h →
+  one transfer (not a salary deposit, not the loan paid out).
+- **Check past bookings: "money moved between your own accounts"** — booked as spending on one side and
+  income on the other (or one booked, one waiting) → Fix removes those entries and makes one transfer with
+  both alerts (rpc_sms_rebook). On prod: Rs 200,000, 110,000 and 100,000 from ··708 to Savings, Rs 45,000
+  back — Rs 455,000 of invented income and spending.
+- A booked transfer debit is now paired with the closest card payment that has no debit of its own: a
+  nearer one that already has its debit no longer hides it (on prod two of the three Rs 50,000 card
+  payments paid from ··708 were missed this way). Copies of an alert are never used as payments.
+- Function `match-agent-12`; no database change.
+
 ## 0.9.11 — Check past bookings: paid from the other account, the same alert twice
 - **Paid from the other account:** a card payment booked as a transfer with no bank debit behind it,
   while a debit of the same amount (+ up to Rs 50 fee) waits on another account within 48 h → Fix moves
