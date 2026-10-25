@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.9 — Phase 9b.2 fix: wallet top-ups only from clean balance gaps
+- On prod data the balance check would have proposed about 45 "top-ups": Rs 5 ATM fees, transfers plus a
+  fee whose debit alert is missing (Rs 25,025, 50,125 …) and alerts that arrived out of order. A gap now
+  counts only when it is whole hundreds, the alerts on both sides agree with the balance (fee-sized gaps
+  aside) and it falls while the wallet is in use. On prod: 6 proposals, Rs 30,700 from BOC Savings.
+- BOCONLINE "You have received LKR … from …" is read as money into the wallet (parser v5).
+- Functions `match-agent-10`, `sms-ingest-6`; no database change.
+
 ## 0.9.8 — Settings › Devices shows both phone filters
 - For a phone set up earlier, Settings › Devices showed only the new OTP text filter; the sender filter
   (now with BOCONLINE, SAMPATHTXN and the payees) appeared only while adding a new phone. The card

@@ -24,6 +24,11 @@ describe('BOC Flex Tap & Pay (BOCONLINE)', () => {
       .toMatchObject({ merchant_text: 'CARGILLS - KURANA', amount: 1480 });
   });
 
+  it('money sent to the wallet is money in', () => {
+    expect(parsed('BOCONLINE', 'Hey there, You have received LKR 5,000.00. from DR (MRS) D M D PERERA.'))
+      .toMatchObject({ parser: 'boconline.received', kind: 'bank_credit', institution: 'BOC Flex', amount: 5000, merchant_text: 'DR (MRS) D M D PERERA' });
+  });
+
   it('its OTPs never get through', () => {
     for (const body of [
       'BOC Flex Fund Transfer - LKR 320,000.00. Please use OTP 610068 to authorize the Transaction. Do not share this OTP with anyone.',

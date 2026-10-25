@@ -286,24 +286,47 @@ describe('BOC Flex wallet top-ups (9b.2): no SMS, so the bank balance tells', ()
     ],
     ...p,
   });
+  // the wallet in use: a Tap & Pay payment
+  const tap = sms({ kind: 'bank_debit', amount: 1480, at: '2026-10-21 12:00', account_id: 'wallet', merchant_text: 'CARGILLS - KURANA', parser: 'boconline.tap_pay' });
+  const boc = (amount: number, at: string, balance: number) => ceft(amount, at, { balance_after: balance, merchant_text: 'ATM Withdrawal' });
 
   it('a BOC balance that dropped Rs 5,000 more than its alerts explain → a top-up of the wallet', () => {
-    const a = ceft(1000, '2026-10-20 09:00', { balance_after: 50000, merchant_text: 'ATM Withdrawal' });
-    const b = ceft(2000, '2026-10-22 09:00', { balance_after: 43000 });
-    const out = walletTopups(withWallet(), [a, b]);
+    const a = boc(1000, '2026-10-20 09:00', 50000);
+    const b = boc(2000, '2026-10-22 09:00', 43000);
+    const c = boc(1000, '2026-10-23 09:00', 42000);
+    const out = walletTopups(withWallet(), [a, tap, b, c]);
     expect(out).toEqual([expect.objectContaining({
       task: 'sms_topup', target_key: b.id, confidence: 0.7, pattern: 'balance',
       proposal: expect.objectContaining({ from_account_id: 'boc', to_account_id: 'wallet', total: 5000, since: '2026-10-20', occurred_on: '2026-10-22' }),
     })]);
   });
 
+  it('an ATM fee next to it does not hide a top-up', () => {
+    const a = boc(1000, '2026-10-19 09:00', 51005);
+    const fee = boc(1000, '2026-10-20 09:00', 50000); // Rs 5 ATM fee: off by 5
+    const b = boc(2000, '2026-10-22 09:00', 43000);
+    expect(walletTopups(withWallet(), [a, fee, tap, b]).map((t) => t.proposal.total)).toEqual([5000]);
+  });
+
+  it('not a top-up: the Rs 5 ATM fee, a transfer + fee whose alert is missing, alerts out of order, before the wallet', () => {
+    const fee = [boc(1000, '2026-10-20 09:00', 50000), boc(1000, '2026-10-21 09:00', 48995)];
+    expect(walletTopups(withWallet(), [...fee, tap])).toEqual([]);
+    const ceftFee = [boc(1000, '2026-10-20 09:00', 50000), boc(1000, '2026-10-22 09:00', 23975)];
+    expect(walletTopups(withWallet(), [...ceftFee, tap])).toEqual([]);
+    // −98,892.60 then +78,897.60: two alerts swapped, not money that left
+    const swapped = [boc(1000, '2026-10-08 09:00', 108331.93), boc(30000, '2026-10-10 09:00', 177219.53), boc(5000, '2026-10-10 10:00', 93300)];
+    expect(walletTopups(withWallet(), [...swapped, tap])).toEqual([]);
+    const early = [boc(1000, '2026-07-01 09:00', 50000), boc(1000, '2026-07-03 09:00', 44000)];
+    expect(walletTopups(withWallet(), [...early, tap])).toEqual([]);
+  });
+
   it('nothing when it is already booked, when money came in, or without exactly one wallet', () => {
-    const a = ceft(1000, '2026-10-20 09:00', { balance_after: 50000 });
-    const b = ceft(2000, '2026-10-22 09:00', { balance_after: 43000 });
+    const a = boc(1000, '2026-10-20 09:00', 50000);
+    const b = boc(2000, '2026-10-22 09:00', 43000);
     const topup = { id: 't', type: 'transfer', account_id: 'boc', to_account_id: 'wallet', payee_text: null, occurred_on: '2026-10-21', occurred_at: null, total: 5000 };
-    expect(walletTopups(withWallet({ candidates: [topup] }), [a, b])).toEqual([]);
-    const up = ceft(2000, '2026-10-22 09:00', { balance_after: 53000 });
-    expect(walletTopups(withWallet(), [a, up])).toEqual([]);
-    expect(walletTopups(bundle(), [a, b])).toEqual([]);
+    expect(walletTopups(withWallet({ candidates: [topup] }), [a, tap, b])).toEqual([]);
+    const up = boc(2000, '2026-10-22 09:00', 53000);
+    expect(walletTopups(withWallet(), [a, tap, up])).toEqual([]);
+    expect(walletTopups(bundle(), [a, tap, b])).toEqual([]);
   });
 });
