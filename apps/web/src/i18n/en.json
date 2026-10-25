@@ -3078,6 +3078,10 @@
       "recategorise": "Booked as {{was}}, but {{payee}} confirms this payment: {{to}}.",
       "topup": "{{from}}'s balance fell {{paid}} more than its alerts explain between {{since}} and {{day}}: probably a top-up of {{to}} (it sends no SMS).",
       "topupNote": "Wallet top-up (no SMS; found from the bank balance)",
+      "moveFee": "Booked from {{was}}, but this {{debit}} debit from {{from}} paid the {{paid}} into {{card}}: Fix moves the payment to {{from}} and books the {{fee}} fee.",
+      "move": "Booked from {{was}}, but this {{debit}} debit from {{from}} paid the {{paid}} into {{card}}: Fix moves the payment to {{from}}.",
+      "duplicateWaiting": "{{bank}} sent this {{paid}} alert twice (same balance, first on {{day}}). Fix marks the second copy as seen.",
+      "duplicate": "{{bank}} sent this {{paid}} alert twice (same balance, first on {{day}}). The second copy is booked as its own entry, so the money is counted twice: Fix removes that entry.",
       "paymentSeen": "The {{card}} payment alert is from {{day}}."
     },
     "evidenceHint": "{{payee}} confirms this payment",
@@ -3182,6 +3186,7 @@
       "sms_rebook": "Past booking → transfer",
       "sms_recategorise": "Past booking → category",
       "sms_topup": "Bank balance → wallet top-up",
+      "sms_duplicate": "Same alert twice → one entry",
       "line_product": "Bill line → product",
       "line_category": "Bill line → category",
       "line_thing": "Bill line → thing",

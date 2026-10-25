@@ -14,6 +14,7 @@ import {
   TooOften,
   checkNow,
   decide,
+  dropDuplicate,
   linkLineProduct,
   matchSettingQuery,
   pastAlertsQuery,
@@ -59,7 +60,7 @@ function ReviewPage() {
   );
   // Phase 9b.1: past bookings the evidence disagrees with
   const past = useMemo(
-    () => (suggestions.data ?? []).filter((s) => s.task === 'sms_rebook' || s.task === 'sms_recategorise' || s.task === 'sms_topup'),
+    () => (suggestions.data ?? []).filter((s) => s.task === 'sms_rebook' || s.task === 'sms_recategorise' || s.task === 'sms_topup' || s.task === 'sms_duplicate'),
     [suggestions.data],
   );
   const pastIds = useMemo(
@@ -248,6 +249,7 @@ function PastBooking({
   const fix = () =>
     act(async () => {
       if (s.task === 'sms_rebook') await rebook(p);
+      else if (s.task === 'sms_duplicate') await dropDuplicate(p);
       else if (s.task === 'sms_topup') {
         // the wallet top-up no SMS reported (9b.2): a transfer, dated where the balance shows it
         await saveTransaction({
@@ -261,7 +263,22 @@ function PastBooking({
   const keep = () => act(() => decide([s.id], 'rejected'), t('match.past.kept'));
 
   const what =
-    s.task === 'sms_topup'
+    s.task === 'sms_duplicate'
+      ? t(p.delete_tx ? 'match.past.duplicate' : 'match.past.duplicateWaiting', {
+          bank: debit?.sender ?? '?',
+          paid: money(p.total),
+          day: p.kept_on ? formatDay(p.kept_on, locale, today.slice(0, 4)) : '?',
+        })
+      : s.task === 'sms_rebook' && p.moved
+      ? t(p.fee ? 'match.past.moveFee' : 'match.past.move', {
+          was: accountName(p.was_account_id),
+          from: accountName(p.from_account_id),
+          card: accountName(p.card_account_id),
+          paid: money(p.total),
+          debit: money(debit?.amount),
+          fee: money(p.fee),
+        })
+      : s.task === 'sms_topup'
       ? t('match.past.topup', {
           from: accountName(p.from_account_id),
           to: accountName(p.to_account_id),

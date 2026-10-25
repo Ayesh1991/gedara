@@ -99,7 +99,7 @@ export interface Bundle {
 }
 
 export interface SuggestionOut {
-  task: 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup';
+  task: 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup' | 'sms_duplicate';
   target_key: string;
   line_id?: string;
   sms_id?: string;
@@ -147,6 +147,8 @@ const PAIR_WINDOW = 48 * 60 * 60 * 1000;
 const PAIR_FEE = 50;
 /** A wallet top-up is only a guess from a balance gap: never "sure". */
 const TOPUP_CONFIDENCE = 0.7;
+/** The same alert again (a bank's double send, or a backup's copy days later). */
+const DUPLICATE_WINDOW = 31 * 86_400_000;
 const DEFAULT_STEPS: ModelRef[] = [
   { provider: 'groq', model: 'openai/gpt-oss-120b' },
   { provider: 'openai', model: 'gpt-6-luna' },
@@ -627,7 +629,7 @@ export function pastChoice(
  */
 export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: ReadonlyMap<string, string>): SuggestionOut[] {
   const booked = bundle.booked ?? [];
-  if (!booked.length) return walletTopups(bundle, sms);
+  if (!booked.length) return [...walletTopups(bundle, sms), ...duplicateAlerts(sms)];
   const out: SuggestionOut[] = [];
   const bySms = new Map(booked.map((b) => [b.sms_id, b]));
   const smsById = new Map(sms.map((m) => [m.id, m]));
@@ -687,12 +689,17 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
     });
   }
 
+  // a card payment booked from an account no debit came from, while the debit that paid it waits elsewhere
+  const duplicates = duplicateAlerts(sms);
+  const copyTx = new Set(duplicates.map((d) => String(d.proposal.delete_tx ?? '')));
+  out.push(...duplicates, ...paidFromOtherAccount(sms, bySms, copyTx, usedPayments, feeCategory));
   out.push(...walletTopups(bundle, sms));
 
   const evidence = paymentEvidence(sms);
   for (const b of booked) {
     if (b.type !== 'expense' || b.lines !== 1 || !b.category_id || !b.line_id || done.has(b.transaction_id)) continue;
-    const e = evidence.get(b.sms_id);
+    const found = evidence.get(b.sms_id);
+    const e = found?.shopOnly ? undefined : found; // a shop note names the shop, not what was bought
     const want = e ? payeeCategory(bundle.categories, payees, e.payee) : null;
     // a main category and one of its own subs agree (Grocery vs Grocery › Other grocery); siblings don't
     if (!e || !want || agrees(bundle.categories, want, b.category_id)) continue;
@@ -701,6 +708,112 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
     out.push({
       task: 'sms_recategorise', target_key: b.sms_id, sms_id: b.sms_id, line_id: b.line_id, proposal,
       confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['recategorise', proposal]),
+    });
+  }
+  return out;
+}
+
+/**
+ * sms_rebook, "paid from the other account" (9b.2 fix) — a card payment booked as a transfer with no bank
+ * debit behind it (often from the default account), while a bank debit of the same amount (+ up to Rs 50
+ * fee) within 48 h is still waiting on another account: that debit paid it. Fix (rpc_sms_rebook with
+ * transfer_id) moves the transfer to the debit's account, links the debit and books the fee. On prod:
+ * three Rs 50,000 card payments booked from Savings, paid by three CEFT Rs 50,025 from ··708.
+ */
+export function paidFromOtherAccount(
+  sms: SmsRow[], bySms: Map<string, BookedRow>, skipTx: ReadonlySet<string>,
+  usedPayments: Set<string>, feeCategory: string | null,
+): SuggestionOut[] {
+  const cents = (n: number) => Math.round(n * 100);
+  const withDebit = new Set(sms.filter((m) => m.transaction_id && (m.kind === 'bank_debit' || m.kind === 'atm')).map((m) => m.transaction_id!));
+  const debits = sms.filter((d) => !d.transaction_id && !d.ignored && d.kind === 'bank_debit' && d.amount !== null && !!d.account_id
+    && namesNoShop(d.merchant_text));
+  const pairs: Array<{ d: SmsRow; p: SmsRow; t: BookedRow; fee: number; dt: number }> = [];
+  for (const p of sms) {
+    if (p.kind !== 'card_payment' || p.amount === null || usedPayments.has(p.id)) continue;
+    const t = bySms.get(p.id);
+    if (!t || t.type !== 'transfer' || withDebit.has(t.transaction_id) || skipTx.has(t.transaction_id)) continue;
+    if (cents(t.total) !== cents(p.amount)) continue;
+    for (const d of debits) {
+      const fee = cents(d.amount!) - cents(p.amount);
+      const dt = Math.abs(smsWhen(p) - smsWhen(d));
+      if (fee >= 0 && fee <= PAIR_FEE * 100 && dt <= PAIR_WINDOW) pairs.push({ d, p, t, fee, dt });
+    }
+  }
+  pairs.sort((a, b) => a.dt - b.dt);
+  const out: SuggestionOut[] = [];
+  const usedDebits = new Set<string>();
+  const usedTx = new Set<string>();
+  for (const { d, p, t, fee } of pairs) {
+    if (usedDebits.has(d.id) || usedTx.has(t.transaction_id) || usedPayments.has(p.id)) continue;
+    usedDebits.add(d.id);
+    usedTx.add(t.transaction_id);
+    usedPayments.add(p.id);
+    const proposal = {
+      debit_sms: d.id, delete_tx: [] as string[], transfer_id: t.transaction_id, to_account_id: null, payment_sms: null,
+      total: p.amount!, fee: fee / 100, fee_category_id: fee > 0 ? feeCategory : null,
+      from_account_id: d.account_id, card_account_id: t.to_account_id, was_account_id: t.account_id, moved: true,
+    };
+    out.push({
+      task: 'sms_rebook', target_key: d.id, sms_id: d.id, proposal,
+      confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['move', proposal]),
+    });
+  }
+  return out;
+}
+
+/**
+ * sms_duplicate (9b.2 fix) — the same alert twice: same sender, kind, amount and balance after, within a
+ * month (Sampath sends some twice; a backup can hold a copy received days later). The first one is kept.
+ * A copy booked as its own entry (made only of copies) → Fix removes that entry and marks the copies seen;
+ * a copy still waiting → Fix marks it seen. A copy booked while the original waits is left alone (that
+ * booking is the real one).
+ */
+export function duplicateAlerts(sms: SmsRow[]): SuggestionOut[] {
+  const groups = new Map<string, SmsRow[]>();
+  for (const m of sms) {
+    if (m.amount === null || m.balance_after === null || m.kind === 'unknown' || m.kind === 'info' || m.kind === 'receipt') continue;
+    const key = [m.sender, m.kind, Math.round(m.amount * 100), Math.round(m.balance_after * 100)].join('|');
+    groups.set(key, [...(groups.get(key) ?? []), m]);
+  }
+  const copyOf = new Map<string, SmsRow>(); // copy id → the alert kept
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    list.sort((a, b) => a.received_at.localeCompare(b.received_at));
+    const first = list[0]!;
+    for (const m of list.slice(1)) {
+      if (Date.parse(m.received_at) - Date.parse(first.received_at) <= DUPLICATE_WINDOW) copyOf.set(m.id, first);
+    }
+  }
+  if (!copyOf.size) return [];
+  const byTx = new Map<string, SmsRow[]>();
+  for (const m of sms) if (m.transaction_id) byTx.set(m.transaction_id, [...(byTx.get(m.transaction_id) ?? []), m]);
+  const out: SuggestionOut[] = [];
+  const done = new Set<string>();
+  for (const [copyId, kept] of copyOf) {
+    if (done.has(copyId)) continue;
+    const copy = sms.find((m) => m.id === copyId)!;
+    let drop: SmsRow[];
+    let deleteTx: string | null = null;
+    if (copy.transaction_id) {
+      if (copy.transaction_id === kept.transaction_id || !kept.transaction_id) continue;
+      drop = byTx.get(copy.transaction_id) ?? [];
+      if (!drop.every((m) => copyOf.has(m.id))) continue; // the entry also holds a real alert: leave it
+      const keptTx = new Set(drop.map((m) => copyOf.get(m.id)!.transaction_id));
+      if (keptTx.has(copy.transaction_id)) continue;
+      deleteTx = copy.transaction_id;
+    } else {
+      if (copy.ignored) continue;
+      drop = [copy];
+    }
+    drop.forEach((m) => done.add(m.id));
+    const proposal = {
+      keep_sms: [...new Set(drop.map((m) => copyOf.get(m.id)!.id))], drop_sms: drop.map((m) => m.id), delete_tx: deleteTx,
+      total: copy.amount, account_id: copy.account_id, kept_on: kept.occurred_on,
+    };
+    out.push({
+      task: 'sms_duplicate', target_key: copy.id, sms_id: copy.id, proposal,
+      confidence: AUDIT_CONFIDENCE, pattern: 'balance', models: [], input_hash: hashOf(['duplicate', proposal]),
     });
   }
   return out;
@@ -817,7 +930,8 @@ export async function runEval(bundle: Bundle, env: RunEnv): Promise<RunOutput & 
     const evidence = paymentEvidence(bundle.sms ?? []);
     const evidenced = new Map<string, string>();
     for (const s of smsBatch) {
-      const e = evidence.get(s.id);
+      const found = evidence.get(s.id);
+      const e = found?.shopOnly ? undefined : found;
       const evCat = e ? payeeCategory(bundle.categories, payees, e.payee) : null;
       if (evCat && !agrees(bundle.categories, s.category_id, evCat)) {
         out.evals.push({ task: 'sms_category', target_key: s.id, truth: { category_id: evCat, chosen: s.category_id, contradicted: true, payee: e!.payee }, rule: null, ai: null, rule_correct: null, ai_correct: null });

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { payeeCategory } from '@match/memory';
-import { checkPastBookings, runEval, runMatching, walletTopups, type BookedRow, type Bundle } from '@match/run';
+import { checkPastBookings, duplicateAlerts, runEval, runMatching, walletTopups, type BookedRow, type Bundle } from '@match/run';
 import { analyseInbox, namesNoShop, paymentEvidence, type SmsRow } from '@match/sms';
 
 // Phase 9b.1: evidence before guesses. A payee's confirmation (Dialog, SLT, LECO, Star Points) explains a
@@ -328,5 +328,77 @@ describe('BOC Flex wallet top-ups (9b.2): no SMS, so the bank balance tells', ()
     const up = boc(2000, '2026-10-22 09:00', 53000);
     expect(walletTopups(withWallet(), [a, tap, up])).toEqual([]);
     expect(walletTopups(bundle(), [a, tap, b])).toEqual([]);
+  });
+});
+
+describe('Paid from the other account, and the same alert twice (9b.2 fix)', () => {
+  const twoBanks = (p: Partial<Bundle> = {}) => bundle({
+    accounts: [
+      { id: 'boc', kind: 'bank', is_suspense: false, archived: false, credit_limit: null, institution: 'BOC' },
+      { id: 'boc708', kind: 'bank', is_suspense: false, archived: false, credit_limit: null, institution: 'BOC' },
+      { id: 'sampath', kind: 'credit_card', is_suspense: false, archived: false, credit_limit: 300000, institution: 'Sampath' },
+    ],
+    ...p,
+  });
+
+  it("a card payment booked from Savings with no debit, while ··708's CEFT Rs 50,025 waits → move it there", () => {
+    const pay = sms({ kind: 'card_payment', amount: 50000, at: '2026-10-14 10:00', account_id: 'sampath', sender: 'SAMPCCTXN', transaction_id: 'tx-p' });
+    const debit = ceft(50025, '2026-10-15 09:00', { account_id: 'boc708' });
+    const out = checkPastBookings(twoBanks({
+      booked: [booked(pay, { transaction_id: 'tx-p', type: 'transfer', account_id: 'boc', to_account_id: 'sampath', total: 50000, lines: 0, line_id: null })],
+    }), [pay, debit], new Map());
+    expect(out).toEqual([expect.objectContaining({
+      task: 'sms_rebook', target_key: debit.id,
+      proposal: expect.objectContaining({ debit_sms: debit.id, delete_tx: [], transfer_id: 'tx-p', total: 50000, fee: 25, moved: true, was_account_id: 'boc', from_account_id: 'boc708' }),
+    })]);
+  });
+
+  it('a transfer that already has its debit, or a debit too far away, is left alone', () => {
+    const pay = sms({ kind: 'card_payment', amount: 50000, at: '2026-10-14 10:00', account_id: 'sampath', transaction_id: 'tx-p' });
+    const own = ceft(50025, '2026-10-14 09:59', { account_id: 'boc', transaction_id: 'tx-p' });
+    const waiting = ceft(50025, '2026-10-15 09:00', { account_id: 'boc708' });
+    const b = booked(pay, { transaction_id: 'tx-p', type: 'transfer', account_id: 'boc', to_account_id: 'sampath', total: 50000, lines: 0, line_id: null });
+    expect(checkPastBookings(twoBanks({ booked: [b, booked(own, { transaction_id: 'tx-p', type: 'transfer', lines: 0, line_id: null })] }), [pay, own, waiting], new Map())).toEqual([]);
+    const far = ceft(50025, '2026-10-20 09:00', { account_id: 'boc708' });
+    expect(checkPastBookings(twoBanks({ booked: [b] }), [pay, far], new Map())).toEqual([]);
+  });
+
+  it('the same alert twice (same sender, kind, amount, balance) booked as its own entry → remove that entry', () => {
+    const first = sms({ kind: 'card_payment', amount: 25000, balance_after: 50328.7, at: '2026-10-02 01:12', account_id: 'sampath', sender: 'SAMPCCTXN', transaction_id: 'tx-1' });
+    const copy = sms({ kind: 'card_payment', amount: 25000, balance_after: 50328.7, at: '2026-10-02 01:12', account_id: 'sampath', sender: 'SAMPCCTXN', transaction_id: 'tx-2' });
+    expect(duplicateAlerts([first, copy])).toEqual([expect.objectContaining({
+      task: 'sms_duplicate', target_key: copy.id, proposal: expect.objectContaining({ keep_sms: [first.id], drop_sms: [copy.id], delete_tx: 'tx-2' }),
+    })]);
+  });
+
+  it('a whole copied transfer (debit + card alert, re-imported later) goes as one; a waiting copy is only marked seen', () => {
+    const d1 = ceft(20000, '2026-09-28 23:16', { balance_after: 177219.53, transaction_id: 'tx-a' });
+    const c1 = sms({ kind: 'card_payment', amount: 20000, balance_after: 38298.09, at: '2026-09-28 23:17', account_id: 'sampath', transaction_id: 'tx-a' });
+    const d2 = ceft(20000, '2026-10-10 12:00', { balance_after: 177219.53, transaction_id: 'tx-b' });
+    const c2 = sms({ kind: 'card_payment', amount: 20000, balance_after: 38298.09, at: '2026-10-10 12:00', account_id: 'sampath', transaction_id: 'tx-b' });
+    const out = duplicateAlerts([d1, c1, d2, c2]);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.proposal).toMatchObject({ delete_tx: 'tx-b', keep_sms: expect.arrayContaining([d1.id, c1.id]), drop_sms: expect.arrayContaining([d2.id, c2.id]) });
+    const w = ceft(20000, '2026-10-10 12:00', { balance_after: 177219.53 });
+    expect(duplicateAlerts([d1, w])[0]!.proposal).toMatchObject({ delete_tx: null, drop_sms: [w.id] });
+  });
+
+  it('not a copy: a different balance, more than a month apart, or the original still waiting', () => {
+    const a = ceft(5000, '2026-10-01 10:00', { balance_after: 10000, transaction_id: 'tx-1' });
+    expect(duplicateAlerts([a, ceft(5000, '2026-10-01 11:00', { balance_after: 5000, transaction_id: 'tx-2' })])).toEqual([]);
+    expect(duplicateAlerts([a, ceft(5000, '2026-11-15 10:00', { balance_after: 10000, transaction_id: 'tx-3' })])).toEqual([]);
+    const waiting = ceft(5000, '2026-10-01 10:00', { balance_after: 10000 });
+    expect(duplicateAlerts([waiting, ceft(5000, '2026-10-02 10:00', { balance_after: 10000, transaction_id: 'tx-4' })])).toEqual([]);
+  });
+
+  it('a Star Points shop note explains a Cargills payment but never sets or changes its category', () => {
+    const card = sms({ kind: 'card_charge', amount: 4170.75, at: '2026-05-23 18:00', account_id: 'peoples', merchant_text: 'CARGILLS - RAJAGIRIYA', transaction_id: 'tx-c' });
+    const shop = sms({ kind: 'info', amount: null, at: '2026-05-23 18:01', merchant_text: 'Cargills', parser: 'starpoints.shop' });
+    expect(checkPastBookings(bundle({ booked: [booked(card, { transaction_id: 'tx-c', type: 'expense', category_id: C.misc })] }), [card, shop], new Map())).toEqual([]);
+    const fresh = sms({ kind: 'card_charge', amount: 999, at: '2026-05-24 18:00', account_id: 'peoples', merchant_text: 'CARGILLS - RAJAGIRIYA' });
+    const note = sms({ kind: 'info', amount: null, at: '2026-05-24 18:01', merchant_text: 'Cargills', parser: 'starpoints.shop' });
+    const sug = analyseInbox([fresh, note], [], new Set(), accounts).suggestions.get(fresh.id);
+    expect(sug).toMatchObject({ kind: 'expense', memo: 'CARGILLS - RAJAGIRIYA' });
+    expect(sug).not.toHaveProperty('evidence');
   });
 });

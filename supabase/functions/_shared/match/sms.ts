@@ -158,6 +158,8 @@ export interface Evidence {
   fromSmsId: string;
   /** what the payment carried on top (a bank fee), in rupees */
   fee: number;
+  /** a Star Points shop note names the shop only: it explains the payment but says nothing about the category */
+  shopOnly?: boolean;
 }
 
 /**
@@ -199,7 +201,7 @@ export function paymentEvidence(sms: SmsRow[]): Map<string, Evidence> {
   const used = new Set<string>();
   for (const { r, p, fee } of pairs) {
     if (out.has(p.id) || used.has(r.id)) continue;
-    out.set(p.id, { payee: r.merchant_text!, fromSmsId: r.id, fee: fee / 100 });
+    out.set(p.id, { payee: r.merchant_text!, fromSmsId: r.id, fee: fee / 100, ...(r.kind === 'receipt' ? {} : { shopOnly: true }) });
     used.add(r.id);
   }
   return out;
@@ -371,8 +373,8 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
       case 'bank_debit':
         suggestions.set(s.id, {
           kind: 'expense', account: s.account_id, total: amount, estimated: lkr.get(s.id)?.estimated ?? false,
-          memo: evidence.get(s.id)?.payee ?? (etcDebits.has(s.id) ? 'ETC top-up' : s.merchant_text),
-          ...(evidence.has(s.id) ? { evidence: evidence.get(s.id)!.payee } : {}),
+          memo: (evidence.get(s.id)?.shopOnly ? null : evidence.get(s.id)?.payee) ?? (etcDebits.has(s.id) ? 'ETC top-up' : s.merchant_text),
+          ...(evidence.has(s.id) && !evidence.get(s.id)!.shopOnly ? { evidence: evidence.get(s.id)!.payee } : {}),
         });
         break;
       case 'bank_credit':

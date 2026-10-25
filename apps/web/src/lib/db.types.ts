@@ -6603,6 +6603,7 @@ export type Database = {
         Returns: Json
       }
       rpc_sms_device_revoke: { Args: { p_id: string }; Returns: undefined }
+      rpc_sms_drop_duplicate: { Args: { p: Json }; Returns: Json }
       rpc_sms_ignore: {
         Args: { p_ids: string[]; p_ignored: boolean }
         Returns: number

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.11 — Check past bookings: paid from the other account, the same alert twice
+- **Paid from the other account:** a card payment booked as a transfer with no bank debit behind it,
+  while a debit of the same amount (+ up to Rs 50 fee) waits on another account within 48 h → Fix moves
+  the transfer to that account, links the debit and books the fee (rpc_sms_rebook). On prod: three
+  Rs 50,000 card payments booked from Savings that ··708's CEFT Rs 50,025 paid.
+- **The same alert twice:** same sender, kind, amount and balance within a month (a bank's double send, or
+  a backup's copy days later). A copy booked as its own entry → Fix removes that entry and marks the copy
+  seen, in one step (rpc_sms_drop_duplicate, migration 91, schema 91); a waiting copy → marked seen. On
+  prod: the Rs 20,000 BOC card payment, the Rs 25,000 Sampath payment, and three Sampath card charges.
+- A Star Points shop note still explains a Cargills payment but no longer sets or changes its category
+  (it names the shop, not what was bought).
+- Function `match-agent-11`.
+
 ## 0.9.10 — The accuracy report counts only the latest test
 - Rows from an earlier test whose items are no longer tested (e.g. the CEFT debits rebooked as card
   transfers) were still counted against the AI. The report now uses only the latest test: the rows saved
