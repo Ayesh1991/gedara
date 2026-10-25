@@ -14,7 +14,7 @@ import type { AnswerOf } from '../ai/tasks.ts';
 import { hash32 } from '../sms/parse.ts';
 import { builtInCategory, payeeCategory } from './memory.ts';
 import { billNameNorm } from './normalise.ts';
-import { analyseInbox, isOwnTransfer, namesNoShop, paymentEvidence, smsWhen, type AccountLite, type SmsRow, type TxCandidate } from './sms.ts';
+import { analyseInbox, isOwnTransfer, isTapPay, namesNoShop, paymentEvidence, smsWhen, type AccountLite, type SmsRow, type TxCandidate } from './sms.ts';
 import { buildMatcher, nameScore, trigrams, type AliasRow, type MatchProduct } from './spine.ts';
 
 export interface CategoryRow {
@@ -99,7 +99,7 @@ export interface Bundle {
 }
 
 export interface SuggestionOut {
-  task: 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup' | 'sms_duplicate';
+  task: 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup' | 'sms_duplicate' | 'sms_relink';
   target_key: string;
   line_id?: string;
   sms_id?: string;
@@ -709,6 +709,7 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
   // a card payment booked from an account no debit came from, while the debit that paid it waits elsewhere
   out.push(...duplicates, ...paidFromOtherAccount(sms, bySms, copyTx, usedPayments, feeCategory));
   out.push(...ownTransfers(bundle.accounts, sms, bySms, new Set([...done, ...copyTx]), feeCategory));
+  out.push(...bookedTwice(bundle, sms, bySms, new Set([...done, ...copyTx])));
   out.push(...walletTopups(bundle, sms));
 
   const evidence = paymentEvidence(sms);
@@ -828,6 +829,50 @@ export function ownTransfers(
     out.push({
       task: 'sms_rebook', target_key: d.id, sms_id: d.id, proposal,
       confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['own', proposal]),
+    });
+  }
+  return out;
+}
+
+/**
+ * sms_relink, "booked twice: the alert and the scanned bill" (9b.2 fix) — a card charge or a Tap & Pay alert
+ * saved as its own expense while the scanned bill of the same amount (±2 days) waits in "to be matched" or
+ * already sits on the same account, linked to no alert. Fix (rpc_sms_relink) removes the alert's entry and links the alert to the bill, which
+ * moves the bill to the alert's account. On prod: Cargills Rs 5,066.26 and Gunasekara Rs 2,252 (Tap & Pay).
+ */
+export function bookedTwice(bundle: Bundle, sms: SmsRow[], bySms: Map<string, BookedRow>, skipTx: ReadonlySet<string>): SuggestionOut[] {
+  const cents = (n: number) => Math.round(n * 100);
+  const suspense = new Set(bundle.accounts.filter((a) => a.is_suspense).map((a) => a.id));
+  const linked = new Set([...(bundle.linked ?? []), ...sms.map((m) => m.transaction_id).filter((x): x is string => !!x)]);
+  const bills = (bundle.candidates ?? []).filter((t) => t.type === 'expense' && !linked.has(t.id));
+  const days = (a: string, b: string) => Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000;
+  const pairs: Array<{ s: SmsRow; b: BookedRow; t: TxCandidate; apart: number }> = [];
+  for (const s of sms) {
+    if ((s.kind !== 'card_charge' && !isTapPay(s)) || s.amount === null || s.currency !== 'LKR' || !s.transaction_id) continue;
+    const b = bySms.get(s.id);
+    if (!b || b.type !== 'expense' || b.source !== 'sms' || b.lines > 1 || skipTx.has(b.transaction_id) || suspense.has(b.account_id)) continue;
+    if (sms.some((m) => m.transaction_id === b.transaction_id && m.id !== s.id)) continue;
+    for (const t of bills) {
+      // in "to be matched", or already on the alert's account (moved there by hand)
+      if (t.id === b.transaction_id || !(suspense.has(t.account_id) || t.account_id === b.account_id)) continue;
+      const apart = days(t.occurred_on, s.occurred_on);
+      if (cents(Number(t.total)) === cents(s.amount) && apart <= 2) pairs.push({ s, b, t, apart });
+    }
+  }
+  pairs.sort((x, y) => x.apart - y.apart);
+  const used = new Set<string>();
+  const out: SuggestionOut[] = [];
+  for (const { s, b, t } of pairs) {
+    if (used.has(s.id) || used.has(t.id)) continue;
+    used.add(s.id);
+    used.add(t.id);
+    const proposal = {
+      sms_ids: [s.id], delete_tx: b.transaction_id, bill_tx: t.id, total: s.amount!, account_id: s.account_id,
+      bill_payee: t.payee_text, bill_on: t.occurred_on,
+    };
+    out.push({
+      task: 'sms_relink', target_key: s.id, sms_id: s.id, proposal,
+      confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['relink', proposal]),
     });
   }
   return out;

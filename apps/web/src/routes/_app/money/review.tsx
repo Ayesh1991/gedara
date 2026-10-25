@@ -15,6 +15,7 @@ import {
   checkNow,
   decide,
   dropDuplicate,
+  relinkToBill,
   linkLineProduct,
   matchSettingQuery,
   pastAlertsQuery,
@@ -60,7 +61,7 @@ function ReviewPage() {
   );
   // Phase 9b.1: past bookings the evidence disagrees with
   const past = useMemo(
-    () => (suggestions.data ?? []).filter((s) => s.task === 'sms_rebook' || s.task === 'sms_recategorise' || s.task === 'sms_topup' || s.task === 'sms_duplicate'),
+    () => (suggestions.data ?? []).filter((s) => s.task === 'sms_rebook' || s.task === 'sms_recategorise' || s.task === 'sms_topup' || s.task === 'sms_duplicate' || s.task === 'sms_relink'),
     [suggestions.data],
   );
   const pastIds = useMemo(
@@ -250,6 +251,7 @@ function PastBooking({
     act(async () => {
       if (s.task === 'sms_rebook') await rebook(p);
       else if (s.task === 'sms_duplicate') await dropDuplicate(p);
+      else if (s.task === 'sms_relink') await relinkToBill(p);
       else if (s.task === 'sms_topup') {
         // the wallet top-up no SMS reported (9b.2): a transfer, dated where the balance shows it
         await saveTransaction({
@@ -263,7 +265,14 @@ function PastBooking({
   const keep = () => act(() => decide([s.id], 'rejected'), t('match.past.kept'));
 
   const what =
-    s.task === 'sms_duplicate'
+    s.task === 'sms_relink'
+      ? t('match.past.relink', {
+          paid: money(p.total),
+          bill: p.bill_payee ?? '?',
+          day: p.bill_on ? formatDay(p.bill_on, locale, today.slice(0, 4)) : '?',
+          account: accountName(p.account_id),
+        })
+      : s.task === 'sms_duplicate'
       ? t(p.delete_tx ? 'match.past.duplicate' : 'match.past.duplicateWaiting', {
           bank: debit?.sender ?? '?',
           paid: money(p.total),

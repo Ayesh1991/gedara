@@ -6,7 +6,7 @@ import type { Json } from '../db.types';
 import { moneyKey } from '../money/queries';
 import { supabase } from '../supabase';
 
-export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup' | 'sms_duplicate';
+export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup' | 'sms_duplicate' | 'sms_relink';
 
 export interface Suggestion {
   id: string;
@@ -51,6 +51,11 @@ export interface Suggestion {
     drop_sms?: string[];
     account_id?: string | null;
     kept_on?: string;
+    /** sms_relink (9b.2): the alert(s), and the scanned bill waiting in "to be matched" */
+    sms_ids?: string[];
+    bill_tx?: string;
+    bill_payee?: string | null;
+    bill_on?: string;
     /** sms_topup (9b.2): the stretch of the bank's balance chain the money went missing in */
     since?: string;
     occurred_on?: string;
@@ -267,6 +272,14 @@ export const pastAlertsQuery = (householdId: string, ids: string[]) =>
     },
     staleTime: 30 * 1000,
   });
+
+/** One database step: the alert's own entry goes, the alert links to the scanned bill (which moves to its account). */
+export async function relinkToBill(p: NonNullable<Suggestion['proposal']>) {
+  const { error } = await supabase.rpc('rpc_sms_relink', {
+    p: { sms_ids: p.sms_ids ?? [], delete_tx: p.delete_tx, bill_tx: p.bill_tx } as unknown as Json,
+  });
+  if (error) throw error;
+}
 
 /** One database step: the entry made only from copies of an alert goes, the copies are marked seen. */
 export async function dropDuplicate(p: NonNullable<Suggestion['proposal']>) {

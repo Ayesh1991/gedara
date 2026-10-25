@@ -207,6 +207,11 @@ export function paymentEvidence(sms: SmsRow[]): Map<string, Evidence> {
   return out;
 }
 
+/** A BOC Flex Tap & Pay payment (from the wallet): paid like a card, at a shop. */
+export function isTapPay(s: SmsRow): boolean {
+  return s.parser === 'boconline.tap_pay';
+}
+
 /**
  * One side of a transfer between your own accounts (9b.2): a bank debit or credit whose own words say
  * "transfer" (not a salary deposit, not the loan paid out), on a bank / wallet / cash account.
@@ -358,7 +363,8 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
       const hits = available
         .filter((t) => daysApart(t.occurred_on, s.occurred_on) <= 2)
         .filter((t) => {
-          if (s.kind === 'card_charge') {
+          // a BOC Flex Tap & Pay is a card payment too: its scanned bill may wait in "to be matched" (9b.2)
+          if (s.kind === 'card_charge' || isTapPay(s)) {
             return t.type === 'expense' && cents(t.total) === wanted && (t.account_id === s.account_id || suspense.has(t.account_id));
           }
           if (s.kind === 'bank_credit') return t.type === 'income' && cents(t.total) === wanted && t.account_id === s.account_id;
@@ -378,7 +384,7 @@ export function analyseInbox(sms: SmsRow[], txs: TxCandidate[], linkedTxIds: Set
         const bestAcct = acct.get(best.t.account_id);
         suggestions.set(s.id, {
           kind: 'link', txId: best.t.id, confident: clear && daysApart(best.t.occurred_on, s.occurred_on) <= 1,
-          moves: !!bestAcct?.is_suspense && s.kind === 'card_charge', others: hits.slice(1, 4).map((h) => h.t.id),
+          moves: !!bestAcct?.is_suspense && (s.kind === 'card_charge' || isTapPay(s)), others: hits.slice(1, 4).map((h) => h.t.id),
         });
         continue;
       }
