@@ -402,3 +402,56 @@ describe('Paid from the other account, and the same alert twice (9b.2 fix)', () 
     expect(sug).not.toHaveProperty('evidence');
   });
 });
+
+describe('Money moved between your own accounts (9b.2 fix)', () => {
+  const banks = (p: Partial<Bundle> = {}) => bundle({
+    accounts: [
+      { id: 'boc', kind: 'bank', is_suspense: false, archived: false, credit_limit: null, institution: 'BOC' },
+      { id: 'boc708', kind: 'bank', is_suspense: false, archived: false, credit_limit: null, institution: 'BOC' },
+      { id: 'peoples', kind: 'credit_card', is_suspense: false, archived: false, credit_limit: 1000000, institution: "People's" },
+      { id: 'sampath', kind: 'credit_card', is_suspense: false, archived: false, credit_limit: 300000, institution: 'Sampath' },
+    ],
+    ...p,
+  });
+  const out708 = (amount: number, at: string, p: Partial<SmsRow> = {}) => ceft(amount, at, { account_id: 'boc708', merchant_text: 'Online Transfer Debit', ...p });
+  const inSav = (amount: number, at: string, p: Partial<SmsRow> = {}) =>
+    sms({ kind: 'bank_credit', amount, at, account_id: 'boc', merchant_text: 'Online Transfer Credit', ...p });
+
+  it('both waiting: the inbox pairs a transfer debit and a transfer credit on your own accounts', () => {
+    const d = out708(200000, '2026-10-14 10:00');
+    const c = inSav(200000, '2026-10-14 10:01');
+    const { suggestions } = analyseInbox([d, c], [], new Set(), banks().accounts);
+    expect(suggestions.get(d.id)).toMatchObject({ kind: 'transfer', from: 'boc708', to: 'boc', total: 200000, fee: 0, pairId: c.id });
+    // a salary deposit is no transfer
+    const salary = sms({ kind: 'bank_credit', amount: 200000, at: '2026-10-14 10:02', account_id: 'boc', merchant_text: 'No Book Deposit S/A' });
+    expect(analyseInbox([out708(200000, '2026-10-14 10:00'), salary], [], new Set(), banks().accounts).suggestions.get(salary.id)).toMatchObject({ kind: 'income' });
+  });
+
+  it('booked as spending on one side and income on the other → one transfer', () => {
+    const d = out708(110000, '2026-10-21 09:00', { transaction_id: 'tx-e' });
+    const c = inSav(110000, '2026-10-21 09:01', { transaction_id: 'tx-i' });
+    const out = checkPastBookings(banks({
+      booked: [booked(d, { transaction_id: 'tx-e', type: 'expense', account_id: 'boc708' }), booked(c, { transaction_id: 'tx-i', type: 'income', account_id: 'boc' })],
+    }), [d, c], new Map());
+    expect(out).toEqual([expect.objectContaining({
+      task: 'sms_rebook', target_key: d.id,
+      proposal: expect.objectContaining({ own: true, delete_tx: ['tx-e', 'tx-i'], transfer_id: null, to_account_id: 'boc', payment_sms: c.id, total: 110000, fee: 0 }),
+    })]);
+  });
+
+  it('the nearest card payment already having its debit does not hide the next one', () => {
+    const d = ceft(50025, '2026-10-15 09:00', { account_id: 'boc708', transaction_id: 'tx-d' });
+    const near = sms({ kind: 'card_payment', amount: 50000, at: '2026-10-15 09:01', account_id: 'peoples', transaction_id: 'tx-p' });
+    const own = ceft(50025, '2026-10-15 09:00', { account_id: 'boc', transaction_id: 'tx-p' });
+    const far = sms({ kind: 'card_payment', amount: 50000, at: '2026-10-14 12:00', account_id: 'sampath', transaction_id: 'tx-s' });
+    const out = checkPastBookings(banks({
+      booked: [
+        booked(d, { transaction_id: 'tx-d', type: 'expense', account_id: 'boc708' }),
+        booked(near, { transaction_id: 'tx-p', type: 'transfer', account_id: 'boc', to_account_id: 'peoples', total: 50000, lines: 0, line_id: null }),
+        booked(own, { transaction_id: 'tx-p', type: 'transfer', account_id: 'boc', lines: 0, line_id: null }),
+        booked(far, { transaction_id: 'tx-s', type: 'transfer', account_id: 'boc', to_account_id: 'sampath', total: 50000, lines: 0, line_id: null }),
+      ],
+    }), [d, near, own, far], new Map());
+    expect(out).toEqual([expect.objectContaining({ proposal: expect.objectContaining({ transfer_id: 'tx-s', delete_tx: ['tx-d'], fee: 25 }) })]);
+  });
+});

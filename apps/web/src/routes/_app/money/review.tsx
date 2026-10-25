@@ -269,6 +269,8 @@ function PastBooking({
           paid: money(p.total),
           day: p.kept_on ? formatDay(p.kept_on, locale, today.slice(0, 4)) : '?',
         })
+      : s.task === 'sms_rebook' && p.own
+      ? t('match.past.own', { from: accountName(p.from_account_id), to: accountName(p.to_account_id), paid: money(p.total) })
       : s.task === 'sms_rebook' && p.moved
       ? t(p.fee ? 'match.past.moveFee' : 'match.past.move', {
           was: accountName(p.was_account_id),

@@ -3078,6 +3078,7 @@
       "recategorise": "Booked as {{was}}, but {{payee}} confirms this payment: {{to}}.",
       "topup": "{{from}}'s balance fell {{paid}} more than its alerts explain between {{since}} and {{day}}: probably a top-up of {{to}} (it sends no SMS).",
       "topupNote": "Wallet top-up (no SMS; found from the bank balance)",
+      "own": "This {{paid}} left {{from}} and arrived in {{to}}: one transfer between your own accounts, not spending and income. Fix makes it one transfer with both alerts.",
       "moveFee": "Booked from {{was}}, but this {{debit}} debit from {{from}} paid the {{paid}} into {{card}}: Fix moves the payment to {{from}} and books the {{fee}} fee.",
       "move": "Booked from {{was}}, but this {{debit}} debit from {{from}} paid the {{paid}} into {{card}}: Fix moves the payment to {{from}}.",
       "duplicateWaiting": "{{bank}} sent this {{paid}} alert twice (same balance, first on {{day}}). Fix marks the second copy as seen.",

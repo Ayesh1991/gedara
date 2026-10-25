@@ -14,7 +14,7 @@ import type { AnswerOf } from '../ai/tasks.ts';
 import { hash32 } from '../sms/parse.ts';
 import { builtInCategory, payeeCategory } from './memory.ts';
 import { billNameNorm } from './normalise.ts';
-import { analyseInbox, namesNoShop, paymentEvidence, smsWhen, type AccountLite, type SmsRow, type TxCandidate } from './sms.ts';
+import { analyseInbox, isOwnTransfer, namesNoShop, paymentEvidence, smsWhen, type AccountLite, type SmsRow, type TxCandidate } from './sms.ts';
 import { buildMatcher, nameScore, trigrams, type AliasRow, type MatchProduct } from './spine.ts';
 
 export interface CategoryRow {
@@ -644,42 +644,59 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
     .map((b) => ({ b, d: smsById.get(b.sms_id) }))
     .filter((x): x is { b: BookedRow; d: SmsRow } =>
       !!x.d && x.d.kind === 'bank_debit' && x.d.amount !== null && !!x.d.account_id && namesNoShop(x.d.merchant_text));
+  // copies of an alert (the same payment sent twice) are not payments of their own
+  const duplicates = duplicateAlerts(sms);
+  const copyTx = new Set(duplicates.map((d) => String(d.proposal.delete_tx ?? '')));
+  const copies = new Set(duplicates.flatMap((d) => d.proposal.drop_sms as string[]));
+  // every (debit, card payment) that could be one transfer; then the closest first, each used once
+  // (a card payment that already has its own debit is no candidate — it must not hide the next one)
+  const candidates: Array<{ b: BookedRow; d: SmsRow; p: SmsRow; fee: number; dt: number; transferId: string | null; deleteTx: string[] }> = [];
   for (const { b, d } of debits) {
     if (done.has(b.transaction_id)) continue;
-    const hit = sms
-      .filter((p) => p.kind === 'card_payment' && p.amount !== null && !!p.account_id && p.account_id !== d.account_id && !usedPayments.has(p.id))
-      .map((p) => ({ p, fee: cents(d.amount!) - cents(p.amount!), dt: Math.abs(smsWhen(p) - smsWhen(d)) }))
-      .filter((x) => x.fee >= 0 && x.fee <= PAIR_FEE * 100 && x.dt <= PAIR_WINDOW)
-      .sort((x, y) => x.dt - y.dt)[0];
-    if (!hit) continue;
-    const pb = hit.p.transaction_id ? bySms.get(hit.p.id) : undefined;
-    if (hit.p.transaction_id && !pb) continue; // booked before the 120 days: leave it
-    const deleteTx = [b.transaction_id];
-    let transferId: string | null = null;
-    if (pb?.type === 'transfer') {
-      if (cents(pb.total) !== cents(hit.p.amount!)) continue;
-      // the transfer already has its bank side: this debit was something else
-      if (sms.some((m) => m.transaction_id === pb.transaction_id && m.kind === 'bank_debit')) continue;
-      transferId = pb.transaction_id;
-    } else if (pb) {
-      if (pb.type !== 'expense' && pb.type !== 'income') continue;
-      if (pb.source !== 'sms' || pb.lines > 1) continue;
-      if (pb.transaction_id !== b.transaction_id) deleteTx.push(pb.transaction_id);
+    for (const p of sms) {
+      if (p.kind !== 'card_payment' || p.amount === null || !p.account_id || p.account_id === d.account_id || copies.has(p.id)) continue;
+      const fee = cents(d.amount!) - cents(p.amount);
+      const dt = Math.abs(smsWhen(p) - smsWhen(d));
+      if (fee < 0 || fee > PAIR_FEE * 100 || dt > PAIR_WINDOW) continue;
+      const pb = p.transaction_id ? bySms.get(p.id) : undefined;
+      if (p.transaction_id && !pb) continue; // booked before the 120 days: leave it
+      const deleteTx = [b.transaction_id];
+      let transferId: string | null = null;
+      if (pb?.type === 'transfer') {
+        if (cents(pb.total) !== cents(p.amount)) continue;
+        // the transfer already has its bank side: this debit was something else
+        if (sms.some((m) => m.transaction_id === pb.transaction_id && m.kind === 'bank_debit')) continue;
+        if (copyTx.has(pb.transaction_id)) continue;
+        transferId = pb.transaction_id;
+      } else if (pb) {
+        if (pb.type !== 'expense' && pb.type !== 'income') continue;
+        if (pb.source !== 'sms' || pb.lines > 1) continue;
+        if (pb.transaction_id !== b.transaction_id) deleteTx.push(pb.transaction_id);
+      }
+      candidates.push({ b, d, p, fee, dt, transferId, deleteTx });
     }
-    usedPayments.add(hit.p.id);
+  }
+  candidates.sort((x, y) => x.dt - y.dt);
+  const usedDebits = new Set<string>();
+  const usedTransfers = new Set<string>();
+  for (const { b, d, p, fee, transferId, deleteTx } of candidates) {
+    if (usedDebits.has(d.id) || usedPayments.has(p.id) || (transferId && usedTransfers.has(transferId)) || deleteTx.some((t) => done.has(t))) continue;
+    usedDebits.add(d.id);
+    usedPayments.add(p.id);
+    if (transferId) usedTransfers.add(transferId);
     deleteTx.forEach((t) => done.add(t));
     const proposal = {
       debit_sms: d.id,
       delete_tx: deleteTx,
       transfer_id: transferId,
-      to_account_id: transferId ? null : hit.p.account_id,
-      payment_sms: transferId ? null : hit.p.id,
-      total: hit.p.amount!,
-      fee: hit.fee / 100,
-      fee_category_id: hit.fee > 0 ? feeCategory : null,
+      to_account_id: transferId ? null : p.account_id,
+      payment_sms: transferId ? null : p.id,
+      total: p.amount!,
+      fee: fee / 100,
+      fee_category_id: fee > 0 ? feeCategory : null,
       // for the person deciding
       from_account_id: d.account_id,
-      card_account_id: hit.p.account_id,
+      card_account_id: p.account_id,
       was_category_id: b.category_id,
       transaction_id: b.transaction_id,
     };
@@ -690,9 +707,8 @@ export function checkPastBookings(bundle: Bundle, sms: SmsRow[], payees: Readonl
   }
 
   // a card payment booked from an account no debit came from, while the debit that paid it waits elsewhere
-  const duplicates = duplicateAlerts(sms);
-  const copyTx = new Set(duplicates.map((d) => String(d.proposal.delete_tx ?? '')));
   out.push(...duplicates, ...paidFromOtherAccount(sms, bySms, copyTx, usedPayments, feeCategory));
+  out.push(...ownTransfers(bundle.accounts, sms, bySms, new Set([...done, ...copyTx]), feeCategory));
   out.push(...walletTopups(bundle, sms));
 
   const evidence = paymentEvidence(sms);
@@ -757,6 +773,61 @@ export function paidFromOtherAccount(
     out.push({
       task: 'sms_rebook', target_key: d.id, sms_id: d.id, proposal,
       confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['move', proposal]),
+    });
+  }
+  return out;
+}
+
+/**
+ * sms_rebook, "money moved between your own accounts" (9b.2 fix) — a transfer debit on one account and a
+ * transfer credit of the same amount (+ up to Rs 50 fee) on another within 48 h, booked as spending on one
+ * side and income on the other (or one booked, one waiting): the balances add up, but the income and the
+ * spending are invented. Fix (rpc_sms_rebook) removes those entries and posts one transfer with both alerts.
+ * On prod: Rs 200,000 / 110,000 / 100,000 from ··708 to Savings and Rs 45,000 back.
+ */
+export function ownTransfers(
+  accounts: AccountLite[], sms: SmsRow[], bySms: Map<string, BookedRow>, skipTx: ReadonlySet<string>, feeCategory: string | null,
+): SuggestionOut[] {
+  const cents = (n: number) => Math.round(n * 100);
+  // an alert either waiting, or booked alone as one plain expense / income line from the SMS
+  const side = (m: SmsRow, type: 'expense' | 'income') => {
+    if (m.ignored) return null;
+    if (!m.transaction_id) return { tx: null as string | null };
+    const b = bySms.get(m.id);
+    if (!b || b.type !== type || b.source !== 'sms' || b.lines > 1 || skipTx.has(b.transaction_id)) return null;
+    if (sms.some((x) => x.transaction_id === b.transaction_id && x.id !== m.id)) return null;
+    return { tx: b.transaction_id };
+  };
+  const debits = sms.filter((m) => m.kind === 'bank_debit' && isOwnTransfer(m, accounts));
+  const credits = sms.filter((m) => m.kind === 'bank_credit' && isOwnTransfer(m, accounts));
+  const pairs: Array<{ d: SmsRow; c: SmsRow; dTx: string | null; cTx: string | null; fee: number; dt: number }> = [];
+  for (const d of debits) {
+    const ds = side(d, 'expense');
+    if (!ds) continue;
+    for (const c of credits) {
+      if (c.account_id === d.account_id) continue;
+      const cs = side(c, 'income');
+      if (!cs || (!ds.tx && !cs.tx)) continue; // both still waiting: the inbox pairs them itself
+      const fee = cents(d.amount!) - cents(c.amount!);
+      const dt = Math.abs(smsWhen(d) - smsWhen(c));
+      if (fee >= 0 && fee <= PAIR_FEE * 100 && dt <= PAIR_WINDOW) pairs.push({ d, c, dTx: ds.tx, cTx: cs.tx, fee, dt });
+    }
+  }
+  pairs.sort((a, b) => a.dt - b.dt);
+  const used = new Set<string>();
+  const out: SuggestionOut[] = [];
+  for (const { d, c, dTx, cTx, fee } of pairs) {
+    if (used.has(d.id) || used.has(c.id)) continue;
+    used.add(d.id);
+    used.add(c.id);
+    const proposal = {
+      debit_sms: d.id, delete_tx: [dTx, cTx].filter((x): x is string => !!x), transfer_id: null,
+      to_account_id: c.account_id, payment_sms: c.id, total: c.amount!, fee: fee / 100, fee_category_id: fee > 0 ? feeCategory : null,
+      from_account_id: d.account_id, own: true,
+    };
+    out.push({
+      task: 'sms_rebook', target_key: d.id, sms_id: d.id, proposal,
+      confidence: AUDIT_CONFIDENCE, pattern: 'evidence', models: [], input_hash: hashOf(['own', proposal]),
     });
   }
   return out;

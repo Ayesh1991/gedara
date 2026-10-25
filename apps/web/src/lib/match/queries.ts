@@ -43,6 +43,8 @@ export interface Suggestion {
     receipt_sms?: string;
     /** sms_rebook "paid from the other account" (9b.2): the account the transfer was booked from */
     moved?: boolean;
+    /** sms_rebook "money moved between your own accounts" (9b.2) */
+    own?: boolean;
     was_account_id?: string | null;
     /** sms_duplicate (9b.2): the alerts kept, the copies dropped, the entry made from the copies */
     keep_sms?: string[];
