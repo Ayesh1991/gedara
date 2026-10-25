@@ -1171,6 +1171,7 @@
       "owed": "ගෙවිය යුතු",
       "limitUsed": "භාවිත කළ ණය සීමාව",
       "availableOf": "Rs {{limit}} න් Rs {{available}} ක් ලබා ගත හැක",
+      "loanOf": "රු {{limit}} ණයෙන් රු {{owed}} ක් ගෙවීමට ඇත",
       "toMatch": "ගැළපීමට {{count}}",
       "toMatchHint": "ඒවා නිවැරදි කාඩ්පතට ගෙන යන්න",
       "countingFrom": "ශේෂය {{date}} න් පසු සටහන් ගණන් කරයි.",

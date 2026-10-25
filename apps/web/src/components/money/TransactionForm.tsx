@@ -271,7 +271,9 @@ function FormBody({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      {!tx && (
+      {/* An entry can change its type while it is plain (9b.2: a bank debit booked as spending that was a
+          transfer); lines already in the pantry or in Things keep it as it is. */}
+      {(!tx || (!locked && (tx.type === 'expense' || tx.type === 'income' || tx.type === 'transfer'))) && (
         <div role="tablist" aria-label={t('money.form.typeLabel')} className="grid grid-cols-3 gap-1 rounded-2xl bg-white/5 p-1">
           {(['expense', 'income', 'transfer'] as const).map((k) => (
             <button

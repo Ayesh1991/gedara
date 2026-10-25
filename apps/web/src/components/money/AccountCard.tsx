@@ -28,7 +28,9 @@ export function AccountBalance({ account, large = false }: { account: Account; l
   const owed = Math.max(0, -account.balance);
   const limit = account.credit_limit;
   const used = limit ? Math.min(1, owed / limit) : 0;
-  const tone = used >= 0.9 ? 'var(--red)' : used >= 0.6 ? 'var(--caution)' : 'var(--teal)';
+  const loan = account.kind === 'loan';
+  // a loan fully owed is normal, not a warning: it shrinks as it is paid back
+  const tone = loan ? 'var(--info)' : used >= 0.9 ? 'var(--red)' : used >= 0.6 ? 'var(--caution)' : 'var(--teal)';
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline gap-2">
@@ -48,10 +50,15 @@ export function AccountBalance({ account, large = false }: { account: Account; l
             <div className="h-full rounded-full" style={{ width: `${used * 100}%`, background: tone }} />
           </div>
           <span className="tabular text-[12.5px] text-muted">
-            {t('money.accounts.availableOf', {
-              available: new Intl.NumberFormat('en-LK', { maximumFractionDigits: 0 }).format(account.available ?? limit - owed),
-              limit: new Intl.NumberFormat('en-LK', { maximumFractionDigits: 0 }).format(limit),
-            })}
+            {loan
+              ? t('money.accounts.loanOf', {
+                  owed: new Intl.NumberFormat('en-LK', { maximumFractionDigits: 0 }).format(owed),
+                  limit: new Intl.NumberFormat('en-LK', { maximumFractionDigits: 0 }).format(limit),
+                })
+              : t('money.accounts.availableOf', {
+                  available: new Intl.NumberFormat('en-LK', { maximumFractionDigits: 0 }).format(account.available ?? limit - owed),
+                  limit: new Intl.NumberFormat('en-LK', { maximumFractionDigits: 0 }).format(limit),
+                })}
           </span>
         </>
       )}

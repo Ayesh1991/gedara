@@ -202,7 +202,8 @@ function BalanceBody({
   const { t } = useTranslation();
   const qc = useQueryClient();
   const isCard = hasLimit(account.kind);
-  const byAvailable = isCard && account.credit_limit != null;
+  // A card's SMS shows the available credit; a loan's limit is the amount borrowed, so a loan is entered as owed.
+  const byAvailable = account.kind === 'credit_card' && account.credit_limit != null;
   const [value, setValue] = useState('');
   const [date, setDate] = useState(account.opening_on ?? todayIn(timezone));
   const [busy, setBusy] = useState(false);
