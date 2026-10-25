@@ -6,7 +6,7 @@ import type { Json } from '../db.types';
 import { moneyKey } from '../money/queries';
 import { supabase } from '../supabase';
 
-export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup';
+export type MatchTask = 'line_product' | 'line_category' | 'line_thing' | 'sms_category' | 'sms_link' | 'sms_rebook' | 'sms_recategorise' | 'sms_topup' | 'sms_duplicate';
 
 export interface Suggestion {
   id: string;
@@ -27,7 +27,8 @@ export interface Suggestion {
     past?: number;
     /** sms_rebook (rpc_sms_rebook's parameter) / sms_recategorise (Phase 9b.1) */
     debit_sms?: string;
-    delete_tx?: string[];
+    /** sms_rebook: entries that go; sms_duplicate: the one entry made from copies */
+    delete_tx?: string[] | string | null;
     transfer_id?: string | null;
     to_account_id?: string | null;
     payment_sms?: string | null;
@@ -40,6 +41,14 @@ export interface Suggestion {
     line_id?: string;
     payee?: string;
     receipt_sms?: string;
+    /** sms_rebook "paid from the other account" (9b.2): the account the transfer was booked from */
+    moved?: boolean;
+    was_account_id?: string | null;
+    /** sms_duplicate (9b.2): the alerts kept, the copies dropped, the entry made from the copies */
+    keep_sms?: string[];
+    drop_sms?: string[];
+    account_id?: string | null;
+    kept_on?: string;
     /** sms_topup (9b.2): the stretch of the bank's balance chain the money went missing in */
     since?: string;
     occurred_on?: string;
@@ -256,6 +265,14 @@ export const pastAlertsQuery = (householdId: string, ids: string[]) =>
     },
     staleTime: 30 * 1000,
   });
+
+/** One database step: the entry made only from copies of an alert goes, the copies are marked seen. */
+export async function dropDuplicate(p: NonNullable<Suggestion['proposal']>) {
+  const { error } = await supabase.rpc('rpc_sms_drop_duplicate', {
+    p: { keep_sms: p.keep_sms ?? [], drop_sms: p.drop_sms ?? [], delete_tx: typeof p.delete_tx === 'string' ? p.delete_tx : null } as unknown as Json,
+  });
+  if (error) throw error;
+}
 
 /** One database step: the wrong expense goes, the debit joins (or makes) the transfer, the fee is its own expense. */
 export async function rebook(p: NonNullable<Suggestion['proposal']>) {
