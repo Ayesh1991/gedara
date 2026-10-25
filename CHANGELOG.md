@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.10 — The accuracy report counts only the latest test
+- Rows from an earlier test whose items are no longer tested (e.g. the CEFT debits rebooked as card
+  transfers) were still counted against the AI. The report now uses only the latest test: the rows saved
+  within 6 hours of the newest one (migration 90, schema 90). Nothing is deleted. On prod: bank alerts AI
+  73 % exact / 88 % main category (was shown as 70 % / 80 %), bill lines 96 %.
+
 ## 0.9.9 — Phase 9b.2 fix: wallet top-ups only from clean balance gaps
 - On prod data the balance check would have proposed about 45 "top-ups": Rs 5 ATM fees, transfers plus a
   fee whose debit alert is missing (Rs 25,025, 50,125 …) and alerts that arrived out of order. A gap now
