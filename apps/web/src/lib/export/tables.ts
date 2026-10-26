@@ -36,6 +36,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'merchant_memory', order: ['id'], scope: 'household' },
   { name: 'line_memory', order: ['id'], scope: 'household' },
   { name: 'payee_category', order: ['id'], scope: 'household' },
+  { name: 'instalment_plan', order: ['id'], scope: 'household' },
   { name: 'match_setting', order: ['household_id'], scope: 'household' },
   { name: 'match_suggestion', order: ['id'], scope: 'household' },
   { name: 'match_run', order: ['id'], scope: 'household' },

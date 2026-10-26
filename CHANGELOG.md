@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.15 — Money › Instalments
+- **A snapshot of every card instalment plan and loan**: this month's total, each plan's "7 of 12", next
+  and last date and what is left; for a loan, what is still owed, the next instalment's interest /
+  principal split (reducing balance, monthly rate = yearly ÷ 12) and the interest still to pay; and when
+  the monthly total drops as plans end.
+- **Add plan** takes a statement line as it reads ("Toyota Lanka <7/12> 09/10/2026 6,470.72"): the latest
+  instalment number, of how many months, its date and the monthly amount. For a loan, the amount and the
+  yearly rate — Gedara shows the bank's instalment for them to check (Rs 2,000,000 at 12 % for 60 months
+  = Rs 44,488.90). People's "…-months instalment plan … created" alerts are offered as plans.
+- Plans are reference only: nothing here moves money. Table `instalment_plan` (migration 94, schema 94)
+  with the household's RLS; included in the export.
+
 ## 0.9.14 — Tap & Pay links to its scanned bill; "counted twice" in Check past bookings
 - **The inbox links a BOC Flex Tap & Pay alert to its scanned bill** waiting in "Card — to be matched"
   (same amount, ±2 days) and moves the bill to the wallet, as it already did for card charges.
