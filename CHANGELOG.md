@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.9.16 — Gedara books certain kinds by itself; Money › What changed
+- **Booking by itself, per kind, only when proven.** Settings › Matching › "Booking by itself" lists six
+  certain kinds: alert → bill already entered, transfers between your accounts, notes, category from a
+  payee's receipt, category you taught for a shop, bill line → product (learned name). Each shows its
+  record on your own past bookings (every run replays the rules on the decided alerts of the last 120
+  days as if they were new). A switch unlocks at ≥ 99 % right on ≥ 20 cases; the owner turns it on. A
+  kind whose record later drops pauses by itself; "Stop all" turns everything off.
+- The twice-daily run and "Check now" book the switched-on kinds with the same database functions a
+  person uses, acting as the owner for that step only; never an AI answer, never a fix to past bookings,
+  a top-up, refund or loan, an estimated foreign amount or an alert whose account is unknown; at most 50
+  per run. No extra function calls or logs.
+- **Money › What changed** lists every booking by run, with **Undo** (the entry goes, or the bill moves
+  back to "to be matched", or the note / line waits again — and Gedara never books it by itself again)
+  and **Looks right**. Attention (and the morning push) shows "N things Gedara booked (not looked at yet)".
+- Two "Check now" in the same second can no longer both start a run (a per-household lock).
+- Table `match_autobook` with the household's RLS, included in the export; `match_setting.auto`,
+  `auto_record` (migration 95, schema 95). Functions `match-agent-14`, `attention-push-5`.
+- On prod today: notes 103 of 103, receipt categories 23 of 23 and learned-name lines 67 of 67 qualify;
+  bills 23 of 24, transfers 56 of 62 and shop categories 49 of 54 do not yet.
+
 ## 0.9.15 — Money › Instalments
 - **A snapshot of every card instalment plan and loan**: this month's total, each plan's "7 of 12", next
   and last date and what is left; for a loan, what is still owed, the next instalment's interest /

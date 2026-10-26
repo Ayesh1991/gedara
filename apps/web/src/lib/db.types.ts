@@ -2158,6 +2158,75 @@ export type Database = {
           },
         ]
       }
+      match_autobook: {
+        Row: {
+          action: string
+          before: Json
+          created_at: string
+          household_id: string
+          id: string
+          kind: string
+          line_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          run_id: string | null
+          sms_ids: string[]
+          summary: Json
+          transaction_id: string | null
+          undone_at: string | null
+          undone_by: string | null
+        }
+        Insert: {
+          action: string
+          before?: Json
+          created_at?: string
+          household_id: string
+          id?: string
+          kind: string
+          line_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          run_id?: string | null
+          sms_ids?: string[]
+          summary?: Json
+          transaction_id?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Update: {
+          action?: string
+          before?: Json
+          created_at?: string
+          household_id?: string
+          id?: string
+          kind?: string
+          line_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          run_id?: string | null
+          sms_ids?: string[]
+          summary?: Json
+          transaction_id?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_autobook_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_autobook_household_id_run_id_fkey"
+            columns: ["household_id", "run_id"]
+            isOneToOne: false
+            referencedRelation: "match_run"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
       match_eval: {
         Row: {
           ai: Json | null
@@ -2246,6 +2315,9 @@ export type Database = {
       match_setting: {
         Row: {
           ai_enabled: boolean
+          auto: Json
+          auto_record: Json
+          auto_record_at: string | null
           daily_requests: number
           household_id: string
           monthly_cap_usd: number
@@ -2255,6 +2327,9 @@ export type Database = {
         }
         Insert: {
           ai_enabled?: boolean
+          auto?: Json
+          auto_record?: Json
+          auto_record_at?: string | null
           daily_requests?: number
           household_id: string
           monthly_cap_usd?: number
@@ -2264,6 +2339,9 @@ export type Database = {
         }
         Update: {
           ai_enabled?: boolean
+          auto?: Json
+          auto_record?: Json
+          auto_record_at?: string | null
           daily_requests?: number
           household_id?: string
           monthly_cap_usd?: number
@@ -6537,6 +6615,12 @@ export type Database = {
       }
       rpc_log_maintenance: { Args: { p: Json }; Returns: Json }
       rpc_lot_code: { Args: { p_lot: string }; Returns: string }
+      rpc_match_autobook: {
+        Args: { p_household: string; p_items: Json; p_run: string }
+        Returns: Json
+      }
+      rpc_match_autobook_seen: { Args: { p_ids: string[] }; Returns: number }
+      rpc_match_autobook_undo: { Args: { p_id: string }; Returns: undefined }
       rpc_match_bundle: {
         Args: { p_household: string; p_mode?: string; p_run: string }
         Returns: Json

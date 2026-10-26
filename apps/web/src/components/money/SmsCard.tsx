@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { findSub, type CategoryRow } from '@/lib/money/categoriesMap';
-import { lineFingerprint } from '@/lib/money/fingerprint';
+import { alertEntryPayload, transferPayload as sharedTransfer } from '@match/book';
+import type { CategoryRow } from '@/lib/money/categoriesMap';
 import { formatDay } from '@/lib/time';
 import { parseAmount } from '@/lib/money/format';
 import { builtInCategory, learnSoon, merchantMemory, payeeCategory, type Memory } from '@/lib/match/memory';
@@ -49,24 +49,9 @@ export async function applyConfident(
   return false;
 }
 
-function earliest(rows: InboxRow[]): InboxRow {
-  return [...rows].sort((a, b) => a.received_at.localeCompare(b.received_at))[0]!;
-}
-
+/** The same entries the matching run makes when it books by itself (_shared/match/book.ts, Phase 9c). */
 function transferPayload(item: CardItem, s: Extract<Suggestion, { kind: 'transfer' }>, householdId: string, categories: CategoryRow[]) {
-  const first = earliest(item.rows);
-  const fee = findSub(categories, 'services', 'Banking & fees');
-  return {
-    household_id: householdId,
-    type: 'transfer' as const,
-    account_id: s.from,
-    to_account_id: s.to,
-    occurred_on: first.occurred_on,
-    occurred_at: first.occurred_at,
-    total: s.total,
-    lines: [],
-    fee: s.fee > 0 ? { amount: s.fee, category_id: fee?.id ?? null } : null,
-  };
+  return sharedTransfer(item.rows, s, householdId, categories);
 }
 
 export function SmsCard({
@@ -162,17 +147,7 @@ export function SmsCard({
     tell(ai?.link, null, 'transaction_id');
     return run(
       () =>
-        smsPost([row.id], {
-          household_id: householdId,
-          type,
-          account_id: newAccount,
-          payee_text: row.merchant_text,
-          occurred_on: row.occurred_on,
-          occurred_at: row.occurred_at,
-          total,
-          notes: row.currency !== 'LKR' ? `${row.currency} ${row.amount}` : null,
-          lines: [{ raw_name: name, category_id: categoryId, amount: total, fingerprint: lineFingerprint(row.fingerprint, 0, name, total) }],
-        }),
+        smsPost([row.id], alertEntryPayload(row, { householdId, type, accountId: newAccount, total, categoryId, name })),
       t('money.inbox.saved'),
     );
   };

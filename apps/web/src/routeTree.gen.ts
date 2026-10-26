@@ -20,6 +20,7 @@ import { Route as AppInsightsIndexRouteImport } from './routes/_app/insights/ind
 import { Route as AppInsightsAreaRouteImport } from './routes/_app/insights/$area'
 import { Route as AppMoneyIndexRouteImport } from './routes/_app/money/index'
 import { Route as AppMoneyBudgetsRouteImport } from './routes/_app/money/budgets'
+import { Route as AppMoneyChangesRouteImport } from './routes/_app/money/changes'
 import { Route as AppMoneyImportRouteImport } from './routes/_app/money/import'
 import { Route as AppMoneyInboxRouteImport } from './routes/_app/money/inbox'
 import { Route as AppMoneyInstalmentsRouteImport } from './routes/_app/money/instalments'
@@ -112,6 +113,11 @@ const AppMoneyIndexRoute = AppMoneyIndexRouteImport.update({
 const AppMoneyBudgetsRoute = AppMoneyBudgetsRouteImport.update({
   id: '/money/budgets',
   path: '/money/budgets',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMoneyChangesRoute = AppMoneyChangesRouteImport.update({
+  id: '/money/changes',
+  path: '/money/changes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMoneyImportRoute = AppMoneyImportRouteImport.update({
@@ -325,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/scan': typeof AppScanRoute
   '/insights/$area': typeof AppInsightsAreaRoute
   '/money/budgets': typeof AppMoneyBudgetsRoute
+  '/money/changes': typeof AppMoneyChangesRoute
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
   '/money/instalments': typeof AppMoneyInstalmentsRoute
@@ -376,6 +383,7 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/insights/$area': typeof AppInsightsAreaRoute
   '/money/budgets': typeof AppMoneyBudgetsRoute
+  '/money/changes': typeof AppMoneyChangesRoute
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
   '/money/instalments': typeof AppMoneyInstalmentsRoute
@@ -429,6 +437,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/insights/$area': typeof AppInsightsAreaRoute
   '/_app/money/budgets': typeof AppMoneyBudgetsRoute
+  '/_app/money/changes': typeof AppMoneyChangesRoute
   '/_app/money/import': typeof AppMoneyImportRoute
   '/_app/money/inbox': typeof AppMoneyInboxRoute
   '/_app/money/instalments': typeof AppMoneyInstalmentsRoute
@@ -482,6 +491,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/insights/$area'
     | '/money/budgets'
+    | '/money/changes'
     | '/money/import'
     | '/money/inbox'
     | '/money/instalments'
@@ -533,6 +543,7 @@ export interface FileRouteTypes {
     | '/'
     | '/insights/$area'
     | '/money/budgets'
+    | '/money/changes'
     | '/money/import'
     | '/money/inbox'
     | '/money/instalments'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/insights/$area'
     | '/_app/money/budgets'
+    | '/_app/money/changes'
     | '/_app/money/import'
     | '/_app/money/inbox'
     | '/_app/money/instalments'
@@ -711,6 +723,13 @@ declare module '@tanstack/react-router' {
       path: '/money/budgets'
       fullPath: '/money/budgets'
       preLoaderRoute: typeof AppMoneyBudgetsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/money/changes': {
+      id: '/_app/money/changes'
+      path: '/money/changes'
+      fullPath: '/money/changes'
+      preLoaderRoute: typeof AppMoneyChangesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/money/import': {
@@ -996,6 +1015,7 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppInsightsAreaRoute: typeof AppInsightsAreaRoute
   AppMoneyBudgetsRoute: typeof AppMoneyBudgetsRoute
+  AppMoneyChangesRoute: typeof AppMoneyChangesRoute
   AppMoneyImportRoute: typeof AppMoneyImportRoute
   AppMoneyInboxRoute: typeof AppMoneyInboxRoute
   AppMoneyInstalmentsRoute: typeof AppMoneyInstalmentsRoute
@@ -1046,6 +1066,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppInsightsAreaRoute: AppInsightsAreaRoute,
   AppMoneyBudgetsRoute: AppMoneyBudgetsRoute,
+  AppMoneyChangesRoute: AppMoneyChangesRoute,
   AppMoneyImportRoute: AppMoneyImportRoute,
   AppMoneyInboxRoute: AppMoneyInboxRoute,
   AppMoneyInstalmentsRoute: AppMoneyInstalmentsRoute,

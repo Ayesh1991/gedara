@@ -15,6 +15,7 @@ export const ATTENTION_KINDS = [
   'things_pending',
   'sms_review',
   'match_review',
+  'autobook_review',
   'scan_waiting',
   'backup_due',
   'budget_over',
@@ -80,6 +81,8 @@ export function attentionTarget(i: AttentionItem): Target {
       return { to: '/money/inbox' };
     case 'match_review':
       return { to: '/money/review' };
+    case 'autobook_review':
+      return { to: '/money/changes' };
     case 'scan_waiting':
       return { to: '/money/import', search: { tab: 'drive' } };
     case 'backup_due':

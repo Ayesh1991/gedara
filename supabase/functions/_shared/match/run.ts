@@ -12,6 +12,7 @@ import { decide, type AskItem, type Budget, type Decision, type UsageRow } from 
 import type { CallResult, Fetch, ModelRef, Provider } from '../ai/providers.ts';
 import type { AnswerOf } from '../ai/tasks.ts';
 import { hash32 } from '../sms/parse.ts';
+import { AUTO_KINDS, AUTO_MAX, autobookAlerts, autobookRecord, qualifies, type AutoItem, type AutoKind, type AutoRecord, type KindRecord } from './book.ts';
 import { builtInCategory, payeeCategory } from './memory.ts';
 import { billNameNorm } from './normalise.ts';
 import { analyseInbox, isOwnTransfer, isTapPay, namesNoShop, paymentEvidence, smsWhen, type AccountLite, type SmsRow, type TxCandidate } from './sms.ts';
@@ -70,9 +71,14 @@ export interface Settings {
   steps?: ModelRef[];
   monthly_cap_usd?: number;
   daily_requests?: number;
+  /** Phase 9c: the kinds the owner let Gedara book by itself, and their last measured record */
+  auto?: string[];
+  auto_record?: AutoRecord;
 }
 
 export interface Bundle {
+  /** 9c: the household the run is for (the entries Gedara books carry it) */
+  household_id?: string;
   settings: Settings;
   usage: { month_cost_usd: number; today: Partial<Record<Provider, number>> };
   accounts: AccountLite[];
@@ -84,6 +90,10 @@ export interface Bundle {
   line_memory: Array<{ name_norm: string; category_id: string }>;
   suggestions: Array<{ task: string; target_key: string; input_hash: string; status: string }>;
   payee_category?: Array<{ payee_norm: string; category_id: string }>;
+  // 9c: alerts / lines a person undid after Gedara booked them (never booked by itself again), and the
+  // record of learned-name product suggestions (Yes vs Change / Skip)
+  autobook_undone?: { sms: string[]; lines: string[] };
+  line_rule_record?: KindRecord;
   // run
   booked?: BookedRow[];
   sms?: SmsRow[];
@@ -126,6 +136,18 @@ export interface RunOutput {
   evals: EvalOut[];
   stale: Array<{ task: string; target_key: string }>;
   stats: Record<string, number | boolean>;
+  /** 9c: what Gedara would book by itself now (kinds switched on and qualified), and each kind's record */
+  autobook?: AutoItem[];
+  record?: AutoRecord;
+}
+
+/** The kinds that may book now: switched on by the owner AND still qualified on the last record. */
+export function kindsOn(settings: Settings): Set<AutoKind> {
+  const on = new Set<AutoKind>();
+  for (const k of settings.auto ?? []) {
+    if ((AUTO_KINDS as readonly string[]).includes(k) && qualifies(settings.auto_record?.[k as AutoKind])) on.add(k as AutoKind);
+  }
+  return on;
 }
 
 export interface RunEnv {
@@ -542,6 +564,45 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
     }
   }
 
+  // 3b. Booking by itself (9c): the record per kind, and the certain alerts / learned-name lines to book
+  const on = kindsOn(bundle.settings);
+  const memory = new Map(bundle.merchant_memory.map((m) => [m.merchant_norm, m.category_id]));
+  const payeeMap = new Map((bundle.payee_category ?? []).map((p) => [p.payee_norm, p.category_id]));
+  const undone = { sms: new Set(bundle.autobook_undone?.sms ?? []), lines: new Set(bundle.autobook_undone?.lines ?? []) };
+  if (sms.length) {
+    out.record = autobookRecord({
+      sms, accounts: bundle.accounts, categories: bundle.categories, memory, payees: payeeMap,
+      booked: bundle.booked ?? [], candidates: bundle.candidates ?? [],
+    });
+  }
+  if (bundle.line_rule_record) out.record = { ...(out.record ?? {}), line_product: bundle.line_rule_record };
+  if (on.size) {
+    const items: AutoItem[] = [];
+    if (sms.length) {
+      const analysis = analyseInbox(sms, bundle.candidates ?? [], new Set(bundle.linked ?? []), bundle.accounts);
+      items.push(...autobookAlerts({
+        householdId: bundle.household_id ?? '', sms, analysis, accounts: bundle.accounts, categories: bundle.categories,
+        memory, payees: payeeMap, undone,
+      }, on));
+    }
+    if (on.has('line_product')) {
+      for (const sug of out.suggestions) {
+        const productId = sug.proposal.product_id as string | null | undefined;
+        if (sug.task !== 'line_product' || sug.pattern !== 'rule' || sug.proposal.destiny !== 'stock' || !productId || !sug.line_id) continue;
+        if (undone.lines.has(sug.line_id)) continue;
+        const line = (bundle.lines ?? []).find((l) => l.id === sug.line_id);
+        items.push({
+          kind: 'line_product', action: 'line', sms_ids: [], line_id: sug.line_id, product_id: productId,
+          summary: {
+            payee: line?.raw_name ?? null, amount: line ? Number(line.amount) : null, account_id: null,
+            product: bundle.products.find((p) => p.id === productId)?.name ?? null,
+          },
+        });
+      }
+    }
+    out.autobook = items.slice(0, AUTO_MAX);
+  }
+
   // 4. Things bought, not entered yet: a clear name, maker, model and category to start from
   const things = (bundle.things ?? []).slice(0, 200);
   const thingItems: AskItem<AnswerOf<'thing'>>[] = [];
@@ -582,6 +643,7 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
 
   out.stats = {
     suggestions: out.suggestions.length,
+    autobook: out.autobook?.length ?? 0,
     stale: out.stale.length,
     ai_calls: out.usage.length,
     ai_failed: out.usage.filter((u) => !u.ok).length,

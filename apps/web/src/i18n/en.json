@@ -2103,6 +2103,8 @@
       "sms_review_one": "1 bank alert to review",
       "match_review": "{{count}} matches to check",
       "match_review_one": "1 match to check",
+      "autobook_review": "{{count}} things Gedara booked (not looked at yet)",
+      "autobook_review_one": "1 thing Gedara booked (not looked at yet)",
       "scan_waiting": "{{count}} scanned files to import",
       "scan_waiting_one": "1 scanned file to import",
       "backup_due": "Your last backup is over a month old",
@@ -2257,6 +2259,37 @@
     "dropBy": "−{{amount}} → {{now}} a month",
     "finished": "Finished",
     "endedOn": "ended {{day}}"
+  },
+  "changes": {
+    "short": "What changed",
+    "title": "What changed",
+    "intro": "What Gedara booked by itself, run by run. Undo puts an alert or line back where it waited (and Gedara never books it by itself again); Looks right clears it from Attention.",
+    "booked": "Gedara booked {{count}}",
+    "booked_one": "Gedara booked 1",
+    "allSeen": "All look right",
+    "allSeenDone": "Marked as looked at",
+    "seen": "Looks right",
+    "seenDone": "Marked as looked at",
+    "undo": "Undo",
+    "undone": "Undone: it waits for you again",
+    "wasUndone": "Undone",
+    "looked": "Looked at",
+    "open": "Open",
+    "failed": "That didn't work. Try again.",
+    "loadFailed": "Couldn't load what changed.",
+    "emptyTitle": "Nothing booked by itself yet",
+    "emptyBody": "Switch on the kinds Gedara may book by itself in Settings › Matching, once each has proved itself on your past bookings.",
+    "switches": "Booking by itself",
+    "allLooked": "Everything Gedara booked has been looked at.",
+    "earlier": "Earlier runs ({{count}})",
+    "kinds": {
+      "alert_link": "Alert → bill already entered",
+      "alert_transfer": "Transfers between your accounts",
+      "alert_note": "Notes (no money)",
+      "category_evidence": "Category from a payee's receipt",
+      "category_rule": "Category you taught for a shop",
+      "line_product": "Bill line → product (learned name)"
+    }
   },
   "recurring": {
     "short": "Recurring",
@@ -3193,6 +3226,30 @@
     "thingHint": "AI: {{name}} ({{pct}} %)"
   },
   "matching": {
+    "auto": {
+      "title": "Booking by itself",
+      "intro": "Gedara can book the answers it is certain of: never an AI answer. Each kind is measured on your own past bookings (the rules replayed as if they were new); its switch unlocks at {{pct}} % right on at least {{of}} cases. Everything it books shows under What changed with Undo.",
+      "record": "{{right}} of {{of}} right on your past bookings ({{pct}})",
+      "noRecord": "No past bookings of this kind yet",
+      "needCases": "Needs {{of}} past cases (has {{n}})",
+      "needRight": "Needs {{pct}} % right",
+      "on": "On: books by itself twice a day and on Check now",
+      "ready": "Proven: you can switch it on",
+      "paused": "Paused by itself: {{reason}}",
+      "never": "Never booked by itself: AI suggestions, fixes to past bookings, wallet top-ups, refunds, loans, foreign amounts that are only estimated, alerts whose account is unknown. At most 50 per run.",
+      "recordAt": "Record measured {{when}}",
+      "lastRun": "Last run booked {{count}}",
+      "lastRun_one": "Last run booked 1",
+      "stopAll": "Stop all",
+      "desc": {
+        "alert_link": "Links a card, Tap & Pay or bank alert to the scanned bill of the same amount (one clear match, a day apart at most) and moves the bill off \"to be matched\".",
+        "alert_transfer": "A bank debit and the card payment it paid, money between your own accounts, an ATM withdrawal to Cash. The fee is booked as Banking & fees.",
+        "alert_note": "Receipts, Star Points, instalment, statement and reminder notes are marked seen.",
+        "category_evidence": "An expense whose payee confirmed it by SMS (Dialog, SLT, CEB …) gets that payee's category.",
+        "category_rule": "An expense at a shop you booked before gets the category you chose then. Never for alerts that name no shop.",
+        "line_product": "An old pantry line gets the product its printed name was taught as. No stock is added."
+      }
+    },
     "payeesTitle": "Payees and their categories",
     "payeesIntro": "When a payee confirms a payment (SLT, LECO, Mobitel, Dialog, Star Points), the bank alert of the same amount gets this category.",
     "payeeReset": "Reset",
@@ -3239,8 +3296,8 @@
     "tested": "{{count}} tested",
     "tested_one": "1 tested",
     "answered": "answered {{n}} of {{of}}",
-    "autoReady": "good enough to book itself (9c)",
-    "autoNotYet": "not yet for booking itself ({{n}} sure)",
+    "autoReady": "AI good enough when sure (it still never books)",
+    "autoNotYet": "AI: not yet ({{n}} sure)",
     "tasks": {
       "sms_rebook": "Past booking → transfer",
       "sms_recategorise": "Past booking → category",

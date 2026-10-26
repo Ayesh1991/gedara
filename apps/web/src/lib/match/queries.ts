@@ -2,6 +2,7 @@
 // views (RLS); writes are RPCs; runs go through the match-agent Edge Function, which works with the
 // service role after the database said who may ask (rpc_match_request).
 import { queryOptions } from '@tanstack/react-query';
+import type { AutoRecord } from '@match/book';
 import type { Json } from '../db.types';
 import { moneyKey } from '../money/queries';
 import { supabase } from '../supabase';
@@ -96,6 +97,10 @@ export interface MatchSetting {
   steps: Array<{ provider: 'groq' | 'gemini' | 'openai'; model: string }>;
   monthly_cap_usd: number;
   daily_requests: number;
+  /** 9c: the kinds the owner let Gedara book by itself, and each kind's record on past bookings */
+  auto: string[];
+  auto_record: AutoRecord;
+  auto_record_at: string | null;
 }
 
 export const DEFAULT_SETTING: MatchSetting = {
@@ -107,6 +112,9 @@ export const DEFAULT_SETTING: MatchSetting = {
   ],
   monthly_cap_usd: 0.9,
   daily_requests: 150,
+  auto: [],
+  auto_record: {},
+  auto_record_at: null,
 };
 
 export const matchSettingQuery = (householdId: string) =>
@@ -115,7 +123,7 @@ export const matchSettingQuery = (householdId: string) =>
     queryFn: async (): Promise<MatchSetting> => {
       const { data, error } = await supabase
         .from('match_setting')
-        .select('ai_enabled, steps, monthly_cap_usd, daily_requests')
+        .select('ai_enabled, steps, monthly_cap_usd, daily_requests, auto, auto_record, auto_record_at')
         .eq('household_id', householdId)
         .maybeSingle();
       if (error) throw error;
@@ -227,7 +235,7 @@ export const evalBatch = (householdId: string) =>
 export const checkKeys = (householdId: string) =>
   invoke<{ ok: true; results: Array<{ provider: string; model: string; ok: boolean; error: string | null }> }>({ household_id: householdId, mode: 'check' });
 
-export async function saveMatchSetting(householdId: string, p: Partial<MatchSetting>) {
+export async function saveMatchSetting(householdId: string, p: Partial<Omit<MatchSetting, 'auto_record' | 'auto_record_at'>>) {
   const { error } = await supabase.rpc('rpc_match_settings_save', { p_household: householdId, p: p as unknown as Json });
   if (error) throw error;
 }
