@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.14 — Tap & Pay links to its scanned bill; "counted twice" in Check past bookings
+- **The inbox links a BOC Flex Tap & Pay alert to its scanned bill** waiting in "Card — to be matched"
+  (same amount, ±2 days) and moves the bill to the wallet, as it already did for card charges.
+- **Check past bookings: "counted twice"** — a card charge or Tap & Pay alert saved as its own expense while
+  the scanned bill of the same purchase waits in "to be matched" or already sits on the same account → Fix
+  keeps the bill with its items, removes the alert's entry and links the alert to the bill, in one step
+  (rpc_sms_relink, migrations 92–93, schema 93). On prod: 13 purchases, Rs 54,378.69 of spending counted
+  twice (Cargills, Scope Cinemas, Skytronic, NW Logistics / Lanka IOC, Senkada, Gunasekara …).
+- Function `match-agent-13`.
+
 ## 0.9.13 — Loans entered as owed; an entry can change its type
 - A loan's starting balance and Reconcile take **what is owed**. They used the card rule ("available
   credit") because a loan has a limit too, so 0 meant "the whole loan owed" — and with the payout booked

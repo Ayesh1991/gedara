@@ -6627,6 +6627,7 @@ export type Database = {
       }
       rpc_sms_post: { Args: { p: Json; p_sms_ids: string[] }; Returns: Json }
       rpc_sms_rebook: { Args: { p: Json }; Returns: Json }
+      rpc_sms_relink: { Args: { p: Json }; Returns: Json }
       rpc_sms_reparse: {
         Args: { p_household: string; p_rows: Json }
         Returns: Json

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { payeeCategory } from '@match/memory';
-import { checkPastBookings, duplicateAlerts, runEval, runMatching, walletTopups, type BookedRow, type Bundle } from '@match/run';
+import { bookedTwice, checkPastBookings, duplicateAlerts, runEval, runMatching, walletTopups, type BookedRow, type Bundle } from '@match/run';
 import { analyseInbox, namesNoShop, paymentEvidence, type SmsRow } from '@match/sms';
 
 // Phase 9b.1: evidence before guesses. A payee's confirmation (Dialog, SLT, LECO, Star Points) explains a
@@ -453,5 +453,54 @@ describe('Money moved between your own accounts (9b.2 fix)', () => {
       ],
     }), [d, near, own, far], new Map());
     expect(out).toEqual([expect.objectContaining({ proposal: expect.objectContaining({ transfer_id: 'tx-s', delete_tx: ['tx-d'], fee: 25 }) })]);
+  });
+});
+
+describe('Tap & Pay and its scanned bill (9b.2 fix)', () => {
+  const withWallet = (p: Partial<Bundle> = {}) => bundle({
+    accounts: [
+      { id: 'wallet', kind: 'wallet', is_suspense: false, archived: false, credit_limit: null, institution: 'BOC Flex' },
+      { id: 'match', kind: 'credit_card', is_suspense: true, archived: false, credit_limit: null },
+    ],
+    ...p,
+  });
+  const tap = (amount: number, at: string, p: Partial<SmsRow> = {}) =>
+    sms({ kind: 'bank_debit', amount, at, account_id: 'wallet', merchant_text: 'CARGILLS - RAJAGIRIYA', parser: 'boconline.tap_pay', ...p });
+  const bill = (id: string, total: number, on: string) =>
+    ({ id, type: 'expense', account_id: 'match', to_account_id: null, payee_text: 'CARGILLS FOOD CITY', occurred_on: on, occurred_at: '19:00:00', total });
+
+  it('a waiting Tap & Pay alert links to the scanned bill in "to be matched" and moves it', () => {
+    const s = tap(5066.26, '2026-10-25 19:05');
+    const { suggestions } = analyseInbox([s], [bill('b1', 5066.26, '2026-10-25')], new Set(), withWallet().accounts);
+    expect(suggestions.get(s.id)).toMatchObject({ kind: 'link', txId: 'b1', moves: true, confident: true });
+  });
+
+  it("booked from the alert while the bill waits → keep the bill, drop the alert's entry", () => {
+    const s = tap(5066.26, '2026-10-25 19:05', { transaction_id: 'tx-a' });
+    const b = withWallet({
+      candidates: [bill('b1', 5066.26, '2026-10-25'), bill('b2', 5066.26, '2026-10-01')],
+      booked: [booked(s, { transaction_id: 'tx-a', type: 'expense', account_id: 'wallet' })],
+    });
+    expect(bookedTwice(b, [s], new Map(b.booked!.map((r) => [r.sms_id, r])), new Set())).toEqual([expect.objectContaining({
+      task: 'sms_relink', target_key: s.id, proposal: expect.objectContaining({ sms_ids: [s.id], delete_tx: 'tx-a', bill_tx: 'b1', total: 5066.26 }),
+    })]);
+  });
+
+  it('also when the bill was already moved to the same account by hand', () => {
+    const s = tap(2252, '2026-10-21 12:00', { transaction_id: 'tx-a' });
+    const rows = [booked(s, { transaction_id: 'tx-a', type: 'expense', account_id: 'wallet' })];
+    const onWallet = { ...bill('b1', 2252, '2026-10-21'), account_id: 'wallet' };
+    const elsewhere = { ...bill('b2', 2252, '2026-10-21'), account_id: 'cash' };
+    expect(bookedTwice(withWallet({ candidates: [elsewhere, onWallet], booked: rows }), [s], new Map(rows.map((r) => [r.sms_id, r])), new Set()))
+      .toEqual([expect.objectContaining({ proposal: expect.objectContaining({ bill_tx: 'b1', delete_tx: 'tx-a' }) })]);
+  });
+
+  it('not when the bill is already linked, the amount differs, or it is days apart', () => {
+    const s = tap(2252, '2026-10-21 12:00', { transaction_id: 'tx-a' });
+    const rows = [booked(s, { transaction_id: 'tx-a', type: 'expense', account_id: 'wallet' })];
+    const bySms = new Map(rows.map((r) => [r.sms_id, r]));
+    expect(bookedTwice(withWallet({ candidates: [bill('b1', 2252, '2026-10-21')], linked: ['b1'], booked: rows }), [s], bySms, new Set())).toEqual([]);
+    expect(bookedTwice(withWallet({ candidates: [bill('b1', 2250, '2026-10-21')], booked: rows }), [s], bySms, new Set())).toEqual([]);
+    expect(bookedTwice(withWallet({ candidates: [bill('b1', 2252, '2026-10-26')], booked: rows }), [s], bySms, new Set())).toEqual([]);
   });
 });
