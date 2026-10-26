@@ -1470,6 +1470,106 @@ export type Database = {
           },
         ]
       }
+      instalment_plan: {
+        Row: {
+          account_id: string
+          annual_rate: number | null
+          archived: boolean
+          created_at: string
+          created_by: string | null
+          first_on: string
+          household_id: string
+          id: string
+          kind: string
+          monthly: number
+          name: string
+          notes: string | null
+          principal: number | null
+          source_sms_id: string | null
+          total_count: number
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          annual_rate?: number | null
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          first_on: string
+          household_id: string
+          id?: string
+          kind: string
+          monthly: number
+          name: string
+          notes?: string | null
+          principal?: number | null
+          source_sms_id?: string | null
+          total_count: number
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          annual_rate?: number | null
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          first_on?: string
+          household_id?: string
+          id?: string
+          kind?: string
+          monthly?: number
+          name?: string
+          notes?: string | null
+          principal?: number | null
+          source_sms_id?: string | null
+          total_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instalment_plan_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "instalment_plan_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "instalment_plan_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_month_end"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "instalment_plan_household_id_account_id_fkey"
+            columns: ["household_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_balance_check"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "instalment_plan_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instalment_plan_household_id_source_sms_id_fkey"
+            columns: ["household_id", "source_sms_id"]
+            isOneToOne: false
+            referencedRelation: "sms_message"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
       label_profile: {
         Row: {
           cols: number

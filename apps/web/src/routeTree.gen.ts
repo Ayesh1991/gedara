@@ -22,6 +22,7 @@ import { Route as AppMoneyIndexRouteImport } from './routes/_app/money/index'
 import { Route as AppMoneyBudgetsRouteImport } from './routes/_app/money/budgets'
 import { Route as AppMoneyImportRouteImport } from './routes/_app/money/import'
 import { Route as AppMoneyInboxRouteImport } from './routes/_app/money/inbox'
+import { Route as AppMoneyInstalmentsRouteImport } from './routes/_app/money/instalments'
 import { Route as AppMoneyRecurringRouteImport } from './routes/_app/money/recurring'
 import { Route as AppMoneyReviewRouteImport } from './routes/_app/money/review'
 import { Route as AppMusicIndexRouteImport } from './routes/_app/music/index'
@@ -121,6 +122,11 @@ const AppMoneyImportRoute = AppMoneyImportRouteImport.update({
 const AppMoneyInboxRoute = AppMoneyInboxRouteImport.update({
   id: '/money/inbox',
   path: '/money/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMoneyInstalmentsRoute = AppMoneyInstalmentsRouteImport.update({
+  id: '/money/instalments',
+  path: '/money/instalments',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMoneyRecurringRoute = AppMoneyRecurringRouteImport.update({
@@ -321,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/money/budgets': typeof AppMoneyBudgetsRoute
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
+  '/money/instalments': typeof AppMoneyInstalmentsRoute
   '/money/recurring': typeof AppMoneyRecurringRoute
   '/money/review': typeof AppMoneyReviewRoute
   '/pantry/$productId': typeof AppPantryProductIdRoute
@@ -371,6 +378,7 @@ export interface FileRoutesByTo {
   '/money/budgets': typeof AppMoneyBudgetsRoute
   '/money/import': typeof AppMoneyImportRoute
   '/money/inbox': typeof AppMoneyInboxRoute
+  '/money/instalments': typeof AppMoneyInstalmentsRoute
   '/money/recurring': typeof AppMoneyRecurringRoute
   '/money/review': typeof AppMoneyReviewRoute
   '/pantry/$productId': typeof AppPantryProductIdRoute
@@ -423,6 +431,7 @@ export interface FileRoutesById {
   '/_app/money/budgets': typeof AppMoneyBudgetsRoute
   '/_app/money/import': typeof AppMoneyImportRoute
   '/_app/money/inbox': typeof AppMoneyInboxRoute
+  '/_app/money/instalments': typeof AppMoneyInstalmentsRoute
   '/_app/money/recurring': typeof AppMoneyRecurringRoute
   '/_app/money/review': typeof AppMoneyReviewRoute
   '/_app/pantry/$productId': typeof AppPantryProductIdRoute
@@ -475,6 +484,7 @@ export interface FileRouteTypes {
     | '/money/budgets'
     | '/money/import'
     | '/money/inbox'
+    | '/money/instalments'
     | '/money/recurring'
     | '/money/review'
     | '/pantry/$productId'
@@ -525,6 +535,7 @@ export interface FileRouteTypes {
     | '/money/budgets'
     | '/money/import'
     | '/money/inbox'
+    | '/money/instalments'
     | '/money/recurring'
     | '/money/review'
     | '/pantry/$productId'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
     | '/_app/money/budgets'
     | '/_app/money/import'
     | '/_app/money/inbox'
+    | '/_app/money/instalments'
     | '/_app/money/recurring'
     | '/_app/money/review'
     | '/_app/pantry/$productId'
@@ -713,6 +725,13 @@ declare module '@tanstack/react-router' {
       path: '/money/inbox'
       fullPath: '/money/inbox'
       preLoaderRoute: typeof AppMoneyInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/money/instalments': {
+      id: '/_app/money/instalments'
+      path: '/money/instalments'
+      fullPath: '/money/instalments'
+      preLoaderRoute: typeof AppMoneyInstalmentsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/money/recurring': {
@@ -979,6 +998,7 @@ interface AppRouteChildren {
   AppMoneyBudgetsRoute: typeof AppMoneyBudgetsRoute
   AppMoneyImportRoute: typeof AppMoneyImportRoute
   AppMoneyInboxRoute: typeof AppMoneyInboxRoute
+  AppMoneyInstalmentsRoute: typeof AppMoneyInstalmentsRoute
   AppMoneyRecurringRoute: typeof AppMoneyRecurringRoute
   AppMoneyReviewRoute: typeof AppMoneyReviewRoute
   AppPantryProductIdRoute: typeof AppPantryProductIdRoute
@@ -1028,6 +1048,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMoneyBudgetsRoute: AppMoneyBudgetsRoute,
   AppMoneyImportRoute: AppMoneyImportRoute,
   AppMoneyInboxRoute: AppMoneyInboxRoute,
+  AppMoneyInstalmentsRoute: AppMoneyInstalmentsRoute,
   AppMoneyRecurringRoute: AppMoneyRecurringRoute,
   AppMoneyReviewRoute: AppMoneyReviewRoute,
   AppPantryProductIdRoute: AppPantryProductIdRoute,
