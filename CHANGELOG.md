@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.17 — Learned-name lines already suggested are booked by themselves too
+- With "Bill line → product" switched on, the run now books every waiting pantry line whose printed name
+  you taught, including lines whose suggestion was already open from an earlier run (the suggestion step
+  skips unchanged ones, so 0.9.16 missed them; on prod: "Green Chilies" → Green Chillies).
+- Function `match-agent-15`; no migration.
+
 ## 0.9.16 — Gedara books certain kinds by itself; Money › What changed
 - **Booking by itself, per kind, only when proven.** Settings › Matching › "Booking by itself" lists six
   certain kinds: alert → bill already entered, transfers between your accounts, notes, category from a
