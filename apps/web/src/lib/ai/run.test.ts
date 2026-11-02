@@ -61,6 +61,20 @@ function fakeAi(answer: (item: Record<string, unknown>, task: string) => Record<
 const KEYS = { groq: 'g', gemini: 'm', openai: 'o' };
 
 describe('runMatching', () => {
+  it('9c: a learned-name line is booked by itself even when its suggestion is already open from an earlier run', async () => {
+    const auto = { auto: ['line_product'], auto_record: { line_product: { right: 67, of: 67 } } };
+    const first = await runMatching(bundle({ lines: [line('b9-0', 'WHITE SUGAR 1KG', { category_id: HH.grocery })] }), { keys: {} });
+    const open = first.suggestions.find((s) => s.target_key === 'b9-0')!;
+    const out = await runMatching(bundle({
+      settings: { ai_enabled: false, ...auto },
+      lines: [line('b9-0', 'WHITE SUGAR 1KG', { category_id: HH.grocery }), line('b9-1', 'KEERI SMBA 5KG')],
+      suggestions: [{ task: 'line_product', target_key: 'b9-0', input_hash: open.input_hash, status: 'pending' }],
+    }), { keys: {} });
+    expect(out.suggestions.find((s) => s.target_key === 'b9-0')).toBeUndefined(); // unchanged: not suggested again
+    expect(out.autobook).toEqual([expect.objectContaining({ kind: 'line_product', line_id: 'l-b9-0', product_id: 'p-sugar',
+      summary: expect.objectContaining({ product: 'Sugar' }) })]); // the trigram "maybe" (Keeri) is never booked
+  });
+
   it('a learned name is a rule suggestion; the AI only sees the rest, by labels', async () => {
     const ai = fakeAi((it) => ({ destiny: 'stock', product: (it.candidates as string[])[0] ?? null, category: 'C2', confidence: 0.95 }));
     const out = await runMatching(bundle({ lines: [line('b1-0', 'WHITE SUGAR 1KG', { category_id: HH.grocery }), line('b1-1', 'KEERI SMBA 5KG')] }),

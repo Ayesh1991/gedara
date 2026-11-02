@@ -586,15 +586,17 @@ export async function runMatching(bundle: Bundle, env: RunEnv): Promise<RunOutpu
       }, on));
     }
     if (on.has('line_product')) {
-      for (const sug of out.suggestions) {
-        const productId = sug.proposal.product_id as string | null | undefined;
-        if (sug.task !== 'line_product' || sug.pattern !== 'rule' || sug.proposal.destiny !== 'stock' || !productId || !sug.line_id) continue;
-        if (undone.lines.has(sug.line_id)) continue;
-        const line = (bundle.lines ?? []).find((l) => l.id === sug.line_id);
+      // every waiting line the learned names settle — also those whose suggestion is already open from an
+      // earlier run (the suggestion step skips unchanged ones)
+      for (const l of bundle.lines ?? []) {
+        if (undone.lines.has(l.id)) continue;
+        const m = ctx.matcher.match({ raw_name: l.raw_name, categoryTop: ctx.topKeyOf(l.category_id) });
+        if (m.confidence !== 'sure' || (m.destiny ?? 'stock') !== 'stock' || !m.productId) continue;
+        const productId = m.productId;
         items.push({
-          kind: 'line_product', action: 'line', sms_ids: [], line_id: sug.line_id, product_id: productId,
+          kind: 'line_product', action: 'line', sms_ids: [], line_id: l.id, product_id: productId,
           summary: {
-            payee: line?.raw_name ?? null, amount: line ? Number(line.amount) : null, account_id: null,
+            payee: l.raw_name, amount: Number(l.amount), account_id: null,
             product: bundle.products.find((p) => p.id === productId)?.name ?? null,
           },
         });

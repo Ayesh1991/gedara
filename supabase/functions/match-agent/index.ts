@@ -24,7 +24,7 @@ import type { ModelRef, Provider } from '../_shared/ai/providers.ts';
 import { KEY_NAMES } from '../_shared/ai/providers.ts';
 import { runEval, runMatching, type Bundle, type RunOutput } from '../_shared/match/run.ts';
 
-const FN_VERSION = 'match-agent-14';
+const FN_VERSION = 'match-agent-15';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
