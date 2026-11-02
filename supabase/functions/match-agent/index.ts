@@ -11,7 +11,9 @@
 //
 // The work is in ../_shared/match/run.ts (rules first, then the AI ladder in ../_shared/ai). The bundle
 // the database gives (rpc_match_bundle) never contains an SMS body, and every request to an AI passes the
-// guard. Nothing is booked: suggestions wait for a person. verify_jwt is off (pg_cron has no session);
+// guard. Suggestions wait for a person; only the kinds the owner switched on, and only while their record on
+// past bookings qualifies, are booked by the run itself (9c, rpc_match_autobook — certain rule answers,
+// never the AI) before the run is saved. verify_jwt is off (pg_cron has no session);
 // both POST paths authenticate here; the cron token is checked inside the database.
 // Secrets: GROQ_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY (scripts/ai-secrets.mjs). Logs: one line per run,
 // counts and error codes only — never text, keys or answers. Bump FN_VERSION on every deploy.
@@ -22,7 +24,7 @@ import type { ModelRef, Provider } from '../_shared/ai/providers.ts';
 import { KEY_NAMES } from '../_shared/ai/providers.ts';
 import { runEval, runMatching, type Bundle, type RunOutput } from '../_shared/match/run.ts';
 
-const FN_VERSION = 'match-agent-13';
+const FN_VERSION = 'match-agent-14';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,17 +60,27 @@ function rpcStatus(code: string | undefined): number {
   return 500;
 }
 
-/** One run for one household: bundle → rules + AI → save. */
+/** One run for one household: bundle → rules + AI → book what may be booked by itself → save. */
 async function work(db: SupabaseClient, householdId: string, runId: string, mode: 'run' | 'eval') {
   const { data: bundle, error } = await db.rpc('rpc_match_bundle', { p_household: householdId, p_run: runId, p_mode: mode });
   if (error) throw error;
   const env = { keys: keys() };
   const out: RunOutput & { remaining?: number; total?: number } =
     mode === 'eval' ? await runEval(bundle as Bundle, env) : await runMatching(bundle as Bundle, env);
+  if (mode === 'run' && out.autobook?.length) {
+    // before the save: booking needs the run still open
+    const { data: booked, error: bookErr } = await db.rpc('rpc_match_autobook', { p_household: householdId, p_run: runId, p_items: out.autobook });
+    if (bookErr) throw bookErr;
+    const b = booked as { booked: number; skipped: number; failed: number; sms_ids: string[]; line_ids: string[] };
+    const done = new Set([...b.sms_ids, ...b.line_ids]);
+    // what was booked needs no suggestion
+    out.suggestions = out.suggestions.filter((s) => !(s.sms_id && done.has(s.sms_id)) && !(s.line_id && done.has(s.line_id)));
+    out.stats = { ...out.stats, suggestions: out.suggestions.length, autobook: b.booked, autobook_skipped: b.skipped, autobook_failed: b.failed };
+  }
   const { error: saveErr } = await db.rpc('rpc_match_save', {
     p_household: householdId,
     p_run: runId,
-    p: { suggestions: out.suggestions, usage: out.usage, evals: out.evals, stale: out.stale, stats: out.stats },
+    p: { suggestions: out.suggestions, usage: out.usage, evals: out.evals, stale: out.stale, stats: out.stats, record: out.record },
   });
   if (saveErr) throw saveErr;
   console.log(JSON.stringify({ fn: FN_VERSION, mode, ...out.stats }));

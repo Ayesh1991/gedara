@@ -1,13 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { BadgeCheck, ChevronLeft, FlaskConical, KeyRound, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { BadgeCheck, ChevronLeft, FlaskConical, History, KeyRound, OctagonX, RotateCcw, ShieldCheck, Sparkles, Wand2 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
+import { AUTO_BAR, AUTO_KINDS, qualifies } from '@match/book';
 import { KNOWN_PAYEES, payeeCategory as defaultPayeeCategory } from '@match/memory';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CategorySelect, fieldLabel } from '@/components/money/bits';
 import { useMoneyBasics } from '@/components/money/useMoney';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Toggle } from '@/components/ui/toggle';
@@ -22,6 +23,8 @@ import {
   saveMatchSetting,
   suggestionsQuery,
   type Accuracy,
+  type MatchSetting,
+  type RunRow,
 } from '@/lib/match/queries';
 import type { CategoryRow } from '@/lib/money/categoriesMap';
 import { billNameNorm } from '@/lib/spine/normalise';
@@ -42,7 +45,8 @@ const usd = (n: number) => `$${n.toFixed(n < 0.1 ? 4 : 2)}`;
 /**
  * Settings › Matching (Phase 9b): the AI in shadow. The owner switches AI suggestions on, sets the
  * monthly cost cap, tests the keys, and runs the accuracy test on the household's own decided data;
- * everyone sees the report, this month's cost and the recent runs. Nothing here books anything.
+ * everyone sees the report, this month's cost and the recent runs. Phase 9c: the owner switches on the
+ * kinds Gedara may book by itself, each only once its record on past bookings qualifies.
  */
 function MatchingPage() {
   const { t } = useTranslation();
@@ -156,6 +160,9 @@ function MatchingPage() {
           {t('matching.privacy')}
         </p>
       </Card>
+
+      {s && <AutoCard setting={s} lastRun={report.data?.runs.find((r) => r.finished_at && r.trigger !== 'eval' && r.trigger !== 'check')}
+        isOwner={isOwner} busy={busy} locale={membership.household.locale} onSave={(auto) => void save({ auto })} />}
 
       {/* The ladder */}
       <Card className="flex flex-col gap-3">
@@ -324,6 +331,76 @@ function MatchingPage() {
         )}
       </Card>
     </div>
+  );
+}
+
+/**
+ * Booking by itself (9c): each certain kind, its record on the household's own past bookings, and a
+ * switch the owner may turn on only once the record qualifies (≥ 99 % on ≥ 20). A kind whose record
+ * later falls below the bar pauses by itself; "Stop all" turns everything off.
+ */
+function AutoCard({ setting, lastRun, isOwner, busy, locale, onSave }: {
+  setting: MatchSetting; lastRun: RunRow | undefined; isOwner: boolean; busy: boolean; locale: string; onSave: (auto: string[]) => void;
+}) {
+  const { t } = useTranslation();
+  const on = new Set(setting.auto);
+  return (
+    <Card className="flex flex-col gap-3">
+      <h2 className="flex items-center gap-2 font-display text-[18px] font-semibold">
+        <Wand2 className="h-[18px] w-[18px] text-info" aria-hidden />
+        {t('matching.auto.title')}
+      </h2>
+      <p className="text-[13px] text-muted">{t('matching.auto.intro', { pct: AUTO_BAR.right * 100, of: AUTO_BAR.of })}</p>
+      <ul className="flex flex-col gap-2">
+        {AUTO_KINDS.map((k) => {
+          const r = setting.auto_record[k];
+          const ok = qualifies(r);
+          const isOn = on.has(k);
+          const state = isOn && ok ? 'on' : isOn ? 'paused' : ok ? 'ready' : 'locked';
+          const reason = !r || r.of === 0 ? t('matching.auto.noRecord')
+            : r.of < AUTO_BAR.of ? t('matching.auto.needCases', { of: AUTO_BAR.of, n: r.of })
+            : t('matching.auto.needRight', { pct: AUTO_BAR.right * 100 });
+          return (
+            <li key={k} className="flex items-start gap-3 rounded-2xl bg-white/[0.035] px-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{t(`changes.kinds.${k}`)}</div>
+                <div className="text-[12.5px] text-muted">{t(`matching.auto.desc.${k}`)}</div>
+                <div className="tabular mt-1 text-[12.5px]">
+                  {r && r.of > 0 ? t('matching.auto.record', { right: r.right, of: r.of, pct: pct(r.right, r.of) }) : null}
+                  <span className={cn('block', state === 'on' ? 'text-teal' : state === 'paused' ? 'text-caution' : 'text-muted')}>
+                    {state === 'on' ? t('matching.auto.on') : state === 'paused' ? t('matching.auto.paused', { reason })
+                      : state === 'ready' ? t('matching.auto.ready') : reason}
+                  </span>
+                </div>
+              </div>
+              <Toggle on={isOn} label={t(`changes.kinds.${k}`)} disabled={!isOwner || busy || (!isOn && !ok)}
+                onChange={(next) => onSave(next ? [...setting.auto, k] : setting.auto.filter((x) => x !== k))} />
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-[12.5px] text-muted">
+        {t('matching.auto.never')}
+        {setting.auto_record_at && (
+          <span className="block">{t('matching.auto.recordAt', { when: new Date(setting.auto_record_at).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }) })}</span>
+        )}
+        {lastRun && setting.auto.length > 0 && (
+          <span className="block">{t('matching.auto.lastRun', { count: Number(lastRun.stats.autobook ?? 0) })}</span>
+        )}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Link to="/money/changes" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+          <History className="h-4 w-4" aria-hidden />
+          {t('changes.title')}
+        </Link>
+        {isOwner && setting.auto.length > 0 && (
+          <Button size="sm" variant="ghost" className="text-red" disabled={busy} onClick={() => onSave([])}>
+            <OctagonX className="h-4 w-4" aria-hidden />
+            {t('matching.auto.stopAll')}
+          </Button>
+        )}
+      </div>
+    </Card>
   );
 }
 

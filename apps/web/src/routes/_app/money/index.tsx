@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { CalendarClock, ChevronLeft, ChevronRight, FileUp, MessageSquareText, PiggyBank, Plus, Repeat, Search, Sparkles, Wallet } from 'lucide-react';
+import { CalendarClock, ChevronLeft, ChevronRight, FileUp, History, MessageSquareText, PiggyBank, Plus, Repeat, Search, Sparkles, Wallet } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -90,6 +90,10 @@ function MoneyPage() {
           <Link to="/money/instalments" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <CalendarClock className="h-4 w-4" aria-hidden />
             {t('instalments.short')}
+          </Link>
+          <Link to="/money/changes" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+            <History className="h-4 w-4" aria-hidden />
+            {t('changes.short')}
           </Link>
           <Link to="/money/budgets" search={{ month }} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <PiggyBank className="h-4 w-4" aria-hidden />

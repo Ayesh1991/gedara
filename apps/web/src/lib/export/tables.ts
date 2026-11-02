@@ -42,6 +42,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'match_run', order: ['id'], scope: 'household' },
   { name: 'ai_usage', order: ['id'], scope: 'household' },
   { name: 'match_eval', order: ['id'], scope: 'household' },
+  { name: 'match_autobook', order: ['id'], scope: 'household' },
   { name: 'location', order: ['id'], scope: 'household' },
   { name: 'place_type', order: ['id'], scope: 'household' },
   { name: 'floor_plan', order: ['id'], scope: 'household' },

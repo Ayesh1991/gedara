@@ -6,6 +6,7 @@ import {
   CloudDownload,
   Clock,
   HardDriveDownload,
+  History,
   MessageSquareText,
   PiggyBank,
   Receipt,
@@ -42,6 +43,7 @@ const ICON: Record<AttentionKind, LucideIcon> = {
   things_pending: Receipt,
   sms_review: MessageSquareText,
   match_review: Sparkles,
+  autobook_review: History,
   scan_waiting: CloudDownload,
   backup_due: HardDriveDownload,
   budget_over: PiggyBank,
@@ -85,6 +87,8 @@ export function useAttentionText() {
         return t('attention.kinds.sms_review', { count: Number(i.qty ?? 0) });
       case 'match_review':
         return t('attention.kinds.match_review', { count: Number(i.qty ?? 0) });
+      case 'autobook_review':
+        return t('attention.kinds.autobook_review', { count: Number(i.qty ?? 0) });
       case 'scan_waiting':
         return t('attention.kinds.scan_waiting', { count: Number(i.qty ?? 0) });
       case 'backup_due':
