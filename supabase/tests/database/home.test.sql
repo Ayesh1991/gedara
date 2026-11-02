@@ -7,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(70);
+select plan(72);
 
 create temp table t_c (k text primary key, v jsonb) on commit drop;
 grant all on t_c to public;
@@ -338,13 +338,15 @@ select is((select count(*)::int from home_command where device_id = pg_temp.dev(
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8c01","role":"authenticated"}';
 select lives_ok(format($$select rpc_device_revoke(%L)$$, pg_temp.dev()), 'the owner removes the bridge');
-select throws_ok(format($$select rpc_home_command(%L, 'turn_on')$$, pg_temp.e('switch.mosquito_vaporizer')), '23514', null,
-  'a removed bridge takes no commands');
+select throws_ok(format($$select rpc_home_command(%L, 'turn_on')$$, (select v ->> 'id' from t_c where k = 'pa')), '42501', null,
+  'a removed bridge takes no commands (what it reported is gone)');
 reset role;
 set local role service_role;
 select throws_ok($$select rpc_home_sync(pg_temp.k(), '{"agent":"a","up":1}')$$, '42501', null, '… and its key no longer works');
 reset role;
 select is((select count(*)::int from home_token where device_id = pg_temp.dev()), 0, 'the key is forgotten');
+select is((select count(*)::int from home_entity where device_id = pg_temp.dev()), 0, 'what it reported goes with it (no old doors after connecting again)');
+select ok((select count(*) from home_event where device_id = pg_temp.dev()) > 0, '… the house log keeps its history');
 
 select * from finish();
 rollback;

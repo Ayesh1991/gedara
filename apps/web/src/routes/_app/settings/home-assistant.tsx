@@ -3,7 +3,7 @@
 // has, by room, with Show / Control and a short name (owner only) — and removing the bridge.
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { AppWindow, ChevronLeft, DoorClosed, HousePlug, Lightbulb, Power, Snowflake, Trash2, type LucideIcon } from 'lucide-react';
+import { AppWindow, ChevronLeft, DoorClosed, Gauge, HousePlug, Lightbulb, PersonStanding, Power, Snowflake, Sun, Trash2, type LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ import {
   entitiesQuery,
   homeErrorKey,
   invalidateHome,
+  kindOrder,
   removeBridge,
   setEntity,
   type HomeEntity,
@@ -28,8 +29,9 @@ export const Route = createFileRoute('/_app/settings/home-assistant')({
   component: HomeAssistantPage,
 });
 
-const ICON: Record<HomeKind, LucideIcon> = { door: DoorClosed, window: AppWindow, light: Lightbulb, switch: Power, climate: Snowflake };
-const ORDER: Record<HomeKind, number> = { climate: 0, switch: 1, light: 2, door: 3, window: 4 };
+const ICON: Record<HomeKind, LucideIcon> = {
+  door: DoorClosed, window: AppWindow, light: Lightbulb, switch: Power, climate: Snowflake, presence: PersonStanding, binary: Sun, sensor: Gauge,
+};
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
@@ -48,7 +50,9 @@ function EntityRow({ e, isOwner }: { e: HomeEntity; isOwner: boolean }) {
   const Icon = ICON[e.kind];
   const canControl = e.kind === 'light' || e.kind === 'switch' || e.kind === 'climate';
 
-  async function change(p: { shown?: boolean; controllable?: boolean; label?: string | null }) {
+  const canAlert = e.kind === 'door' || e.kind === 'window' || e.kind === 'presence';
+
+  async function change(p: { shown?: boolean; controllable?: boolean; label?: string | null; logged?: boolean; alert?: boolean }) {
     setBusy(true);
     try {
       const r = await setEntity(e.id, p);
@@ -86,10 +90,13 @@ function EntityRow({ e, isOwner }: { e: HomeEntity; isOwner: boolean }) {
           ) : (
             <span className="block truncate px-1 text-[15px]">{e.label ?? e.ha_name}</span>
           )}
-          <span className="block truncate px-1 font-mono text-[11.5px] text-faint">{e.entity_id}</span>
+          <span className="block truncate px-1 font-mono text-[11.5px] text-faint">
+            {e.entity_id}
+            {e.platform ? ` · ${e.platform}` : ''}
+          </span>
         </div>
       </div>
-      <div className="flex items-center gap-5 pl-8 sm:pl-0">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pl-8 sm:pl-0">
         <label className="flex items-center gap-2 text-[13px] text-muted">
           {t('house.chooser.show')}
           <Toggle on={e.shown} disabled={!isOwner || busy} label={t('house.chooser.showLabel', { name: e.label ?? e.ha_name })} onChange={(v) => void change({ shown: v })} />
@@ -101,6 +108,19 @@ function EntityRow({ e, isOwner }: { e: HomeEntity; isOwner: boolean }) {
             disabled={!isOwner || busy || !canControl}
             label={t('house.chooser.controlLabel', { name: e.label ?? e.ha_name })}
             onChange={(v) => void change({ controllable: v })}
+          />
+        </label>
+        <label className="flex items-center gap-2 text-[13px] text-muted">
+          {t('house.chooser.log')}
+          <Toggle on={e.logged} disabled={!isOwner || busy} label={t('house.chooser.logLabel', { name: e.label ?? e.ha_name })} onChange={(v) => void change({ logged: v })} />
+        </label>
+        <label className={cn('flex items-center gap-2 text-[13px] text-muted', !canAlert && 'invisible')}>
+          {t('house.chooser.alert')}
+          <Toggle
+            on={e.alert}
+            disabled={!isOwner || busy || !canAlert}
+            label={t('house.chooser.alertLabel', { name: e.label ?? e.ha_name })}
+            onChange={(v) => void change({ alert: v })}
           />
         </label>
       </div>
@@ -126,7 +146,7 @@ function HomeAssistantPage() {
     const map = new Map<string | null, HomeEntity[]>();
     for (const e of entities.data ?? []) map.set(e.area, [...(map.get(e.area) ?? []), e]);
     return [...map.entries()]
-      .map(([name, list]) => ({ name, list: list.sort((a, b) => ORDER[a.kind] - ORDER[b.kind] || collator.compare(a.ha_name, b.ha_name)) }))
+      .map(([name, list]) => ({ name, list: list.sort((a, b) => kindOrder(a.kind) - kindOrder(b.kind) || collator.compare(a.ha_name, b.ha_name)) }))
       .sort((a, b) => (a.name === null ? 1 : b.name === null ? -1 : collator.compare(a.name, b.name)));
   }, [entities.data, collator]);
 

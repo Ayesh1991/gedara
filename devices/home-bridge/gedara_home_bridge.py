@@ -46,7 +46,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 AGENT = f"gedara-home {VERSION}"
 ROOT = Path(os.environ.get("GEDARA_HOME_ROOT", "/"))
 CONF = ROOT / "etc/gedara-home"
@@ -66,6 +66,12 @@ except ZoneInfoNotFoundError:  # no tz database (tests on Windows); Sri Lanka ha
 
 ENTITY_ID = re.compile(r"^[a-z_]{1,30}\.[a-z0-9_]{1,120}$")
 OPENING_CLASSES = {"door", "window", "opening", "garage_door"}
+PRESENCE_CLASSES = {"motion", "occupancy", "presence"}
+# Sent within ~1 s (alerts, the House page); the rest is batched every QUIET_EVERY seconds.
+URGENT_KINDS = {"door", "window", "light", "switch", "climate"}
+QUIET_EVERY = 30.0
+SENSOR_EVERY = 300.0  # a sensor value goes to the log at most every 5 min, sooner if it moves enough
+MAX_PENDING_EVENTS = 2000  # kept while the internet is down (the oldest go first)
 # The whole list of what the bridge will ever ask Home Assistant to do.
 ALLOWED = {
     ("switch", "turn_on"), ("switch", "turn_off"),
@@ -86,15 +92,17 @@ class Refused(Exception):
 
 
 # ── Pure helpers (unit-tested in test_bridge.py) ──────────────────────────────
-def kind_of(entity_id: str, attrs: dict) -> str | None:
-    """door / window / light / switch / climate for what Gedara shows, else None."""
+def kind_of(entity_id: str, attrs: dict, platform: str | None = None) -> str | None:
+    """What Gedara shows, else None: door / window (any integration), light / switch / climate, and
+    (Phase 8b) from ESPHome devices only — so a camera's motion sensors never come — presence
+    (motion / occupancy / presence), other binary sensors (binary) and numeric sensors (sensor)."""
     if not ENTITY_ID.match(entity_id):
         return None
     domain = entity_id.split(".", 1)[0]
     if domain in ("light", "switch", "climate"):
         return domain
+    dc = str(attrs.get("device_class") or "")
     if domain == "binary_sensor":
-        dc = str(attrs.get("device_class") or "")
         if dc == "window":
             return "window"
         if dc in ("door", "garage_door"):
@@ -102,6 +110,11 @@ def kind_of(entity_id: str, attrs: dict) -> str | None:
         if dc == "opening":
             name = str(attrs.get("friendly_name") or entity_id).lower()
             return "window" if "window" in name else "door"
+        if platform == "esphome":
+            return "presence" if dc in PRESENCE_CLASSES else "binary"
+        return None
+    if domain == "sensor" and platform == "esphome" and (attrs.get("unit_of_measurement") or attrs.get("state_class")):
+        return "sensor"
     return None
 
 
@@ -124,10 +137,11 @@ def build_catalog(states: list[dict], entities: list[dict], devices: list[dict],
     for s in states:
         eid = str(s.get("entity_id") or "")
         attrs = s.get("attributes") or {}
-        kind = kind_of(eid, attrs)
+        e = reg.get(eid)
+        platform = str(e.get("platform"))[:40] if e and e.get("platform") else None
+        kind = kind_of(eid, attrs, platform)
         if not kind:
             continue
-        e = reg.get(eid)
         if e and (e.get("disabled_by") or e.get("hidden_by") or e.get("entity_category") in ("config", "diagnostic")):
             continue
         name = str(attrs.get("friendly_name") or eid)[:100].strip() or eid
@@ -135,6 +149,10 @@ def build_catalog(states: list[dict], entities: list[dict], devices: list[dict],
                 "area": area_of(e, devs, area_names)}
         if attrs.get("device_class"):
             item["device_class"] = str(attrs["device_class"])[:30]
+        if platform:
+            item["platform"] = platform
+        if kind == "sensor" and attrs.get("unit_of_measurement"):
+            item["unit"] = str(attrs["unit_of_measurement"])[:12]
         out.append(item)
     out.sort(key=lambda i: i["entity_id"])
     return out[:MAX_CATALOG]
@@ -224,6 +242,57 @@ class Throttle:
 
     def mark(self, r: dict, now: float) -> None:
         self.sent[r["entity_id"]] = (r, now)
+
+
+ISO = re.compile(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?([+-]\d\d:\d\d|Z)$")
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def event_of(old: dict | None, new: dict) -> dict | None:
+    """A change for the house log, with Home Assistant's own time; None when the state is the same
+    (an attribute changed, e.g. a light's brightness)."""
+    state = str(new.get("state") or "unknown")[:30]
+    if old is not None and str(old.get("state") or "unknown")[:30] == state:
+        return None
+    at = new.get("last_changed")
+    return {"entity_id": str(new.get("entity_id") or ""), "state": state, "at": at if isinstance(at, str) and ISO.match(at) else iso_now()}
+
+
+class SensorGate:
+    """A sensor's value goes to Gedara (the log and the House page) at most every SENSOR_EVERY
+    seconds, sooner when it moves enough: 0.5 ° for temperatures, 2 points for %, else 10 %."""
+
+    def __init__(self, every: float = SENSOR_EVERY):
+        self.every = every
+        self.last: dict[str, tuple[float, float]] = {}
+
+    @staticmethod
+    def threshold(unit: str | None, value: float) -> float:
+        if unit in ("°C", "°F", "K"):
+            return 0.5
+        if unit == "%":
+            return 2.0
+        return max(abs(value) * 0.10, 0.01)
+
+    def due(self, entity_id: str, state: str, unit: str | None, now: float) -> bool:
+        try:
+            v = float(state)
+        except (TypeError, ValueError):
+            return True  # unavailable / unknown: say so once (only changes reach here)
+        last = self.last.get(entity_id)
+        if last is None:
+            return True
+        lv, at = last
+        return now - at >= self.every or abs(v - lv) >= self.threshold(unit, lv)
+
+    def mark(self, entity_id: str, state: str, now: float) -> None:
+        try:
+            self.last[entity_id] = (float(state), now)
+        except (TypeError, ValueError):
+            self.last.pop(entity_id, None)
 
 
 def ws_url(base: str) -> str:
@@ -439,7 +508,12 @@ class Bridge:
         self.catalog: list[dict] = []
         self.catalog_dirty = False
         self.throttle = Throttle()
+        self.gate = SensorGate()
+        self.kinds: dict[str, str] = {}  # entity_id → kind, from the catalog
+        self.units: dict[str, str | None] = {}
         self.pending_states: dict[str, dict] = {}
+        self.events: list[dict] = []  # changes for the house log, oldest first
+        self.quiet_since: float | None = None  # when the oldest not-urgent change was queued
         self.done: list[dict] = []
         self.lock = threading.Lock()
         self.report_now = threading.Event()
@@ -461,9 +535,11 @@ class Bridge:
             self.catalog = catalog
             self.catalog_dirty = True
             self.known = {s["entity_id"]: s for s in states if s.get("entity_id") in ids}
+            self.kinds = {c["entity_id"]: c["kind"] for c in catalog}
+            self.units = {c["entity_id"]: c.get("unit") for c in catalog}
             self.throttle = Throttle()  # Gedara gets every state again with the new catalog
             self.pending_states = {eid: state_report(s) for eid, s in self.known.items()}
-        log(f"[HA] {len(catalog)} doors, windows, lights, switches and ACs")
+        log(f"[HA] {len(catalog)} doors, windows, lights, switches, ACs and sensors")
         self.report_now.set()
 
     def on_event(self, event: dict) -> None:
@@ -476,12 +552,28 @@ class Bridge:
         data = event.get("data") or {}
         new = data.get("new_state")
         eid = data.get("entity_id")
+        now = time.time()
         with self.lock:
             if not new or eid not in self.known:
                 return
+            old = self.known.get(eid)
             self.known[eid] = new
+            kind = self.kinds.get(eid)
+            ev = event_of(old, new)
+            if kind == "sensor":
+                # Values arrive every few seconds: only some go (the log and the House page agree).
+                if ev is None or not self.gate.due(eid, ev["state"], self.units.get(eid), now):
+                    return
+                self.gate.mark(eid, ev["state"], now)
             self.pending_states[eid] = state_report(new)
-        self.report_now.set()
+            if ev is not None:
+                self.events.append(ev)
+                del self.events[:-MAX_PENDING_EVENTS]
+            urgent = kind in URGENT_KINDS
+            if not urgent and self.quiet_since is None:
+                self.quiet_since = now
+        if urgent:
+            self.report_now.set()
 
     def refresher(self) -> None:
         while True:
@@ -513,7 +605,10 @@ class Bridge:
             done, self.done = self.done[:50], self.done[50:]
             if done:
                 body["done"] = done
-            body["wait"] = wait and not (due or done or "catalog" in body)
+            events = self.events[:400]
+            if events:
+                body["events"] = events
+            body["wait"] = wait and not (due or done or events or "catalog" in body)
         try:
             reply = post(self.url, body, self.key, timeout=45 if body["wait"] else 20)
         except Exception:
@@ -527,6 +622,10 @@ class Bridge:
                 self.throttle.mark(r, now)
                 if self.pending_states.get(r["entity_id"]) == r:
                     del self.pending_states[r["entity_id"]]
+            if events:
+                del self.events[: len(events)]
+            if not self.events and not any(self.kinds.get(e) not in URGENT_KINDS for e in self.pending_states):
+                self.quiet_since = None
             if reply.get("need_catalog"):
                 self.catalog_dirty = True
         for c in reply.get("commands") or []:
@@ -553,16 +652,23 @@ class Bridge:
         self.report_now.set()
 
     def has_news(self) -> bool:
+        """Something to send now: results, a new catalog, an urgent change (doors, windows, lights,
+        switches, the AC), or not-urgent ones (people, sensors) waiting QUIET_EVERY seconds."""
         now = time.time()
         with self.lock:
-            return bool(self.done or (self.catalog_dirty and self.ha.state == "connected")
-                        or any(self.throttle.due(r, now) for r in self.pending_states.values()))
+            if self.done or (self.catalog_dirty and self.ha.state == "connected"):
+                return True
+            if any(self.kinds.get(e["entity_id"]) in URGENT_KINDS for e in self.events):
+                return True
+            if any(self.kinds.get(eid) in URGENT_KINDS and self.throttle.due(r, now) for eid, r in self.pending_states.items()):
+                return True
+            return self.quiet_since is not None and now - self.quiet_since >= QUIET_EVERY
 
     def reporter(self) -> None:
         """Changes go in a short sync ~1 s after they happen; AC room temperatures wait (Throttle).
         Nothing to say → no request (the long-poll already carries the bridge's status)."""
         while True:
-            self.report_now.wait(timeout=30)  # the timeout lets a throttled room temperature go when due
+            self.report_now.wait(timeout=10)  # the timeout lets batched and throttled changes go when due
             self.report_now.clear()
             time.sleep(1.0)  # a window and its light change together: one report
             if not self.has_news():

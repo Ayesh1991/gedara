@@ -36,3 +36,15 @@ target_temp_step, hvac_modes` (checked again by `private.home_attrs`).
 - Limits: 400 catalog items / states and 50 results per sync, 256 KB body, 60 commands a minute per
   household; one bridge per household; the bridge's key in `home_token` only (a speaker's or the
   scale's key can't be used here).
+
+## Phase 8b additions (gedara-home 0.2.0, home-agent-2, migrations 96–97)
+- Catalog items carry `platform` (HA integration) and `unit`; kinds `presence` (binary_sensor motion /
+  occupancy / presence), `binary` (other binary sensors) and `sensor` (numeric, with a unit or state_class)
+  are reported **only when `platform == "esphome"`** (cameras are never reported).
+- `sync.events: [{ entity_id, state, at }]` (≤ 400): every state change with HA's `last_changed`. Doors,
+  windows, lights, switches and the AC go within ~1 s; people and sensors are batched every 30 s; a
+  sensor's value goes at most every 5 min or when it moves (0.5 °, 2 %, else 10 %) (`SensorGate`).
+- `rpc_home_sync` stores events of `logged` entities in `home_event` (once per entity and time, from the
+  last 2 days) and returns `alerts` (each person's `home_alert_pref`, the household's night, the entity's
+  `alert`, throttled through `home_alert_sent`); home-agent sends them with Web Push and **strips them from
+  the reply** (they hold the phones' push addresses).

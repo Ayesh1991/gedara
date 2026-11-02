@@ -67,3 +67,10 @@ send me a photo or the text. **Never paste the token into a chat.**
   at "Keep the Home Assistant token…".
 - **Disconnect:** Gedara → Settings → Devices → Home Assistant → **Disconnect Home Assistant**. Then
   in Home Assistant you can delete the Gedara user's token too.
+
+## Stage F · Alerts on your phone (each person, once)
+1. [ ] On **your phone**, open Gedara → **Settings → Notifications** → **Turn on notifications** (allow when the phone asks).
+2. [ ] On the same page, **House alerts** → **Doors and windows opening**: choose **Always** or **Only at night** (set your night, e.g. 22:00–06:00). Optionally **Someone detected**.
+3. [ ] Open a door. **You should see:** a notification "🚪 Front door opened · Living Room · 21:54" within a few seconds.
+4. [ ] Which doors, windows and sensors may alert, and which are logged: **Settings → Devices → Home Assistant** → the **Alert** and **Log** switches.
+5. [ ] The history: **House → Log**.

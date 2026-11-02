@@ -34,12 +34,14 @@ export interface SimReply {
 }
 export interface SimEntity {
   entity_id: string;
-  domain: 'binary_sensor' | 'light' | 'switch' | 'climate';
-  kind: 'door' | 'window' | 'light' | 'switch' | 'climate';
+  domain: 'binary_sensor' | 'light' | 'switch' | 'climate' | 'sensor';
+  kind: 'door' | 'window' | 'light' | 'switch' | 'climate' | 'presence' | 'binary' | 'sensor';
   name: string;
   area: string | null;
   state: string;
   attrs?: Record<string, unknown>;
+  platform?: string;
+  unit?: string;
 }
 
 /** A small house like Didula's: two rooms, windows, a door, lights, the vaporizer, the emergency light, an AC. */
@@ -52,6 +54,9 @@ export function demoHouse(prefix = ''): SimEntity[] {
     { entity_id: id('light.bedroom_mist_rgb'), domain: 'light', kind: 'light', name: 'Mist maker Mist RGB Light', area: 'Bedroom', state: 'off' },
     { entity_id: id('switch.mosquito_vaporizer'), domain: 'switch', kind: 'switch', name: 'Mosquito Vaporizer', area: 'Bedroom', state: 'off' },
     { entity_id: id('switch.living_room_emergency_light'), domain: 'switch', kind: 'switch', name: 'Living Room Emergency Light', area: 'Living Room', state: 'off' },
+    { entity_id: id('binary_sensor.living_room_human_presence'), domain: 'binary_sensor', kind: 'presence', name: 'Living Room Human Presence', area: 'Living Room', state: 'off', platform: 'esphome' },
+    { entity_id: id('binary_sensor.living_room_dark_detection'), domain: 'binary_sensor', kind: 'binary', name: 'Living Room Dark Detection', area: 'Living Room', state: 'off', platform: 'esphome' },
+    { entity_id: id('sensor.bedroom_temperature'), domain: 'sensor', kind: 'sensor', name: 'Bedroom Temperature', area: 'Bedroom', state: '28.9', platform: 'esphome', unit: '°C' },
     {
       entity_id: id('climate.bedroom_ac'), domain: 'climate', kind: 'climate', name: 'AC', area: 'Bedroom', state: 'off',
       attrs: { current_temperature: 28.9, temperature: 27, min_temp: 16, max_temp: 30, target_temp_step: 0.5, hvac_modes: ['off', 'cool', 'dry', 'fan_only'] },
@@ -74,6 +79,8 @@ export class BridgeSim {
   deviceId: string | null = null;
   private done: { id: string; ok: boolean; error?: string }[] = [];
   private changed = new Set<string>();
+  /** Changes for the house log (Phase 8b), with the time they happened. */
+  private events: { entity_id: string; state: string; at: string }[] = [];
   private catalogDirty = true;
   private running = false;
 
@@ -117,6 +124,7 @@ export class BridgeSim {
   /** Something changes in the house (a window opens …): reported in the next sync. */
   set(entityId: string, state: string, attrs?: Record<string, unknown>) {
     const e = this.entity(entityId);
+    if (e.state !== state) this.events.push({ entity_id: e.entity_id, state, at: new Date().toISOString() });
     e.state = state;
     if (attrs) e.attrs = { ...e.attrs, ...attrs };
     this.changed.add(e.entity_id);
@@ -127,6 +135,7 @@ export class BridgeSim {
     if (!e) return 'refused by the bridge: not something this bridge reports';
     if (!ALLOWED.has(`${e.domain}.${c.action}`)) return `refused by the bridge: ${e.domain}.${c.action} is not allowed from Gedara`;
     const a = e.attrs ?? {};
+    const before = e.state;
     if (c.action === 'turn_on') e.state = e.domain === 'climate' ? 'cool' : 'on';
     else if (c.action === 'turn_off') e.state = 'off';
     else if (c.action === 'set_temperature') {
@@ -137,6 +146,7 @@ export class BridgeSim {
       if (!(a.hvac_modes as string[] | undefined)?.includes(c.args.hvac_mode ?? '')) return 'refused by the bridge: no such mode';
       e.state = c.args.hvac_mode!;
     }
+    if (e.state !== before) this.events.push({ entity_id: e.entity_id, state: e.state, at: new Date().toISOString() });
     this.changed.add(e.entity_id);
     return null;
   }
@@ -152,13 +162,16 @@ export class BridgeSim {
       status: { ha: 'connected', ha_version: '2026.10.0', entities: this.entities.length },
     };
     if (this.catalogDirty) {
-      body.catalog = this.entities.map(({ entity_id, domain, kind, name, area }) => ({ entity_id, domain, kind, name, area }));
+      body.catalog = this.entities.map(({ entity_id, domain, kind, name, area, platform, unit }) => ({
+        entity_id, domain, kind, name, area, ...(platform ? { platform } : {}), ...(unit ? { unit } : {}),
+      }));
       body.catalog_full = true;
     }
     const states = this.entities.filter((e) => this.changed.has(e.entity_id));
     if (states.length) body.states = states.map((e) => ({ entity_id: e.entity_id, state: e.state, ...(e.attrs ? { attrs: e.attrs } : {}) }));
     if (this.done.length) body.done = this.done.splice(0);
-    if (body.catalog || body.states || body.done) body.wait = false;
+    if (this.events.length) body.events = this.events.splice(0, 400);
+    if (body.catalog || body.states || body.done || body.events) body.wait = false;
     this.changed.clear();
     const r = await this.post(body);
     if (!r.ok) return r;
@@ -175,7 +188,7 @@ export class BridgeSim {
   }
 
   get busy() {
-    return this.done.length > 0 || this.changed.size > 0 || this.catalogDirty;
+    return this.done.length > 0 || this.changed.size > 0 || this.events.length > 0 || this.catalogDirty;
   }
 
   /** Keeps a long-poll open like the bridge; reports back at once after anything happened. */

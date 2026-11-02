@@ -4,6 +4,7 @@ import { BellOff, BellRing, ChevronLeft, Send, Share, Smartphone, Trash2 } from 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { HouseAlertsCard } from '@/components/home/HouseAlertsCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { myDevicesQuery } from '@/lib/insights/queries';
@@ -124,6 +125,8 @@ function NotificationsPage() {
         )}
         <p className="text-[12.5px] text-faint">{t('notifications.privacy')}</p>
       </Card>
+
+      <HouseAlertsCard householdId={householdId} phoneOn={onHere} />
 
       <Card className="flex flex-col gap-3">
         <h2 className="font-display text-[17px] font-semibold">{t('notifications.myDevices')}</h2>

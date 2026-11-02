@@ -12,6 +12,12 @@ import {
   roomsOf,
   summaryOf,
   type HomeEntity,
+  dayRange,
+  localDay,
+  logRows,
+  sensorValue,
+  shortDuration,
+  type HomeEvent,
 } from './logic';
 
 let n = 0;
@@ -32,6 +38,10 @@ function ent(p: Partial<HomeEntity> & Pick<HomeEntity, 'kind'>): HomeEntity {
     attrs: {},
     shown: true,
     controllable: false,
+    platform: null,
+    unit: null,
+    logged: false,
+    alert: false,
     changed_at: null,
     updated_at: '2026-10-20T00:00:00Z',
     ...p,
@@ -136,5 +146,49 @@ describe('protocol (what the bridge may send)', () => {
     const states = Array.from({ length: 401 }, (_, i) => ({ entity_id: `light.l${i}`, state: 'on' }));
     expect(SyncRequest.safeParse({ action: 'sync', v: 1, agent: 'a', up: 1, states }).success).toBe(false);
     expect(SyncRequest.safeParse({ action: 'sync', v: 1, agent: 'a', up: 1, states: states.slice(0, 400) }).success).toBe(true);
+  });
+});
+
+describe('Phase 8b: people, sensors and the house log', () => {
+  it('rooms get people detected, sensors and other binary sensors', () => {
+    const rooms = roomsOf([
+      ent({ kind: 'presence', area: 'Living Room', state: 'on' }),
+      ent({ kind: 'sensor', area: 'Bedroom', state: '28.9', unit: '°C' }),
+      ent({ kind: 'binary', area: 'Living Room', state: 'off', device_class: 'light' }),
+    ]);
+    expect(rooms.find((r) => r.name === 'Living Room')!.presence).toHaveLength(1);
+    expect(rooms.find((r) => r.name === 'Living Room')!.binaries).toHaveLength(1);
+    expect(rooms.find((r) => r.name === 'Bedroom')!.sensors).toHaveLength(1);
+    expect(summaryOf([ent({ kind: 'presence', area: 'Living Room', state: 'on' }), ent({ kind: 'presence', area: 'Bedroom', state: 'off' })]).peopleIn).toEqual(['Living Room']);
+  });
+  it('shows sensor values with their unit', () => {
+    expect(sensorValue('28.94', '°C', 'en-LK')).toBe('28.9 °C');
+    expect(sensorValue('45', '%', 'en-LK')).toBe('45 %');
+    expect(sensorValue('1234.5', 'lx', 'en-LK')).toBe('1,235 lx');
+    expect(sensorValue('unavailable', '°C')).toBeNull();
+  });
+  it('pairs openings with their closing, newest first', () => {
+    const ev = (id: number, entity_id: string, kind: HomeEvent['kind'], state: string, at: string, value: number | null = null): HomeEvent =>
+      ({ id, entity: null, entity_id, name: entity_id, area: null, kind, state, value, unit: value === null ? null : '°C', at });
+    const rows = logRows([
+      ev(1, 'door', 'door', 'on', '2026-11-02T16:24:33Z'),
+      ev(3, 'door', 'door', 'off', '2026-11-02T16:25:10Z'),
+      ev(2, 'presence', 'presence', 'on', '2026-11-02T16:24:40Z'),
+      ev(4, 'temp', 'sensor', '28.9', '2026-11-02T16:26:00Z', 28.9),
+      ev(5, 'door', 'door', 'off', '2026-11-02T16:10:00Z'),
+    ]);
+    expect(rows.map((r) => r.type + ':' + r.name)).toEqual(['value:temp', 'span:presence', 'span:door', 'change:door']);
+    const span = rows.find((r) => r.type === 'span' && r.name === 'door')!;
+    expect(span.type === 'span' && [span.end, span.seconds]).toEqual(['2026-11-02T16:25:10Z', 37]);
+    expect(rows.find((r) => r.name === 'presence')).toMatchObject({ end: null });
+  });
+  it('says how long in words people read', () => {
+    expect(shortDuration(37)).toBe('37 s');
+    expect(shortDuration(240)).toBe('4 min');
+    expect(shortDuration(7500)).toBe('2 h 5 min');
+  });
+  it('a day in Colombo is 18:30 to 18:30 UTC', () => {
+    expect(dayRange('2026-11-02', 'Asia/Colombo')).toEqual({ from: '2026-11-01T18:30:00.000Z', to: '2026-11-02T18:30:00.000Z' });
+    expect(localDay('2026-11-01T19:00:00Z', 'Asia/Colombo')).toBe('2026-11-02');
   });
 });

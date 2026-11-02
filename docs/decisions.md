@@ -275,3 +275,10 @@ Format: date · decision · why. Append-only.
 - 2026-10-27 · rpc_match_request takes a per-household advisory lock (pg_advisory_xact_lock) · fixes the 2026-10-26 race: two "Check now" in the same second both passed the once-a-minute check
 - 2026-10-27 · Home shows "What changed" through the Attention card (the new autobook_review item) rather than a separate card · one place for "needs a look", and it disappears when everything is looked at
 - 2026-10-26 · Instalment plans store only the facts (monthly, months, first date, loan amount + yearly rate); where a plan stands, what is left and a loan's split are worked out from today's date in the app · nothing to update month by month; Didula's statements give "<7/12>" lines, so the form asks for the latest number and its date · app 0.9.15 (9c becomes 0.9.16)
+- 2026-11-02 · Phase 8b: door/window and people alerts are Web Push from Gedara (home-agent sends them after rpc_home_sync decides), per person (off / always / night) · Didula's HA phone app doesn't notify; Sandeepani's does, so it must be optional per person
+- 2026-11-02 · New kinds (presence, binary, sensor) only from entities whose HA registry platform is esphome · leaves the camera's motion alarms ("Uho-P1A-M3F4D …") out by construction, as Didula asked
+- 2026-11-02 · Events carry HA's own last_changed; doors/windows sent at once, people/sensors batched 30 s, sensor values logged every 5 min or on a move (0.5 °, 2 %, 10 %) · exact times in the log without a request per flicker (log budget)
+- 2026-11-02 · Alert throttle: one per opening (2 min), presence 10 min per sensor; events older than 10 min (reported late after an outage) are logged but don't alert · no storm after the internet comes back
+- 2026-11-02 · Retention: home_event a year (sensor values 90 days), home_alert_sent 90 days · enough history, small table
+- 2026-11-02 · rpc_device_revoke also deletes the bridge's home_entity rows (migration 97; 96 was already on staging) · reconnecting showed the old bridge's entities next to the new
+- 2026-11-02 · App version 0.9.18 (main was at 0.9.17 / schema 95 from Phase 9), schema 97

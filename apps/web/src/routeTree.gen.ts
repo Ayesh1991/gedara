@@ -14,8 +14,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotInvitedRouteImport } from './routes/not-invited'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAttentionRouteImport } from './routes/_app/attention'
-import { Route as AppHouseRouteImport } from './routes/_app/house'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
+import { Route as AppHouseIndexRouteImport } from './routes/_app/house/index'
+import { Route as AppHouseLogRouteImport } from './routes/_app/house/log'
 import { Route as AppInsightsIndexRouteImport } from './routes/_app/insights/index'
 import { Route as AppInsightsAreaRouteImport } from './routes/_app/insights/$area'
 import { Route as AppMoneyIndexRouteImport } from './routes/_app/money/index'
@@ -85,14 +86,19 @@ const AppAttentionRoute = AppAttentionRouteImport.update({
   path: '/attention',
   getParentRoute: () => AppRoute,
 } as any)
-const AppHouseRoute = AppHouseRouteImport.update({
-  id: '/house',
-  path: '/house',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppScanRoute = AppScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHouseIndexRoute = AppHouseIndexRouteImport.update({
+  id: '/house/',
+  path: '/house/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHouseLogRoute = AppHouseLogRouteImport.update({
+  id: '/house/log',
+  path: '/house/log',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInsightsIndexRoute = AppInsightsIndexRouteImport.update({
@@ -327,8 +333,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/attention': typeof AppAttentionRoute
-  '/house': typeof AppHouseRoute
   '/scan': typeof AppScanRoute
+  '/house/log': typeof AppHouseLogRoute
   '/insights/$area': typeof AppInsightsAreaRoute
   '/money/budgets': typeof AppMoneyBudgetsRoute
   '/money/changes': typeof AppMoneyChangesRoute
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/settings/units': typeof AppSettingsUnitsRoute
   '/things/$assetId': typeof AppThingsAssetIdRoute
   '/things/pending': typeof AppThingsPendingRoute
+  '/house/': typeof AppHouseIndexRoute
   '/insights/': typeof AppInsightsIndexRoute
   '/money/': typeof AppMoneyIndexRoute
   '/music/': typeof AppMusicIndexRoute
@@ -378,9 +385,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/attention': typeof AppAttentionRoute
-  '/house': typeof AppHouseRoute
   '/scan': typeof AppScanRoute
   '/': typeof AppIndexRoute
+  '/house/log': typeof AppHouseLogRoute
   '/insights/$area': typeof AppInsightsAreaRoute
   '/money/budgets': typeof AppMoneyBudgetsRoute
   '/money/changes': typeof AppMoneyChangesRoute
@@ -412,6 +419,7 @@ export interface FileRoutesByTo {
   '/settings/units': typeof AppSettingsUnitsRoute
   '/things/$assetId': typeof AppThingsAssetIdRoute
   '/things/pending': typeof AppThingsPendingRoute
+  '/house': typeof AppHouseIndexRoute
   '/insights': typeof AppInsightsIndexRoute
   '/money': typeof AppMoneyIndexRoute
   '/music': typeof AppMusicIndexRoute
@@ -432,9 +440,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
   '/_app/attention': typeof AppAttentionRoute
-  '/_app/house': typeof AppHouseRoute
   '/_app/scan': typeof AppScanRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/house/log': typeof AppHouseLogRoute
   '/_app/insights/$area': typeof AppInsightsAreaRoute
   '/_app/money/budgets': typeof AppMoneyBudgetsRoute
   '/_app/money/changes': typeof AppMoneyChangesRoute
@@ -466,6 +474,7 @@ export interface FileRoutesById {
   '/_app/settings/units': typeof AppSettingsUnitsRoute
   '/_app/things/$assetId': typeof AppThingsAssetIdRoute
   '/_app/things/pending': typeof AppThingsPendingRoute
+  '/_app/house/': typeof AppHouseIndexRoute
   '/_app/insights/': typeof AppInsightsIndexRoute
   '/_app/money/': typeof AppMoneyIndexRoute
   '/_app/music/': typeof AppMusicIndexRoute
@@ -487,8 +496,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/attention'
-    | '/house'
     | '/scan'
+    | '/house/log'
     | '/insights/$area'
     | '/money/budgets'
     | '/money/changes'
@@ -520,6 +529,7 @@ export interface FileRouteTypes {
     | '/settings/units'
     | '/things/$assetId'
     | '/things/pending'
+    | '/house/'
     | '/insights/'
     | '/money/'
     | '/music/'
@@ -538,9 +548,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/attention'
-    | '/house'
     | '/scan'
     | '/'
+    | '/house/log'
     | '/insights/$area'
     | '/money/budgets'
     | '/money/changes'
@@ -572,6 +582,7 @@ export interface FileRouteTypes {
     | '/settings/units'
     | '/things/$assetId'
     | '/things/pending'
+    | '/house'
     | '/insights'
     | '/money'
     | '/music'
@@ -591,9 +602,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/not-invited'
     | '/_app/attention'
-    | '/_app/house'
     | '/_app/scan'
     | '/_app/'
+    | '/_app/house/log'
     | '/_app/insights/$area'
     | '/_app/money/budgets'
     | '/_app/money/changes'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/_app/settings/units'
     | '/_app/things/$assetId'
     | '/_app/things/pending'
+    | '/_app/house/'
     | '/_app/insights/'
     | '/_app/money/'
     | '/_app/music/'
@@ -683,18 +695,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAttentionRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/house': {
-      id: '/_app/house'
-      path: '/house'
-      fullPath: '/house'
-      preLoaderRoute: typeof AppHouseRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/scan': {
       id: '/_app/scan'
       path: '/scan'
       fullPath: '/scan'
       preLoaderRoute: typeof AppScanRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/house/': {
+      id: '/_app/house/'
+      path: '/house'
+      fullPath: '/house/'
+      preLoaderRoute: typeof AppHouseIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/house/log': {
+      id: '/_app/house/log'
+      path: '/house/log'
+      fullPath: '/house/log'
+      preLoaderRoute: typeof AppHouseLogRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/insights/': {
@@ -1010,9 +1029,9 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAttentionRoute: typeof AppAttentionRoute
-  AppHouseRoute: typeof AppHouseRoute
   AppScanRoute: typeof AppScanRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppHouseLogRoute: typeof AppHouseLogRoute
   AppInsightsAreaRoute: typeof AppInsightsAreaRoute
   AppMoneyBudgetsRoute: typeof AppMoneyBudgetsRoute
   AppMoneyChangesRoute: typeof AppMoneyChangesRoute
@@ -1044,6 +1063,7 @@ interface AppRouteChildren {
   AppSettingsUnitsRoute: typeof AppSettingsUnitsRoute
   AppThingsAssetIdRoute: typeof AppThingsAssetIdRoute
   AppThingsPendingRoute: typeof AppThingsPendingRoute
+  AppHouseIndexRoute: typeof AppHouseIndexRoute
   AppInsightsIndexRoute: typeof AppInsightsIndexRoute
   AppMoneyIndexRoute: typeof AppMoneyIndexRoute
   AppMusicIndexRoute: typeof AppMusicIndexRoute
@@ -1061,9 +1081,9 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAttentionRoute: AppAttentionRoute,
-  AppHouseRoute: AppHouseRoute,
   AppScanRoute: AppScanRoute,
   AppIndexRoute: AppIndexRoute,
+  AppHouseLogRoute: AppHouseLogRoute,
   AppInsightsAreaRoute: AppInsightsAreaRoute,
   AppMoneyBudgetsRoute: AppMoneyBudgetsRoute,
   AppMoneyChangesRoute: AppMoneyChangesRoute,
@@ -1095,6 +1115,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsUnitsRoute: AppSettingsUnitsRoute,
   AppThingsAssetIdRoute: AppThingsAssetIdRoute,
   AppThingsPendingRoute: AppThingsPendingRoute,
+  AppHouseIndexRoute: AppHouseIndexRoute,
   AppInsightsIndexRoute: AppInsightsIndexRoute,
   AppMoneyIndexRoute: AppMoneyIndexRoute,
   AppMusicIndexRoute: AppMusicIndexRoute,
