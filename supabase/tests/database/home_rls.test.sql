@@ -8,7 +8,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(27);
+select plan(38);
 
 create temp table t_c (k text primary key, v jsonb) on commit drop;
 grant all on t_c to public;
@@ -130,6 +130,40 @@ select ok((select relrowsecurity from pg_class where oid = 'public.home_token'::
           and (select relrowsecurity from pg_class where oid = 'public.home_entity'::regclass)
           and (select relrowsecurity from pg_class where oid = 'public.home_command'::regclass),
   'RLS is on for all three tables');
+
+-- ── Phase 8b: the log and each person's alerts ───────────────────────────────
+set local role service_role;
+insert into t_c values ('ea', rpc_home_sync(pg_temp.h('bridge-key-a-000000000000000000000000000000'), jsonb_build_object('agent', 'a', 'up', 9,
+  'events', jsonb_build_array(jsonb_build_object('entity_id', 'binary_sensor.window_a', 'state', 'on', 'at', now() - interval '5 seconds')))));
+reset role;
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8a03","role":"authenticated"}';
+select is((select count(*)::int from home_event), 1, 'A''s viewer sees A''s log');
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8b01","role":"authenticated"}';
+select is((select count(*)::int from home_event), 0, 'B doesn''t');
+select throws_ok($$select rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8aaa', '{"doors":"always"}')$$, '42501', null,
+  'B can''t set alerts in A');
+select throws_ok($$insert into home_event (household_id, device_id, entity_id, name, kind, state, at)
+  select household_id, device_id, entity_id, 'x', kind, 'on', now() from home_entity$$, '42501', null, 'the log can''t be written directly');
+select throws_ok($$insert into home_alert_pref (household_id, user_id) values ('00000000-0000-0000-0000-0000000f8bbb', '00000000-0000-0000-0000-0000000f8b01')$$,
+  '42501', null, 'alert choices only through their RPC');
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8a01","role":"authenticated"}';
+insert into t_c values ('pf', rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8aaa', '{"doors":"always"}'));
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8a02","role":"authenticated"}';
+select is((select count(*)::int from home_alert_pref), 0, 'the member can''t see the owner''s alert choices');
+insert into t_c values ('pm', rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8aaa', '{"presence":"night"}'));
+select is((select string_agg(presence, ',') from home_alert_pref), 'night', '… only their own');
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8a01","role":"authenticated"}';
+select is((select string_agg(doors || '/' || presence, ',') from home_alert_pref), 'always/off', 'and the owner only theirs');
+select throws_ok($$update home_alert_pref set doors = 'off'$$, '42501', null, 'nor changed directly');
+reset role;
+set local role anon;
+select throws_ok($$select count(*) from home_event$$, '42501', null, 'anon can''t read the log');
+reset role;
+select ok((select relrowsecurity from pg_class where oid = 'public.home_event'::regclass)
+          and (select relrowsecurity from pg_class where oid = 'public.home_alert_pref'::regclass)
+          and (select relrowsecurity from pg_class where oid = 'public.home_alert_sent'::regclass),
+  'RLS is on for the log and the alert tables');
 
 select * from finish();
 rollback;

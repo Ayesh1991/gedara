@@ -18,10 +18,11 @@ const sha256 = z.string().regex(/^[0-9a-fA-F]{64}$/);
 const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 const text = (max: number) => z.string().max(max);
 
-/** What Gedara shows from Home Assistant: doors and windows (binary_sensors), lights, switches, the AC. */
-export const KINDS = ['door', 'window', 'light', 'switch', 'climate'] as const;
+/** What Gedara shows from Home Assistant: doors and windows (binary_sensors), lights, switches, the AC;
+ *  and (Phase 8b, from ESPHome devices only) people detected, other binary sensors and sensor values. */
+export const KINDS = ['door', 'window', 'light', 'switch', 'climate', 'presence', 'binary', 'sensor'] as const;
 export type HomeKind = (typeof KINDS)[number];
-export const DOMAINS = ['binary_sensor', 'light', 'switch', 'climate'] as const;
+export const DOMAINS = ['binary_sensor', 'light', 'switch', 'climate', 'sensor'] as const;
 export type HomeDomain = (typeof DOMAINS)[number];
 /** The only commands there are; the bridge maps them to switch/light/climate services and nothing else. */
 export const ACTIONS = ['turn_on', 'turn_off', 'set_temperature', 'set_hvac_mode'] as const;
@@ -46,9 +47,21 @@ export const CatalogItem = z
     name: z.string().min(1).max(100),
     area: text(60).nullable().optional(),
     device_class: text(30).nullable().optional(),
+    /** The HA integration it comes from ("esphome" …). */
+    platform: text(40).nullable().optional(),
+    /** Sensors: their unit ("°C", "%"). */
+    unit: text(12).nullable().optional(),
   })
   .refine((e) => e.entity_id.startsWith(`${e.domain}.`), 'entity_id must be in its domain')
-  .refine((e) => (e.domain === 'binary_sensor' ? e.kind === 'door' || e.kind === 'window' : e.kind === e.domain), 'kind must match the domain');
+  .refine(
+    (e) =>
+      e.domain === 'binary_sensor'
+        ? ['door', 'window', 'presence', 'binary'].includes(e.kind)
+        : e.domain === 'sensor'
+          ? e.kind === 'sensor'
+          : e.kind === e.domain,
+    'kind must match the domain',
+  );
 export type CatalogItem = z.infer<typeof CatalogItem>;
 
 const num = z.number().finite().min(-50).max(100);
@@ -72,6 +85,14 @@ export const StateReport = z.object({
 });
 export type StateReport = z.infer<typeof StateReport>;
 
+/** One change for the house log, with Home Assistant's own time (Phase 8b). */
+export const EventReport = z.object({
+  entity_id: EntityId,
+  state: text(30),
+  at: z.iso.datetime({ offset: true }),
+});
+export type EventReport = z.infer<typeof EventReport>;
+
 export const BridgeStatus = z.object({
   ha: z.enum(HA_STATES),
   ha_version: text(20).optional(),
@@ -90,6 +111,7 @@ export const SyncRequest = z.object({
   /** The catalog is everything HA has: entities not in it are removed from Gedara. */
   catalog_full: z.boolean().optional(),
   states: z.array(StateReport).max(400).optional(),
+  events: z.array(EventReport).max(400).optional(),
   done: z.array(z.object({ id: uuid, ok: z.boolean(), error: text(200).optional() })).max(50).optional(),
 });
 export type SyncRequest = z.infer<typeof SyncRequest>;
