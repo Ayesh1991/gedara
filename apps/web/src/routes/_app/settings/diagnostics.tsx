@@ -247,7 +247,7 @@ function ScaleStatusCard({ householdId }: { householdId: string }) {
 /** The Home Assistant bridge (Phase 8): online, its version, Home Assistant reachable, what it found. */
 function HomeBridgeStatusCard({ householdId }: { householdId: string }) {
   const { t } = useTranslation();
-  const bridge = useQuery({ ...bridgeQuery(householdId), refetchInterval: 30_000 });
+  const bridge = useQuery({ ...bridgeQuery(householdId), refetchInterval: 60_000 });
   const b = bridge.data;
   if (!b) return null;
   const online = bridgeOnline(b);
@@ -279,7 +279,7 @@ function HomeBridgeStatusCard({ householdId }: { householdId: string }) {
 /** The music speaker(s) (Phase 7h): online, agent version, sound output, space on the card, temperature. */
 function SpeakerStatusCard({ householdId }: { householdId: string }) {
   const { t } = useTranslation();
-  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 30_000 });
+  const speakers = useQuery({ ...speakersQuery(householdId), refetchInterval: 60_000 });
   const list = speakers.data ?? [];
   if (list.length === 0) return null;
   return (

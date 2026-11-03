@@ -10,22 +10,24 @@
 // sync with `wait: true` is a long-poll: when there is nothing to do it keeps the request open for
 // up to 25 s, waiting inside Postgres (rpc_home_wait: every 0.3 s, at most 7 s per call because
 // PostgREST's statement_timeout is 8 s), so a tap in Gedara reaches the bridge in about a second
-// for ~5 logged requests per quiet 25 s (Log Ingestion is Gedara's tightest quota). Success is
-// logged only when something happened. Payloads are Zod-validated (rule 6); logs and replies never
+// for ~5 logged requests per quiet 25 s (Log Ingestion is Gedara's tightest quota). Since home-agent-3
+// the sync, the waits and the pending check go straight to Postgres (_shared/db/direct.ts), which the
+// API gateway doesn't log, and a bridge from 0.2.1 asks for 55 s waits. Success is logged only when
+// something happened. Payloads are Zod-validated (rule 6); logs and replies never
 // contain the key. Bump FN_VERSION on every deploy of this function.
 //
 // Phase 8b: rpc_home_sync also stores the house log and returns the door / window / people alerts
 // each person chose; they are sent here with Web Push (the morning summary's keys) after the reply,
 // and never passed on to the Pi.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.116.0';
+import { dbCheck, dbPath, rpc } from '../_shared/db/direct.ts';
 import { corsHeaders, json, readBody, rpcError, sha256Hex, sleep, sourceHash } from '../_shared/device/http.ts';
-import { DeviceKey, PairStart, PROTOCOL_VERSION, SyncRequest, type HomeCommand } from '../_shared/home/protocol.ts';
+import { DeviceKey, PairStart, PROTOCOL_VERSION, SyncRequest, waitMs, type HomeCommand } from '../_shared/home/protocol.ts';
 import { sendPush, type VapidKeys } from '../_shared/push/webpush.ts';
 
-const FN_VERSION = 'home-agent-2';
+const FN_VERSION = 'home-agent-3';
 const MAX_BYTES = 262_144; // a full catalog of 400 entities with their states
-const WAIT_MS = 25_000;
-const WAIT_CHUNK_MS = 7_000; // one rpc_home_wait: under PostgREST's 8 s statement_timeout
+const WAIT_CHUNK_MS = 7_000; // one rpc_home_wait (its own cap; PostgREST's statement_timeout is 8 s)
 
 // Supabase Edge Runtime: finish work after the reply has been sent.
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
@@ -98,7 +100,10 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
   if (!parsed.success) return invalid(parsed.error.issues[0]?.path, 'sync');
   const { action: _a, v: _v, wait, ...payload } = parsed.data;
 
-  const { data, error } = await db.rpc('rpc_home_sync', { p_token_hash: keyHash, p: payload });
+  const { data, error } = await rpc(db, 'rpc_home_sync', {
+    p_token_hash: { value: keyHash, type: 'text' },
+    p: { value: payload, type: 'jsonb' },
+  });
   if (error) {
     console.log(JSON.stringify({ fn: FN_VERSION, action: 'sync', error: error.code }));
     return rpcError(error.code);
@@ -107,14 +112,14 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
   // Alerts carry the phones' push addresses: sent from here, never in the reply to the Pi.
   if (alerts?.length) await later(sendAlerts(db, alerts));
 
-  // Long-poll: nothing to do yet → wait for a command, up to 25 s.
+  // Long-poll: nothing to do yet → wait for a command, 25 or up to 55 s.
   let waited = 0;
   if (wait && !reply.commands.length) {
-    const until = Date.now() + WAIT_MS;
+    const until = Date.now() + waitMs(wait);
     while (Date.now() < until - 100 && !req.signal.aborted) {
-      const { data: something, error: we } = await db.rpc('rpc_home_wait', {
-        p_token_hash: keyHash,
-        p_ms: Math.min(WAIT_CHUNK_MS, until - Date.now()),
+      const { data: something, error: we } = await rpc(db, 'rpc_home_wait', {
+        p_token_hash: { value: keyHash, type: 'text' },
+        p_ms: { value: Math.min(WAIT_CHUNK_MS, until - Date.now()), type: 'integer' },
       });
       if (we) {
         console.log(JSON.stringify({ fn: FN_VERSION, action: 'wait', error: we.code }));
@@ -122,7 +127,7 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
         break;
       }
       if (!something) continue;
-      const { data: p, error: pe } = await db.rpc('rpc_home_pending', { p_token_hash: keyHash });
+      const { data: p, error: pe } = await rpc(db, 'rpc_home_pending', { p_token_hash: { value: keyHash, type: 'text' } });
       if (pe) break;
       const pending = (p as { commands: HomeCommand[] }).commands;
       if (pending.length) {
@@ -144,6 +149,7 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
         events: payload.events?.length,
         alerts: alerts?.length,
         waited,
+        db: dbPath(),
         ms: Date.now() - started,
       }),
     );
@@ -153,7 +159,7 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method === 'GET') return json({ ok: true, fn_version: FN_VERSION, protocol: PROTOCOL_VERSION });
+  if (req.method === 'GET') return json({ ok: true, fn_version: FN_VERSION, protocol: PROTOCOL_VERSION, db: await dbCheck() });
   if (req.method !== 'POST') return json({ ok: false, error: 'method' }, 405);
 
   try {

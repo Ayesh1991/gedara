@@ -282,3 +282,6 @@ Format: date · decision · why. Append-only.
 - 2026-11-02 · Retention: home_event a year (sensor values 90 days), home_alert_sent 90 days · enough history, small table
 - 2026-11-02 · rpc_device_revoke also deletes the bridge's home_entity rows (migration 97; 96 was already on staging) · reconnecting showed the old bridge's entities next to the new
 - 2026-11-02 · App version 0.9.18 (main was at 0.9.17 / schema 95 from Phase 9), schema 97
+- 2026-11-03 · Log diet: media-agent-4 / home-agent-3 call their RPCs over a direct Postgres connection (SUPABASE_DB_URL, postgres.js, `set local role service_role` per call), PostgREST only as fallback · each API-gateway request is a ~1 KB Log Ingestion row; the two long-polls were ~41k rows (~40 MB) a day against a 1 GB month (prod log view 03 Nov)
+- 2026-11-03 · `wait` takes seconds (≤ 55); speaker 0.2.3 and bridge 0.2.1 wait 55 s (`true` stays 25 s for older Pis); online window 90 → 150 s · fewer function requests, under Cloudflare's 100 s and the function's 150 s limits (measured 57 s on staging)
+- 2026-11-03 · Device status refresh on Settings pages 30 → 60 s, mini player 60 → 120 s · an open tab polled ~4 rows a minute; app 0.9.19, schema unchanged (97)

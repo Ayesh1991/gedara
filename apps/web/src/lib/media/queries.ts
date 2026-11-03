@@ -68,9 +68,10 @@ export const speakersQuery = (householdId: string) =>
     staleTime: 15_000,
   });
 
-/** The speaker counts as online if it was heard from in the last 90 s (it long-polls every 25 s). */
+const ONLINE_MS = 150_000;
+/** Heard from in the last 150 s: it long-polls every 55 s (25 s before speaker 0.2.3), plus slack. */
 export function speakerOnline(s: Pick<Speaker, 'last_seen_at'> | null | undefined, now = Date.now()): boolean {
-  return !!s?.last_seen_at && now - Date.parse(s.last_seen_at) < 90_000;
+  return !!s?.last_seen_at && now - Date.parse(s.last_seen_at) < ONLINE_MS;
 }
 
 export type PairResult = { ok: true; id: string } | { ok: false; error: 'GDPCN' };

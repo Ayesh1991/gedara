@@ -64,7 +64,7 @@ export function useSpeaker(householdId: string): SpeakerView {
   const qc = useQueryClient();
   useMediaLive(householdId);
   const speakers = useQuery(speakersQuery(householdId));
-  const players = useQuery({ ...playersQuery(householdId), refetchInterval: 60_000 });
+  const players = useQuery({ ...playersQuery(householdId), refetchInterval: 120_000 });
   const tracksQ = useQuery(tracksQuery(householdId));
   const [chosen, setChosen] = useState<string | null>(readChosen);
 

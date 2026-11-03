@@ -12,6 +12,15 @@ import { z } from 'zod';
 
 export const PROTOCOL_VERSION = 1;
 
+/** Long-poll: `wait: true` (Pis before the log diet) holds the reply 25 s, a number that many seconds.
+ *  55 s stays well under the API's 100 s cut-off and the function's 150 s limit. */
+export const WAIT_DEFAULT_S = 25;
+export const WAIT_MAX_S = 55;
+export function waitMs(wait: boolean | number | undefined): number {
+  if (wait === true) return WAIT_DEFAULT_S * 1000;
+  return typeof wait === 'number' ? Math.min(Math.max(wait, 1), WAIT_MAX_S) * 1000 : 0;
+}
+
 /** The bridge's own key: 43 characters of base64url, made on the Pi, never stored anywhere else. */
 export const DeviceKey = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const sha256 = z.string().regex(/^[0-9a-fA-F]{64}$/);
@@ -104,8 +113,8 @@ export const SyncRequest = z.object({
   v: z.literal(PROTOCOL_VERSION),
   agent: text(32),
   up: z.number().int().min(0).max(4_294_967_295),
-  /** Hold the reply (≤ 25 s) until there is a command. */
-  wait: z.boolean().optional(),
+  /** Hold the reply until there is something to do: true = 25 s (older Pis), or seconds (≤ 55). */
+  wait: z.union([z.boolean(), z.number().int().min(1).max(WAIT_MAX_S)]).optional(),
   status: BridgeStatus.optional(),
   catalog: z.array(CatalogItem).max(400).optional(),
   /** The catalog is everything HA has: entities not in it are removed from Gedara. */

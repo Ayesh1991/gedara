@@ -21,6 +21,11 @@ with `X-Gedara-Device`.
   does the function call `rpc_media_pending` to pick the commands. The reply comes as soon as there is a
   command, or with `sync_now:true` when a song is waiting to be collected. A quiet 25 s costs about
   5 logged requests (it was about 37 with the 0.7 s polling before media-agent-3).
+- Log diet (media-agent-4, speaker 0.2.3): the sync, the waits and the pending check run straight in
+  Postgres (`_shared/db/direct.ts`, `SUPABASE_DB_URL`, each call `set local role service_role`), which the
+  API gateway doesn't log; supabase-js is the fallback for a minute if that connection fails. `wait` may
+  also be a number of seconds (≤ 55; `true` stays 25 s). The speaker sends `wait: 55` with a 75 s timeout,
+  so a quiet minute is about 2 logged rows. GET shows `db: "direct" | "rest"`.
 - State changes (MPD `idle`) are reported at once by a second, short sync (`wait:false`).
 - The reply carries:
   - `commands` (resolved: a `play` carries `queue: [{id, file}]` of songs on the card);

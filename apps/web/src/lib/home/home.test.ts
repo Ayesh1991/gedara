@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CatalogItem, StateReport, SyncRequest } from '@home/protocol';
+import { CatalogItem, StateReport, SyncRequest, waitMs } from '@home/protocol';
 import {
   bridgeOnline,
   displayName,
@@ -122,11 +122,22 @@ describe('controls', () => {
     expect(homeErrorKey({ code: '23514' })).toBe('house.errors.rejected');
     expect(homeErrorKey(new Error('x'))).toBe('house.errors.generic');
   });
-  it('the bridge is online for 90 s after it was heard from', () => {
+  it('the bridge is online for 150 s after it was heard from (55 s long-polls)', () => {
     const now = Date.parse('2026-10-20T10:00:00Z');
-    expect(bridgeOnline({ last_seen_at: '2026-10-20T09:59:00Z' }, now)).toBe(true);
-    expect(bridgeOnline({ last_seen_at: '2026-10-20T09:58:00Z' }, now)).toBe(false);
+    expect(bridgeOnline({ last_seen_at: '2026-10-20T09:58:00Z' }, now)).toBe(true);
+    expect(bridgeOnline({ last_seen_at: '2026-10-20T09:57:00Z' }, now)).toBe(false);
     expect(bridgeOnline(null, now)).toBe(false);
+  });
+  it('wait: true is 25 s (older bridges), a number is seconds up to 55', () => {
+    const base = { action: 'sync', v: 1, agent: 'a', up: 1 };
+    expect(waitMs(true)).toBe(25_000);
+    expect(waitMs(55)).toBe(55_000);
+    expect(waitMs(false)).toBe(0);
+    expect(waitMs(undefined)).toBe(0);
+    expect(SyncRequest.safeParse({ ...base, wait: true }).success).toBe(true);
+    expect(SyncRequest.safeParse({ ...base, wait: 55 }).success).toBe(true);
+    expect(SyncRequest.safeParse({ ...base, wait: 120 }).success).toBe(false);
+    expect(SyncRequest.safeParse({ ...base, wait: 2.5 }).success).toBe(false);
   });
 });
 

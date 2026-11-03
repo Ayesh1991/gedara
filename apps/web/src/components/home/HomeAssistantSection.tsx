@@ -104,7 +104,7 @@ function PairSheet({ onClose, householdId }: { onClose: () => void; householdId:
 
 export function HomeAssistantSection({ householdId, isOwner }: { householdId: string; isOwner: boolean }) {
   const { t } = useTranslation();
-  const bridge = useQuery({ ...bridgeQuery(householdId), refetchInterval: 30_000 });
+  const bridge = useQuery({ ...bridgeQuery(householdId), refetchInterval: 60_000 });
   const [adding, setAdding] = useState(false);
   const b = bridge.data;
   const online = bridgeOnline(b);

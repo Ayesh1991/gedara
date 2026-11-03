@@ -10,19 +10,21 @@
 // up to 25 s, so a tap on Play in Gedara reaches the speaker in about a second. The waiting happens
 // inside Postgres (rpc_media_wait, migration 74: checks every 0.3 s, at most 7 s per call because
 // PostgREST's statement_timeout is 8 s), so a quiet 25 s costs ~5 logged requests instead of ~37
-// (the free plan's Log Ingestion is Gedara's tightest quota). Success is logged only when something
-// happened. Songs waiting in `media-inbox` are handed
+// (the free plan's Log Ingestion is Gedara's tightest quota). Since media-agent-4 the sync, the waits
+// and the pending check go straight to Postgres (_shared/db/direct.ts), which the API gateway doesn't
+// log, and a speaker from 0.2.3 asks for 55 s waits: a quiet minute is about 2 logged rows instead of
+// ~17. Success is logged only when something happened. Songs waiting in `media-inbox` are handed
 // over as links signed for 15 minutes; inbox files the speaker no longer needs are deleted here.
 // Payloads are Zod-validated (rule 6); logs and replies never contain the key. Bump FN_VERSION on
 // every deploy of this function.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.116.0';
-import { ArtUpload, DeviceKey, PairStart, PROTOCOL_VERSION, SyncRequest, type Download, type MediaCommand } from '../_shared/media/protocol.ts';
+import { dbCheck, dbPath, rpc } from '../_shared/db/direct.ts';
+import { ArtUpload, DeviceKey, PairStart, PROTOCOL_VERSION, SyncRequest, waitMs, type Download, type MediaCommand } from '../_shared/media/protocol.ts';
 
-const FN_VERSION = 'media-agent-3';
+const FN_VERSION = 'media-agent-4';
 const MAX_BYTES = 65_536;
 const LINK_SECONDS = 900;
-const WAIT_MS = 25_000;
-const WAIT_CHUNK_MS = 7_000; // one rpc_media_wait: under PostgREST's 8 s statement_timeout
+const WAIT_CHUNK_MS = 7_000; // one rpc_media_wait (its own cap; PostgREST's statement_timeout is 8 s)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -132,7 +134,10 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
   if (!parsed.success) return invalid(parsed.error.issues[0]?.path, 'sync');
   const { action: _a, wait, ...payload } = parsed.data;
 
-  const { data, error } = await db.rpc('rpc_media_sync', { p_token_hash: keyHash, p: payload });
+  const { data, error } = await rpc(db, 'rpc_media_sync', {
+    p_token_hash: { value: keyHash, type: 'text' },
+    p: { value: payload, type: 'jsonb' },
+  });
   if (error) {
     console.log(JSON.stringify({ fn: FN_VERSION, action: 'sync', error: error.code }));
     return rpcError(error.code);
@@ -155,14 +160,14 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
     );
   }
 
-  // Long-poll: nothing to do yet → wait for a command (or a song to collect), up to 25 s.
+  // Long-poll: nothing to do yet → wait for a command (or a song to collect), 25 or up to 55 s.
   let waited = 0;
   if (wait && !reply.commands.length && !reply.downloads.length && !reply.deletions.length) {
-    const until = Date.now() + WAIT_MS;
+    const until = Date.now() + waitMs(wait);
     while (Date.now() < until - 100 && !req.signal.aborted) {
-      const { data: something, error: we } = await db.rpc('rpc_media_wait', {
-        p_token_hash: keyHash,
-        p_ms: Math.min(WAIT_CHUNK_MS, until - Date.now()),
+      const { data: something, error: we } = await rpc(db, 'rpc_media_wait', {
+        p_token_hash: { value: keyHash, type: 'text' },
+        p_ms: { value: Math.min(WAIT_CHUNK_MS, until - Date.now()), type: 'integer' },
       });
       if (we) {
         console.log(JSON.stringify({ fn: FN_VERSION, action: 'wait', error: we.code }));
@@ -170,7 +175,7 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
         break;
       }
       if (!something) continue;
-      const { data: p, error: pe } = await db.rpc('rpc_media_pending', { p_token_hash: keyHash });
+      const { data: p, error: pe } = await rpc(db, 'rpc_media_pending', { p_token_hash: { value: keyHash, type: 'text' } });
       if (pe) break;
       const pending = p as { commands: MediaCommand[]; wake: boolean };
       if (pending.commands.length) {
@@ -200,6 +205,7 @@ async function sync(req: Request, db: SupabaseClient, keyHash: string, raw: unkn
         deletions: reply.deletions.length,
         trash: trash.length,
         waited,
+        db: dbPath(),
         ms: Date.now() - started,
       }),
     );
@@ -229,7 +235,7 @@ async function artUpload(db: SupabaseClient, keyHash: string, raw: unknown): Pro
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method === 'GET') return json({ ok: true, fn_version: FN_VERSION, protocol: PROTOCOL_VERSION });
+  if (req.method === 'GET') return json({ ok: true, fn_version: FN_VERSION, protocol: PROTOCOL_VERSION, db: await dbCheck() });
   if (req.method !== 'POST') return json({ ok: false, error: 'method' }, 405);
 
   try {
