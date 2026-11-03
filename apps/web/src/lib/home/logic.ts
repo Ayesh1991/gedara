@@ -36,9 +36,10 @@ export interface HomeEntity {
   updated_at: string;
 }
 
-/** Online if heard from in the last 90 s (it long-polls every 25 s). */
+const ONLINE_MS = 150_000;
+/** Heard from in the last 150 s: it long-polls every 55 s (25 s before bridge 0.2.1), plus slack. */
 export function bridgeOnline(b: { last_seen_at: string | null } | null | undefined, now = Date.now()): boolean {
-  return !!b?.last_seen_at && now - Date.parse(b.last_seen_at) < 90_000;
+  return !!b?.last_seen_at && now - Date.parse(b.last_seen_at) < ONLINE_MS;
 }
 
 export function displayName(e: Pick<HomeEntity, 'label' | 'ha_name'>): string {

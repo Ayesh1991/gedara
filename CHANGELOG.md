@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.19 — Log diet: the speaker and the house bridge log ~8× less
+- Supabase's free **Log Ingestion** (1 GB a month) was running out: the music speaker and the Home Assistant
+  bridge each made ~7 logged requests every 25 s, day and night (~40 MB a day together).
+- `media-agent-4` and `home-agent-3` now talk to the database directly, so their waiting is no longer
+  logged by the API gateway (a short `{"db":"direct"}` in the function's health check shows it). If that
+  path fails they go back to the old one for a minute.
+- Speaker **gedara-media 0.2.3** and bridge **gedara-home 0.2.1** wait 55 s per request instead of 25 s
+  (run `install.ps1 -Music` and `install.ps1 -HomeAssistant` again, after the functions are deployed).
+  Taps still arrive in about a second.
+- Speaker and bridge count as online for 150 s after they were heard from (was 90 s); the device status on
+  the Settings pages refreshes every minute (was 30 s), the mini player's every 2 minutes.
+
 ## 0.9.18 — Phase 8b: house alerts on your phone, the house log, and sensors
 - **House alerts** (Settings › Notifications › House alerts), each person their own: a notification when a
   door or window opens (Off / Always / Only at night), and when someone is detected. One per opening

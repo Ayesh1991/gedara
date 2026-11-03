@@ -37,4 +37,5 @@ Gedara (phone / PC) ──► Supabase ◄── outbound only ── gedara-hom
 ## Good to know
 - If the Gedara Pi is off, the House page says **"Offline"** and shows the last known state; Home
   Assistant itself keeps working as before.
-- Supabase's free plan counts logs: the bridge is built to add only a few MB a day.
+- Supabase's free plan counts logs: since bridge 0.2.1 / home-agent-3 a quiet bridge is about 2 logged
+  requests a minute (about 2 MB a day).

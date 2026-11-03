@@ -29,6 +29,10 @@ target_temp_step, hvac_modes` (checked again by `private.home_attrs`).
 - `wait: true` and nothing to do: the function waits **inside Postgres** (`rpc_home_wait`, every
   0.3 s, at most 7 s a call: PostgREST's `statement_timeout` is 8 s) for up to 25 s, then picks
   commands with `rpc_home_pending`. About 5 logged requests per quiet 25 s.
+- Log diet (home-agent-3, bridge 0.2.1): those RPCs run straight in Postgres (`_shared/db/direct.ts`), not
+  through PostgREST, so the gateway logs none of them (supabase-js is the fallback for a minute if the
+  connection fails); `wait` may be seconds (≤ 55, `true` = 25 s) and the bridge sends `wait: 55` with a
+  75 s timeout. Online = heard from in the last 150 s. GET shows `db: "direct" | "rest"`.
 - The bridge reports changes in a short sync ~1 s after they happen (batched), an AC's room
   temperature at most every 5 minutes (`Throttle`), the full catalog on start and when HA's
   registries change. No report when nothing changed: the long-poll carries the status.

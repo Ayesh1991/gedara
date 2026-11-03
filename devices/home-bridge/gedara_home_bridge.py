@@ -46,7 +46,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
+# Long-poll: Gedara holds a quiet sync this many seconds (one logged request a minute, not ~7 every
+# 25 s; Supabase's free Log Ingestion is the tight quota). Needs media-agent-4 / home-agent-3.
+WAIT_S = 55
 AGENT = f"gedara-home {VERSION}"
 ROOT = Path(os.environ.get("GEDARA_HOME_ROOT", "/"))
 CONF = ROOT / "etc/gedara-home"
@@ -608,9 +611,9 @@ class Bridge:
             events = self.events[:400]
             if events:
                 body["events"] = events
-            body["wait"] = wait and not (due or done or events or "catalog" in body)
+            body["wait"] = WAIT_S if wait and not (due or done or events or "catalog" in body) else False
         try:
-            reply = post(self.url, body, self.key, timeout=45 if body["wait"] else 20)
+            reply = post(self.url, body, self.key, timeout=WAIT_S + 20 if body["wait"] else 20)
         except Exception:
             with self.lock:  # nothing is lost: the results go again next time
                 self.done[:0] = done

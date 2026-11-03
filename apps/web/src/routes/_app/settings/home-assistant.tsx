@@ -135,7 +135,7 @@ function HomeAssistantPage() {
   const isOwner = membership.role === 'owner';
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const bridge = useQuery({ ...bridgeQuery(householdId), refetchInterval: 30_000 });
+  const bridge = useQuery({ ...bridgeQuery(householdId), refetchInterval: 60_000 });
   const entities = useQuery({ ...entitiesQuery(householdId), enabled: !!bridge.data });
   useHomeLive(householdId, !!bridge.data);
   const [confirmRemove, setConfirmRemove] = useState(false);

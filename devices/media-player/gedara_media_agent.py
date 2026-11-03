@@ -45,7 +45,10 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gedara_network import AirPlay, Bluetooth  # noqa: E402
 
-VERSION = "0.2.2"
+VERSION = "0.2.3"
+# Long-poll: Gedara holds a quiet sync this many seconds (one logged request a minute, not ~7 every
+# 25 s; Supabase's free Log Ingestion is the tight quota). Needs media-agent-4 / home-agent-3.
+WAIT_S = 55
 AGENT = f"gedara-media {VERSION}"
 ROOT = Path(os.environ.get("GEDARA_MEDIA_ROOT", "/"))
 CONF = ROOT / "etc/gedara-media"
@@ -397,13 +400,13 @@ class Agent:
             taken = {k: v[:20] if k in ("pc_added", "downloaded", "played", "art") else v[:100] for k, v in self.outbox.items() if v}
             for k, v in taken.items():
                 del self.outbox[k][: len(v)]
-        body = {"action": "sync", "v": 1, "agent": AGENT, "up": int(time.time() - self.started), "wait": wait and not taken,
+        body = {"action": "sync", "v": 1, "agent": AGENT, "up": int(time.time() - self.started), "wait": WAIT_S if wait and not taken else False,
                 "status": self.status(), "player": self.report(),
                 "known": {"settings_v": str(self.state.get("settings_v")) if "settings_v" in self.state else None,
                           "schedules_v": self.state.get("schedules_v")}}
         body.update(taken)
         try:
-            reply = post(self.url, body, self.key, timeout=45 if body["wait"] else 20)
+            reply = post(self.url, body, self.key, timeout=WAIT_S + 20 if body["wait"] else 20)
         except Exception:
             with self.lock:  # nothing is lost: it goes again next time
                 for k, v in taken.items():

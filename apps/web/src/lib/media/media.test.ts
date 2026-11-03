@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sniffAudio } from '@media/protocol';
+import { sniffAudio, SyncRequest, waitMs } from '@media/protocol';
 import { dominantColours, forGlow } from './palette';
 import { elapsedAt, formatLength, formatTime, fraction, sleepMinutesLeft } from './progress';
 import { parseFlac, parseId3, parseIlst, parseOgg, titleFromFileName } from './tags';
@@ -134,5 +134,15 @@ describe('palette', () => {
     const [r, g, b] = forGlow([250, 250, 240]);
     expect((Math.max(r, g, b) + Math.min(r, g, b)) / 510).toBeLessThanOrEqual(0.551);
     expect(forGlow([0, 0, 0])).toEqual([71, 71, 71]);
+  });
+});
+
+describe('long-poll wait', () => {
+  it('true is 25 s (speakers before 0.2.3), a number is seconds up to 55', () => {
+    const base = { action: 'sync', v: 1, agent: 'a', up: 1 };
+    expect(waitMs(true)).toBe(25_000);
+    expect(waitMs(55)).toBe(55_000);
+    expect(SyncRequest.safeParse({ ...base, wait: 55 }).success).toBe(true);
+    expect(SyncRequest.safeParse({ ...base, wait: 120 }).success).toBe(false);
   });
 });
