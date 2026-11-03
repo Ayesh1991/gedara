@@ -7,13 +7,13 @@ import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import type { HaState, HomeAction } from '@home/protocol';
 import type { Json } from '../db.types';
 import { supabase } from '../supabase';
-import type { HomeEntity } from './logic';
+import type { HomeEntity, HomeEvent } from './logic';
 
 export * from './logic';
 
 export const homeKey = (householdId: string, ...rest: unknown[]) => ['home', householdId, ...rest] as const;
 
-export function invalidateHome(qc: QueryClient, householdId: string, what?: 'bridge' | 'entities') {
+export function invalidateHome(qc: QueryClient, householdId: string, what?: 'bridge' | 'entities' | 'events' | 'alerts') {
   return qc.invalidateQueries({ queryKey: what ? homeKey(householdId, what) : homeKey(householdId) });
 }
 
@@ -74,7 +74,7 @@ export async function removeBridge(id: string): Promise<void> {
 
 // ── Entities ──────────────────────────────────────────────────────────────────
 const ENTITY_COLUMNS = `id, household_id, device_id, entity_id, domain, kind, ha_name, label, area, device_class, state, attrs,
-  shown, controllable, changed_at, updated_at`;
+  shown, controllable, platform, unit, logged, alert, changed_at, updated_at`;
 
 export const entitiesQuery = (householdId: string) =>
   queryOptions({
@@ -87,10 +87,65 @@ export const entitiesQuery = (householdId: string) =>
     staleTime: 30_000,
   });
 
-export async function setEntity(id: string, p: { shown?: boolean; controllable?: boolean; label?: string | null }) {
+export async function setEntity(id: string, p: { shown?: boolean; controllable?: boolean; label?: string | null; logged?: boolean; alert?: boolean }) {
   const { data, error } = await supabase.rpc('rpc_home_entity_set', { p_id: id, p: p as Json });
   if (error) throw error;
-  return data as unknown as Pick<HomeEntity, 'id' | 'shown' | 'controllable' | 'label'>;
+  return data as unknown as Pick<HomeEntity, 'id' | 'shown' | 'controllable' | 'label' | 'logged' | 'alert'>;
+}
+
+// ── The house log (Phase 8b) ──────────────────────────────────────────────────
+export type LogFilter = 'all' | 'openings' | 'people' | 'sensors';
+const FILTER_KINDS: Record<Exclude<LogFilter, 'all'>, string[]> = {
+  openings: ['door', 'window'],
+  people: ['presence'],
+  sensors: ['sensor', 'binary'],
+};
+export const LOG_PAGE = 200;
+
+/** Newest first, 200 at a time (`before`: the oldest `at` already shown). `day`: YYYY-MM-DD in the household's time zone. */
+export async function fetchEvents(householdId: string, o: { filter: LogFilter; room: string | null; before?: string; day?: { from: string; to: string } }) {
+  let q = supabase
+    .from('home_event')
+    .select('id, entity, entity_id, name, area, kind, state, value, unit, at')
+    .eq('household_id', householdId)
+    .order('at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(LOG_PAGE);
+  if (o.filter !== 'all') q = q.in('kind', FILTER_KINDS[o.filter]);
+  if (o.room) q = q.eq('area', o.room);
+  if (o.before) q = q.lt('at', o.before);
+  if (o.day) q = q.gte('at', o.day.from).lt('at', o.day.to);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data as unknown as HomeEvent[]).map((e) => ({ ...e, value: e.value === null ? null : Number(e.value) }));
+}
+
+// ── Each person's alerts (Phase 8b) ───────────────────────────────────────────
+export type AlertWhen = 'off' | 'always' | 'night';
+export interface AlertPref {
+  doors: AlertWhen;
+  presence: AlertWhen;
+  night_from: string; // HH:MM
+  night_to: string;
+}
+export const DEFAULT_ALERT_PREF: AlertPref = { doors: 'off', presence: 'off', night_from: '22:00', night_to: '06:00' };
+
+export const alertPrefQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: homeKey(householdId, 'alerts'),
+    queryFn: async (): Promise<AlertPref> => {
+      const { data, error } = await supabase.from('home_alert_pref').select('doors, presence, night_from, night_to').eq('household_id', householdId).maybeSingle();
+      if (error) throw error;
+      const r = data as { doors: AlertWhen; presence: AlertWhen; night_from: string; night_to: string } | null;
+      return r ? { ...r, night_from: r.night_from.slice(0, 5), night_to: r.night_to.slice(0, 5) } : DEFAULT_ALERT_PREF;
+    },
+    staleTime: 60_000,
+  });
+
+export async function setAlertPref(householdId: string, p: Partial<AlertPref>): Promise<AlertPref> {
+  const { data, error } = await supabase.rpc('rpc_home_alert_pref_set', { p_household: householdId, p: p as Json });
+  if (error) throw error;
+  return data as unknown as AlertPref;
 }
 
 // ── Commands ──────────────────────────────────────────────────────────────────

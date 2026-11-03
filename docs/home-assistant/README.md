@@ -3,7 +3,7 @@
 Your Home Assistant (on the Raspberry Pi 3) shows inside Gedara, on the **House** page: every room's
 **doors and windows** (open or closed), **lights** (on or off), and controls for the **AC**, the
 **mosquito vaporizer** and the **emergency lights**. Owner and Sandeepani can control; a viewer only looks.
-No new notifications: Home Assistant already sends its own.
+**Phase 8b:** door, window and "someone detected" **alerts on your phone** from Gedara (each person chooses: Settings › Notifications › House alerts), a **House log** of every change with date and time, and the ESP **sensors** (people detected, temperature, humidity, dark detection) in each room. Camera events are never included.
 
 | Read | For |
 |---|---|

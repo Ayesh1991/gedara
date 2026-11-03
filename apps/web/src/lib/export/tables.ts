@@ -85,6 +85,9 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'media_bt_device', order: ['id'], scope: 'household' },
   { name: 'home_entity', order: ['id'], scope: 'household' },
   { name: 'home_command', order: ['id'], scope: 'household' },
+  { name: 'home_event', order: ['id'], scope: 'household' },
+  { name: 'home_alert_pref', order: ['user_id'], scope: 'household' },
+  { name: 'home_alert_sent', order: ['id'], scope: 'household' },
   { name: 'export_run', order: ['id'], scope: 'household' },
 ];
 

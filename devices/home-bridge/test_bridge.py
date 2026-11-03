@@ -128,6 +128,59 @@ class Throttling(unittest.TestCase):
         self.assertTrue(t.due({**ac, "state": "off"}, 5))
 
 
+class Sensors(unittest.TestCase):
+    """Phase 8b: people detected and ESP sensors, from ESPHome only (never the cameras)."""
+
+    def test_esphome_only(self):
+        self.assertEqual(b.kind_of("binary_sensor.living_room_human_presence", {"device_class": "occupancy"}, "esphome"), "presence")
+        self.assertEqual(b.kind_of("binary_sensor.hall_motion", {"device_class": "motion"}, "esphome"), "presence")
+        self.assertEqual(b.kind_of("binary_sensor.living_room_dark_detection", {"device_class": "light"}, "esphome"), "binary")
+        self.assertEqual(b.kind_of("sensor.bedroom_temperature", {"unit_of_measurement": "°C", "state_class": "measurement"}, "esphome"), "sensor")
+        # The camera ("Uho-P1A-M3F4D Motion Alarm") and other integrations: left out.
+        self.assertIsNone(b.kind_of("binary_sensor.uho_p1a_m3f4d_motion_alarm", {"device_class": "motion"}, "onvif"))
+        self.assertIsNone(b.kind_of("binary_sensor.uho_p1a_m3f4d_cell_motion_detection", {"device_class": "motion"}, None))
+        self.assertIsNone(b.kind_of("sensor.phone_battery", {"unit_of_measurement": "%"}, "mobile_app"))
+        self.assertIsNone(b.kind_of("sensor.esp_version", {}, "esphome"))  # text, no unit
+        # Doors and windows still come from any integration.
+        self.assertEqual(b.kind_of("binary_sensor.front_door", {"device_class": "door"}, "zha"), "door")
+
+    def test_catalog_carries_platform_and_unit(self):
+        states = [
+            {"entity_id": "sensor.bedroom_temperature", "state": "28.9", "attributes": {"unit_of_measurement": "°C", "friendly_name": "Bedroom Temperature"}},
+            {"entity_id": "binary_sensor.uho_motion", "state": "on", "attributes": {"device_class": "motion"}},
+            {"entity_id": "binary_sensor.presence", "state": "off", "attributes": {"device_class": "presence"}},
+            {"entity_id": "sensor.esp_wifi_signal", "state": "-60", "attributes": {"unit_of_measurement": "dBm"}},
+        ]
+        entities = [
+            {"entity_id": "sensor.bedroom_temperature", "platform": "esphome", "area_id": "bedroom"},
+            {"entity_id": "binary_sensor.uho_motion", "platform": "onvif"},
+            {"entity_id": "binary_sensor.presence", "platform": "esphome"},
+            {"entity_id": "sensor.esp_wifi_signal", "platform": "esphome", "entity_category": "diagnostic"},
+        ]
+        cat = b.build_catalog(states, entities, [], [{"area_id": "bedroom", "name": "Bedroom"}])
+        self.assertEqual([(c["entity_id"], c["kind"], c.get("platform"), c.get("unit")) for c in cat],
+                         [("binary_sensor.presence", "presence", "esphome", None), ("sensor.bedroom_temperature", "sensor", "esphome", "°C")])
+
+    def test_events_keep_home_assistants_time(self):
+        old = {"entity_id": "binary_sensor.front_door", "state": "off"}
+        new = {"entity_id": "binary_sensor.front_door", "state": "on", "last_changed": "2026-11-02T16:24:33.512+00:00"}
+        self.assertEqual(b.event_of(old, new), {"entity_id": "binary_sensor.front_door", "state": "on", "at": "2026-11-02T16:24:33.512+00:00"})
+        self.assertIsNone(b.event_of(new, {**new, "attributes": {"brightness": 3}}))  # same state: no event
+        self.assertTrue(b.ISO.match(b.event_of(None, {"entity_id": "light.x", "state": "on", "last_changed": "yesterday"})["at"]))
+
+    def test_sensor_values_every_5_minutes_or_when_they_move(self):
+        g = b.SensorGate(every=300)
+        self.assertTrue(g.due("sensor.t", "28.9", "°C", 0))
+        g.mark("sensor.t", "28.9", 0)
+        self.assertFalse(g.due("sensor.t", "29.1", "°C", 60))   # +0.2 °C in a minute: wait
+        self.assertTrue(g.due("sensor.t", "29.4", "°C", 60))    # +0.5 °C: now
+        self.assertTrue(g.due("sensor.t", "29.0", "°C", 301))   # 5 minutes: now
+        g.mark("sensor.h", "45", 0)
+        self.assertFalse(g.due("sensor.h", "46", "%", 10))
+        self.assertTrue(g.due("sensor.h", "47", "%", 10))
+        self.assertTrue(g.due("sensor.t", "unavailable", "°C", 5))
+
+
 class Address(unittest.TestCase):
     def test_websocket_url(self):
         self.assertEqual(b.ws_url("http://homeassistant.local:8123"), "ws://homeassistant.local:8123/api/websocket")

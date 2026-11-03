@@ -1198,6 +1198,109 @@ export type Database = {
           },
         ]
       }
+      home_alert_pref: {
+        Row: {
+          doors: string
+          household_id: string
+          night_from: string
+          night_to: string
+          presence: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          doors?: string
+          household_id: string
+          night_from?: string
+          night_to?: string
+          presence?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          doors?: string
+          household_id?: string
+          night_from?: string
+          night_to?: string
+          presence?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_alert_pref_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_alert_pref_household_id_user_id_fkey"
+            columns: ["household_id", "user_id"]
+            isOneToOne: true
+            referencedRelation: "household_member"
+            referencedColumns: ["household_id", "user_id"]
+          },
+        ]
+      }
+      home_alert_sent: {
+        Row: {
+          body: string
+          created_at: string
+          devices: number
+          entity: string | null
+          event_id: number | null
+          household_id: string
+          id: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          devices?: number
+          entity?: string | null
+          event_id?: number | null
+          household_id: string
+          id?: never
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          devices?: number
+          entity?: string | null
+          event_id?: number | null
+          household_id?: string
+          id?: never
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_alert_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "home_event"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_alert_sent_household_id_entity_fkey"
+            columns: ["household_id", "entity"]
+            isOneToOne: false
+            referencedRelation: "home_entity"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "home_alert_sent_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_command: {
         Row: {
           action: string
@@ -1270,6 +1373,7 @@ export type Database = {
       }
       home_entity: {
         Row: {
+          alert: boolean
           area: string | null
           attrs: Json
           changed_at: string | null
@@ -1283,11 +1387,15 @@ export type Database = {
           id: string
           kind: string
           label: string | null
+          logged: boolean
+          platform: string | null
           shown: boolean
           state: string | null
+          unit: string | null
           updated_at: string
         }
         Insert: {
+          alert?: boolean
           area?: string | null
           attrs?: Json
           changed_at?: string | null
@@ -1301,11 +1409,15 @@ export type Database = {
           id?: string
           kind: string
           label?: string | null
+          logged?: boolean
+          platform?: string | null
           shown?: boolean
           state?: string | null
+          unit?: string | null
           updated_at?: string
         }
         Update: {
+          alert?: boolean
           area?: string | null
           attrs?: Json
           changed_at?: string | null
@@ -1319,8 +1431,11 @@ export type Database = {
           id?: string
           kind?: string
           label?: string | null
+          logged?: boolean
+          platform?: string | null
           shown?: boolean
           state?: string | null
+          unit?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1333,6 +1448,76 @@ export type Database = {
           },
           {
             foreignKeyName: "home_entity_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_event: {
+        Row: {
+          area: string | null
+          at: string
+          device_id: string
+          entity: string | null
+          entity_id: string
+          household_id: string
+          id: number
+          kind: string
+          name: string
+          received_at: string
+          state: string
+          unit: string | null
+          value: number | null
+        }
+        Insert: {
+          area?: string | null
+          at: string
+          device_id: string
+          entity?: string | null
+          entity_id: string
+          household_id: string
+          id?: never
+          kind: string
+          name: string
+          received_at?: string
+          state: string
+          unit?: string | null
+          value?: number | null
+        }
+        Update: {
+          area?: string | null
+          at?: string
+          device_id?: string
+          entity?: string | null
+          entity_id?: string
+          household_id?: string
+          id?: never
+          kind?: string
+          name?: string
+          received_at?: string
+          state?: string
+          unit?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_event_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "home_event_household_id_entity_fkey"
+            columns: ["household_id", "entity"]
+            isOneToOne: false
+            referencedRelation: "home_entity"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "home_event_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "household"
@@ -6568,6 +6753,10 @@ export type Database = {
           p_with_files: boolean
         }
         Returns: string
+      }
+      rpc_home_alert_pref_set: {
+        Args: { p: Json; p_household: string }
+        Returns: Json
       }
       rpc_home_command: {
         Args: { p_action: string; p_args?: Json; p_entity: string }

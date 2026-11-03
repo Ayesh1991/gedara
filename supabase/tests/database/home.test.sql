@@ -7,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(51);
+select plan(72);
 
 create temp table t_c (k text primary key, v jsonb) on commit drop;
 grant all on t_c to public;
@@ -98,7 +98,7 @@ set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8c01","
 select throws_ok(format($$select rpc_home_entity_set(%L, '{"controllable":true}')$$, pg_temp.e('binary_sensor.front_door')),
   '23514', null, 'doors and windows can only be shown');
 select is(rpc_home_entity_set(pg_temp.e('switch.mosquito_vaporizer'), '{"controllable":true,"label":"  Vaporizer "}'),
-  jsonb_build_object('id', pg_temp.e('switch.mosquito_vaporizer'), 'shown', true, 'controllable', true, 'label', 'Vaporizer'),
+  jsonb_build_object('id', pg_temp.e('switch.mosquito_vaporizer'), 'shown', true, 'controllable', true, 'label', 'Vaporizer', 'logged', false, 'alert', false),
   'making a switch controllable also shows it; the short name is trimmed');
 select is(rpc_home_entity_set(pg_temp.e('climate.bedroom_ac'), '{"shown":false}') ->> 'controllable', 'false', 'hiding something stops its control');
 select is(rpc_home_entity_set(pg_temp.e('climate.bedroom_ac'), '{"controllable":true}') ->> 'shown', 'true', '… and controlling it shows it again');
@@ -203,6 +203,122 @@ select ok((select v from t_c where k = 'w4') = 'true'::jsonb
           and (select (b.v)::numeric - (a.v)::numeric from t_c a, t_c b where a.k = 'w3' and b.k = 'w5') < 0.25,
   'a queued command ends the wait at once');
 
+-- ── Phase 8b: sensors, the log, each person's alerts ─────────────────────────
+set local role service_role;
+insert into t_c values ('s8', rpc_home_sync(pg_temp.k(), $${"agent":"gedara-home 0.2.0","up":30,"catalog":[
+    {"entity_id":"binary_sensor.bedroom_presence","domain":"binary_sensor","kind":"presence","name":"Bedroom Presence","area":"Bedroom","platform":"esphome"},
+    {"entity_id":"binary_sensor.living_room_dark","domain":"binary_sensor","kind":"binary","name":"Dark Detection","area":"Living Room","platform":"esphome","device_class":"light"},
+    {"entity_id":"sensor.bedroom_temperature","domain":"sensor","kind":"sensor","name":"Bedroom Temperature","area":"Bedroom","platform":"esphome","unit":"°C"}]}$$));
+reset role;
+select is((select string_agg(kind || ':' || shown || ':' || logged || ':' || alert || ':' || coalesce(unit, '-'), ',' order by entity_id)
+             from home_entity where device_id = pg_temp.dev() and kind in ('presence', 'binary', 'sensor')),
+  'presence:true:true:false:-,binary:true:true:false:-,sensor:true:true:false:°C',
+  'presence, other binary sensors and sensor values are shown and logged; they don''t alert by themselves');
+select is((select logged::text || alert::text from home_entity where id = pg_temp.e('binary_sensor.bedroom_window_2')), 'truetrue',
+  'windows are logged and alert');
+select is((select logged::text from home_entity where id = pg_temp.e('light.mist_rgb')), 'false', 'lights aren''t logged unless chosen');
+set local role service_role;
+select throws_ok($$select rpc_home_sync(pg_temp.k(), '{"agent":"a","up":1,"catalog":[{"entity_id":"sensor.x","domain":"sensor","kind":"presence","name":"X"}]}')$$,
+  '23514', null, 'a sensor can''t pretend to be a presence sensor');
+reset role;
+
+-- The owner turns door & window alerts on (this browser has notifications on); the member leaves them off.
+insert into push_subscription (household_id, user_id, endpoint, p256dh, auth) values
+  ('00000000-0000-0000-0000-0000000f8ccc', '00000000-0000-0000-0000-0000000f8c01', 'https://push.example/owner-phone', repeat('A', 87), repeat('B', 22)),
+  ('00000000-0000-0000-0000-0000000f8ccc', '00000000-0000-0000-0000-0000000f8c02', 'https://push.example/member-phone', repeat('C', 87), repeat('D', 22));
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8c01","role":"authenticated"}';
+select is(rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8ccc', '{"doors":"always"}') ->> 'doors', 'always', 'the owner turns door alerts on');
+select throws_ok($$select rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8ccc', '{"doors":"sometimes"}')$$, '23514', null,
+  'only off, always or at night');
+select throws_ok($$select rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8ccc', '{"night_from":"25:00"}')$$, '23514', null,
+  'a night needs real times');
+select throws_ok(format($$select rpc_home_entity_set(%L, '{"alert":true}')$$, pg_temp.e('light.mist_rgb')), '23514', null,
+  'a light can''t alert');
+reset role;
+
+set local role service_role;
+insert into t_c values ('ev1', rpc_home_sync(pg_temp.k(), jsonb_build_object('agent', 'a', 'up', 40, 'events', jsonb_build_array(
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_window_2', 'state', 'on', 'at', now() - interval '60 seconds'),
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_presence', 'state', 'on', 'at', now() - interval '50 seconds'),
+  jsonb_build_object('entity_id', 'sensor.bedroom_temperature', 'state', '28.9', 'at', now() - interval '40 seconds'),
+  jsonb_build_object('entity_id', 'light.mist_rgb', 'state', 'on', 'at', now() - interval '40 seconds'),
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_window_2', 'state', 'off', 'at', now() - interval '3 days')))));
+reset role;
+select is((select string_agg(kind || '=' || state || coalesce(':' || value::text || unit, ''), ',' order by at) from home_event where device_id = pg_temp.dev()),
+  'window=on,presence=on,sensor=28.9:28.9000°C', 'the log keeps the window, the person and the temperature with HA''s times (not the light, not 3 days ago)');
+select is((select jsonb_agg(a ->> 'endpoint' || '|' || (a ->> 'title')) from jsonb_array_elements((select v -> 'alerts' from t_c where k = 'ev1')) a),
+  '["https://push.example/owner-phone|🪟 Bedroom Window 2 opened"]'::jsonb, 'the window alerts the owner''s phone only (the member left alerts off)');
+select is((select count(*)::int from home_alert_sent where user_id = '00000000-0000-0000-0000-0000000f8c02'), 0, 'nothing is sent to the member');
+set local role service_role;
+insert into t_c values ('ev2', rpc_home_sync(pg_temp.k(), jsonb_build_object('agent', 'a', 'up', 41, 'events', jsonb_build_array(
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_window_2', 'state', 'on', 'at', now() - interval '60 seconds'),
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_window_2', 'state', 'off', 'at', now() - interval '30 seconds'),
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_window_2', 'state', 'on', 'at', now() - interval '10 seconds')))));
+reset role;
+select is((select count(*)::int from home_event where entity = pg_temp.e('binary_sensor.bedroom_window_2')), 3, 'sent again: kept once; closed and opened again: both logged');
+select is(jsonb_array_length((select v -> 'alerts' from t_c where k = 'ev2')), 0, 'opened again within 2 minutes: no second alert');
+
+-- At night only: a night that isn't now, then one that is.
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8c01","role":"authenticated"}';
+insert into t_c values ('n1', rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8ccc', jsonb_build_object('doors', 'night',
+  'night_from', to_char(now() at time zone 'Asia/Colombo' + interval '2 hours', 'HH24:MI'),
+  'night_to', to_char(now() at time zone 'Asia/Colombo' + interval '3 hours', 'HH24:MI'))));
+reset role;
+set local role service_role;
+insert into t_c values ('ev3', rpc_home_sync(pg_temp.k(), jsonb_build_object('agent', 'a', 'up', 42, 'events', jsonb_build_array(
+  jsonb_build_object('entity_id', 'binary_sensor.front_door', 'state', 'on', 'at', now() - interval '30 seconds')))));
+reset role;
+select is(jsonb_array_length((select v -> 'alerts' from t_c where k = 'ev3')), 0, '"at night" doesn''t alert in the day');
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8c01","role":"authenticated"}';
+insert into t_c values ('n2', rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8ccc', jsonb_build_object(
+  'night_from', to_char(now() at time zone 'Asia/Colombo' - interval '1 hour', 'HH24:MI'),
+  'night_to', to_char(now() at time zone 'Asia/Colombo' + interval '1 hour', 'HH24:MI'))));
+reset role;
+set local role service_role;
+insert into t_c values ('ev4', rpc_home_sync(pg_temp.k(), jsonb_build_object('agent', 'a', 'up', 43, 'events', jsonb_build_array(
+  jsonb_build_object('entity_id', 'binary_sensor.front_door', 'state', 'on', 'at', now() - interval '20 seconds')))));
+reset role;
+select is((select a ->> 'title' from jsonb_array_elements((select v -> 'alerts' from t_c where k = 'ev4')) a), '🚪 Front door opened',
+  '… and does at night (a night may run past midnight)');
+
+-- People detected: the owner lets the bedroom sensor alert and chooses "always".
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8c01","role":"authenticated"}';
+insert into t_c values ('pa', rpc_home_entity_set(pg_temp.e('binary_sensor.bedroom_presence'), '{"alert":true}'));
+insert into t_c values ('pp', rpc_home_alert_pref_set('00000000-0000-0000-0000-0000000f8ccc', '{"presence":"always"}'));
+reset role;
+set local role service_role;
+insert into t_c values ('ev5', rpc_home_sync(pg_temp.k(), jsonb_build_object('agent', 'a', 'up', 44, 'events', jsonb_build_array(
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_presence', 'state', 'off', 'at', now() - interval '15 seconds'),
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_presence', 'state', 'on', 'at', now() - interval '10 seconds')))));
+insert into t_c values ('ev6', rpc_home_sync(pg_temp.k(), jsonb_build_object('agent', 'a', 'up', 45, 'events', jsonb_build_array(
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_presence', 'state', 'off', 'at', now() - interval '5 seconds'),
+  jsonb_build_object('entity_id', 'binary_sensor.bedroom_presence', 'state', 'on', 'at', now() - interval '2 seconds')))));
+reset role;
+select is((select a ->> 'title' from jsonb_array_elements((select v -> 'alerts' from t_c where k = 'ev5')) a), '🚶 Someone in Bedroom',
+  'someone detected alerts the owner');
+select is(jsonb_array_length((select v -> 'alerts' from t_c where k = 'ev6')), 0, '… at most every 10 minutes');
+set local role service_role;
+insert into t_c values ('ev7', rpc_home_sync(pg_temp.k(), jsonb_build_object('agent', 'a', 'up', 46, 'events', jsonb_build_array(
+  jsonb_build_object('entity_id', 'binary_sensor.front_door', 'state', 'off', 'at', now() - interval '25 minutes'),
+  jsonb_build_object('entity_id', 'binary_sensor.front_door', 'state', 'on', 'at', now() - interval '20 minutes')))));
+reset role;
+select ok(jsonb_array_length((select v -> 'alerts' from t_c where k = 'ev7')) = 0
+          and (select count(*) from home_event where entity = pg_temp.e('binary_sensor.front_door') and at < now() - interval '19 minutes') = 2,
+  'an opening reported late (internet was down) is logged but doesn''t alert');
+
+-- Retention: 90 days of sensor values, a year of the rest.
+insert into home_event (household_id, device_id, entity, entity_id, name, kind, state, value, at)
+  select '00000000-0000-0000-0000-0000000f8ccc', pg_temp.dev(), pg_temp.e('sensor.bedroom_temperature'), 'sensor.bedroom_temperature', 'T', 'sensor', '27', 27, now() - interval '100 days';
+insert into home_event (household_id, device_id, entity, entity_id, name, kind, state, at)
+  select '00000000-0000-0000-0000-0000000f8ccc', pg_temp.dev(), pg_temp.e('binary_sensor.front_door'), 'binary_sensor.front_door', 'D', 'door', 'on', now() - interval '100 days';
+do $$ begin perform private.housekeeping(); end $$;
+select is((select string_agg(kind, ',' order by kind) from home_event where at < now() - interval '99 days'), 'door',
+  'housekeeping drops sensor values after 90 days, keeps doors for a year');
+
 -- ── Limits, renaming, removal, housekeeping ───────────────────────────────────
 insert into home_command (household_id, device_id, entity, entity_id, action, status)
   select '00000000-0000-0000-0000-0000000f8ccc', pg_temp.dev(), pg_temp.e('switch.mosquito_vaporizer'), 'switch.mosquito_vaporizer', 'turn_on', 'done'
@@ -222,13 +338,15 @@ select is((select count(*)::int from home_command where device_id = pg_temp.dev(
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000f8c01","role":"authenticated"}';
 select lives_ok(format($$select rpc_device_revoke(%L)$$, pg_temp.dev()), 'the owner removes the bridge');
-select throws_ok(format($$select rpc_home_command(%L, 'turn_on')$$, pg_temp.e('switch.mosquito_vaporizer')), '23514', null,
-  'a removed bridge takes no commands');
+select throws_ok(format($$select rpc_home_command(%L, 'turn_on')$$, (select v ->> 'id' from t_c where k = 'pa')), '42501', null,
+  'a removed bridge takes no commands (what it reported is gone)');
 reset role;
 set local role service_role;
 select throws_ok($$select rpc_home_sync(pg_temp.k(), '{"agent":"a","up":1}')$$, '42501', null, '… and its key no longer works');
 reset role;
 select is((select count(*)::int from home_token where device_id = pg_temp.dev()), 0, 'the key is forgotten');
+select is((select count(*)::int from home_entity where device_id = pg_temp.dev()), 0, 'what it reported goes with it (no old doors after connecting again)');
+select ok((select count(*) from home_event where device_id = pg_temp.dev()) > 0, '… the house log keeps its history');
 
 select * from finish();
 rollback;

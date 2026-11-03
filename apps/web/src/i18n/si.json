@@ -364,13 +364,13 @@
       "driveScan": "drive-scan function එක පිළිතුරු දුන්නේ නැත. එය deploy කරන්න (7 වන අදියර).",
       "driveKeys": "drive-scan ක්‍රියා කරයි, නමුත් Google Drive කියවනයේ රහස් සකසා නැත. scripts/drive-secrets.mjs ධාවනය කරන්න.",
       "mediaAgent": "සංගීත ස්පීකරයේ ශ්‍රිතය (media-agent) පිළිතුරු නොදෙයි.",
+      "matchAgent": "ගැළපීමේ ශ්‍රිතය (match-agent) පිළිතුරු නොදෙයි.",
       "scaleIngest": "තරාදි අන්තය (scale-ingest) පිළිතුරු දුන්නේ නැත. එය deploy කරන්න (අදියර 6b).",
       "noSession": "සැසියක් නැත",
       "noHousehold": "නිවසක සාමාජිකත්වයක් නැත",
       "noController": "සක්‍රිය service worker එකක් නැත",
       "swMismatch": "SW v{{sw}}, යෙදුම v{{app}}",
-      "smsIngest": "බැංකු SMS function එක (sms-ingest) පිළිතුරු නොදෙයි",
-      "matchAgent": "ගැළපීමේ ශ්‍රිතය (match-agent) පිළිතුරු නොදෙයි."
+      "smsIngest": "බැංකු SMS function එක (sms-ingest) පිළිතුරු නොදෙයි"
     }
   },
   "errors": {
@@ -1316,15 +1316,15 @@
       "open": "විවෘත කරන්න",
       "undo": "අහෝසි කරන්න",
       "kinds": {
-        "receipt": "ගෙවීම් තහවුරු කිරීම",
         "card_charge": "කාඩ් ගෙවීම",
         "card_payment": "කාඩ් බිල්පත ගෙවූ",
         "bank_debit": "බැංකු හර කිරීම",
         "bank_credit": "ලැබුණු මුදල්",
         "atm": "ATM මුදල් ආපසු ගැනීම",
-        "unknown": "නව ඇඟවීම් වර්ගයක්",
         "refund": "ආපසු ගෙවීම",
-        "info": "බැංකුවේ දැනුම්දීමක්"
+        "info": "බැංකුවේ දැනුම්දීමක්",
+        "unknown": "නව ඇඟවීම් වර්ගයක්",
+        "receipt": "ගෙවීම් තහවුරු කිරීම"
       },
       "unknownAccount": "ගිණුම ··{{digits}} (සකසා නැත)",
       "gap": "බැංකු ශේෂය අවසන් ඇඟවීමට අනුව නොවේ (අපේක්ෂිත Rs {{expected}}, බැංකුව පවසන්නේ Rs {{reported}}). ඇඟවීමක් අස්ථානගත වී තිබිය හැක, නැතහොත් කාඩ් රඳවා ගැනීමක් පොරොත්තුවෙන් ඇත.",
@@ -1432,6 +1432,8 @@
     "template": "JSON template",
     "senderRegex": "යවන්නා (regular expression)",
     "textRegex": "පෙළ පෙරහන (regular expression)",
+    "filterUpdatedTitle": "දුරකථනය සඳහා පෙරහන් (2026 ඔක්තෝබර් යාවත්කාලීනයි)",
+    "filterUpdatedBody": "කලින් සකසා තිබේද? SMS to URL Forwarder හි Gedara නීතිය විවෘත කර, පෙරහන් දෙකම මේ දෙකින් ප්‍රතිස්ථාපනය කර සුරකින්න. යවන්නන්ගේ ලැයිස්තුවට දැන් BOC Flex (BOCONLINE), Sampath ගිණුම (SAMPATHTXN) සහ ගෙවීම් තහවුරු කරන ආයතන (SLT, Mobitel, Dialog 5555, LECO, Star Points) ද ඇතුළත්ය. පෙළ පෙරහන සෑම OTP එකක්ම දුරකථනයේම තබයි (සිංහල සහ දෙමළ වචනද); Gedara ද තමන්ගේ පැත්තෙන් OTP ඉවත් කරයි.",
     "copy": "{{what}} පිටපත් කරන්න",
     "copyFailed": "පිටපත් කළ නොහැකි විය. පෙළ තෝරා අතින් පිටපත් කරන්න.",
     "doneCopying": "මම සියල්ල පිටපත් කළා",
@@ -1442,9 +1444,7 @@
     "revokeConfirm": "{{name}} ඉවත් කරන්නද? එය වහාම ඇඟවීම් යොමු කිරීම නවත්වයි.",
     "revoked": "{{name}} ඉවත් කළා",
     "revokedCount": "ඉවත් කළ දුරකථන {{count}}",
-    "revokedCount_one": "ඉවත් කළ දුරකථන 1",
-    "filterUpdatedTitle": "දුරකථනය සඳහා පෙරහන් (2026 ඔක්තෝබර් යාවත්කාලීනයි)",
-    "filterUpdatedBody": "කලින් සකසා තිබේද? SMS to URL Forwarder හි Gedara නීතිය විවෘත කර, පෙරහන් දෙකම මේ දෙකින් ප්‍රතිස්ථාපනය කර සුරකින්න. යවන්නන්ගේ ලැයිස්තුවට දැන් BOC Flex (BOCONLINE), Sampath ගිණුම (SAMPATHTXN) සහ ගෙවීම් තහවුරු කරන ආයතන (SLT, Mobitel, Dialog 5555, LECO, Star Points) ද ඇතුළත්ය. පෙළ පෙරහන සෑම OTP එකක්ම දුරකථනයේම තබයි (සිංහල සහ දෙමළ වචනද); Gedara ද තමන්ගේ පැත්තෙන් OTP ඉවත් කරයි."
+    "revokedCount_one": "ඉවත් කළ දුරකථන 1"
   },
   "spine": {
     "scanBarcode": "පැකට්ටුවේ බාර්කෝඩය ස්කෑන් කරන්න",
@@ -2164,6 +2164,10 @@
       "things_pending_one": "මිලදී ගත් භාණ්ඩයක්, තවම ඇතුළත් නොකළ",
       "sms_review": "සමාලෝචනයට බැංකු ඇඟවීම් {{count}}",
       "sms_review_one": "සමාලෝචනයට බැංකු ඇඟවීමක්",
+      "match_review": "පරීක්ෂා කළ යුතු ගැළපීම් {{count}}",
+      "match_review_one": "පරීක්ෂා කළ යුතු ගැළපීම් 1",
+      "autobook_review": "Gedara සටහන් කළ දේ {{count}}ක් (තවම බලා නැත)",
+      "autobook_review_one": "Gedara සටහන් කළ දේ 1ක් (තවම බලා නැත)",
       "scan_waiting": "ආයාත කිරීමට ස්කෑන් කළ ගොනු {{count}}",
       "scan_waiting_one": "ආයාත කිරීමට ස්කෑන් කළ ගොනුවක්",
       "backup_due": "ඔබේ අවසන් උපස්ථයට මාසයකට වඩා වැඩියි",
@@ -2172,11 +2176,7 @@
       "budget_near": "{{title}} අයවැය බොහෝ දුරට භාවිතයි",
       "scale_decision": "{{title}} භාජනය එහි තොගයට වඩා බරයි",
       "scale_new_tag": "මුළුතැන්ගෙයි තරාදියේ නව ටැග {{count}}",
-      "scale_new_tag_one": "මුළුතැන්ගෙයි තරාදියේ නව ටැගයක්",
-      "match_review": "පරීක්ෂා කළ යුතු ගැළපීම් {{count}}",
-      "match_review_one": "පරීක්ෂා කළ යුතු ගැළපීම් 1",
-      "autobook_review": "Gedara සටහන් කළ දේ {{count}}ක් (තවම බලා නැත)",
-      "autobook_review_one": "Gedara සටහන් කළ දේ 1ක් (තවම බලා නැත)"
+      "scale_new_tag_one": "මුළුතැන්ගෙයි තරාදියේ නව ටැගයක්"
     }
   },
   "activity": {
@@ -3122,7 +3122,8 @@
       "acOn": "AC: {{mode}} {{t}}°",
       "acOff": "AC නිවා ඇත",
       "unavailable": "Home Assistant හි {{count}}ක් නොලැබේ",
-      "unavailable_one": "Home Assistant හි 1ක් නොලැබේ"
+      "unavailable_one": "Home Assistant හි 1ක් නොලැබේ",
+      "people": "{{rooms}} හි කවුරුහරි"
     },
     "room": {
       "open": "{{count}}ක් විවෘතයි",
@@ -3202,7 +3203,11 @@
       "control": "පාලනය",
       "showLabel": "{{name}} පෙන්වන්න",
       "controlLabel": "{{name}} Gedara වෙතින් පාලනය කරන්න",
-      "shortName": "{{name}} සඳහා කෙටි නම"
+      "shortName": "{{name}} සඳහා කෙටි නම",
+      "log": "ලොගය",
+      "logLabel": "{{name}} නිවසේ ලොගයේ තබන්න",
+      "alert": "දැනුම්දීම",
+      "alertLabel": "{{name}} හට දැනුම් දිය හැක"
     },
     "security": {
       "title": "එය ආරක්ෂිතව තබන ආකාරය",
@@ -3216,6 +3221,57 @@
       "notAllowed": "ඔබට එය මෙහි කළ නොහැක.",
       "rejected": "Home Assistant හට දැන් එය කළ නොහැක (නොලැබේ, හෝ සීමාවෙන් පිටත).",
       "generic": "යමක් වැරදුණා. නැවත උත්සාහ කරන්න."
+    },
+    "people": {
+      "here": "කවුරුහරි මෙහි",
+      "none": "කවුරුත් නැත",
+      "noneSince": "කවුරුත් නැත · {{time}}"
+    },
+    "binary": {
+      "light": "ආලෝකය",
+      "dark": "අඳුර",
+      "detected": "හඳුනාගත්තා",
+      "clear": "පැහැදිලියි"
+    },
+    "log": {
+      "open": "ලොගය",
+      "title": "නිවසේ ලොගය",
+      "filter": "පෙන්වන්න",
+      "filters": {
+        "all": "සියල්ල",
+        "openings": "දොරවල් සහ ජනෙල්",
+        "people": "මිනිසුන්",
+        "sensors": "සංවේදක"
+      },
+      "room": "කාමරය",
+      "allRooms": "සියලු කාමර",
+      "day": "දිනය",
+      "anyDay": "ඕනෑම දිනයක්",
+      "opened": "විවෘත කළා",
+      "closed": "වැසුවා",
+      "detected": "හඳුනාගත්තා",
+      "cleared": "පැහැදිලි වුණා",
+      "stillOpen": "තවම විවෘතයි",
+      "stillHere": "තවම මෙහි",
+      "more": "පැරණි ඒවා පෙන්වන්න",
+      "emptyTitle": "තවම කිසිවක් ලොග් වී නැත",
+      "emptyBody": "මෙතැන් සිට Home Assistant වාර්තා කරන සෑම දොරක්, ජනේලයක්, හඳුනාගත් පුද්ගලයෙක් සහ සංවේදක අගයක් දිනය සහ වේලාව සමඟ මෙහි පෙනේ."
+    },
+    "alerts": {
+      "title": "නිවසේ දැනුම්දීම්",
+      "intro": "දොරක් හෝ ජනේලයක් විවෘත වූ විට, හෝ කෙනෙක් හඳුනාගත් විට ඔබේ දුරකථනයට දැනුම්දීමක්. ඔබට පමණි: සඳේපනී තමන්ගේම දේ තෝරයි.",
+      "doors": "දොරවල් සහ ජනෙල් විවෘත වීම",
+      "presence": "කෙනෙක් හඳුනාගත් විට",
+      "when": {
+        "off": "නැත",
+        "always": "සැම විටම",
+        "night": "රාත්‍රියේ පමණි"
+      },
+      "night": "රාත්‍රිය",
+      "nightFrom": "රාත්‍රිය ආරම්භය",
+      "nightTo": "රාත්‍රිය අවසානය",
+      "phoneOff": "ඉහතින් මෙම දුරකථනයට දැනුම්දීම් සක්‍රිය කරන්න, නැතහොත් දැනුම්දීම්වලට යාමට තැනක් නැත.",
+      "note": "එක් විවෘත වීමකට එක් දැනුම්දීමක් (මිනිත්තු 2ක් ඇතුළත විවෘත වීම් එකක් ලෙස ගණන් ගැනේ); කෙනෙක් හඳුනාගැනීම එක් සංවේදකයකට මිනිත්තු 10කට වරක් උපරිමය. දැනුම් දිය හැකි දොරවල්, ජනෙල් සහ සංවේදක Settings › Devices › Home Assistant හි තෝරනු ලැබේ."
     }
   },
   "match": {

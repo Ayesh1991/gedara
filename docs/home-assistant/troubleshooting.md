@@ -16,3 +16,7 @@ The bridge's log on the Pi: `sudo journalctl -u gedara-home -n 50` (it never sho
 | Something shows **Unavailable** | Home Assistant can't reach that device (Wi-Fi, power, ESPHome) | fix it in Home Assistant / ESPHome; Gedara shows it as soon as it's back |
 | A room is missing; things are under **Other** | they have no area in Home Assistant | Home Assistant → the device → **Area**; Gedara updates within a few seconds |
 | A new sensor doesn't appear | the bridge reads Home Assistant's list again after changes; it may take ~10 s | wait, or restart the bridge: `sudo systemctl restart gedara-home` |
+| **No alert on my phone** when a door opens | notifications are off on that phone, alerts are Off for you, it's "Only at night" in the day, or that door's **Alert** is off | Settings › Notifications: turn on for this phone, House alerts → Always; Settings › Devices › Home Assistant → the door's **Alert** on |
+| Only one alert for two quick openings | openings within 2 minutes are grouped (people: every 10 minutes per sensor) | as designed |
+| A sensor isn't in the log or on the House page | only ESPHome sensors are read (cameras never), and its **Log** may be off | Settings › Devices › Home Assistant → **Show** / **Log** on; run `install.ps1 -HomeAssistant` again after adding an ESPHome device if it doesn't appear |
+| Sensor values in the log every few minutes, not every second | values are kept every 5 minutes, or at once when they move (0.5 °, 2 %) | as designed (saves Supabase's free log quota) |

@@ -1,13 +1,14 @@
-// One room of the House page (Phase 8): its AC, switches (vaporizer, emergency light …), lights,
-// then its doors and windows. Status colours never change with the theme: open = amber (caution),
-// closed = teal, a light that's on = violet (info), unavailable = faint.
-import { AppWindow, DoorClosed, DoorOpen, Lightbulb, LightbulbOff, Minus, Plus, Power, Snowflake } from 'lucide-react';
+// One room of the House page (Phase 8): its AC, who is there and the sensor values (Phase 8b),
+// switches (vaporizer, emergency light …), lights, other binary sensors, then its doors and windows.
+// Status colours never change with the theme: open = amber (caution), closed = teal, a light that's
+// on and someone detected = violet (info), gas / smoke / water = red, unavailable = faint.
+import { AppWindow, Droplets, DoorClosed, DoorOpen, Gauge, Lightbulb, LightbulbOff, Minus, PersonStanding, Plus, Power, Snowflake, Sun, Thermometer, UserRoundX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HomeAction } from '@home/protocol';
 import { Card } from '@/components/ui/card';
 import { Toggle } from '@/components/ui/toggle';
-import { displayName, isAvailable, isOn, isOpen, nextTemperature, type HomeEntity, type Room } from '@/lib/home/queries';
+import { displayName, isAvailable, isDetected, isOn, isOpen, nextTemperature, sensorValue, type HomeEntity, type Room } from '@/lib/home/queries';
 import { cn } from '@/lib/utils';
 
 type Act = (e: HomeEntity, action: HomeAction, args?: Record<string, unknown>) => Promise<void>;
@@ -139,6 +140,65 @@ function SwitchRow({ e, canWrite, act, busy }: { e: HomeEntity; canWrite: boolea
   );
 }
 
+function PresenceRow({ e, time }: { e: HomeEntity; time: (iso: string) => string }) {
+  const { t } = useTranslation();
+  const here = isDetected(e);
+  const Icon = here ? PersonStanding : UserRoundX;
+  return (
+    <li className="flex min-h-11 items-center gap-3" data-testid="presence-row" data-here={here || undefined}>
+      <Icon className={cn('h-5 w-5 shrink-0', !isAvailable(e) ? 'text-faint' : here ? 'text-info' : 'text-muted')} aria-hidden />
+      <span className="min-w-0 flex-1 truncate text-[15px]">{displayName(e)}</span>
+      {!isAvailable(e) ? (
+        <Status e={e} />
+      ) : (
+        <span className={cn('tabular text-[13.5px]', here ? 'text-info' : 'text-muted')}>
+          {here ? t('house.people.here') : e.changed_at ? t('house.people.noneSince', { time: time(e.changed_at) }) : t('house.people.none')}
+        </span>
+      )}
+    </li>
+  );
+}
+
+const DANGER = new Set(['gas', 'smoke', 'moisture', 'carbon_monoxide', 'problem', 'safety', 'tamper']);
+
+function BinaryRow({ e }: { e: HomeEntity }) {
+  const { t } = useTranslation();
+  const on = e.state === 'on';
+  const dc = e.device_class ?? '';
+  const danger = on && DANGER.has(dc);
+  const word = dc === 'light' ? (on ? t('house.binary.light') : t('house.binary.dark')) : on ? t('house.binary.detected') : t('house.binary.clear');
+  return (
+    <li className="flex min-h-11 items-center gap-3" data-testid="binary-row">
+      <Sun className={cn('h-5 w-5 shrink-0', !isAvailable(e) ? 'text-faint' : danger ? 'text-red' : on ? 'text-info' : 'text-muted')} aria-hidden />
+      <span className="min-w-0 flex-1 truncate text-[15px]">{displayName(e)}</span>
+      {isAvailable(e) ? <span className={cn('text-[13.5px]', danger ? 'text-red' : 'text-muted')}>{word}</span> : <Status e={e} />}
+    </li>
+  );
+}
+
+function SensorChips({ list }: { list: HomeEntity[] }) {
+  const { t, i18n } = useTranslation();
+  return (
+    <div className="flex flex-wrap gap-2" data-testid="sensor-chips">
+      {list.map((e) => {
+        const v = isAvailable(e) ? sensorValue(e.state, e.unit, i18n.language === 'si' ? 'si-LK' : 'en-LK') : null;
+        const Icon = e.unit === '°C' || e.unit === '°F' ? Thermometer : e.unit === '%' ? Droplets : Gauge;
+        return (
+          <span
+            key={e.id}
+            title={displayName(e)}
+            aria-label={`${displayName(e)}: ${v ?? t('house.state.unavailable')}`}
+            className="flex h-9 items-center gap-1.5 rounded-full border border-line-2 bg-white/[0.03] px-3 text-[13.5px]"
+          >
+            <Icon className={cn('h-4 w-4', v ? 'text-due' : 'text-faint')} aria-hidden />
+            <span className={cn('tabular font-mono', !v && 'text-faint')}>{v ?? '—'}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function OpeningRow({ e, time }: { e: HomeEntity; time: (iso: string) => string }) {
   const { t } = useTranslation();
   const open = isOpen(e);
@@ -174,10 +234,25 @@ export function RoomCard({ room, canWrite, act, busy, time }: Props) {
       {room.climates.map((e) => (
         <AcTile key={e.id} e={e} canWrite={canWrite} act={act} busy={busy.has(e.id)} />
       ))}
+      {room.sensors.length > 0 && <SensorChips list={room.sensors} />}
+      {room.presence.length > 0 && (
+        <ul className="flex flex-col divide-y divide-line">
+          {room.presence.map((e) => (
+            <PresenceRow key={e.id} e={e} time={time} />
+          ))}
+        </ul>
+      )}
       {(room.switches.length > 0 || room.lights.length > 0) && (
         <ul className="flex flex-col divide-y divide-line">
           {[...room.switches, ...room.lights].map((e) => (
             <SwitchRow key={e.id} e={e} canWrite={canWrite} act={act} busy={busy.has(e.id)} />
+          ))}
+        </ul>
+      )}
+      {room.binaries.length > 0 && (
+        <ul className="flex flex-col divide-y divide-line">
+          {room.binaries.map((e) => (
+            <BinaryRow key={e.id} e={e} />
           ))}
         </ul>
       )}

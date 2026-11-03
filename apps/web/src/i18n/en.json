@@ -3059,7 +3059,8 @@
       "acOn": "AC: {{mode}} {{t}}°",
       "acOff": "AC off",
       "unavailable": "{{count}} unavailable in Home Assistant",
-      "unavailable_one": "1 unavailable in Home Assistant"
+      "unavailable_one": "1 unavailable in Home Assistant",
+      "people": "Someone in {{rooms}}"
     },
     "room": {
       "open": "{{count}} open",
@@ -3139,7 +3140,11 @@
       "control": "Control",
       "showLabel": "Show {{name}}",
       "controlLabel": "Control {{name}} from Gedara",
-      "shortName": "Short name for {{name}}"
+      "shortName": "Short name for {{name}}",
+      "log": "Log",
+      "logLabel": "Keep {{name}} in the house log",
+      "alert": "Alert",
+      "alertLabel": "{{name}} can send alerts"
     },
     "security": {
       "title": "How it's kept safe",
@@ -3153,6 +3158,57 @@
       "notAllowed": "You can't do that here.",
       "rejected": "Home Assistant can't do that right now (unavailable, or out of range).",
       "generic": "Something went wrong. Try again."
+    },
+    "people": {
+      "here": "Someone here",
+      "none": "No one",
+      "noneSince": "No one · {{time}}"
+    },
+    "binary": {
+      "light": "Light",
+      "dark": "Dark",
+      "detected": "Detected",
+      "clear": "Clear"
+    },
+    "log": {
+      "open": "Log",
+      "title": "House log",
+      "filter": "Show",
+      "filters": {
+        "all": "Everything",
+        "openings": "Doors & windows",
+        "people": "People",
+        "sensors": "Sensors"
+      },
+      "room": "Room",
+      "allRooms": "All rooms",
+      "day": "Day",
+      "anyDay": "Any day",
+      "opened": "Opened",
+      "closed": "closed",
+      "detected": "Detected",
+      "cleared": "cleared",
+      "stillOpen": "still open",
+      "stillHere": "still there",
+      "more": "Show older",
+      "emptyTitle": "Nothing logged yet",
+      "emptyBody": "Every door, window, person detected and sensor value Home Assistant reports from now on shows here with its date and time."
+    },
+    "alerts": {
+      "title": "House alerts",
+      "intro": "A notification on your phone when a door or window opens, or someone is detected. Only for you: Sandeepani chooses her own.",
+      "doors": "Doors and windows opening",
+      "presence": "Someone detected",
+      "when": {
+        "off": "Off",
+        "always": "Always",
+        "night": "Only at night"
+      },
+      "night": "Night is",
+      "nightFrom": "Night starts",
+      "nightTo": "Night ends",
+      "phoneOff": "Turn notifications on for this phone above, or the alerts have nowhere to go.",
+      "note": "One alert per opening (openings within 2 minutes count once); someone detected at most every 10 minutes per sensor. Which doors, windows and sensors can alert is chosen in Settings › Devices › Home Assistant."
     }
   },
   "match": {

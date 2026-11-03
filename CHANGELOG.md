@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.18 — Phase 8b: house alerts on your phone, the house log, and sensors
+- **House alerts** (Settings › Notifications › House alerts), each person their own: a notification when a
+  door or window opens (Off / Always / Only at night), and when someone is detected. One per opening
+  (openings within 2 minutes count once), people at most every 10 minutes per sensor. They come from
+  Gedara, so they work when the Home Assistant phone app doesn't.
+- **House › Log**: every door and window (opened 21:54:33 → closed 21:55:10 · 37 s), every person detected,
+  the other ESP binary sensors and the sensor values, with Home Assistant's own times; by day, filtered by
+  kind, room and day. A year kept (sensor values 90 days).
+- **People and sensors on the House page**: "Someone here" / "No one · 21:54", temperatures and humidity,
+  dark detection. Only from ESPHome devices, so the camera's motion alarms never appear.
+- Settings › Devices › Home Assistant: **Log** and **Alert** per entity; disconnecting the bridge now also
+  removes what it reported (the log keeps its history).
+- Bridge **gedara-home 0.2.0** (run `install.ps1 -HomeAssistant` again): people and sensors batched every
+  30 s, sensor values every 5 min or when they move. Migrations 96–97 (schema 97), function `home-agent-2`.
+
 ## 0.9.17 — Learned-name lines already suggested are booked by themselves too
 - With "Bill line → product" switched on, the run now books every waiting pantry line whose printed name
   you taught, including lines whose suggestion was already open from an earlier run (the suggestion step

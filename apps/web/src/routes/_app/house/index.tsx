@@ -5,7 +5,7 @@
 // Assistant sends its own.
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { CircleCheck, HousePlug, TriangleAlert, WifiOff } from 'lucide-react';
+import { CircleCheck, HousePlug, ScrollText, TriangleAlert, WifiOff } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/aurora/EmptyState';
@@ -17,7 +17,7 @@ import { Card } from '@/components/ui/card';
 import { bridgeOnline, bridgeQuery, displayName, entitiesQuery, roomsOf, summaryOf } from '@/lib/home/queries';
 import { cn } from '@/lib/utils';
 
-export const Route = createFileRoute('/_app/house')({
+export const Route = createFileRoute('/_app/house/')({
   component: HousePage,
 });
 
@@ -43,6 +43,12 @@ function HousePage() {
   const header = (
     <div className="flex flex-wrap items-center gap-3">
       <h1 className="flex-1 font-display text-[30px] font-semibold tracking-tight">{t('house.title')}</h1>
+      {bridge.data && (
+        <Link to="/house/log" className={buttonVariants({ variant: 'secondary', size: 'sm' })} data-testid="house-log-link">
+          <ScrollText className="h-4 w-4" aria-hidden />
+          {t('house.log.open')}
+        </Link>
+      )}
       {bridge.data && (
         <span className="glass flex h-10 min-w-0 items-center gap-2 rounded-full px-3.5 text-[13.5px]">
           <span
@@ -126,6 +132,7 @@ function HousePage() {
               (summary.ac.state && summary.ac.state !== 'off' && summary.ac.state !== 'unavailable'
                 ? t('house.summary.acOn', { mode: t(`house.mode.${summary.ac.state}`, { defaultValue: summary.ac.state }), t: summary.ac.attrs.temperature ?? '—' })
                 : t('house.summary.acOff')),
+            summary.peopleIn.length > 0 && t('house.summary.people', { rooms: summary.peopleIn.join(', ') }),
             summary.unavailable > 0 && t('house.summary.unavailable', { count: summary.unavailable }),
           ]
             .filter(Boolean)

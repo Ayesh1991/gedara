@@ -1,13 +1,15 @@
 import { expect, test } from '@playwright/test';
 import { BridgeSim, demoHouse } from '../../devices/home-bridge/tools/sim';
-import { STORAGE_STATE, stagingAdmin } from './staging-guard';
+import { E2E_EMAIL, STORAGE_STATE, stagingAdmin } from './staging-guard';
 
 // Phase 8 done-when, with the software bridge (devices/home-bridge/tools/sim.ts) speaking the real
 // protocol to the real home-agent function: connect Home Assistant with the 8-digit code, choose
 // the vaporizer and the emergency light in the chooser, see every room, a window opening turns
 // amber within 2 s, switch the AC on and one step warmer, the vaporizer on, a service the bridge
 // refuses comes back failed, "Home Assistant didn't answer" when it stays silent, and the page fits
-// a 375 px phone. Everything is named "E2E-8 …" and removed afterwards (staging only). One project
+// a 375 px phone. Phase 8b: people detected and sensor values in the rooms, a door opening in House ›
+// Log with its time, and a door alert made only for the person who turned alerts on (never sent to
+// the Pi). Everything is named "E2E-8 …" and removed afterwards (staging only). One project
 // only: a household has at most one bridge, so if a real one is paired on staging this skips.
 test.use({ storageState: STORAGE_STATE });
 
@@ -46,7 +48,7 @@ test('connect Home Assistant, see the rooms, a window opens, switch the AC and t
   try {
     // The chooser: everything HA has, by room; the owner lets the vaporizer and the emergency light be switched.
     await page.goto('/settings/home-assistant');
-    await expect(page.getByTestId('chooser-row')).toHaveCount(7, { timeout: 30_000 });
+    await expect(page.getByTestId('chooser-row')).toHaveCount(10, { timeout: 30_000 });
     await page.getByRole('switch', { name: 'Control Mosquito Vaporizer from Gedara' }).click();
     await expect(page.getByRole('switch', { name: 'Show Mosquito Vaporizer' })).toHaveAttribute('aria-checked', 'true');
     await page.getByRole('switch', { name: 'Control Living Room Emergency Light from Gedara' }).click();
@@ -64,7 +66,8 @@ test('connect Home Assistant, see the rooms, a window opens, switch the AC and t
     await expect(window2).not.toHaveAttribute('data-open');
     sim.set(`binary_sensor.${P}bedroom_window_2`, 'on');
     const opened = Date.now();
-    await sim.sync(false);
+    const r1 = await sim.sync(false);
+    expect(r1.ok, JSON.stringify(r1)).toBe(true);
     await expect(window2).toHaveAttribute('data-open', 'true', { timeout: 2000 });
     testInfo.annotations.push({ type: 'latency', description: `${Date.now() - opened} ms from HA to the screen` });
     await expect(page.getByTestId('house-summary')).toContainText('Open: Bedroom Window 2');
@@ -108,6 +111,50 @@ test('connect Home Assistant, see the rooms, a window opens, switch the AC and t
     }
     await page.goto('/');
     await expect(page.getByTestId('house-card')).toContainText('Open: Bedroom Window 2');
+
+    // Phase 8b — people and sensors in the rooms.
+    await page.setViewportSize({ width: 1024, height: 1366 });
+    await page.goto('/house');
+    await expect(page.getByTestId('sensor-chips')).toContainText('28.9 °C');
+    const person = page.getByTestId('presence-row').filter({ hasText: 'Living Room Human Presence' });
+    await expect(person).not.toHaveAttribute('data-here');
+    sim.set(`binary_sensor.${P}living_room_human_presence`, 'on');
+    await sim.sync(false);
+    await expect(person).toHaveAttribute('data-here', 'true', { timeout: 3000 });
+    await expect(page.getByTestId('house-summary')).toContainText('Someone in Living Room');
+
+    // Door alerts: on for me, off for everyone else; the Pi never sees the alerts.
+    const { data: users } = await admin.auth.admin.listUsers({ perPage: 200 });
+    const me = users.users.find((u) => u.email === E2E_EMAIL)!.id;
+    const { data: before } = await admin.from('home_alert_pref').select('*').eq('user_id', me);
+    try {
+      await page.goto('/settings/notifications');
+      await page.getByTestId('alert-doors-always').click();
+      await expect(page.getByTestId('alert-doors-always')).toHaveAttribute('aria-checked', 'true');
+      await expect.poll(async () => (await admin.from('home_alert_pref').select('doors').eq('user_id', me).maybeSingle()).data?.doors).toBe('always');
+      sim.set(`binary_sensor.${P}front_door`, 'on');
+      const reply = await sim.sync(false);
+      expect(reply.ok).toBe(true);
+      expect(reply).not.toHaveProperty('alerts');
+      const { data: sent } = await admin.from('home_alert_sent').select('user_id, title').eq('title', '🚪 Front door opened')
+        .gte('created_at', new Date(Date.now() - 60_000).toISOString());
+      expect((sent ?? []).map((s) => s.user_id)).toEqual([me]);
+    } finally {
+      await admin.from('home_alert_pref').delete().eq('user_id', me);
+      if (before?.length) await admin.from('home_alert_pref').insert(before);
+    }
+
+    // House › Log: the door, with its time; the person detected.
+    await page.goto('/house/log');
+    await expect(page.getByTestId('house-log')).toBeVisible();
+    await expect(page.getByTestId('log-row').filter({ hasText: 'Front door' }).first()).toContainText(/Opened \d{1,2}:\d\d:\d\d/);
+    await page.getByRole('button', { name: 'People', exact: true }).click();
+    await expect(page.getByTestId('log-row').first()).toHaveAttribute('data-kind', 'presence');
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: testInfo.outputPath('house-log-375.png'), fullPage: true });
+    const wider = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(wider, 'log: nothing wider than the phone').toBeLessThanOrEqual(0);
   } finally {
     sim.stop();
   }
