@@ -20,7 +20,11 @@
   but not where it is kept, its photos or receipts ("Kept in: private"); a valuable place (the safe) and
   everything inside it is the owner's only. Ask never shows valuables, not even to the owner.
 - Accuracy (docs/ask-accuracy.md): 64 of 66 real questions right on prod data (97 %), Sinhala 9 of 10,
-  16 of 16 held-out questions. Migrations 98–101 (schema 101), function `ask-gedara-2`.
+  16 of 16 held-out questions.
+- Hardening (migration 102): the AI cost of a question is recorded with a one-time secret only the function
+  holds, so nobody can write it down as 0; a plan whose cost can't be recorded isn't returned. Every way of
+  changing stock, things or places (not only Move) refuses someone other than the owner when it touches a
+  valuable place. Migrations 98–102 (schema 102), function `ask-gedara-3`.
 
 ## 0.9.19 — Log diet: the speaker and the house bridge log ~8× less
 - Supabase's free **Log Ingestion** (1 GB a month) was running out: the music speaker and the Home Assistant

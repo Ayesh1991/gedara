@@ -132,6 +132,7 @@ export type Database = {
           id: string
           input_tokens: number
           model: string
+          nonce_hash: string | null
           ok: boolean
           output_tokens: number
           provider: string
@@ -148,6 +149,7 @@ export type Database = {
           id?: string
           input_tokens?: number
           model: string
+          nonce_hash?: string | null
           ok: boolean
           output_tokens?: number
           provider: string
@@ -164,6 +166,7 @@ export type Database = {
           id?: string
           input_tokens?: number
           model?: string
+          nonce_hash?: string | null
           ok?: boolean
           output_tokens?: number
           provider?: string
@@ -6825,7 +6828,12 @@ export type Database = {
         Returns: Json
       }
       rpc_ask_record: {
-        Args: { p_calls: Json; p_household: string; p_request: string }
+        Args: {
+          p_calls: Json
+          p_household: string
+          p_nonce: string
+          p_request: string
+        }
         Returns: Json
       }
       rpc_ask_settings_save: {

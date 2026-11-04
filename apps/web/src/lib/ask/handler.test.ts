@@ -19,7 +19,7 @@ const GOOD_PLAN = JSON.stringify({
 });
 const BEGIN = {
   steps: [{ provider: 'groq', model: 'openai/gpt-oss-120b' }, { provider: 'openai', model: 'gpt-6-luna' }],
-  today: '2026-11-03', used: 3, limit: 20,
+  today: '2026-11-03', used: 3, limit: 20, nonce: 'f'.repeat(64),
 };
 
 const ok = (text: string, cost = 0): CallResult => ({ ok: true, text, inputTokens: 1800, outputTokens: 90, error: null, costUsd: cost });
@@ -77,9 +77,25 @@ describe('ask-gedara handler', () => {
     expect(t.userDb).toHaveBeenCalledWith(JWT);
     expect(t.rpc.mock.calls.map((c) => c[0])).toEqual(['rpc_ask_begin', 'rpc_ask_record']);
     expect(t.rpc.mock.calls[1]![1]).toEqual({
-      p_household: HOUSEHOLD, p_request: REQUEST,
+      p_household: HOUSEHOLD, p_request: REQUEST, p_nonce: 'f'.repeat(64),
       p_calls: [{ provider: 'groq', model: 'openai/gpt-oss-120b', input_tokens: 1800, output_tokens: 90, cost_usd: 0, ok: true, error: null }],
     });
+  });
+
+  it('never sends the one-time record secret to the browser', async () => {
+    const t = setup();
+    const text = await (await handleAsk(ask(), t.deps)).text();
+    expect(text).not.toContain('f'.repeat(64));
+    expect(text).not.toMatch(/nonce/);
+  });
+
+  it('withholds the plan when its cost could not be recorded', async () => {
+    const t = setup();
+    t.rpc.mockImplementation(async (name: string) =>
+      name === 'rpc_ask_begin' ? { data: BEGIN, error: null } : { data: {}, error: { code: '22023' } });
+    const res = await handleAsk(ask(), t.deps);
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'db' });
   });
 
   it('falls back from Groq to OpenAI and records both calls', async () => {

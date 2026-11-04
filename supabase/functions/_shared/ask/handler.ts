@@ -14,7 +14,7 @@ import { assertAskUser, buildUser, questionCheck, UnsafeAsk } from './guard.ts';
 import { PLAN_SCHEMA, toPlan, type AskPlan } from './plan.ts';
 import { ASK_SYSTEM } from './prompt.ts';
 
-export const FN_VERSION = 'ask-gedara-2';
+export const FN_VERSION = 'ask-gedara-3';
 export const MAX_BODY = 2048;
 const MODEL_TIMEOUT_MS = 20_000;
 const ASK_PROVIDERS = ['groq', 'openai'] as const;
@@ -42,6 +42,8 @@ const Begin = z.object({
   today: z.iso.date(),
   used: z.number().int(),
   limit: z.number().int(),
+  /** one-time secret for rpc_ask_record (migration 102); never sent to the browser */
+  nonce: z.string().regex(/^[0-9a-f]{64}$/),
 });
 
 export interface AskReply {
@@ -117,7 +119,7 @@ export async function handleAsk(req: Request, deps: AskDeps): Promise<Response> 
     log.err = 'begin_shape';
     return reply({ error: 'db' }, 500);
   }
-  const { steps, today, used, limit } = start.data;
+  const { steps, today, used, limit, nonce } = start.data;
 
   const keys: Partial<Record<Provider, string>> = {};
   for (const p of ASK_PROVIDERS) {
@@ -150,10 +152,16 @@ export async function handleAsk(req: Request, deps: AskDeps): Promise<Response> 
     }
   }
 
-  const recorded = await db.rpc('rpc_ask_record', { p_household: body.data.household_id, p_request: body.data.request_id, p_calls: calls });
+  const recorded = await db.rpc('rpc_ask_record', {
+    p_household: body.data.household_id, p_request: body.data.request_id, p_nonce: nonce, p_calls: calls,
+  });
   log.calls = calls.length;
   log.provider = answeredBy?.provider ?? null;
-  if (recorded.error) log.record = recorded.error.code ?? 'error';
+  // What isn't counted isn't answered: the cap and the daily limit rely on the record.
+  if (recorded.error) {
+    log.err = `record_${recorded.error.code ?? 'error'}`;
+    return reply({ error: 'db' }, 500);
+  }
 
   if (!plan || !answeredBy) {
     log.err = calls.map((c) => c.error).join('|').slice(0, 60);

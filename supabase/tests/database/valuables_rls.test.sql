@@ -7,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(56);
+select plan(60);
 
 create function pg_temp.u(p_code text) returns uuid language sql stable as
   $$ select id from public.unit where household_id is null and code = p_code $$;
@@ -138,11 +138,21 @@ select throws_ok($$select rpc_move(gen_random_uuid(), 'location', '00000000-0000
   '23503', null, 'member can''t move the box out of the safe');
 select throws_ok($$insert into location (household_id, parent_id, name)
   values ('00000000-0000-0000-0000-0000000e10aa', '00000000-0000-0000-0000-0000000e1c02', 'Peek')$$,
-  '42501', null, 'member can''t add a place inside the safe');
+  '23503', null, 'member can''t add a place inside the safe');
 select throws_ok($$select rpc_set_valuable('00000000-0000-0000-0000-0000000e10aa', 'asset', '00000000-0000-0000-0000-0000000e1a03', true)$$,
   '42501', null, 'member can''t mark valuables');
 select throws_ok($$update asset set valuable = false where id = '00000000-0000-0000-0000-0000000e1a01'$$,
   '42501', null, 'member can''t clear the flag directly');
+select throws_ok($$select rpc_purchase(jsonb_build_object(
+  'household_id', '00000000-0000-0000-0000-0000000e10aa', 'product_id', '00000000-0000-0000-0000-0000000e1d01',
+  'qty', 5, 'unit_id', pg_temp.u('g'), 'total_cost', 1, 'location_id', '00000000-0000-0000-0000-0000000e1c02'))$$,
+  '23503', null, 'member can''t stock anything into the safe through rpc_purchase');
+select throws_ok($$select rpc_consume(jsonb_build_object(
+  'household_id', '00000000-0000-0000-0000-0000000e10aa', 'product_id', '00000000-0000-0000-0000-0000000e1d01',
+  'qty', 1, 'unit_id', pg_temp.u('g')))$$,
+  '23503', null, 'member can''t use stock kept in the safe through rpc_consume');
+select lives_ok($$update location set name = 'Main bedroom' where id = '00000000-0000-0000-0000-0000000e1c01'$$,
+  'member can still rename the room the safe is in (the database re-paths the safe itself)');
 update location set name = 'Opened' where id = '00000000-0000-0000-0000-0000000e1c02';
 update asset set name = 'Taken' where id = '00000000-0000-0000-0000-0000000e1a02';
 select lives_ok($$update asset set location_id = '00000000-0000-0000-0000-0000000e1c04' where id = '00000000-0000-0000-0000-0000000e1a01'$$,
@@ -186,7 +196,10 @@ select lives_ok($$select rpc_set_valuable('00000000-0000-0000-0000-0000000e10aa'
 select is((select count(*)::int from location where in_valuable), 0, 'no valuable places remain');
 
 reset role;
-select is((select name from location where id = '00000000-0000-0000-0000-0000000e1c02'), 'Safe', 'the member''s rename of the safe did nothing');
+select is((select name || ' · ' || path from location where id = '00000000-0000-0000-0000-0000000e1c02'), 'Safe · Main bedroom › Safe',
+  'the member''s rename of the safe did nothing; its path followed the room');
+select is((select sum(qty_remaining) from stock_lot where product_id = '00000000-0000-0000-0000-0000000e1d01'), 10.0000,
+  'the coins in the safe are untouched');
 select is((select name from asset where id = '00000000-0000-0000-0000-0000000e1a02'), 'Cash envelope', 'the member''s rename of the cash did nothing');
 
 select * from finish();
