@@ -7,10 +7,18 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(60);
+select plan(62);
 
 create function pg_temp.u(p_code text) returns uuid language sql stable as
   $$ select id from public.unit where household_id is null and code = p_code $$;
+-- Stand-ins for SECURITY DEFINER paths (RLS bypassed), to prove the guard triggers catch them.
+create function pg_temp.sneak_thing() returns void language sql security definer as
+  $$ insert into public.asset (household_id, name, location_id)
+     values ('00000000-0000-0000-0000-0000000e10aa', 'Sneaky', '00000000-0000-0000-0000-0000000e1c03') $$;
+create function pg_temp.sneak_movement() returns void language sql security definer as
+  $$ insert into public.stock_movement (household_id, lot_id, product_id, delta, reason, correlation_id)
+     select s.household_id, s.id, s.product_id, -1, 'consume', gen_random_uuid() from public.stock_lot s
+      where s.product_id = '00000000-0000-0000-0000-0000000e1d01' limit 1 $$;
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000e1001', 'val-owner-a@test.local'),
@@ -151,6 +159,10 @@ select throws_ok($$select rpc_consume(jsonb_build_object(
   'household_id', '00000000-0000-0000-0000-0000000e10aa', 'product_id', '00000000-0000-0000-0000-0000000e1d01',
   'qty', 1, 'unit_id', pg_temp.u('g')))$$,
   '23503', null, 'member can''t use stock kept in the safe through rpc_consume');
+select throws_ok($$select pg_temp.sneak_thing()$$, '23503', null,
+  'a definer path can''t create a thing inside the safe for a member');
+select throws_ok($$select pg_temp.sneak_movement()$$, '23503', null,
+  'a definer path can''t change a lot in the safe through a movement that names no place');
 select lives_ok($$update location set name = 'Main bedroom' where id = '00000000-0000-0000-0000-0000000e1c01'$$,
   'member can still rename the room the safe is in (the database re-paths the safe itself)');
 update location set name = 'Opened' where id = '00000000-0000-0000-0000-0000000e1c02';

@@ -24,7 +24,8 @@
 - Hardening (migration 102): the AI cost of a question is recorded with a one-time secret only the function
   holds, so nobody can write it down as 0; a plan whose cost can't be recorded isn't returned. Every way of
   changing stock, things or places (not only Move) refuses someone other than the owner when it touches a
-  valuable place. Migrations 98–102 (schema 102), function `ask-gedara-3`.
+  valuable place, including a new thing created there and a stock movement on a lot there (migration 103).
+  Migrations 98–103 (schema 103), function `ask-gedara-3`.
 
 ## 0.9.19 — Log diet: the speaker and the house bridge log ~8× less
 - Supabase's free **Log Ingestion** (1 GB a month) was running out: the music speaker and the Home Assistant
