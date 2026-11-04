@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotInvitedRouteImport } from './routes/not-invited'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppAskRouteImport } from './routes/_app/ask'
 import { Route as AppAttentionRouteImport } from './routes/_app/attention'
 import { Route as AppScanRouteImport } from './routes/_app/scan'
 import { Route as AppHouseIndexRouteImport } from './routes/_app/house/index'
@@ -41,6 +42,7 @@ import { Route as AppPlacesPlanRouteImport } from './routes/_app/places/plan'
 import { Route as AppSCodeRouteImport } from './routes/_app/s.$code'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings/appearance'
+import { Route as AppSettingsAskRouteImport } from './routes/_app/settings/ask'
 import { Route as AppSettingsCategoriesRouteImport } from './routes/_app/settings/categories'
 import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
 import { Route as AppSettingsDiagnosticsRouteImport } from './routes/_app/settings/diagnostics'
@@ -79,6 +81,11 @@ const NotInvitedRoute = NotInvitedRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAskRoute = AppAskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAttentionRoute = AppAttentionRouteImport.update({
@@ -221,6 +228,11 @@ const AppSettingsAppearanceRoute = AppSettingsAppearanceRouteImport.update({
   path: '/settings/appearance',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsAskRoute = AppSettingsAskRouteImport.update({
+  id: '/settings/ask',
+  path: '/settings/ask',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsCategoriesRoute = AppSettingsCategoriesRouteImport.update({
   id: '/settings/categories',
   path: '/settings/categories',
@@ -332,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
+  '/ask': typeof AppAskRoute
   '/attention': typeof AppAttentionRoute
   '/scan': typeof AppScanRoute
   '/house/log': typeof AppHouseLogRoute
@@ -353,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/places/plan': typeof AppPlacesPlanRoute
   '/s/$code': typeof AppSCodeRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/settings/ask': typeof AppSettingsAskRoute
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
@@ -384,6 +398,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
+  '/ask': typeof AppAskRoute
   '/attention': typeof AppAttentionRoute
   '/scan': typeof AppScanRoute
   '/': typeof AppIndexRoute
@@ -406,6 +421,7 @@ export interface FileRoutesByTo {
   '/places/plan': typeof AppPlacesPlanRoute
   '/s/$code': typeof AppSCodeRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/settings/ask': typeof AppSettingsAskRoute
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
@@ -439,6 +455,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
+  '/_app/ask': typeof AppAskRoute
   '/_app/attention': typeof AppAttentionRoute
   '/_app/scan': typeof AppScanRoute
   '/_app/': typeof AppIndexRoute
@@ -461,6 +478,7 @@ export interface FileRoutesById {
   '/_app/places/plan': typeof AppPlacesPlanRoute
   '/_app/s/$code': typeof AppSCodeRoute
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/_app/settings/ask': typeof AppSettingsAskRoute
   '/_app/settings/categories': typeof AppSettingsCategoriesRoute
   '/_app/settings/devices': typeof AppSettingsDevicesRoute
   '/_app/settings/diagnostics': typeof AppSettingsDiagnosticsRoute
@@ -495,6 +513,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/not-invited'
+    | '/ask'
     | '/attention'
     | '/scan'
     | '/house/log'
@@ -516,6 +535,7 @@ export interface FileRouteTypes {
     | '/places/plan'
     | '/s/$code'
     | '/settings/appearance'
+    | '/settings/ask'
     | '/settings/categories'
     | '/settings/devices'
     | '/settings/diagnostics'
@@ -547,6 +567,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/not-invited'
+    | '/ask'
     | '/attention'
     | '/scan'
     | '/'
@@ -569,6 +590,7 @@ export interface FileRouteTypes {
     | '/places/plan'
     | '/s/$code'
     | '/settings/appearance'
+    | '/settings/ask'
     | '/settings/categories'
     | '/settings/devices'
     | '/settings/diagnostics'
@@ -601,6 +623,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/not-invited'
+    | '/_app/ask'
     | '/_app/attention'
     | '/_app/scan'
     | '/_app/'
@@ -623,6 +646,7 @@ export interface FileRouteTypes {
     | '/_app/places/plan'
     | '/_app/s/$code'
     | '/_app/settings/appearance'
+    | '/_app/settings/ask'
     | '/_app/settings/categories'
     | '/_app/settings/devices'
     | '/_app/settings/diagnostics'
@@ -686,6 +710,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ask': {
+      id: '/_app/ask'
+      path: '/ask'
+      fullPath: '/ask'
+      preLoaderRoute: typeof AppAskRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/attention': {
@@ -884,6 +915,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAppearanceRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/ask': {
+      id: '/_app/settings/ask'
+      path: '/settings/ask'
+      fullPath: '/settings/ask'
+      preLoaderRoute: typeof AppSettingsAskRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/categories': {
       id: '/_app/settings/categories'
       path: '/settings/categories'
@@ -1028,6 +1066,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAskRoute: typeof AppAskRoute
   AppAttentionRoute: typeof AppAttentionRoute
   AppScanRoute: typeof AppScanRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -1050,6 +1089,7 @@ interface AppRouteChildren {
   AppPlacesPlanRoute: typeof AppPlacesPlanRoute
   AppSCodeRoute: typeof AppSCodeRoute
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
+  AppSettingsAskRoute: typeof AppSettingsAskRoute
   AppSettingsCategoriesRoute: typeof AppSettingsCategoriesRoute
   AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
   AppSettingsDiagnosticsRoute: typeof AppSettingsDiagnosticsRoute
@@ -1080,6 +1120,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAskRoute: AppAskRoute,
   AppAttentionRoute: AppAttentionRoute,
   AppScanRoute: AppScanRoute,
   AppIndexRoute: AppIndexRoute,
@@ -1102,6 +1143,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPlacesPlanRoute: AppPlacesPlanRoute,
   AppSCodeRoute: AppSCodeRoute,
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
+  AppSettingsAskRoute: AppSettingsAskRoute,
   AppSettingsCategoriesRoute: AppSettingsCategoriesRoute,
   AppSettingsDevicesRoute: AppSettingsDevicesRoute,
   AppSettingsDiagnosticsRoute: AppSettingsDiagnosticsRoute,

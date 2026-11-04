@@ -5,7 +5,7 @@ import { formatLKR } from '@/lib/money/format';
 import { cn } from '@/lib/utils';
 
 /** A router target as <Link> props (the targets are built from typed route paths). */
-export function TargetLink({ target, className, children, ...rest }: { target: Target; className?: string; children: ReactNode; title?: string; 'aria-label'?: string }) {
+export function TargetLink({ target, className, children, ...rest }: { target: Target; className?: string; children: ReactNode; title?: string; 'aria-label'?: string; onClick?: () => void }) {
   return (
     <Link {...(target as unknown as LinkProps)} className={className} {...rest}>
       {children}

@@ -15,12 +15,15 @@ import {
   Search,
   Settings,
   ShoppingBasket,
+  Sparkles,
   Tag,
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AskPanel } from '@/components/ask/AskPanel';
+import { askStatusQuery } from '@/lib/ask/queries';
 import type { Target } from '@/lib/attention';
 import { formatLKR } from '@/lib/money/format';
 import { categoriesQuery } from '@/lib/money/queries';
@@ -44,6 +47,8 @@ interface Entry {
   title: string;
   sub?: string;
   target: Target;
+  /** Ask Gedara (Phase 10): answer the text inside the palette instead of opening a page */
+  ask?: string;
 }
 
 const TYPE_ICON: Record<Hit['type'], LucideIcon> = {
@@ -64,6 +69,9 @@ function useDebounced<T>(value: T, ms: number): T {
   return v;
 }
 
+const QUESTION = /\?$|^(how|what|when|where|which|who|why|is|are|do|did|does|show|list|any)\b|කීය|කොහෙ|මොනව|කවද|ද\s*$/i;
+const looksLikeQuestion = (q: string) => QUESTION.test(q) || q.split(/\s+/).length >= 4;
+
 /** ⌘K: search every product, thing, place, bill and bill line, plus quick commands (MASTER_PLAN §5.4). */
 export function CommandPalette({ open, onClose, householdId, locale }: { open: boolean; onClose: () => void; householdId: string; locale: string }) {
   const { t } = useTranslation();
@@ -72,7 +80,9 @@ export function CommandPalette({ open, onClose, householdId, locale }: { open: b
   const input = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState('');
   const [active, setActive] = useState(0);
+  const [asking, setAsking] = useState<string | null>(null);
   const dq = useDebounced(q.trim(), 180);
+  const askStatus = useQuery({ ...askStatusQuery(householdId), enabled: open });
   const categories = useQuery({ ...categoriesQuery(householdId), enabled: open });
   const hits = useQuery({
     queryKey: ['search', householdId, dq],
@@ -92,6 +102,7 @@ export function CommandPalette({ open, onClose, householdId, locale }: { open: b
       d.showModal();
       setQ('');
       setActive(0);
+      setAsking(null);
       setTimeout(() => input.current?.focus(), 0);
     }
     if (!open && d.open) d.close();
@@ -153,10 +164,20 @@ export function CommandPalette({ open, onClose, householdId, locale }: { open: b
         target,
       };
     });
-    return [...found, ...cmds];
-  }, [q, dq, hits.data, commands, categories.data, locale, t]);
+    const question = q.trim();
+    const ask: Entry[] =
+      askStatus.data?.enabled && question.length >= 4
+        ? [{ key: 'ask', icon: Sparkles, title: t('ask.palette', { q: question }), target: { to: '/ask', search: { q: question } }, ask: question }]
+        : [];
+    // a question goes first; a short search keeps its first hit on Enter
+    return looksLikeQuestion(question) ? [...ask, ...found, ...cmds] : [...found, ...ask, ...cmds];
+  }, [q, dq, hits.data, commands, categories.data, locale, t, askStatus.data?.enabled]);
 
   function go(e: Entry) {
+    if (e.ask) {
+      setAsking(e.ask);
+      return;
+    }
     onClose();
     void navigate(e.target as never);
   }
@@ -171,7 +192,12 @@ export function CommandPalette({ open, onClose, householdId, locale }: { open: b
       }}
       className="m-0 mx-auto mt-[8dvh] w-[calc(100%-2rem)] max-w-xl rounded-[24px] border border-line-2 bg-[rgba(9,12,24,0.97)] p-0 text-text shadow-2xl backdrop:bg-black/60"
     >
-      {open && (
+      {open && asking !== null && (
+        <div className="max-h-[80dvh] overflow-y-auto p-4">
+          <AskPanel householdId={householdId} householdLocale={locale} initial={asking} autoAsk onLeave={onClose} />
+        </div>
+      )}
+      {open && asking === null && (
         <div className="flex flex-col">
           <div className="flex items-center gap-3 border-b border-line px-4">
             <Search className="h-5 w-5 shrink-0 text-muted" aria-hidden />

@@ -5,6 +5,7 @@ import {
   CalendarClock,
   ChevronLeft,
   Copy,
+  Gem,
   HandCoins,
   Handshake,
   Pencil,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ValuableSwitch } from '@/components/ask/ValuableSwitch';
 import { toast } from 'sonner';
 import { Money } from '@/components/money/bits';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
@@ -217,7 +219,12 @@ function AssetPage() {
                 <dt className="text-[12px] text-muted">{t('things.value.place')}</dt>
                 <dd className="mt-0.5 flex items-center gap-2 text-[15px]">
                   <span className="min-w-0 flex-1">
-                    {asset.location_id ? (
+                    {asset.place_private ? (
+                      <span className="inline-flex items-center gap-1.5 text-muted">
+                        <Gem className="h-4 w-4 text-violet" aria-hidden />
+                        {t('ask.valuable.private')}
+                      </span>
+                    ) : asset.location_id ? (
                       <Link to="/places/$placeId" params={{ placeId: asset.location_id }} className="text-accent-b">
                         {asset.location_path}
                       </Link>
@@ -246,6 +253,8 @@ function AssetPage() {
                 </dd>
               </div>
             </dl>
+
+            {membership.role === 'owner' && <ValuableSwitch householdId={householdId} kind="asset" id={asset.id} on={!!asset.valuable} />}
 
             <div className="flex items-center gap-3 rounded-2xl border border-line bg-white/[0.03] p-3">
               <CodeQr code={asset.code} className="h-[64px] w-[64px] shrink-0 p-1" />

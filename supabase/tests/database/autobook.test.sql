@@ -149,9 +149,9 @@ select throws_ok($$insert into match_autobook (household_id, kind, action) value
   '42501', null, 'nobody writes the log directly');
 
 reset role;
-insert into t_c select 'transfer', to_jsonb(id) from match_autobook where kind = 'alert_transfer';
-insert into t_c select 'link', to_jsonb(id) from match_autobook where kind = 'alert_link';
-insert into t_c select 'line', to_jsonb(id) from match_autobook where kind = 'line_product';
+insert into t_c select 'transfer', to_jsonb(id) from match_autobook where household_id = '00000000-0000-0000-0000-0000000fa1aa' and kind = 'alert_transfer';
+insert into t_c select 'link', to_jsonb(id) from match_autobook where household_id = '00000000-0000-0000-0000-0000000fa1aa' and kind = 'alert_link';
+insert into t_c select 'line', to_jsonb(id) from match_autobook where household_id = '00000000-0000-0000-0000-0000000fa1aa' and kind = 'line_product';
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000fb101","role":"authenticated"}';
 select throws_ok($$select rpc_match_autobook_seen(array[(select (v #>> '{}')::uuid from t_c where k = 'transfer')])$$, '42501', null,

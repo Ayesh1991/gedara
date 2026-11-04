@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronRight, CircleCheck, HousePlug, ListChecks, MapPin, Music } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { ArrowUp, ChevronRight, CircleCheck, HousePlug, ListChecks, MapPin, MessageCircleQuestion, Music, Sparkles } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
 import { StatTile } from '@/components/aurora/StatTile';
@@ -13,6 +13,7 @@ import { useDriveSync } from '@/components/scan/useDriveSync';
 import { useHomeLive } from '@/components/home/useHomeLive';
 import { useShoppingList } from '@/components/spine/useShopping';
 import { Card } from '@/components/ui/card';
+import { askStatusQuery } from '@/lib/ask/queries';
 import { knownItems } from '@/lib/attention';
 import { activityQuery, attentionQuery, budgetMonthQuery } from '@/lib/insights/queries';
 import { bridgeQuery, displayName, entitiesQuery, summaryOf } from '@/lib/home/queries';
@@ -218,6 +219,61 @@ function ActivityCard({ householdId, locale }: { householdId: string; locale: st
   );
 }
 
+/** Ask Gedara (Phase 10): a question box that opens /ask; when Ask is off only the owner sees where to turn it on. */
+function AskCard({ householdId, isOwner }: { householdId: string; isOwner: boolean }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const status = useQuery(askStatusQuery(householdId));
+  const [q, setQ] = useState('');
+  if (!status.data) return null;
+  if (!status.data.enabled) {
+    if (!isOwner) return null;
+    return (
+      <Link to="/settings/ask" className="block">
+        <Card className="flex items-center gap-3 py-3.5 text-[13.5px] text-muted transition-colors hover:border-white/25">
+          <MessageCircleQuestion className="h-5 w-5 shrink-0 text-info" aria-hidden />
+          <span className="min-w-0 flex-1">{t('ask.home.off')}</span>
+          <ChevronRight className="h-5 w-5 shrink-0" aria-hidden />
+        </Card>
+      </Link>
+    );
+  }
+  return (
+    <Card className="py-3">
+      <form
+        role="search"
+        aria-label={t('ask.title')}
+        className="flex items-center gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const text = q.trim();
+          void navigate({ to: '/ask', search: text ? { q: text } : {} });
+        }}
+      >
+        <span className="brand-gradient grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#05070F]" aria-hidden>
+          <Sparkles className="h-5 w-5" />
+        </span>
+        <label htmlFor="home-ask" className="sr-only">
+          {t('ask.placeholder')}
+        </label>
+        <input
+          id="home-ask"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          maxLength={300}
+          placeholder={t('ask.placeholder')}
+          autoComplete="off"
+          enterKeyHint="send"
+          className="h-11 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-faint"
+        />
+        <button type="submit" aria-label={t('ask.ask')} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted hover:bg-white/5 hover:text-text">
+          <ArrowUp className="h-5 w-5" aria-hidden />
+        </button>
+      </form>
+    </Card>
+  );
+}
+
 /** Places is not in the phone dock (§5.1), so Home links to it — with real counts only. */
 function PlacesCard({ householdId }: { householdId: string }) {
   const { t } = useTranslation();
@@ -331,6 +387,8 @@ function Pulse() {
       <h1 className="font-display text-[28px] leading-tight font-semibold tracking-tight lg:text-[32px]">
         {t(`home.greeting.${part}`, { name })}
       </h1>
+
+      <AskCard householdId={householdId} isOwner={membership.role === 'owner'} />
 
       <section aria-label={t('home.net')} className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Link to="/insights/$area" params={{ area: 'cashflow' }} search={{ from: thisMonth }} className="contents">

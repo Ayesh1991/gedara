@@ -3381,5 +3381,199 @@
       "import": "bill import",
       "eval": "accuracy test"
     }
+  },
+  "ask": {
+    "title": "Ask Gedara",
+    "intro": "Ask about your money, pantry, things and places in plain words. Gedara looks it up itself and shows its own numbers.",
+    "settingsHint": "Questions in plain words, answered from your own data",
+    "placeholder": "Ask anything… e.g. fish since June",
+    "ask": "Ask",
+    "try": "Try:",
+    "examples": {
+      "fish": "How much did we spend on fish since June?",
+      "due": "What's due this month?",
+      "toyota": "When does the Toyota instalment end?",
+      "drill": "Where is the drill?",
+      "runout": "What runs out this week?",
+      "boc": "How much is in BOC savings?"
+    },
+    "thinking": "Looking it up…",
+    "answer": "Answer",
+    "alsoMeant": "Did you mean:",
+    "open": "Open where these numbers come from",
+    "answeredBy": "Understood by {{provider}} · {{model}}",
+    "usedToday": "{{used}} of {{limit}} questions today",
+    "privacy": "The AI only reads your question to choose what to look up. It never sees your data: Gedara finds the numbers itself, with your own login. Questions and answers are not kept.",
+    "unsafe": {
+      "otp": "That looks like a code or password, so it wasn't sent anywhere. Ask without it.",
+      "card": "That looks like a card or account number, so it wasn't sent anywhere. The last 4 digits are enough.",
+      "code": "That number could be a one-time code, so the question wasn't sent. Write it as money (Rs 50,000) or leave it out.",
+      "other": "That question can't be sent. Try asking it another way."
+    },
+    "errors": {
+      "off": "Ask Gedara is off. The owner can turn it on in Settings › Ask Gedara.",
+      "stopped": "Ask Gedara has been stopped for now.",
+      "limit": "That's all your questions for today. They start again tomorrow.",
+      "cap": "This month's AI budget is used up, so Ask is resting until next month.",
+      "not_member": "You're not a member of this household.",
+      "no_answer": "I couldn't understand that question. Try asking it more simply, e.g. “fish since June”.",
+      "network": "Couldn't reach Gedara. Check the connection and try again.",
+      "unknown": "Something went wrong. Try again.",
+      "read": "Couldn't read this part of the answer."
+    },
+    "refusal": {
+      "write": "Ask only reads, it never changes anything. To add or change something, open the page and do it there.",
+      "house": "Ask doesn't look at the house (doors, windows, lights, people). Open House to see it.",
+      "private": "Ask never shows codes, passwords, full card or account numbers, bank SMS or where valuables are kept.",
+      "other": "I can't answer that from Gedara yet. You can ask about:"
+    },
+    "can": {
+      "spend": "what you spent, on what, where and when",
+      "due": "bills and instalments due",
+      "instalments": "instalment plans and loans: when they end, what's left",
+      "find": "where a thing is, how much of a pantry item is left",
+      "pantry": "what runs out, expires or is below minimum",
+      "balances": "account balances and what's owed on a card",
+      "budget": "budget against spending for a month",
+      "warranty": "warranties ending soon"
+    },
+    "kind": {
+      "category": "category",
+      "sub": "category",
+      "product": "product",
+      "shop": "shop",
+      "words": "words on bills"
+    },
+    "what": {
+      "all": "All spending",
+      "named": "{{name}}",
+      "shop": "At {{name}}",
+      "words": "Bill lines with “{{name}}”"
+    },
+    "bills_one": "{{n}} bill",
+    "bills_other": "{{n}} bills",
+    "spend": {
+      "head_one": "{{total}} from {{from}} to {{to}}, on {{n}} bill.",
+      "head_other": "{{total}} from {{from}} to {{to}}, on {{n}} bills.",
+      "none": "Nothing spent on this from {{from}} to {{to}}."
+    },
+    "tx": {
+      "head_one": "{{n}} bill from {{from}} to {{to}}, {{total}}:",
+      "head_other": "{{n}} bills from {{from}} to {{to}}, {{total}} in all. The newest:",
+      "none": "No bills for this from {{from}} to {{to}}.",
+      "row": "{{date}} · {{account}}"
+    },
+    "due": {
+      "head_one": "{{n}} payment due from {{from}} to {{to}}, {{total}}.",
+      "head_other": "{{n}} payments due from {{from}} to {{to}}, {{total}} in all.",
+      "none": "Nothing due from {{from}} to {{to}}.",
+      "overdue": "Overdue since {{date}}",
+      "bill": "Bill · {{date}}",
+      "instalment": "Instalment · {{date}}"
+    },
+    "inst": {
+      "none": "No instalment plans are running.",
+      "noneAbout": "No instalment plan or loan matches “{{about}}”.",
+    "noMatchAll_one": "No plan is called “{{about}}”. The {{n}} running plan, {{monthly}} a month:",
+    "noMatchAll_other": "No plan is called “{{about}}”. All {{n}} running plans, {{monthly}} a month:",
+      "one": "{{name}} ends on {{last}}: {{left}} of {{total}} instalments left.",
+      "done": "{{name}} ended on {{last}}.",
+      "many_one": "{{n}} plan running, {{monthly}} a month.",
+      "many_other": "{{n}} plans running, {{monthly}} a month.",
+      "row": "{{monthly}} a month · {{left}} of {{total}} left · next {{next}} · last {{last}} · {{account}}",
+      "rowLoan": "Still owed · {{monthly}} a month · {{left}} of {{total}} left · next {{next}} · last {{last}} · {{account}}",
+      "rowDone": "Finished on {{last}}"
+    },
+    "find": {
+      "head": "Where “{{about}}” is:",
+      "none": "Nothing called “{{about}}” in Things, Pantry or Places.",
+      "at": "Kept in {{place}}",
+      "noPlace": "No place set yet",
+      "lent": "Lent to {{who}}",
+      "stockAt": "{{qty}} left · mostly in {{place}}",
+      "stock": "{{qty}} left",
+      "noStock": "None in stock",
+      "place": "Place · {{place}}"
+    },
+    "pantry": {
+      "runout_one": "{{n}} item runs out within {{days}} days:",
+      "runout_other": "{{n}} items run out within {{days}} days:",
+      "runoutNone": "Nothing runs out within {{days}} days.",
+      "expiring_one": "{{n}} item expires within {{days}} days:",
+      "expiring_other": "{{n}} items expire within {{days}} days:",
+      "expiringNone": "Nothing expires within {{days}} days.",
+      "below_min_one": "{{n}} item is below its minimum:",
+      "below_min_other": "{{n}} items are below their minimum:",
+      "below_minNone": "Nothing is below its minimum.",
+      "inDays_one": "Runs out in about {{n}} day",
+      "inDays_other": "Runs out in about {{n}} days",
+      "expired": "Expired on {{date}}",
+      "bestBefore": "Best before {{date}}",
+      "expires": "Expires on {{date}}",
+      "min": "Minimum {{min}}"
+    },
+    "bal": {
+      "head": "Balances now:",
+      "none": "No account matches “{{about}}”.",
+      "balance": "Balance",
+      "owed": "Owed",
+      "owedAvail": "Owed · {{available}} available"
+    },
+    "budget": {
+      "none": "No budgets are set for {{month}}.",
+      "ok_one": "Budgets for {{month}}: none is over.",
+      "ok_other": "Budgets for {{month}}: none is over.",
+      "over_one": "Budgets for {{month}}: {{n}} is over.",
+      "over_other": "Budgets for {{month}}: {{n}} are over.",
+      "rowLeft": "{{spent}} of {{budget}} spent · left",
+      "rowOver": "{{spent}} of {{budget}} spent · over by"
+    },
+    "warranty": {
+      "head_one": "{{n}} warranty ends within {{days}} days:",
+      "head_other": "{{n}} warranties end within {{days}} days:",
+      "none_one": "No warranty ends within {{days}} days.",
+      "none_other": "No warranty ends within {{days}} days.",
+      "row_one": "Ends {{date}} · in {{n}} day",
+      "row_other": "Ends {{date}} · in {{n}} days"
+    },
+    "home": {
+      "off": "Ask Gedara is off. Turn it on in Settings › Ask Gedara."
+    },
+    "palette": "Ask Gedara: “{{q}}”",
+    "diagnosticsError": "The Ask Gedara function (ask-gedara) doesn't answer.",
+    "settings": {
+      "switchTitle": "Ask Gedara",
+      "switchOn": "On: everyone in the household can ask.",
+      "switchOffHint": "Off. Only the owner can turn it on.",
+      "ownerOnly": "Only the owner can change these settings.",
+      "how": "How it keeps your data safe",
+      "how1": "The AI gets only your question and today's date, never your money, bank alerts, pantry or house data. It picks which of Gedara's fixed read-only questions to run.",
+      "how2": "Gedara runs them itself with the asker's own login, so everyone sees only what they may see. Ask can't book, change, delete or control anything.",
+      "how3": "Codes, passwords and card numbers in a question are stopped before anything is sent. House data and valuables are never part of an answer.",
+      "how4": "Questions and answers are not kept. Gedara only counts how many each person asked and what the AI cost.",
+      "limit": "Questions per person per day",
+      "limitHint": "0 to 100. Each person has their own count; it starts again at midnight.",
+      "save": "Save",
+      "saved": "Saved",
+      "today": "You've asked {{used}} of {{limit}} today.",
+      "cost": "This month's AI cost, Ask and Matching together: {{cost}} of {{cap}}.",
+      "providers": "Groq answers first (free, keeps nothing); OpenAI only when Groq is busy. Gemini is never used for Ask.",
+      "kill": "Emergency stop (for the owner, on the PC): node scripts/ask-switch.mjs prod off"
+    },
+    "valuables": {
+      "title": "Valuables",
+      "intro": "Jewellery, cash, documents, the safe: mark them on the thing's or the place's own page.",
+      "none": "Nothing is marked valuable yet.",
+      "thing": "Thing",
+      "place": "Place"
+    },
+    "valuable": {
+      "label": "Valuable",
+      "thingHint": "Others in the household still see this thing, but not where it's kept, its photos or receipts. Ask never shows it, not even to you.",
+      "placeHint": "Only you see this place and everything inside it. Ask never shows it, not even to you.",
+      "private": "Private (a valuable)",
+      "on": "Marked valuable",
+      "off": "No longer valuable"
+    }
   }
 }

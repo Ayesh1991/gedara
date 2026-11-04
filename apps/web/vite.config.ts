@@ -52,6 +52,8 @@ export default defineConfig({
       '@match': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/match'),
       // AI gateway (Phase 9b): only its pure parts (guard, schemas) are used by the app's tests.
       '@ai': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/ai'),
+      // Ask Gedara (Phase 10): the plan's tool list and Zod, shared with the ask-gedara Edge Function.
+      '@ask': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/ask'),
       zod: path.resolve(import.meta.dirname, 'node_modules/zod'),
     },
   },

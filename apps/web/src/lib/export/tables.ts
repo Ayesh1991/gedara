@@ -60,6 +60,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'shopping_list_item', order: ['id'], scope: 'household' },
   { name: 'asset', order: ['id'], scope: 'household' },
   { name: 'asset_barcode', order: ['id'], scope: 'household' },
+  { name: 'asset_place_private', order: ['asset_id'], scope: 'household' },
   { name: 'tag', order: ['id'], scope: 'household' },
   { name: 'asset_tag', order: ['asset_id', 'tag_id'], scope: 'household' },
   { name: 'category_field', order: ['id'], scope: 'household' },

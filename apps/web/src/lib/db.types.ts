@@ -132,11 +132,14 @@ export type Database = {
           id: string
           input_tokens: number
           model: string
+          nonce_hash: string | null
           ok: boolean
           output_tokens: number
           provider: string
+          request_id: string | null
           run_id: string | null
           task: string
+          user_id: string | null
         }
         Insert: {
           at?: string
@@ -146,11 +149,14 @@ export type Database = {
           id?: string
           input_tokens?: number
           model: string
+          nonce_hash?: string | null
           ok: boolean
           output_tokens?: number
           provider: string
+          request_id?: string | null
           run_id?: string | null
           task: string
+          user_id?: string | null
         }
         Update: {
           at?: string
@@ -160,11 +166,14 @@ export type Database = {
           id?: string
           input_tokens?: number
           model?: string
+          nonce_hash?: string | null
           ok?: boolean
           output_tokens?: number
           provider?: string
+          request_id?: string | null
           run_id?: string | null
           task?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -235,6 +244,7 @@ export type Database = {
           transaction_line_id: string | null
           updated_at: string
           useful_life_months: number | null
+          valuable: boolean
           vendor: string | null
           warranty_notes: string | null
           warranty_until: string | null
@@ -275,6 +285,7 @@ export type Database = {
           transaction_line_id?: string | null
           updated_at?: string
           useful_life_months?: number | null
+          valuable?: boolean
           vendor?: string | null
           warranty_notes?: string | null
           warranty_until?: string | null
@@ -315,6 +326,7 @@ export type Database = {
           transaction_line_id?: string | null
           updated_at?: string
           useful_life_months?: number | null
+          valuable?: boolean
           vendor?: string | null
           warranty_notes?: string | null
           warranty_until?: string | null
@@ -442,6 +454,63 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "household"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_place_private: {
+        Row: {
+          asset_id: string
+          household_id: string
+          location_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          household_id: string
+          location_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          household_id?: string
+          location_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_place_private_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: true
+            referencedRelation: "asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "asset_place_private_household_id_asset_id_fkey"
+            columns: ["household_id", "asset_id"]
+            isOneToOne: true
+            referencedRelation: "v_asset"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "asset_place_private_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_place_private_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "location"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "asset_place_private_household_id_location_id_fkey"
+            columns: ["household_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "v_location_contents"
+            referencedColumns: ["household_id", "location_id"]
           },
         ]
       }
@@ -2044,6 +2113,7 @@ export type Database = {
           holds_product_id: string | null
           household_id: string
           id: string
+          in_valuable: boolean
           kind: string | null
           map_x: number | null
           map_y: number | null
@@ -2058,6 +2128,7 @@ export type Database = {
           tare_set_at: string | null
           type_id: string | null
           updated_at: string
+          valuable: boolean
         }
         Insert: {
           climate?: string | null
@@ -2068,6 +2139,7 @@ export type Database = {
           holds_product_id?: string | null
           household_id: string
           id?: string
+          in_valuable?: boolean
           kind?: string | null
           map_x?: number | null
           map_y?: number | null
@@ -2082,6 +2154,7 @@ export type Database = {
           tare_set_at?: string | null
           type_id?: string | null
           updated_at?: string
+          valuable?: boolean
         }
         Update: {
           climate?: string | null
@@ -2092,6 +2165,7 @@ export type Database = {
           holds_product_id?: string | null
           household_id?: string
           id?: string
+          in_valuable?: boolean
           kind?: string | null
           map_x?: number | null
           map_y?: number | null
@@ -2106,6 +2180,7 @@ export type Database = {
           tare_set_at?: string | null
           type_id?: string | null
           updated_at?: string
+          valuable?: boolean
         }
         Relationships: [
           {
@@ -2500,6 +2575,8 @@ export type Database = {
       match_setting: {
         Row: {
           ai_enabled: boolean
+          ask_daily_per_person: number
+          ask_enabled: boolean
           auto: Json
           auto_record: Json
           auto_record_at: string | null
@@ -2512,6 +2589,8 @@ export type Database = {
         }
         Insert: {
           ai_enabled?: boolean
+          ask_daily_per_person?: number
+          ask_enabled?: boolean
           auto?: Json
           auto_record?: Json
           auto_record_at?: string | null
@@ -2524,6 +2603,8 @@ export type Database = {
         }
         Update: {
           ai_enabled?: boolean
+          ask_daily_per_person?: number
+          ask_enabled?: boolean
           auto?: Json
           auto_record?: Json
           auto_record_at?: string | null
@@ -5519,6 +5600,7 @@ export type Database = {
           parent_id: string | null
           parent_name: string | null
           parts: number | null
+          place_private: boolean | null
           purchase_price: number | null
           purchased_on: string | null
           quantity: number | null
@@ -5537,6 +5619,7 @@ export type Database = {
           transaction_line_id: string | null
           updated_at: string | null
           useful_life_months: number | null
+          valuable: boolean | null
           vendor: string | null
           warranty_days_left: number | null
           warranty_notes: string | null
@@ -5556,20 +5639,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "household"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "asset_household_id_location_id_fkey"
-            columns: ["household_id", "location_id"]
-            isOneToOne: false
-            referencedRelation: "location"
-            referencedColumns: ["household_id", "id"]
-          },
-          {
-            foreignKeyName: "asset_household_id_location_id_fkey"
-            columns: ["household_id", "location_id"]
-            isOneToOne: false
-            referencedRelation: "v_location_contents"
-            referencedColumns: ["household_id", "location_id"]
           },
           {
             foreignKeyName: "asset_household_id_parent_id_fkey"
@@ -6661,6 +6730,58 @@ export type Database = {
         Returns: number
       }
       accept_pending_invites: { Args: never; Returns: number }
+      ask_balances: {
+        Args: { p_about?: string; p_household: string }
+        Returns: Json
+      }
+      ask_budget: {
+        Args: { p_household: string; p_month?: string }
+        Returns: Json
+      }
+      ask_due: {
+        Args: { p_from?: string; p_household: string; p_to?: string }
+        Returns: Json
+      }
+      ask_find: {
+        Args: { p_about: string; p_household: string }
+        Returns: Json
+      }
+      ask_instalments: {
+        Args: { p_about?: string; p_household: string }
+        Returns: Json
+      }
+      ask_pantry: {
+        Args: { p_household: string; p_view: string; p_within_days?: number }
+        Returns: Json
+      }
+      ask_spend: {
+        Args: {
+          p_about?: string
+          p_from?: string
+          p_group?: string
+          p_household: string
+          p_id?: string
+          p_kind?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      ask_transactions: {
+        Args: {
+          p_about?: string
+          p_from?: string
+          p_household: string
+          p_id?: string
+          p_kind?: string
+          p_limit?: number
+          p_to?: string
+        }
+        Returns: Json
+      }
+      ask_warranty: {
+        Args: { p_household: string; p_within_days?: number }
+        Returns: Json
+      }
       attention_feed: {
         Args: { p_household: string }
         Returns: {
@@ -6702,6 +6823,24 @@ export type Database = {
           lines: number
         }[]
       }
+      rpc_ask_begin: {
+        Args: { p_household: string; p_request: string }
+        Returns: Json
+      }
+      rpc_ask_record: {
+        Args: {
+          p_calls: Json
+          p_household: string
+          p_nonce: string
+          p_request: string
+        }
+        Returns: Json
+      }
+      rpc_ask_settings_save: {
+        Args: { p: Json; p_household: string }
+        Returns: Json
+      }
+      rpc_ask_status: { Args: { p_household: string }; Returns: Json }
       rpc_asset_sell: { Args: { p: Json }; Returns: Json }
       rpc_asset_split: { Args: { p_asset: string }; Returns: string[] }
       rpc_asset_unsell: { Args: { p_asset: string }; Returns: undefined }
@@ -6966,6 +7105,15 @@ export type Database = {
         Returns: Json
       }
       rpc_set_lot_due: { Args: { p: Json }; Returns: Json }
+      rpc_set_valuable: {
+        Args: {
+          p_household: string
+          p_id: string
+          p_kind: string
+          p_on: boolean
+        }
+        Returns: Json
+      }
       rpc_shopping_sync: { Args: { p_household: string }; Returns: Json }
       rpc_shopping_tick: {
         Args: { p_at?: string; p_done: boolean; p_item: string }
