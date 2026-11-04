@@ -3412,7 +3412,7 @@
     },
     "errors": {
       "off": "Ask Gedara is off. The owner can turn it on in Settings › Ask Gedara.",
-      "stopped": "Ask Gedara has been stopped for now.",
+      "stopped": "Ask Gedara has been stopped with its emergency stop. The owner can end it: Settings › Ask Gedara shows how.",
       "limit": "That's all your questions for today. They start again tomorrow.",
       "cap": "This month's AI budget is used up, so Ask is resting until next month.",
       "not_member": "You're not a member of this household.",
@@ -3558,7 +3558,9 @@
       "today": "You've asked {{used}} of {{limit}} today.",
       "cost": "This month's AI cost, Ask and Matching together: {{cost}} of {{cap}}.",
       "providers": "Groq answers first (free, keeps nothing); OpenAI only when Groq is busy. Gemini is never used for Ask.",
-      "kill": "Emergency stop (for the owner, on the PC): node scripts/ask-switch.mjs prod off"
+      "kill": "To turn Ask on or off, use the switch at the top of this page — nothing else is needed. (There is also an emergency stop on the PC, only for when something has gone badly wrong.)",
+      "stoppedTitle": "The emergency stop is on",
+      "stoppedBody": "Nobody can ask until it is ended, whatever the switch below says. To end it, open a terminal in the Gedara folder on the PC and run:"
     },
     "valuables": {
       "title": "Valuables",

@@ -8,7 +8,8 @@ import { GREETING, STORAGE_STATE, stagingAdmin } from './staging-guard';
 // links only to Gedara's own pages, marks it valuable (Ask then never shows it), gets an OTP-looking question
 // refused before anything is sent, and asks again from Ctrl+K. The switch belongs to the household, so only the
 // phone run asks (the iPad run checks the pages' layout). Real AI calls (Groq → OpenAI): ~3 questions a run.
-test.use({ storageState: STORAGE_STATE });
+// no service worker: the stop check below fakes the function's reply, which a worker's own fetch would bypass
+test.use({ storageState: STORAGE_STATE, serviceWorkers: 'block' });
 
 const TOKEN = 'e2easkp';
 const HOSTILE = `${TOKEN} lamp <img src=x onerror=alert(1)> https://evil.example`;
@@ -65,6 +66,19 @@ test('10: Ask Gedara — switch on, ask, plain-text answers, valuables hidden, u
       await expect(page.getByRole('heading', { level: 1, name: 'Ask Gedara' })).toBeVisible();
       await noOverflow(page, path);
     }
+    // the emergency stop: no card normally; when the function answers "stopped", the card shows how to end it
+    await page.goto('/settings/ask');
+    await expect(page.getByRole('heading', { level: 1, name: 'Ask Gedara' })).toBeVisible();
+    await expect(page.getByText('The emergency stop is on')).toHaveCount(0);
+    await page.route('**/functions/v1/ask-gedara', (route) =>
+      route.request().method() === 'GET'
+        ? route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"stopped"}' })
+        : route.continue());
+    await page.reload();
+    await expect(page.getByRole('alert').filter({ hasText: 'The emergency stop is on' })).toBeVisible();
+    await expect(page.getByText('node scripts/ask-switch.mjs staging on')).toBeVisible();
+    await noOverflow(page, '/settings/ask (stopped)');
+    await page.screenshot({ path: 'playwright/.auth/ask-stopped.png' });
     return;
   }
   test.setTimeout(300_000);

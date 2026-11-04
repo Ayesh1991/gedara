@@ -100,6 +100,23 @@ export async function runForAnswer(householdId: string, call: AskCall): Promise<
   return data;
 }
 
+/** Is the emergency stop (secret ASK_OFF, scripts/ask-switch.mjs) on? The function's GET answers 503 'stopped'. */
+export const askStoppedQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: askKey(householdId, 'stopped'),
+    queryFn: async (): Promise<boolean> => {
+      const { error } = await supabase.functions.invoke('ask-gedara', { method: 'GET' });
+      if (!error) return false;
+      const res = (error as { context?: Response }).context;
+      if (res?.status !== 503) return false;
+      const body = (await res.clone().json().catch(() => ({}))) as { error?: string };
+      return body.error === 'stopped';
+    },
+    // checked again every time the page opens: right after the stop is ended, the card must go
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+
 export async function saveAskSettings(householdId: string, p: { ask_enabled?: boolean; ask_daily_per_person?: number }) {
   const { error } = await supabase.rpc('rpc_ask_settings_save', { p_household: householdId, p });
   if (error) throw error;

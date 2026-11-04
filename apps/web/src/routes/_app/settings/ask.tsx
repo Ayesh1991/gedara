@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronLeft, Gem, MapPin, Package, ShieldCheck, Sparkles } from 'lucide-react';
+import { ChevronLeft, Gem, MapPin, OctagonX, Package, ShieldCheck, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Toggle } from '@/components/ui/toggle';
-import { askStatusQuery, invalidateAsk, saveAskSettings, valuablesQuery } from '@/lib/ask/queries';
+import { askStatusQuery, askStoppedQuery, invalidateAsk, saveAskSettings, valuablesQuery } from '@/lib/ask/queries';
+import { env } from '@/lib/env';
 
 export const Route = createFileRoute('/_app/settings/ask')({
   component: AskSettingsPage,
@@ -29,6 +30,8 @@ function AskSettingsPage() {
   const isOwner = membership.role === 'owner';
   const status = useQuery(askStatusQuery(householdId));
   const valuables = useQuery({ ...valuablesQuery(householdId), enabled: isOwner });
+  const stopped = useQuery({ ...askStoppedQuery(householdId), enabled: isOwner });
+  const project = env.VITE_APP_ENV === 'prod' ? 'prod' : 'staging';
   const [limit, setLimit] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const s = status.data;
@@ -61,6 +64,19 @@ function AskSettingsPage() {
         <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('ask.title')}</h1>
         <p className="mt-1 max-w-prose text-[14.5px] text-muted">{t('ask.intro')}</p>
       </div>
+
+      {isOwner && stopped.data && (
+        <Card role="alert" className="flex flex-col gap-2 border-red/40 bg-red/10">
+          <div className="flex items-center gap-2 font-medium">
+            <OctagonX className="h-5 w-5 shrink-0 text-red" aria-hidden />
+            {t('ask.settings.stoppedTitle')}
+          </div>
+          <p className="text-[13.5px] text-muted">{t('ask.settings.stoppedBody')}</p>
+          <code className="tabular rounded-xl bg-black/40 px-3 py-2 font-mono text-[13px] break-all select-all">
+            node scripts/ask-switch.mjs {project} on
+          </code>
+        </Card>
+      )}
 
       <Card className="flex flex-col gap-3">
         <div className="flex items-center gap-3">

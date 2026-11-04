@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.1 — Ask Gedara: the emergency stop can't be mistaken for a setup step
+- Settings › Ask Gedara no longer shows the emergency-stop command; it says the switch at the top is all you
+  need. When the emergency stop is on, the owner sees a red card saying so, with the exact command that ends
+  it. The "stopped" message on the Ask page says the owner can end it there.
+
 ## 0.10.0 — Phase 10: Ask Gedara, questions in plain words answered from your own data
 - **Ask Gedara**: type a question in English or Sinhala — on Home, on the Ask page, or with Ctrl+K — e.g.
   "How much did we spend on fish since June?", "What's due this month?", "Where is the drill?", "When does the
