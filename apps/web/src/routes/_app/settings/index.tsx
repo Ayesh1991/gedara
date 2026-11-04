@@ -1,5 +1,5 @@
 import { Link, createFileRoute, type LinkProps } from '@tanstack/react-router';
-import { BellRing, ChevronRight, HardDrive, HardDriveDownload, ListPlus, MapPin, Palette, Ruler, Shapes, Smartphone, Sparkles, Stethoscope, type LucideIcon, Wallet } from 'lucide-react';
+import { BellRing, ChevronRight, HardDrive, HardDriveDownload, ListPlus, MapPin, MessageCircleQuestion, Palette, Ruler, Shapes, Smartphone, Sparkles, Stethoscope, type LucideIcon, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -57,6 +57,7 @@ function SettingsPage() {
         hint={t('settings.accountsHint')}
       />
       <SettingsLink to="/settings/matching" icon={Sparkles} title={t('matching.title')} hint={t('settings.matchingHint')} />
+      <SettingsLink to="/settings/ask" icon={MessageCircleQuestion} title={t('ask.title')} hint={t('ask.settingsHint')} />
       <SettingsLink
         to="/settings/categories"
         icon={Shapes}

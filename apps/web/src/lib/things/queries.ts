@@ -43,6 +43,8 @@ export interface Asset extends AssetRow {
   sale_gain: number | null;
   warranty_days_left: number | null;
   next_due: string | null;
+  /** valuable, and its place is the owner's only (migration 98): "Kept in: private" */
+  place_private: boolean | null;
 }
 export type PendingLine = Tables<'v_asset_pending_line'>;
 export type Tag = Tables<'tag'>;

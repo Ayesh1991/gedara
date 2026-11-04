@@ -21,6 +21,7 @@ export default defineConfig({
       '@home': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/home'),
       '@match': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/match'),
       '@ai': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/ai'),
+      '@ask': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/ask'),
       zod: path.resolve(import.meta.dirname, 'node_modules/zod'),
     },
   },

@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.10.0 — Phase 10: Ask Gedara, questions in plain words answered from your own data
+- **Ask Gedara**: type a question in English or Sinhala — on Home, on the Ask page, or with Ctrl+K — e.g.
+  "How much did we spend on fish since June?", "What's due this month?", "Where is the drill?", "When does the
+  Toyota instalment end?", "What runs out this week?". The answer is short, shows the numbers it used and links
+  to the page they came from; when the data isn't there it says so. It only reads: it can't book, change,
+  delete, move stock or control a device.
+- **The AI never sees your data.** It only reads the question and picks which of Gedara's 9 fixed read-only
+  questions to run (spending, bills, what's due, instalments, where is it, pantry, balances, budget,
+  warranties). Gedara runs them itself with the asker's own login and fills a fixed sentence, so every number
+  comes from the database and a shop name can't trick the AI. Groq answers first (free, keeps nothing), OpenAI
+  when Groq is busy; Gemini is never used for Ask.
+- OTPs, passwords, card or account numbers and code-like numbers in a question are stopped before anything is
+  sent; e-mail addresses are masked. House data (doors, windows, people) and bank SMS are never part of an answer.
+- **Settings › Ask Gedara** (owner): off by default; questions per person per day (default 20); this month's
+  AI cost, shared with Matching under the same US$0.90 cap. Questions and answers are not kept — only counts.
+  Emergency stop: `node scripts/ask-switch.mjs prod off`.
+- **Valuables**: the owner marks a thing or a place "Valuable" on its page. Others still see a valuable thing,
+  but not where it is kept, its photos or receipts ("Kept in: private"); a valuable place (the safe) and
+  everything inside it is the owner's only. Ask never shows valuables, not even to the owner.
+- Accuracy (docs/ask-accuracy.md): 64 of 66 real questions right on prod data (97 %), Sinhala 9 of 10,
+  16 of 16 held-out questions. Migrations 98–101 (schema 101), function `ask-gedara-2`.
+
 ## 0.9.19 — Log diet: the speaker and the house bridge log ~8× less
 - Supabase's free **Log Ingestion** (1 GB a month) was running out: the music speaker and the Home Assistant
   bridge each made ~7 logged requests every 25 s, day and night (~40 MB a day together).

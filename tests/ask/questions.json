@@ -1,0 +1,480 @@
+{
+  "about": "Ask Gedara accuracy set (Phase 10). Each question's truth is SQL written by hand on the raw tables (never the ask_* functions), run read-only on prod. :T = today (Asia/Colombo), :H = the household. `pick` is the path in the answer of call 0 that must equal the truth. A refusal question expects that refusal and no calls. Plans come from the staging ask-gedara function (the AI sees only the question), so prod data never reaches an AI. Questions with \"set\": \"held\" were written after the first tuning round and are never used to tune the prompt or the functions: they show how Ask does on questions it wasn't tuned for.",
+  "spend": "select coalesce(sum(case when t.type = 'refund' then -l.amount else l.amount end), 0) from transaction_line l join money_transaction t on t.id = l.transaction_id and t.household_id = l.household_id left join category c on c.id = l.category_id where t.household_id = :H and t.type in ('expense', 'refund')",
+  "questions": [
+    {
+      "id": "veg-june",
+      "lang": "en",
+      "q": "How much did we spend on vegetables since June?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Vegetables' and t.occurred_on between '2026-06-01' and :T"
+    },
+    {
+      "id": "petrol-oct",
+      "lang": "en",
+      "q": "How much did we spend on petrol in October?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Petrol' and t.occurred_on between '2026-10-01' and '2026-10-31'"
+    },
+    {
+      "id": "dining-last-month",
+      "lang": "en",
+      "q": "What did we spend on dining out last month?",
+      "pick": "total",
+      "truth": "{spend} and (c.name = 'Dining out' or c.parent_id = (select id from category where household_id = :H and name = 'Dining out' and parent_id is null)) and t.occurred_on between '2026-10-01' and '2026-10-31'"
+    },
+    {
+      "id": "electricity-april",
+      "lang": "en",
+      "q": "How much went on electricity since April?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Electricity' and t.occurred_on between '2026-04-01' and :T"
+    },
+    {
+      "id": "subs-year",
+      "lang": "en",
+      "q": "How much have we paid for subscriptions this year?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Subscriptions' and t.occurred_on between '2026-01-01' and :T"
+    },
+    {
+      "id": "education-year",
+      "lang": "en",
+      "q": "Education spending this year?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Education' and t.occurred_on between '2026-01-01' and :T"
+    },
+    {
+      "id": "rent-may",
+      "lang": "en",
+      "q": "What did we pay for house rent since May?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'House renting' and t.occurred_on between '2026-05-01' and :T"
+    },
+    {
+      "id": "milk-aug",
+      "lang": "en",
+      "q": "How much did we spend on milk since August?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Dairy & milk' and t.occurred_on between '2026-08-01' and :T"
+    },
+    {
+      "id": "water-bill-total",
+      "lang": "en",
+      "q": "How much were the water bills from June to October?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Water bill' and t.occurred_on between '2026-06-01' and '2026-10-31'"
+    },
+    {
+      "id": "cargills-july",
+      "lang": "en",
+      "q": "How much did we spend at Cargills since July?",
+      "pick": "total",
+      "truth": "{spend} and coalesce((select m.name from merchant m where m.id = t.merchant_id), t.payee_text) ilike '%cargills%' and t.occurred_on between '2026-07-01' and :T"
+    },
+    {
+      "id": "keells-month",
+      "lang": "en",
+      "q": "How much did we spend at Keells?",
+      "pick": "total",
+      "truth": "{spend} and coalesce((select m.name from merchant m where m.id = t.merchant_id), t.payee_text) ilike '%keells%' and t.occurred_on between date_trunc('month', :T::date)::date and :T"
+    },
+    {
+      "id": "all-sept",
+      "lang": "en",
+      "q": "Spending by category in September",
+      "pick": "total",
+      "truth": "{spend} and t.occurred_on between '2026-09-01' and '2026-09-30'"
+    },
+    {
+      "id": "top-shop-oct",
+      "lang": "en",
+      "q": "Which shop did we spend the most at in October?",
+      "pick": "groups.0.name",
+      "truth": "select x.n from (select coalesce(m.name, t.payee_text) n, sum(case when t.type = 'refund' then -l.amount else l.amount end) s from transaction_line l join money_transaction t on t.id = l.transaction_id left join merchant m on m.id = t.merchant_id where t.household_id = :H and t.type in ('expense', 'refund') and t.occurred_on between '2026-10-01' and '2026-10-31' group by 1 order by 2 desc limit 1) x"
+    },
+    {
+      "id": "last-week",
+      "lang": "en",
+      "q": "How much did we spend in the last week?",
+      "pick": "total",
+      "truth": "{spend} and t.occurred_on between :T::date - 7 and :T"
+    },
+    {
+      "id": "clothing-year",
+      "lang": "en",
+      "q": "How much did we spend on clothes this year?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Clothing' and t.occurred_on between '2026-01-01' and :T"
+    },
+    {
+      "id": "petrol-last3",
+      "lang": "en",
+      "q": "Show the last 3 petrol bills",
+      "pick": "rows.0.date",
+      "truth": "select max(t.occurred_on)::text from transaction_line l join money_transaction t on t.id = l.transaction_id join category c on c.id = l.category_id where t.household_id = :H and t.type = 'expense' and c.name = 'Petrol' and t.occurred_on <= :T"
+    },
+    {
+      "id": "water-last",
+      "lang": "en",
+      "q": "When did we last pay the water bill?",
+      "pick": "rows.0.date",
+      "truth": "select max(t.occurred_on)::text from transaction_line l join money_transaction t on t.id = l.transaction_id join category c on c.id = l.category_id where t.household_id = :H and t.type = 'expense' and c.name = 'Water bill' and t.occurred_on <= :T"
+    },
+    {
+      "id": "due-month",
+      "lang": "en",
+      "q": "What's due this month?",
+      "pick": "total",
+      "truth": "select coalesce(sum(p.monthly), 0) from instalment_plan p cross join generate_series(1, p.total_count) n where p.household_id = :H and not p.archived and (p.first_on + make_interval(months => n - 1))::date between :T and (date_trunc('month', :T::date) + interval '1 month - 1 day')::date"
+    },
+    {
+      "id": "due-dec",
+      "lang": "en",
+      "q": "What do we have to pay in December?",
+      "pick": "total",
+      "truth": "select coalesce(sum(p.monthly), 0) from instalment_plan p cross join generate_series(1, p.total_count) n where p.household_id = :H and not p.archived and (p.first_on + make_interval(months => n - 1))::date between '2026-12-01' and '2026-12-31'"
+    },
+    {
+      "id": "due-jan",
+      "lang": "en",
+      "q": "How much are the instalments in January?",
+      "pick": "total",
+      "truth": "select coalesce(sum(p.monthly), 0) from instalment_plan p cross join generate_series(1, p.total_count) n where p.household_id = :H and not p.archived and (p.first_on + make_interval(months => n - 1))::date between '2027-01-01' and '2027-01-31'"
+    },
+    {
+      "id": "toyota-end",
+      "lang": "en",
+      "q": "When does the Toyota instalment end?",
+      "pick": "rows.0.last_on",
+      "truth": "select (first_on + make_interval(months => total_count - 1))::date::text from instalment_plan where household_id = :H and name = 'Toyota Lanka'"
+    },
+    {
+      "id": "luxury-left",
+      "lang": "en",
+      "q": "How much is left to pay on the Luxury X plan?",
+      "pick": "rows.0.left_to_pay",
+      "truth": "select round((p.total_count - (select count(*) from generate_series(1, p.total_count) n where (p.first_on + make_interval(months => n - 1))::date <= :T)) * p.monthly, 2) from instalment_plan p where p.household_id = :H and p.name = 'Luxury X'"
+    },
+    {
+      "id": "boc-loan-owed",
+      "lang": "en",
+      "q": "How much do we still owe on the BOC loan?",
+      "pick": "rows.0.owed",
+      "truth": "select round(p.principal * power(1 + p.annual_rate / 1200, k.paid) - p.monthly * (power(1 + p.annual_rate / 1200, k.paid) - 1) / (p.annual_rate / 1200), 2) from instalment_plan p cross join lateral (select count(*)::int paid from generate_series(1, p.total_count) n where (p.first_on + make_interval(months => n - 1))::date <= :T) k where p.household_id = :H and p.name = 'BOC Loan'"
+    },
+    {
+      "id": "insurance-left",
+      "lang": "en",
+      "q": "How many insurance instalments are left?",
+      "pick": "rows.0.left",
+      "truth": "select p.total_count - (select count(*) from generate_series(1, p.total_count) n where (p.first_on + make_interval(months => n - 1))::date <= :T) from instalment_plan p where p.household_id = :H and p.name = 'Sri Lanka Insurance'"
+    },
+    {
+      "id": "pgim-end",
+      "lang": "en",
+      "q": "When does the PGIM plan finish?",
+      "pick": "rows.0.last_on",
+      "truth": "select (first_on + make_interval(months => total_count - 1))::date::text from instalment_plan where household_id = :H and name = 'Postgraduate inst. of Medicine'"
+    },
+    {
+      "id": "instalments-monthly",
+      "lang": "en",
+      "q": "How much do we pay in instalments every month?",
+      "pick": "monthly_total",
+      "truth": "select coalesce(sum(p.monthly), 0) from instalment_plan p where p.household_id = :H and not p.archived and (p.first_on + make_interval(months => p.total_count - 1))::date > :T"
+    },
+    {
+      "id": "find-ram",
+      "lang": "en",
+      "q": "Where is the laptop RAM?",
+      "pick": "rows.0.place",
+      "truth": "select l.path from asset a join location l on l.id = a.location_id where a.household_id = :H and a.name ilike 'DDR4 Laptop RAM%' limit 1"
+    },
+    {
+      "id": "find-housemaid",
+      "lang": "en",
+      "q": "Where is the Housemaid book?",
+      "pick": "rows.0.place",
+      "truth": "select l.path from asset a join location l on l.id = a.location_id where a.household_id = :H and a.name = 'Housemaid' limit 1"
+    },
+    {
+      "id": "find-rekha",
+      "lang": "en",
+      "q": "Where is the Rekha Wuntakal MRCOG book?",
+      "pick": "rows.0.place",
+      "truth": "select l.path from asset a join location l on l.id = a.location_id where a.household_id = :H and a.name ilike '%rekha wuntakal%' limit 1"
+    },
+    {
+      "id": "stock-keeri",
+      "lang": "en",
+      "q": "How much keeri samba rice is left?",
+      "pick": "rows.0.qty",
+      "truth": "select sum(s.qty_remaining) from stock_lot s join product p on p.id = s.product_id where p.household_id = :H and p.name = 'Keeri Samba Bulk' and s.qty_remaining > 0"
+    },
+    {
+      "id": "stock-dhal",
+      "lang": "en",
+      "q": "How much red dhal do we have?",
+      "pick": "rows.0.qty",
+      "truth": "select sum(s.qty_remaining) from stock_lot s join product p on p.id = s.product_id where p.household_id = :H and p.name = 'Red Dhal' and s.qty_remaining > 0"
+    },
+    {
+      "id": "runout-week",
+      "lang": "en",
+      "q": "What runs out this week?",
+      "pick": "rows.length",
+      "truth": "select least(count(*), 10) from v_product_velocity v join product p on p.id = v.product_id where v.household_id = :H and not p.archived and v.days_to_empty <= 7"
+    },
+    {
+      "id": "expiring-2w",
+      "lang": "en",
+      "q": "What expires in the next two weeks?",
+      "pick": "rows.length",
+      "truth": "select least(count(*), 10) from stock_lot s where s.household_id = :H and s.qty_remaining > 0 and s.due_date <= :T::date + 14"
+    },
+    {
+      "id": "below-min",
+      "lang": "en",
+      "q": "Which pantry items are below their minimum?",
+      "pick": "rows.length",
+      "truth": "select least(count(*), 10) from v_product_velocity v join product p on p.id = v.product_id where v.household_id = :H and not p.archived and v.below_min"
+    },
+    {
+      "id": "bal-boc",
+      "lang": "en",
+      "q": "How much is in BOC savings?",
+      "pick": "rows.0.balance",
+      "truth": "select b.balance from v_account_balance b join account a on a.id = b.account_id where a.household_id = :H and a.name = 'BOC Savings'"
+    },
+    {
+      "id": "bal-seylan",
+      "lang": "en",
+      "q": "How much do we owe on the Seylan card?",
+      "pick": "rows.0.balance",
+      "truth": "select b.balance from v_account_balance b join account a on a.id = b.account_id where a.household_id = :H and a.name = 'Seylan Credit Card'"
+    },
+    {
+      "id": "bal-flex",
+      "lang": "en",
+      "q": "What's the balance of the BOC Flex wallet?",
+      "pick": "rows.0.balance",
+      "truth": "select b.balance from v_account_balance b join account a on a.id = b.account_id where a.household_id = :H and a.name = 'BOC Flex ··3399'"
+    },
+    {
+      "id": "budget-none",
+      "lang": "en",
+      "q": "Are we over budget this month?",
+      "pick": "rows.length",
+      "truth": "select count(*) from budget where household_id = :H"
+    },
+    {
+      "id": "warranty-3m",
+      "lang": "en",
+      "q": "Which warranties end in the next 3 months?",
+      "pick": "rows.length",
+      "truth": "select least(count(*), 10) from asset a where a.household_id = :H and not a.archived and a.status not in ('sold', 'disposed', 'lost') and not coalesce(a.lifetime_warranty, false) and a.warranty_until between :T and :T::date + 90"
+    },
+    {
+      "id": "refuse-write",
+      "lang": "en",
+      "q": "Book Rs 500 for fish today",
+      "refusal": "write"
+    },
+    {
+      "id": "refuse-house",
+      "lang": "en",
+      "q": "Is the front door open?",
+      "refusal": "house"
+    },
+    {
+      "id": "refuse-private",
+      "lang": "en",
+      "q": "Show me the SMS messages from BOC",
+      "refusal": "private"
+    },
+    {
+      "id": "si-veg-june",
+      "lang": "si",
+      "q": "ජූනි සිට එළවළු වලට කීයක් වියදම් කළාද?",
+      "pick": "total",
+      "same": "veg-june"
+    },
+    {
+      "id": "si-petrol-oct",
+      "lang": "si",
+      "q": "ඔක්තෝබර් මාසයේ පෙට්‍රල් වලට කීයක් ගියාද?",
+      "pick": "total",
+      "same": "petrol-oct"
+    },
+    {
+      "id": "si-due-month",
+      "lang": "si",
+      "q": "මේ මාසේ ගෙවන්න තියෙන්නේ මොනවද?",
+      "pick": "total",
+      "same": "due-month"
+    },
+    {
+      "id": "si-toyota",
+      "lang": "si",
+      "q": "Toyota වාරික ඉවර වෙන්නේ කවදද?",
+      "pick": "rows.0.last_on",
+      "same": "toyota-end"
+    },
+    {
+      "id": "si-boc-loan",
+      "lang": "si",
+      "q": "BOC ණය තව කීයක් ගෙවන්න තියෙනවද?",
+      "pick": "rows.0.owed",
+      "same": "boc-loan-owed"
+    },
+    {
+      "id": "si-keeri",
+      "lang": "si",
+      "q": "කීරි සම්බා හාල් කීයක් ඉතුරුද?",
+      "pick": "rows.0.qty",
+      "same": "stock-keeri"
+    },
+    {
+      "id": "si-boc-bal",
+      "lang": "si",
+      "q": "BOC ඉතුරුම් ගිණුමේ කීයක් තියෙනවද?",
+      "pick": "rows.0.balance",
+      "same": "bal-boc"
+    },
+    {
+      "id": "si-runout",
+      "lang": "si",
+      "q": "මේ සතියේ ඉවර වෙන්නේ මොනවද?",
+      "pick": "rows.length",
+      "same": "runout-week"
+    },
+    {
+      "id": "h-restaurant-sep",
+      "lang": "en",
+      "q": "How much did we spend on restaurants in September?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Restaurant' and t.occurred_on between '2026-09-01' and '2026-09-30'",
+      "set": "held"
+    },
+    {
+      "id": "h-veg-oct",
+      "lang": "en",
+      "q": "What did we spend on vegetables last month?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Vegetables' and t.occurred_on between '2026-10-01' and '2026-10-31'",
+      "set": "held"
+    },
+    {
+      "id": "h-bread-july",
+      "lang": "en",
+      "q": "How much on bread and bakery since July?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Bread & bakery' and t.occurred_on between '2026-07-01' and :T",
+      "set": "held"
+    },
+    {
+      "id": "h-laugfs-oct",
+      "lang": "en",
+      "q": "How much did we spend at Laugfs in October?",
+      "pick": "total",
+      "truth": "{spend} and coalesce((select m.name from merchant m where m.id = t.merchant_id), t.payee_text) ilike '%laugfs%' and t.occurred_on between '2026-10-01' and '2026-10-31'",
+      "set": "held"
+    },
+    {
+      "id": "h-google-year",
+      "lang": "en",
+      "q": "How much did Google One cost us this year?",
+      "pick": "total",
+      "truth": "{spend} and coalesce((select m.name from merchant m where m.id = t.merchant_id), t.payee_text) ilike '%google%' and coalesce((select m.name from merchant m where m.id = t.merchant_id), t.payee_text) ilike '%one%' and t.occurred_on between '2026-01-01' and :T",
+      "set": "held"
+    },
+    {
+      "id": "h-mobile-oct",
+      "lang": "en",
+      "q": "How much did we spend on mobile and telephone in October?",
+      "pick": "total",
+      "truth": "{spend} and c.name = 'Mobile & telephone' and t.occurred_on between '2026-10-01' and '2026-10-31'",
+      "set": "held"
+    },
+    {
+      "id": "h-abans-end",
+      "lang": "en",
+      "q": "When does the ABANS plan end?",
+      "pick": "rows.0.last_on",
+      "truth": "select (first_on + make_interval(months => total_count - 1))::date::text from instalment_plan where household_id = :H and name = 'ABANS Elite'",
+      "set": "held"
+    },
+    {
+      "id": "h-hds-left",
+      "lang": "en",
+      "q": "How many HDS instalments are left?",
+      "pick": "rows.0.left",
+      "truth": "select p.total_count - (select count(*) from generate_series(1, p.total_count) n where (p.first_on + make_interval(months => n - 1))::date <= :T) from instalment_plan p where p.household_id = :H and p.name = 'HDS Enterprises'",
+      "set": "held"
+    },
+    {
+      "id": "h-toyota-left",
+      "lang": "en",
+      "q": "How much is left on the Toyota plan?",
+      "pick": "rows.0.left_to_pay",
+      "truth": "select round((p.total_count - (select count(*) from generate_series(1, p.total_count) n where (p.first_on + make_interval(months => n - 1))::date <= :T)) * p.monthly, 2) from instalment_plan p where p.household_id = :H and p.name = 'Toyota Lanka'",
+      "set": "held"
+    },
+    {
+      "id": "h-find-skills",
+      "lang": "en",
+      "q": "Where is the Basic practical skills book?",
+      "pick": "rows.0.place",
+      "truth": "select l.path from asset a join location l on l.id = a.location_id where a.household_id = :H and a.name ilike 'Basic practical skills%' limit 1",
+      "set": "held"
+    },
+    {
+      "id": "h-milkpowder",
+      "lang": "en",
+      "q": "How much milk powder do we have?",
+      "pick": "rows.0.qty",
+      "truth": "select sum(s.qty_remaining) from stock_lot s join product p on p.id = s.product_id where p.household_id = :H and p.name = 'Milk powder' and s.qty_remaining > 0",
+      "set": "held"
+    },
+    {
+      "id": "h-bal-peoples",
+      "lang": "en",
+      "q": "What's the balance on the People's card?",
+      "pick": "rows.0.balance",
+      "truth": "select b.balance from v_account_balance b join account a on a.id = b.account_id where a.household_id = :H and a.name = 'People''s Credit Card'",
+      "set": "held"
+    },
+    {
+      "id": "h-bal-cash",
+      "lang": "en",
+      "q": "How much cash do we have?",
+      "pick": "rows.0.balance",
+      "truth": "select b.balance from v_account_balance b join account a on a.id = b.account_id where a.household_id = :H and a.name = 'Cash'",
+      "set": "held"
+    },
+    {
+      "id": "h-refuse-delete",
+      "lang": "en",
+      "q": "Delete the last bill",
+      "refusal": "write",
+      "set": "held"
+    },
+    {
+      "id": "h-si-veg-oct",
+      "lang": "si",
+      "q": "ඔක්තෝබර් මාසේ එළවළු වලට කීයද?",
+      "pick": "total",
+      "same": "h-veg-oct",
+      "set": "held"
+    },
+    {
+      "id": "h-si-abans",
+      "lang": "si",
+      "q": "ABANS වාරික ඉවර වෙන්නේ කවදද?",
+      "pick": "rows.0.last_on",
+      "same": "h-abans-end",
+      "set": "held"
+    }
+  ]
+}

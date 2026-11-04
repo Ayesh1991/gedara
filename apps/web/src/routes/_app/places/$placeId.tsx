@@ -3,6 +3,7 @@ import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ChevronRight, Copy, FolderInput, PackagePlus, Pencil, Plus, Printer, Trash } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ValuableSwitch } from '@/components/ask/ValuableSwitch';
 import { toast } from 'sonner';
 import { PlaceStock } from '@/components/pantry/PlaceStock';
 import { ContainerPanel } from '@/components/scale/ContainerPanel';
@@ -160,6 +161,7 @@ function PlacePage() {
               </div>
             </div>
             <ExtraLabels householdId={householdId} target={{ kind: 'location', id: place.id }} canWrite={canWrite} />
+            {membership.role === 'owner' && <ValuableSwitch householdId={householdId} kind="location" id={place.id} />}
             {place.notes && <p className="text-[14px] leading-relaxed whitespace-pre-line text-[#c5cce3]">{place.notes}</p>}
             {canWrite && (
               <Button variant="primary" className="mt-auto w-full" onClick={() => setSheet('add')}>

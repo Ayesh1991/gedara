@@ -82,7 +82,7 @@ function MoneyPage() {
           <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('nav.money')}</h1>
           <p className="mt-1 text-[14.5px] text-muted">{t('money.intro')}</p>
         </div>
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2.5 sm:max-w-[65%] sm:justify-end">
           <Link to="/money/recurring" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <Repeat className="h-4 w-4" aria-hidden />
             {t('recurring.short')}

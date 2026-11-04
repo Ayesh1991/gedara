@@ -457,3 +457,10 @@ verify_jwt = false
 [functions.match-agent]
 enabled = true
 verify_jwt = false
+
+# Ask Gedara (Phase 10): signed-in members only (the platform checks the JWT, the handler checks it again
+# and the database checks membership). It never uses the service role and never reads household data: it
+# turns a question into a plan with Groq / OpenAI and the browser runs the plan as the person asking.
+[functions.ask-gedara]
+enabled = true
+verify_jwt = true
