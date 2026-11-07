@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — schema 104: deleting an account no longer trips over a shop memory
+- Deleting an account failed ("merchant_memory_check") when Gedara remembered a shop only by that account
+  ("this shop is paid by the Seylan card", no category). That memory is now forgotten with the account; a
+  shop that also has a category keeps it. Migration 104, no app change (found by the money e2e cleanup).
+
 ## 0.10.1 — Ask Gedara: the emergency stop can't be mistaken for a setup step
 - Settings › Ask Gedara no longer shows the emergency-stop command; it says the switch at the top is all you
   need. When the emergency stop is on, the owner sees a red card saying so, with the exact command that ends
