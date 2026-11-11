@@ -9,10 +9,13 @@
 
 namespace scanner {
 /** Opens the serial port and sends the start-up settings. False = the module didn't answer. */
-bool begin(gm861::Eye eye);
-/** Change how it watches (sense / always / key). False = it didn't answer. */
-bool setEye(gm861::Eye eye);
+bool begin(gm861::Eye eye, gm861::Sense sense);
+/** Change how it watches (sense / always / key) and how keenly. False = it didn't answer. */
+bool setEye(gm861::Eye eye, gm861::Sense sense);
 gm861::Eye eye();
+gm861::Sense sense();
+/** Serial "sense <p1> <p2>": try raw sensitivity numbers (0–255, lower = keener) until the next restart. */
+bool rawSense(uint8_t p1, uint8_t p2);
 bool found();                 // answered at the last begin / setEye
 /** "Read now" (only does something in key mode). */
 void trigger();

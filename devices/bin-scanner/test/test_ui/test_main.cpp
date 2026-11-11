@@ -84,6 +84,10 @@ void test_left_text() {
   TEST_ASSERT_EQUAL_STRING("400 g", b);
   uilogic::amountText(3, "pcs", b, sizeof b);
   TEST_ASSERT_EQUAL_STRING("3", b);
+  uilogic::leftText(2, "pack", false, 1, b, sizeof b);
+  TEST_ASSERT_EQUAL_STRING("2 packs left", b);
+  uilogic::leftText(1, "pack", false, 1, b, sizeof b);
+  TEST_ASSERT_EQUAL_STRING("1 pack left", b);
 }
 
 void test_burn_in_walk_stays_within_one_pixel_and_moves() {

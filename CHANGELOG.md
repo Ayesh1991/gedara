@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.11.1 — Bin scanner: a keener reader, and devices that survive a silent router
+- **How keenly it senses a pack** (Settings › Devices › the scanner): Normal / High / Highest. In a dim kitchen
+  the reader woke late or not at all; Highest makes it react to much smaller changes. The lamp still lights
+  only while it reads and each read is shorter (2 s), so the reader doesn't wear out faster. Schema 110,
+  scanner firmware 0.1.1 (new scanners start on High).
+- The scanner uses public name servers (8.8.8.8 / 1.1.1.1) when the home router's doesn't answer. On 11 Nov the
+  router refused every lookup and the scale, speaker and Home Assistant bridge all went offline until it was
+  restarted; the scanner now carries on by itself.
+- "2 packs left" instead of "2 pack left" for products counted in packs, bottles, cans … (app and scanner screen).
+- Scanner Serial Monitor: `buzz` (which kind of buzzer, and is it wired) and `sense <a> <b>` (try sensitivity numbers).
+
 ## 0.11.0 — Phase 11: Bin scanner, the pantry counts itself at the kitchen bin
 - **Bin scanner**: a small barcode scanner next to the kitchen bin (ESP32 + GM861S reader + keypad + OLED +
   buzzer). Show the empty pack to it on the way to the bin: an instant tick, the screen says

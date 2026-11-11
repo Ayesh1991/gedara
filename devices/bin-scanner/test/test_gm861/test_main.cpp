@@ -60,7 +60,7 @@ void test_mode_bytes() {
 
 void test_startup_settings_end_with_the_mode() {
   Setting s[12];
-  const size_t n = startupSettings(Eye::Sense, s, 12);
+  const size_t n = startupSettings(Eye::Sense, Sense::High, s, 12);
   TEST_ASSERT_TRUE(n >= 6);
   TEST_ASSERT_EQUAL_HEX16(kZoneMode, s[n - 1].addr);
   TEST_ASSERT_EQUAL_HEX8(0xD7, s[n - 1].value);
@@ -138,8 +138,31 @@ void test_rubbish_and_too_long_lines_are_dropped() {
   TEST_ASSERT_EQUAL_STRING("ok-again", a.text());
 }
 
+void test_sensitivity_steps() {
+  uint8_t a, b, c, d, e, f;
+  senseBytes(Sense::Normal, &a, &b);
+  senseBytes(Sense::High, &c, &d);
+  senseBytes(Sense::Max, &e, &f);
+  TEST_ASSERT_EQUAL_HEX8(0x32, a);  // the factory values
+  TEST_ASSERT_EQUAL_HEX8(0x0A, b);
+  TEST_ASSERT_TRUE(c < a && d < b);  // lower = keener
+  TEST_ASSERT_TRUE(e < c && f < d);
+  TEST_ASSERT_TRUE(e > 0 && f > 0);
+  // A keener reader reads for a shorter time, so its lamp is not on longer overall.
+  Setting s[12];
+  size_t n = startupSettings(Eye::Sense, Sense::Max, s, 12);
+  uint8_t readMax = 0, readNormal = 0;
+  for (size_t i = 0; i < n; i++) if (s[i].addr == kZoneReadTime) readMax = s[i].value;
+  n = startupSettings(Eye::Sense, Sense::Normal, s, 12);
+  for (size_t i = 0; i < n; i++) if (s[i].addr == kZoneReadTime) readNormal = s[i].value;
+  TEST_ASSERT_TRUE(readMax < readNormal);
+  // The lamp stays "only while reading" at every step (zone 0x0000 bits 3-2 = 01).
+  TEST_ASSERT_EQUAL_HEX8(0x04, modeByte(Eye::Sense) & 0x0C);
+}
+
 int main(int, char**) {
   UNITY_BEGIN();
+  RUN_TEST(test_sensitivity_steps);
   RUN_TEST(test_write_frame_matches_the_manual);
   RUN_TEST(test_read_frame_matches_the_manual);
   RUN_TEST(test_trigger_frame);

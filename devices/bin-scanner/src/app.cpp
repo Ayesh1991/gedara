@@ -65,11 +65,18 @@ gm861::Eye wantedEye() {
   return c.eye == 1 ? gm861::Eye::Always : gm861::Eye::Sense;
 }
 
+gm861::Sense wantedSense() {
+  const int s = settings::get().config.sense;
+  return s == 2 ? gm861::Sense::Max : (s == 0 ? gm861::Sense::Normal : gm861::Sense::High);
+}
+
 void applyEye() {
   const gm861::Eye e = wantedEye();
-  if (e == scanner::eye() && scanner::found()) return;
-  const bool ok = scanner::setEye(e);
-  logbuf::logf("[SCAN] eye: %s%s", app::eyeName(), ok ? "" : " (the reader did not answer)");
+  const gm861::Sense s = wantedSense();
+  if (e == scanner::eye() && s == scanner::sense() && scanner::found()) return;
+  const bool ok = scanner::setEye(e, s);
+  logbuf::logf("[SCAN] eye: %s, sensing %s%s", app::eyeName(), s == gm861::Sense::Max ? "max" : (s == gm861::Sense::High ? "high" : "normal"),
+               ok ? "" : " (the reader did not answer)");
 }
 
 Sound modeSound(Mode m) {

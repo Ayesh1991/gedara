@@ -11,6 +11,7 @@ struct ScannerConfig {      // from Gedara (reply.config)
   int quietTo = 6 * 60;
   int eye = 0;              // 0 senses movement · 1 always reading · 2 only after a key
   bool eyeQuietKey = false; // in quiet hours: only after a key
+  int sense = 1;            // how keenly the reader senses: 0 normal · 1 high · 2 max
   int modeS = 30;           // seconds before Add / Opened / Waste / Check fall back to Used
   bool buzzerPassive = true;
   int bright = 80;          // 0–100

@@ -4,6 +4,7 @@
 import type { ScanMode, ScanStatus } from '@scanner/protocol';
 
 const MINUS = '−';
+const COUNT_WORDS = new Set(['pack', 'packet', 'bottle', 'can', 'box', 'jar', 'bag', 'tin', 'cup', 'tub', 'roll', 'bar', 'sachet', 'tube']);
 
 function num(n: number, locale: string, digits = 2): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: digits }).format(n);
@@ -16,7 +17,9 @@ export function formatAmount(qty: number, unit: string | null | undefined, local
   const u = (unit ?? '').toLowerCase();
   if (u === 'pcs' || u === '') return `${sign}${num(abs, locale)}`;
   if ((u === 'g' || u === 'ml') && abs >= 1000) return `${sign}${num(abs / 1000, locale)} ${u === 'g' ? 'kg' : 'L'}`;
-  return `${sign}${num(abs, locale, abs < 10 ? 1 : 0)} ${unit}`;
+  // Counted in packs, bottles, cans …: "2 packs", "1 pack".
+  const plural = COUNT_WORDS.has(u) && Math.abs(abs - 1) > 0.00005 ? 's' : '';
+  return `${sign}${num(abs, locale, abs < 10 ? 1 : 0)} ${unit}${plural}`;
 }
 
 /** A change with its sign: "−1", "+400 ml". */

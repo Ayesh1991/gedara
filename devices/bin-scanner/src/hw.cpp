@@ -172,6 +172,7 @@ void keypad::inject2(char a, char b, uint32_t holdMs) {
 namespace {
 gm861::LineAssembler lines;
 gm861::Eye currentEye = gm861::Eye::Sense;
+gm861::Sense currentSense = gm861::Sense::High;
 bool moduleFound = false;
 
 #ifndef GEDARA_FAKE
@@ -198,9 +199,9 @@ bool writeSetting(uint16_t addr, uint8_t value) {
   return false;
 }
 
-bool configure(gm861::Eye eye) {
+bool configure(gm861::Eye eye, gm861::Sense sense) {
   gm861::Setting s[12];
-  const size_t n = gm861::startupSettings(eye, s, 12);
+  const size_t n = gm861::startupSettings(eye, sense, s, 12);
   size_t ok = 0;
   for (size_t i = 0; i < n; i++) if (writeSetting(s[i].addr, s[i].value)) ok++;
   return ok == n;
@@ -213,31 +214,44 @@ struct FakeLine {
 #endif
 }  // namespace
 
-bool scanner::begin(gm861::Eye eye) {
+bool scanner::begin(gm861::Eye eye, gm861::Sense sense) {
   currentEye = eye;
+  currentSense = sense;
 #ifdef GEDARA_FAKE
   fakeQ = xQueueCreate(8, sizeof(FakeLine));
   moduleFound = true;
 #else
   port.begin(9600, SERIAL_8N1, PIN_SCANNER_RX, PIN_SCANNER_TX);
   delay(300);  // the module needs 250 ms after power-on
-  moduleFound = configure(eye);
+  moduleFound = configure(eye, sense);
   if (!moduleFound) {
     delay(500);
-    moduleFound = configure(eye);
+    moduleFound = configure(eye, sense);
   }
 #endif
   return moduleFound;
 }
 
-bool scanner::setEye(gm861::Eye eye) {
+bool scanner::setEye(gm861::Eye eye, gm861::Sense sense) {
   currentEye = eye;
+  currentSense = sense;
 #ifndef GEDARA_FAKE
-  moduleFound = writeSetting(gm861::kZoneMode, gm861::modeByte(eye));
+  moduleFound = configure(eye, sense);  // all of them again: the read time goes with the sensitivity
 #endif
   return moduleFound;
 }
 
+bool scanner::rawSense(uint8_t p1, uint8_t p2) {
+#ifndef GEDARA_FAKE
+  return writeSetting(gm861::kZoneSense1, p1) && writeSetting(gm861::kZoneSense2, p2);
+#else
+  (void)p1;
+  (void)p2;
+  return true;
+#endif
+}
+
+gm861::Sense scanner::sense() { return currentSense; }
 gm861::Eye scanner::eye() { return currentEye; }
 bool scanner::found() { return moduleFound; }
 uint32_t scanner::dropped() { return lines.dropped(); }

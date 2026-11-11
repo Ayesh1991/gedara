@@ -10,6 +10,9 @@ describe('scanner amounts', () => {
     expect(formatAmount(1500, 'g')).toBe('1.5 kg');
     expect(formatAmount(1000, 'ml')).toBe('1 L');
     expect(formatAmount(-0, 'pcs')).toBe('0');
+    expect(formatAmount(2, 'pack')).toBe('2 packs');
+    expect(formatAmount(1, 'pack')).toBe('1 pack');
+    expect(formatAmount(0, 'bottle')).toBe('0 bottles');
   });
   it('gives a change its sign, with a real minus', () => {
     expect(formatChange(-1, 'pcs')).toBe('−1');
@@ -98,6 +101,8 @@ describe('scanner protocol', () => {
     expect(ScannerSettings.safeParse(ok).success).toBe(true);
     expect(ScannerSettings.safeParse({ ...ok, mode_s: 5 }).success).toBe(false);
     expect(ScannerSettings.safeParse({ ...ok, eye: 'laser' }).success).toBe(false);
+    expect(ScannerSettings.safeParse({ ...ok, sense: 'max' }).success).toBe(true);
+    expect(ScannerSettings.safeParse({ ...ok, sense: 'laser' }).success).toBe(false);
   });
 });
 

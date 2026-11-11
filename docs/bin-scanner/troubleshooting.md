@@ -8,6 +8,8 @@ Diagnostics** → the VS Code **Serial Monitor**.
 |---|---|---|
 | **reader MISSING** at start; Gedara shows "Scanner eye: Not answering" | the reader's wires | VCC on **3V3**; scanner pin 5 (TXD) → **RX2**, pin 4 (RXD) → **TX2** (crossed is right); GND joined. Try swapping the RX2 / TX2 wires once |
 | The reader's lamp never comes on | no power, or eye set to "Only after a key" | check 3V3 and GND at the reader; Settings › Devices › the scanner › How it watches |
+| It doesn't wake for a pack when the kitchen is dim | the reader senses a change in the picture, and in dim light a pack changes it little | Settings › Devices › the scanner › **How keenly it senses → Highest**, Save, press #. Still missing: "How it watches → Always", or fit the distance sensor |
+| It lights up when nobody is there | sensing set too keen for a room with changing light | one step lower (Highest → High → Normal) |
 | Lamp on, but no tick | the code is too close, too far, or glaring | 10–20 cm; tilt the pack a little; shiny foil: tilt more |
 | It reads the same pack twice | the pack stayed in view | a repeat within 2.5 s is ignored; move it away after the tick |
 | **screen MISSING** at start | OLED wiring | VCC 3V3, GND, SDA → **D21**, SCL → **D22**. Some OLEDs have VCC and GND swapped: read the print on yours |

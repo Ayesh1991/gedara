@@ -9,7 +9,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(74);
+select plan(76);
 
 create function pg_temp.u(p_code text) returns uuid language sql stable as
   $$ select id from public.unit where household_id is null and code = p_code $$;
@@ -223,6 +223,8 @@ select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"key",
   'scanner settings are accepted');
 select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"keymap":"1111456B789C*0#D"}}')$$, pg_temp.dev()),
   '23514', null, 'a key map must have every key once');
+select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"sense":"max"}}')$$, pg_temp.dev()), 'the reader can be made as keen as it goes');
+select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"sense":"laser"}}')$$, pg_temp.dev()), '23514', null, 'an unknown sensitivity is refused');
 select throws_ok(format($$select rpc_device_command(%L, 'tare')$$, pg_temp.dev()), '23514', null, 'a scanner has no tare command');
 select lives_ok(format($$select rpc_device_command(%L, 'beep')$$, pg_temp.dev()), 'Test beep is queued');
 reset role;

@@ -148,6 +148,10 @@ export type DeviceCommand = (typeof DEVICE_COMMANDS)[number];
 export const EYES = ['sense', 'always', 'key'] as const;
 export type Eye = (typeof EYES)[number];
 export const DEFAULT_KEYMAP = '123A456B789C*0#D';
+/** How keenly the reader senses a pack in its sensing mode (max = as keen as the GM861S goes). */
+export const SENSES = ['normal', 'high', 'max'] as const;
+export type Sense = (typeof SENSES)[number];
+export const DEFAULT_SENSE: Sense = 'high';
 
 export const ScannerSettings = z.object({
   volume: z.number().int().min(0).max(100),
@@ -160,6 +164,7 @@ export const ScannerSettings = z.object({
   bright: z.number().int().min(0).max(100),
   night_off: z.boolean(),
   keymap: z.string().regex(/^[0-9A-D*#]{16}$/),
+  sense: z.enum(SENSES).optional(), // absent on scanners added before migration 110 = high
 });
 export type ScannerSettings = z.infer<typeof ScannerSettings>;
 

@@ -32,7 +32,7 @@ import {
   type ScannerCommand,
   type ScannerDevice,
 } from '@/lib/scanner/queries';
-import type { ScannerSettings } from '@scanner/protocol';
+import { DEFAULT_SENSE, SENSES, type ScannerSettings } from '@scanner/protocol';
 
 export const Route = createFileRoute('/_app/settings/scanner/$deviceId')({
   component: ScannerPage,
@@ -151,6 +151,26 @@ function SettingsForm({ deviceId, settings, canWrite }: { deviceId: string; sett
             />
             {t('scanner.settings.eyeQuiet')}
           </label>
+        </div>
+
+        <div>
+          <label className={fieldLabel} htmlFor="sc-sense">
+            {t('scanner.settings.sense')}
+          </label>
+          <select
+            id="sc-sense"
+            className={selectClass}
+            value={s.sense ?? DEFAULT_SENSE}
+            disabled={!canWrite || s.eye !== 'sense'}
+            onChange={(e) => setS({ ...s, sense: e.target.value as ScannerSettings['sense'] })}
+          >
+            {SENSES.map((v) => (
+              <option key={v} value={v}>
+                {t(`scanner.settings.senses.${v}`)}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-[12.5px] text-faint">{t('scanner.settings.senseHint')}</p>
         </div>
 
         <div>

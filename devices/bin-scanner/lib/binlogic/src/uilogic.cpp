@@ -29,8 +29,15 @@ void amountText(double qty, const char* unit, char* out, size_t n) {
     return;
   }
   number(qty, num, sizeof num);
-  if (!unit || !unit[0] || isUnit(unit, "pcs")) snprintf(out, n, "%s", num);
-  else snprintf(out, n, "%s %s", num, unit);
+  if (!unit || !unit[0] || isUnit(unit, "pcs")) {
+    snprintf(out, n, "%s", num);
+    return;
+  }
+  // Counted in packs, bottles, cans …: "2 packs", "1 pack".
+  static const char* const kWords[] = {"pack", "packet", "bottle", "can", "box", "jar", "bag", "tin", "cup", "tub", "roll", "bar", "sachet", "tube"};
+  bool word = false;
+  for (const char* w : kWords) if (isUnit(unit, w)) word = true;
+  snprintf(out, n, word && fabs(qty - 1.0) > 0.00005 ? "%s %ss" : "%s %s", num, unit);
 }
 
 void leftText(double left, const char* unit, bool sized, double pack, char* out, size_t n) {

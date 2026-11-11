@@ -77,6 +77,14 @@ void command(String cmd) {
     net::simulateOffline(cmd.endsWith("on"));
   } else if (cmd == "buzz") {
     buzzer::test();
+  } else if (cmd.startsWith("sense ")) {
+    // sense <p1> <p2>: raw sensitivity numbers for tuning (lower = keener; factory 50 10). Until the next restart.
+    int p1 = -1, p2 = -1;
+    if (sscanf(cmd.c_str() + 6, "%d %d", &p1, &p2) == 2 && p1 >= 0 && p1 <= 255 && p2 >= 0 && p2 <= 255) {
+      Serial.printf("sensitivity %d %d: %s\n", p1, p2, scanner::rawSense(static_cast<uint8_t>(p1), static_cast<uint8_t>(p2)) ? "set" : "the reader did not answer");
+    } else {
+      Serial.println("sense <0-255> <0-255>  (lower = keener; factory 50 10, high 25 5, max 10 2)");
+    }
   } else if (cmd == "reboot") {
     ESP.restart();
 #ifdef GEDARA_FAKE
@@ -90,7 +98,7 @@ void command(String cmd) {
     keypad::inject2('A', 'D', 10300);                    // A + D for 10 s (Wi-Fi setup)
 #endif
   } else {
-    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · reboot"
+    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · sense <p1> <p2> · reboot"
 #ifdef GEDARA_FAKE
                    " · scan <code> · key <0-9 A-D * #> · hold <key> · setup"
 #endif
@@ -138,7 +146,8 @@ void setup() {
   keypad::begin();
   buzzer::begin();
   const ScannerConfig& c = settings::get().config;
-  const bool readerOk = scanner::begin(c.eye == 1 ? gm861::Eye::Always : (c.eye == 2 ? gm861::Eye::Key : gm861::Eye::Sense));
+  const bool readerOk = scanner::begin(c.eye == 1 ? gm861::Eye::Always : (c.eye == 2 ? gm861::Eye::Key : gm861::Eye::Sense),
+                                       c.sense == 2 ? gm861::Sense::Max : (c.sense == 0 ? gm861::Sense::Normal : gm861::Sense::High));
   app::begin();
   net::begin();
 

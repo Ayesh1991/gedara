@@ -38,6 +38,8 @@ constexpr uint16_t kZoneStabilise = 0x0004;  // image stabilisation time (sense 
 constexpr uint16_t kZoneInterval = 0x0005;   // pause between reads, × 0.1 s
 constexpr uint16_t kZoneReadTime = 0x0006;   // longest single read, × 0.1 s
 constexpr uint16_t kZoneOutput = 0x000D;     // where and how the text goes out
+constexpr uint16_t kZoneSense1 = 0x000F;     // sensing mode: sensitivity parameter 1 (lower = keener; factory 0x32)
+constexpr uint16_t kZoneSense2 = 0x0010;     // sensitivity parameter 2 (lower = keener; factory 0x0A)
 constexpr uint16_t kZoneSameCode = 0x0013;   // same-barcode delay
 constexpr uint16_t kZoneCode128 = 0x0033;
 constexpr uint16_t kZoneTail = 0x0060;       // line ending
@@ -49,12 +51,19 @@ constexpr uint8_t kOutputSerialUtf8 = 0x2C;  // serial port, input AUTO, output 
 constexpr uint8_t kSameCode2500ms = 0x80 | 25;
 constexpr uint8_t kTailCr = 0x01;            // plain data + CR
 
+/** How keenly the sensing mode reacts to a change in the picture. The manual gives two numbers
+ *  ("higher value, lower sensitivity", factory 0x32 and 0x0A) and no table for its presets, so these
+ *  steps are ours: half and a fifth of the factory values. The lamp only lights while reading, and
+ *  a read is cut to 2 s at High and Max, so a keener reader does not wear its LED. */
+enum class Sense : uint8_t { Normal, High, Max };
+void senseBytes(Sense s, uint8_t* p1, uint8_t* p2);
+
 /** The settings sent at every start, in order. Returns how many (≤ max). */
 struct Setting {
   uint16_t addr;
   uint8_t value;
 };
-size_t startupSettings(Eye eye, Setting* out, size_t max);
+size_t startupSettings(Eye eye, Sense sense, Setting* out, size_t max);
 
 // ── Text from the module ──────────────────────────────────────────────────────
 constexpr size_t kTextMax = 96;

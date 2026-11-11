@@ -2874,6 +2874,13 @@
         "key": "Only after a key press (20 seconds)"
       },
       "eyeQuiet": "In quiet hours, only after a key press",
+      "sense": "How keenly it senses a pack",
+      "senses": {
+        "normal": "Normal (the reader's factory setting)",
+        "high": "High",
+        "max": "Highest (for a dim kitchen)"
+      },
+      "senseHint": "Higher wakes the reader for smaller changes: better in dim light, but it may also light up when someone walks past. The lamp is still only on while it reads, and each read is shorter, so the reader doesn't wear out faster.",
       "modeTime": "Seconds before it goes back to \u201cUsed\u201d",
       "modeTimeHint": "Add, Opened, Waste and Check fall back to Used after this long, so a pack scanned at the bin can never add stock by mistake.",
       "buzzer": "Buzzer",

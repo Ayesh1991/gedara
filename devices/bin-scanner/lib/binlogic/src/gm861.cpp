@@ -58,15 +58,37 @@ uint8_t modeByte(Eye eye) {
   }
 }
 
-size_t startupSettings(Eye eye, Setting* out, size_t max) {
+void senseBytes(Sense s, uint8_t* p1, uint8_t* p2) {
+  switch (s) {
+    case Sense::Max:
+      *p1 = 0x0A;
+      *p2 = 0x02;
+      break;
+    case Sense::High:
+      *p1 = 0x19;
+      *p2 = 0x05;
+      break;
+    default:
+      *p1 = 0x32;
+      *p2 = 0x0A;
+      break;
+  }
+}
+
+size_t startupSettings(Eye eye, Sense sense, Setting* out, size_t max) {
+  uint8_t s1, s2;
+  senseBytes(sense, &s1, &s2);
   const Setting all[] = {
       {kZoneOutput, kOutputSerialUtf8},
       {kZoneTail, kTailCr},
       {kZoneCode128, 0x01},
       {kZoneSameCode, kSameCode2500ms},
-      {kZoneReadTime, 30},      // read for at most 3 s, then watch again
+      {kZoneSense1, s1},
+      {kZoneSense2, s2},
+      // A keener reader wakes more often: each read is shorter, so the lamp is on no longer overall.
+      {kZoneReadTime, static_cast<uint8_t>(sense == Sense::Normal ? 30 : 20)},  // 3 s / 2 s, then watch again
       {kZoneInterval, 5},       // 0.5 s between reads
-      {kZoneStabilise, 1},      // 0.1 s for the picture to settle after something moved
+      {kZoneStabilise, static_cast<uint8_t>(sense == Sense::Max ? 0 : 1)},  // time for the picture to settle
       {kZoneMode, modeByte(eye)},  // last: the eye opens once everything else is set
   };
   size_t n = 0;

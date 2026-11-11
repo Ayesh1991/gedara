@@ -29,7 +29,7 @@ In a terminal in the `gedara-handoff` folder:
    ```
 2. [ ] Tell me it's done. I then deploy the scanner's server function and the notification function to
    staging, refresh the app's database types, run the tests and push the preview.
-3. [ ] Preview site: the footer says **v0.11.0 · db 109**. **Settings → Diagnostics → Test connection**
+3. [ ] Preview site: the footer says **v0.11.1 · db 110**. **Settings → Diagnostics → Test connection**
    is green and its last line ends with `scanner-ingest-1`.
 
 ---
@@ -205,7 +205,7 @@ Do these **in this order** on the PC, in a terminal in the `gedara-handoff` fold
    2. **base: main** ← **compare: phase-11** → **Create pull request**.
    3. Title: `Phase 11 Bin Scanner` → **Create pull request**.
    4. **Merge pull request** → **Confirm merge**.
-5. [ ] Wait 2–3 minutes. Open **https://gedara.vercel.app**: the footer says **v0.11.0 · db 109**.
+5. [ ] Wait 2–3 minutes. Open **https://gedara.vercel.app**: the footer says **v0.11.1 · db 110**.
    **Settings → Diagnostics → Test connection** is all green.
 6. [ ] Real site → **Settings → Devices → Bin scanners** → name `Bin scanner` → **Add scanner** →
    **copy** the key.

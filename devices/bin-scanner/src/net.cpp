@@ -190,6 +190,8 @@ void applyConfig(JsonObject cfg) {
   const String eye = cfg["eye"] | "sense";
   c.eye = eye == "always" ? 1 : (eye == "key" ? 2 : 0);
   c.eyeQuietKey = String(cfg["eye_quiet"] | "same") == "key";
+  const String sense = cfg["sense"] | "high";
+  c.sense = sense == "max" ? 2 : (sense == "normal" ? 0 : 1);
   c.modeS = constrain(cfg["mode_s"] | 30, 10, 120);
   c.buzzerPassive = String(cfg["buzzer"] | "passive") != "active";
   c.bright = constrain(cfg["bright"] | 80, 0, 100);
