@@ -23,7 +23,9 @@ Diagnostics** → the VS Code **Serial Monitor**.
 | **A bill just added this** | Add scanned within 3 days of a bill with the same product | Pantry › Bin scanner › Needs you: **Add 1 more** or **Ignore** |
 | **saved · N waiting** / **wifi !** | no internet or Gedara unreachable | scans are safe on the scanner; they go when it's back, in order |
 | **Paused · The scan is kept** | someone paused it, or it scanned too much too fast | Settings › Devices › the scanner: read why, then **Resume** (owner). If it wasn't you: **Undo all**, then **Remove this scanner** and add it again with a new key |
+| Log: **DNS Failed** … *can't reach it*, although Wi-Fi is connected | the router's name server isn't answering (seen 11 Nov 2026: "Query refused") | firmware 0.1.0 from 11 Nov on switches to 8.8.8.8 / 1.1.1.1 by itself (log: *the router's name server doesn't answer*). Restarting the router usually cures the router |
 | **Key not accepted** | scanner removed in Gedara, or a staging key on gedara (or the reverse) | add it again, hold **A + D** 10 s, paste the new key, pick the right server |
+| Log: `[NET] server gedara` but the key was made on the preview site | the server field was left on **gedara** in the Wi-Fi setup | Serial Monitor: type `server gedara-staging` (or hold A + D 10 s and choose it) |
 | **Server not found** | the server in the Wi-Fi setup doesn't have the scanner function yet | preview = **gedara-staging**; gedara.vercel.app = **gedara** (after going live) |
 | Wi-Fi setup page doesn't open | the phone stayed on mobile data | turn mobile data off for a minute, or open http://192.168.4.1 |
 | Test beep / Install / new settings do nothing | the scanner hasn't called yet | **press # on the scanner** (it only calls on a scan, on #, and every 30 minutes) |

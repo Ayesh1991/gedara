@@ -44,6 +44,7 @@ uint32_t backoffMs = 0;
 uint32_t backoffUntil = 0;
 size_t maxBatch = 20;
 bool clockSet = false;
+bool dnsChecked = false;
 bool rebootAfterSync = false;
 String lastErr;
 
@@ -287,6 +288,7 @@ void syncOnce() {
     lastErr = String("net:") + HTTPClient::errorToString(code);
     logSync(String("can't reach it (") + HTTPClient::errorToString(code) + ") - Wi-Fi or internet down?");
     http.end();
+    dnsChecked = false;  // perhaps the router gave its (silent) name server again: look once more
     fail(1000, n > 0);
     return;
   }
@@ -448,8 +450,26 @@ void net::task(void*) {
     if (!wifiWasUp) {
       wifiWasUp = true;
       everUp = true;
+      dnsChecked = false;  // a new connection: the router gives its name server again
       logbuf::logf("[NET] Wi-Fi connected (%s, %d dBm)\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
       nextSyncAt = millis();  // report in at once (and send anything queued)
+    }
+    // Some home routers hand out a name server that refuses to answer (seen on Didula's router,
+    // 2026-11-11: "Query refused" for every name). If the server's name can't be found with the
+    // router's name server, use public ones (Google, Cloudflare) for this connection.
+    if (!dnsChecked) {
+      dnsChecked = true;
+      String host = settings::ingestUrl();
+      host = host.substring(8, host.indexOf('/', 8));
+      IPAddress found;
+      if (WiFi.hostByName(host.c_str(), found) != 1) {
+        const IPAddress was = WiFi.dnsIP(0);
+        WiFi.STA.dnsIP(0, IPAddress(8, 8, 8, 8));
+        WiFi.STA.dnsIP(1, IPAddress(1, 1, 1, 1));
+        const bool ok = WiFi.hostByName(host.c_str(), found) == 1;
+        logbuf::logf("[NET] the router's name server (%s) doesn't answer - using 8.8.8.8 / 1.1.1.1 instead: %s",
+                     was.toString().c_str(), ok ? "works" : "still no answer (internet down?)");
+      }
     }
     if (!clockSet) {
       configTime(0, 0, "time.google.com", "pool.ntp.org");
