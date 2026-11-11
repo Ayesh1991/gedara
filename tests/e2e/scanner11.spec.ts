@@ -112,13 +112,14 @@ test('a finished cup scanned at the bin pops up within 2 s; a replay moves nothi
 
   const started = Date.now();
   const result = await sim.scan(yoghurt.barcode!);
+  const answered = Date.now() - started;
   expect(result?.status).toBe('used');
   const popup = page.getByTestId('scanner-popups').getByTestId('scanner-scan').first();
   await expect(popup.getByTestId('scanner-scan-title')).toHaveText(`${t} Yoghurt`, { timeout: 2000 });
   await expect(popup.getByTestId('scanner-scan-left')).toHaveText('5 left', { timeout: 2000 });
   const elapsed = Date.now() - started;
   testInfo.annotations.push({ type: 'latency', description: `${elapsed} ms from the scanner's POST to the pop-up` });
-  console.log(`[${testInfo.project.name}] scanner POST → pop-up on screen: ${elapsed} ms`);
+  console.log(`[${testInfo.project.name}] scanner POST answered in ${answered} ms; pop-up on screen after ${elapsed} ms`);
   expect(elapsed).toBeLessThan(2000);
   expect(await stockOf(yoghurt.productId)).toBe(5);
 

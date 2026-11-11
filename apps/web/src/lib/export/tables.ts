@@ -105,6 +105,7 @@ export const EXCLUDED_TABLES = [
   'device_pair_attempt',
   'media_inbox_trash',
   'home_token',
+  'scanner_token',
 ];
 
 /** One row → CSV-friendly values (objects/arrays as JSON text). */

@@ -121,7 +121,8 @@ function PantryPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      {/* Six buttons: beside the title only on a wide screen (on an iPad they squeezed the title to nothing). */}
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
         <div className="min-w-0 flex-1">
           <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('nav.pantry')}</h1>
           <p className="mt-1 text-[14.5px] text-muted">{t('pantry.intro')}</p>
