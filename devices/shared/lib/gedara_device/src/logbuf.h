@@ -1,6 +1,7 @@
-// The scale's log: every line goes to the Serial Monitor (when a cable is connected) AND into a small
-// ring buffer that net.cpp sends to Gedara with each sync. Once the scale is built, its USB port is
-// sealed inside, so Settings › Devices › the scale › Scale log is its Serial Monitor.
+// The device's log (kitchen scale, bin scanner): every line goes to the Serial Monitor (when a cable
+// is connected) AND into a small ring buffer that net.cpp sends to Gedara with each sync. Once the
+// device is built, its USB port is sealed inside, so Settings › Devices › the device › Log is its
+// Serial Monitor.
 #pragma once
 #include <Arduino.h>
 

@@ -5,13 +5,8 @@
 #include <Update.h>
 #include <esp_ota_ops.h>
 #include <esp_task_wdt.h>
+#include <Preferences.h>
 #include <mbedtls/sha256.h>
-
-#include "logbuf.h"
-#include "net.h"
-#include "settings.h"
-#include "ui.h"
-#include "version.h"
 
 // Arduino would mark a new image valid at once; we decide after it reached Gedara.
 extern "C" bool verifyRollbackLater() { return true; }
@@ -20,6 +15,21 @@ namespace {
 constexpr uint32_t kProveWithinMs = 120000;
 constexpr uint32_t kMaxBoots = 3;
 bool pending = false;
+ota::Hooks hooks;
+
+// The same NVS namespace and keys the scale has used since 0.1.0 (its settings module wrote them).
+Preferences& kv() {
+  static Preferences p;
+  static bool open = false;
+  if (!open) open = p.begin("gedara", false);
+  return p;
+}
+namespace settings {
+uint32_t loadU32(const char* k, uint32_t d = 0) { return kv().isKey(k) ? kv().getUInt(k, d) : d; }
+void storeU32(const char* k, uint32_t v) { kv().putUInt(k, v); }
+String loadStr(const char* k, const char* d = "") { return kv().isKey(k) ? kv().getString(k, d) : String(d); }
+void storeStr(const char* k, const String& v) { kv().putString(k, v); }
+}  // namespace settings
 
 String runningLabel() {
   const esp_partition_t* p = esp_ota_get_running_partition();
@@ -41,6 +51,8 @@ String runningLabel() {
 }
 }  // namespace
 
+void ota::setup(const Hooks& h) { hooks = h; }
+
 void ota::bootCheck() {
   if (settings::loadU32("ota_pend") == 0) return;
   if (runningLabel() == settings::loadStr("ota_prev")) {
@@ -53,7 +65,7 @@ void ota::bootCheck() {
   settings::storeU32("ota_boots", boots);
   if (boots > kMaxBoots) rollback("crash loop");
   pending = true;
-  settings::storeStr("ota_state", String("pending_verify:") + FW_VERSION);
+  settings::storeStr("ota_state", String("pending_verify:") + hooks.fwVersion);
 }
 
 void ota::confirm() {
@@ -61,7 +73,7 @@ void ota::confirm() {
   pending = false;
   esp_ota_mark_app_valid_cancel_rollback();
   settings::storeU32("ota_pend", 0);
-  settings::storeStr("ota_state", String("installed:") + FW_VERSION);
+  settings::storeStr("ota_state", String("installed:") + hooks.fwVersion);
 }
 
 void ota::loop() {
@@ -73,7 +85,7 @@ String ota::state() { return settings::loadStr("ota_state"); }
 bool ota::install(const String& url, size_t size, const String& sha256, const String& version, String& error) {
   const esp_partition_t* running = esp_ota_get_running_partition();
   NetworkClientSecure client;
-  client.setCACert(net::rootCAs());   // verified HTTPS, same roots as the sync
+  client.setCACert(hooks.rootCAs);    // verified HTTPS, same roots as the sync
   HTTPClient http;
   http.setTimeout(15000);
   if (!http.begin(client, url)) {
@@ -96,7 +108,7 @@ bool ota::install(const String& url, size_t size, const String& sha256, const St
     http.end();
     return false;
   }
-  ui::show(Screen::Updating, (String("Updating to ") + version).c_str(), "", "do not unplug");
+  if (hooks.onStart) hooks.onStart(version.c_str());
   mbedtls_sha256_context sha;
   mbedtls_sha256_init(&sha);
   mbedtls_sha256_starts(&sha, 0);
@@ -120,7 +132,7 @@ bool ota::install(const String& url, size_t size, const String& sha256, const St
     done += n;
     const int pct = static_cast<int>(done * 100 / size);
     if (pct != lastPct) {
-      ui::setProgress(static_cast<int8_t>(pct));
+      if (hooks.onProgress) hooks.onProgress(pct);
       lastPct = pct;
     }
   }

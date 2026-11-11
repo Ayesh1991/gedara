@@ -1,0 +1,388 @@
+#include "app.h"
+
+#include <WiFi.h>
+#include <esp_task_wdt.h>
+#include <esp_timer.h>
+#include <sys/time.h>
+
+#include <atomic>
+
+#include "catalog.h"
+#include "gedara_core.h"
+#include "hw.h"
+#include "keys.h"
+#include "logbuf.h"
+#include "modes.h"
+#include "net.h"
+#include "outbox.h"
+#include "scan_record.h"
+#include "settings.h"
+#include "ui.h"
+#include "uilogic.h"
+#include "version.h"
+
+using gedara::EventType;
+using gedara::Mode;
+using gedara::ScanRecord;
+using tunes::Sound;
+
+namespace {
+struct NvsSeq : gedara::SeqStore {
+  uint32_t load() override { return settings::loadU32("seq_next", 0); }
+  void store(uint32_t next) override { settings::storeU32("seq_next", next); }
+} seqStore;
+gedara::SeqAllocator seq(seqStore);
+
+modes::Machine machine;
+keys::Decoder decoder;
+QueueHandle_t resultQ;
+std::atomic<bool> sendFailed{false};
+std::atomic<bool> configChanged{false};
+std::atomic<bool> pausedNow{false};
+std::atomic<bool> locateAsked{false};
+std::atomic<uint32_t> latencyMs{0};
+
+// The scan we are waiting for Gedara to answer (the newest one).
+uint32_t waitingSeq = 0;
+uint32_t waitingSince = 0;
+Mode waitingMode = Mode::Use;
+char waitingName[28] = "";
+bool waitingSavedShown = false;
+
+// The same code again within 2.5 s is the same pack still in front of the reader.
+char lastCode[gm861::kTextMax + 1] = "";
+uint32_t lastCodeAt = 0;
+constexpr uint32_t kSameCodeMs = 2500;
+
+// "Key first" eye: the reader is asked to look for 20 s after a key press.
+uint32_t lookUntil = 0;
+uint32_t lastTrigger = 0;
+bool quietWas = false;
+
+gm861::Eye wantedEye() {
+  const ScannerConfig& c = settings::get().config;
+  if (c.eye == 2 || (c.eyeQuietKey && buzzer::quietNow())) return gm861::Eye::Key;
+  return c.eye == 1 ? gm861::Eye::Always : gm861::Eye::Sense;
+}
+
+gm861::Sense wantedSense() {
+  const int s = settings::get().config.sense;
+  return s == 2 ? gm861::Sense::Max : (s == 0 ? gm861::Sense::Normal : gm861::Sense::High);
+}
+
+void applyEye() {
+  const gm861::Eye e = wantedEye();
+  const gm861::Sense s = wantedSense();
+  if (e == scanner::eye() && s == scanner::sense() && scanner::found()) return;
+  const bool ok = scanner::setEye(e, s);
+  logbuf::logf("[SCAN] eye: %s, sensing %s%s", app::eyeName(), s == gm861::Sense::Max ? "max" : (s == gm861::Sense::High ? "high" : "normal"),
+               ok ? "" : " (the reader did not answer)");
+}
+
+Sound modeSound(Mode m) {
+  switch (m) {
+    case Mode::Add: return Sound::ModeAdd;
+    case Mode::Open: return Sound::ModeOpen;
+    case Mode::Waste: return Sound::ModeWaste;
+    case Mode::Check: return Sound::ModeCheck;
+    default: return Sound::ModeUse;
+  }
+}
+
+const char* modeLabel(Mode m) {
+  switch (m) {
+    case Mode::Add: return "ADD";
+    case Mode::Open: return "OPENED";
+    case Mode::Waste: return "WASTE";
+    case Mode::Check: return "CHECK";
+    default: return "USED";
+  }
+}
+
+void pushMode() {
+  const modes::Snapshot s = machine.snapshot(millis());
+  ui::setMode(s.mode, s.locked, s.count, s.secondsLeft, static_cast<uint32_t>(settings::get().config.modeS));
+}
+
+void queueRecord(ScanRecord& r) {
+  r.seq = seq.next();
+  r.boot = settings::get().boot;
+  r.upMs = app::uptimeMs();
+  r.atMs = app::epochMs();
+  if (!outbox::append(r)) logbuf::logf("[SCAN] could not save scan %lu to flash", static_cast<unsigned long>(r.seq));
+  waitingSeq = r.seq;
+  waitingSince = millis();
+  waitingMode = r.mode;
+  waitingSavedShown = false;
+  sendFailed = false;
+  net::nudge();
+}
+
+void onCode(const char* code) {
+  const uint32_t now = millis();
+  if (strcmp(code, lastCode) == 0 && now - lastCodeAt < kSameCodeMs) return;
+  strlcpy(lastCode, code, sizeof lastCode);
+  lastCodeAt = now;
+  lookUntil = 0;
+  ui::wake();
+  buzzer::play(Sound::Tick);  // at once: "I read it"
+
+  ScanRecord r;
+  r.type = EventType::Scan;
+  machine.onScan(now, &r.mode, &r.count);
+  strlcpy(r.code, code, sizeof r.code);
+  pushMode();
+
+  char name[28] = "";
+  const bool known = catalog::lookup(code, name, sizeof name);
+  strlcpy(waitingName, known ? name : "", sizeof waitingName);
+  char shown[24];
+  uilogic::fitName(known ? name : code, 18, shown, sizeof shown);
+  char how[24];
+  if (r.count > 1) snprintf(how, sizeof how, "x%u  ...", r.count);
+  else snprintf(how, sizeof how, "...");
+  ui::show(Screen::Result, shown, how, known ? "" : "new to this scanner", "", Icon::None, 6000, r.mode);
+  queueRecord(r);
+  logbuf::logf("[SCAN] %s x%u: %s (seq %lu)", gedara::modeWord(r.mode), r.count, known ? name : "a code without a name yet",
+               static_cast<unsigned long>(r.seq));
+}
+
+void onUndoKey() {
+  ScanRecord r;
+  r.type = EventType::Undo;
+  strlcpy(waitingName, "", sizeof waitingName);
+  ui::show(Screen::Notice, "Undo", "taking the last", "scan back...", "", Icon::Undo, 6000);
+  queueRecord(r);
+  lastCode[0] = 0;  // the same pack may be scanned again right away
+  logbuf::logf("[KEY] * undo (seq %lu)", static_cast<unsigned long>(r.seq));
+}
+
+void onKeyEvent(const keys::Event& e) {
+  const uint32_t now = millis();
+  ui::wake();
+  if (scanner::eye() == gm861::Eye::Key) lookUntil = now + 20000;
+  if (e.kind == keys::EventKind::Hold) {
+    if (e.key == '*') app::showStatus();
+    return;
+  }
+  if (e.kind == keys::EventKind::Chord) {
+    if ((e.key == 'A' && e.key2 == 'D') || (e.key == 'D' && e.key2 == 'A')) net::requestPortal();
+    return;
+  }
+  bool check = false;
+  const modes::Action a = machine.onKey(e.key, now, &check);
+  pushMode();
+  const modes::Snapshot s = machine.snapshot(now);
+  switch (a) {
+    case modes::Action::ModeChanged:
+      buzzer::play(modeSound(s.mode));
+      ui::show(Screen::Mode, "", "", "", "", Icon::None, 1500, s.mode);
+      logbuf::logf("[KEY] %c mode %s", e.key, modeLabel(s.mode));
+      if (check) net::nudge();  // # also means "call Gedara now"
+      break;
+    case modes::Action::ModeLocked:
+      buzzer::play(Sound::ModeLock);
+      ui::show(Screen::Mode, "", "", "", "", Icon::None, 1500, s.mode);
+      logbuf::logf("[KEY] B again: ADD stays for 5 minutes");
+      break;
+    case modes::Action::CountChanged:
+      buzzer::play(Sound::Key);
+      logbuf::logf("[KEY] %c: x%u for the next scan", e.key, s.count);
+      if (s.mode == Mode::Use) ui::idle();
+      break;
+    case modes::Action::Undo:
+      buzzer::play(Sound::Key);
+      onUndoKey();
+      break;
+    default:
+      break;
+  }
+}
+
+// Gedara's answer → the screen and the sound.
+void present(const app::Result& r) {
+  char left[28] = "", name[24], qty[20] = "";
+  uilogic::fitName(r.name[0] ? r.name : (waitingName[0] ? waitingName : "Item"), 18, name, sizeof name);
+  if (!isnan(r.left)) uilogic::leftText(r.left, r.unit, r.sized, isnan(r.pack) ? 0 : r.pack, left, sizeof left);
+  if (!isnan(r.qty)) uilogic::amountText(fabs(r.qty), r.unit, qty, sizeof qty);
+  const String st = r.status;
+  const Mode m = waitingMode;
+  const uint32_t hold = 5000;
+  if (st == "used") {
+    ui::show(Screen::Result, name, left, r.onList ? "+ on the shopping list" : "", "", Icon::Tick, hold, Mode::Use);
+    buzzer::play(Sound::Used);
+  } else if (st == "wasted") {
+    ui::show(Screen::Result, name, left, "counted as waste", "", Icon::Bin, hold, Mode::Waste);
+    buzzer::play(Sound::Wasted);
+  } else if (st == "added") {
+    ui::show(Screen::Result, name, left, (String("+") + qty).c_str(), "", Icon::Plus, hold, Mode::Add);
+    buzzer::play(Sound::Added);
+  } else if (st == "opened") {
+    ui::show(Screen::Result, name, "opened", left, "", Icon::Open, hold, Mode::Open);
+    buzzer::play(Sound::Opened);
+  } else if (st == "moved") {
+    ui::show(Screen::Result, name, "into the jar", (String(qty) + " moved").c_str(), "", Icon::Tick, hold, Mode::Use);
+    buzzer::play(Sound::Used);
+  } else if (st == "in_jar") {
+    ui::show(Screen::Result, name, "already in jar", "nothing to take", "", Icon::Tick, hold, Mode::Use);
+    buzzer::play(Sound::Checked);
+  } else if (st == "no_stock") {
+    ui::show(Screen::Result, name, "none left", r.onList ? "+ on the shopping list" : "", "", Icon::Tick, hold, m);
+    buzzer::play(Sound::NoStock);
+  } else if (st == "nothing_to_open") {
+    ui::show(Screen::Result, name, "none to open", left, "", Icon::Cross, hold, Mode::Open);
+    buzzer::play(Sound::Unknown);
+  } else if (st == "checked") {
+    ui::show(Screen::Result, name, left, "", "", Icon::Look, hold, Mode::Check);
+    buzzer::play(Sound::Checked);
+  } else if (st == "unknown") {
+    char code[22];
+    uilogic::fitName(lastCode, 21, code, sizeof code);
+    ui::show(Screen::Notice, "New barcode", code, "Saved for you.", "Link it in Gedara.", Icon::Question, 7000);
+    buzzer::play(Sound::Unknown);
+  } else if (st == "bill_guard") {
+    ui::show(Screen::Notice, name, "A bill just added", "this. Say in Gedara", "if you want more.", Icon::Question, 7000);
+    buzzer::play(Sound::Unknown);
+  } else if (st == "held") {
+    ui::show(Screen::Notice, "Paused", "The scan is kept.", "Nothing changes until", "the owner resumes.", Icon::Pause, 7000);
+    buzzer::play(Sound::Paused);
+  } else if (st == "not_pantry") {
+    ui::show(Screen::Notice, "Not a pantry item", "Nothing was changed.", "", "", Icon::Cross, hold);
+    buzzer::play(Sound::Error);
+  } else if (st == "undo") {
+    ui::show(Screen::Result, r.name[0] ? name : "Last scan", "undone", left, "", Icon::Undo, hold, Mode::Use);
+    buzzer::play(Sound::Undone);
+  } else if (st == "undo_none") {
+    const String why = r.reason;
+    ui::show(Screen::Notice, "Nothing to undo", why == "late" ? "The last scan is more" : (why == "changed" ? "That stock has" : ""),
+             why == "late" ? "than 10 minutes old." : (why == "changed" ? "changed since." : ""), "", Icon::Cross, hold);
+    buzzer::play(Sound::Error);
+  } else {
+    ui::show(Screen::Notice, "Could not use it", "Gedara kept a note.", "Try again or use the app.", "", Icon::Cross, hold);
+    buzzer::play(Sound::Error);
+  }
+  logbuf::logf("[RESULT] seq %lu: %s %s %s", static_cast<unsigned long>(r.seq), r.status, r.name, left);
+}
+}  // namespace
+
+void app::begin() {
+  resultQ = xQueueCreate(8, sizeof(Result));
+  seq.begin();
+  const ScannerConfig& c = settings::get().config;
+  machine.setModeSeconds(static_cast<uint32_t>(c.modeS));
+  decoder.setMap(c.keymap);
+  pushMode();
+}
+
+void app::controlTask(void*) {
+  esp_task_wdt_add(nullptr);
+  char code[gm861::kTextMax + 1];
+  uint32_t lastSecond = 0, lastEyeCheck = 0;
+  for (;;) {
+    esp_task_wdt_reset();
+    const uint32_t now = millis();
+
+    // New settings from Gedara.
+    if (configChanged.exchange(false)) {
+      const ScannerConfig& c = settings::get().config;
+      machine.setModeSeconds(static_cast<uint32_t>(c.modeS));
+      decoder.setMap(c.keymap);
+      applyEye();
+      pushMode();
+    }
+    // Quiet hours begin or end: the eye may change ("key first during quiet hours").
+    if (now - lastEyeCheck > 30000) {
+      lastEyeCheck = now;
+      const bool q = buzzer::quietNow();
+      if (q != quietWas || !scanner::found()) {
+        quietWas = q;
+        applyEye();
+      }
+    }
+
+    // Keys.
+    const keys::Event e = decoder.update(keypad::read(), now);
+    if (e.kind != keys::EventKind::None) onKeyEvent(e);
+
+    // The reader. In "key first" mode it looks for 20 s after a key press.
+    if (scanner::eye() == gm861::Eye::Key && lookUntil && static_cast<int32_t>(lookUntil - now) > 0 && now - lastTrigger > 3300) {
+      scanner::trigger();
+      lastTrigger = now;
+    }
+    if (scanner::poll(code)) onCode(code);
+
+    // The mode's clock.
+    if (machine.tick(now) == modes::Action::FellBack) {
+      buzzer::play(Sound::FellBack);
+      pushMode();
+      ui::idle();
+      logbuf::logf("[MODE] back to USED");
+    } else if (now - lastSecond >= 500) {
+      lastSecond = now;
+      pushMode();
+    }
+
+    // Gedara's answers: only the newest scan's goes to the screen (older ones were queued offline).
+    Result r;
+    while (xQueueReceive(resultQ, &r, 0) == pdTRUE) {
+      if (r.seq != waitingSeq) continue;
+      latencyMs = now - waitingSince;
+      waitingSeq = 0;
+      present(r);
+    }
+    // No answer: say once that the scan is safe on the scanner.
+    if (waitingSeq && !waitingSavedShown && (sendFailed || now - waitingSince > 8000)) {
+      waitingSavedShown = true;
+      char q[28];
+      snprintf(q, sizeof q, "saved - %u waiting", static_cast<unsigned>(outbox::pending()));
+      char name[24];
+      uilogic::fitName(waitingName[0] ? waitingName : "Scan", 18, name, sizeof name);
+      ui::show(Screen::Result, name, "saved", q, "", Icon::Cloud, 5000, waitingMode);
+      buzzer::play(Sound::Saved);
+    }
+    if (locateAsked.exchange(false)) {
+      ui::show(Screen::Notice, "Here I am", WiFi.localIP().toString().c_str(), "", "", Icon::None, 8000);
+      buzzer::play(Sound::Locate);
+    }
+    vTaskDelay(pdMS_TO_TICKS(5));
+  }
+}
+
+void app::onResult(const Result& r) {
+  if (resultQ) xQueueSend(resultQ, &r, 0);
+}
+void app::onSendFailed() { sendFailed = true; }
+void app::onConfig() { configChanged = true; }
+void app::setPaused(bool p) {
+  pausedNow = p;
+  ui::setPaused(p);
+}
+bool app::paused() { return pausedNow; }
+uint32_t app::lastLatencyMs() { return latencyMs; }
+void app::locate() { locateAsked = true; }
+
+const char* app::eyeName() {
+  if (!scanner::found()) return "missing";
+  switch (scanner::eye()) {
+    case gm861::Eye::Always: return "always";
+    case gm861::Eye::Key: return "key";
+    default: return "sense";
+  }
+}
+
+void app::showStatus() {
+  char a[32], b[32], c[32];
+  snprintf(a, sizeof a, "fw %s  %s", FW_VERSION, net::online() ? "online" : "offline");
+  snprintf(b, sizeof b, "%s %d dBm", net::ip().c_str(), net::rssi());
+  snprintf(c, sizeof c, "waiting %u  names %u", static_cast<unsigned>(outbox::pending()), static_cast<unsigned>(catalog::count()));
+  ui::show(Screen::Status, "Bin scanner", a, b, c, Icon::None, 8000);
+}
+
+uint64_t app::uptimeMs() { return static_cast<uint64_t>(esp_timer_get_time() / 1000); }
+
+uint64_t app::epochMs() {
+  timeval tv;
+  gettimeofday(&tv, nullptr);
+  if (tv.tv_sec < 1700000000) return 0;
+  return static_cast<uint64_t>(tv.tv_sec) * 1000ULL + static_cast<uint64_t>(tv.tv_usec / 1000);
+}

@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { History, ListChecks, Plus, Scale, ScanLine, Search, ShoppingBasket } from 'lucide-react';
+import { History, ListChecks, Plus, Scale, ScanBarcode, ScanLine, Search, ShoppingBasket } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -121,7 +121,8 @@ function PantryPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      {/* Six buttons: beside the title only on a wide screen (on an iPad they squeezed the title to nothing). */}
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
         <div className="min-w-0 flex-1">
           <h1 className="font-display text-[30px] font-semibold tracking-tight">{t('nav.pantry')}</h1>
           <p className="mt-1 text-[14.5px] text-muted">{t('pantry.intro')}</p>
@@ -139,6 +140,10 @@ function PantryPage() {
           <Link to="/pantry/scale" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <Scale className="h-4 w-4" aria-hidden />
             {t('scale.page.short')}
+          </Link>
+          <Link to="/pantry/scanner" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+            <ScanBarcode className="h-4 w-4" aria-hidden />
+            {t('scanner.page.short')}
           </Link>
           {canWrite && (
             <Link to="/scan" search={{ add: 'product' }} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>

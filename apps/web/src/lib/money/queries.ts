@@ -1,6 +1,7 @@
 // Money data access. Reads go straight to the tables/views (RLS); every write is an RPC
 // (CLAUDE.md rule 1 — balances only ever change by writing transactions).
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import { settleAfterBills } from '../scanner/settle';
 import { supabase } from '../supabase';
 import { isPendingDelete } from '../undo';
 import { monthRange } from '../time';
@@ -302,6 +303,8 @@ export async function importBills(
     out.push(...(data as unknown as ImportResult[]));
     onProgress?.(Math.min(i + batchSize, bills.length));
   }
+  // Packs the bin scanner's Add already put in are not counted twice (Phase 11).
+  await settleAfterBills(out.filter((r) => (r.lots ?? 0) > 0).map((r) => r.id));
   return out;
 }
 

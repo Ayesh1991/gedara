@@ -19,6 +19,8 @@ export default defineConfig({
       '@scale': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scale'),
       '@media': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/media'),
       '@home': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/home'),
+      // Bin-scanner protocol (Phase 11) shared with the scanner-ingest Edge Function and the simulator.
+      '@scanner': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scanner'),
       '@match': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/match'),
       '@ai': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/ai'),
       '@ask': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/ask'),

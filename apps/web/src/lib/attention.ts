@@ -22,6 +22,9 @@ export const ATTENTION_KINDS = [
   'budget_near',
   'scale_decision',
   'scale_new_tag',
+  'bin_unknown',
+  'bin_waiting',
+  'bin_paused',
 ] as const;
 export type AttentionKind = (typeof ATTENTION_KINDS)[number];
 
@@ -90,6 +93,11 @@ export function attentionTarget(i: AttentionItem): Target {
     case 'scale_decision':
     case 'scale_new_tag':
       return { to: '/pantry/scale' };
+    case 'bin_unknown':
+    case 'bin_waiting':
+      return { to: '/pantry/scanner' };
+    case 'bin_paused':
+      return i.entity_id ? { to: '/settings/scanner/$deviceId', params: { deviceId: i.entity_id } } : { to: '/pantry/scanner' };
     case 'budget_over':
     case 'budget_near': {
       const month = typeof i.extra.month === 'string' ? i.extra.month : undefined;

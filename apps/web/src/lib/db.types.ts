@@ -667,6 +667,170 @@ export type Database = {
           },
         ]
       }
+      bin_scan: {
+        Row: {
+          at: string
+          bill_line_id: string | null
+          code: string | null
+          code_kind: string | null
+          correlation_id: string | null
+          count: number
+          device_id: string | null
+          epoch: number
+          error_code: string | null
+          household_id: string
+          id: string
+          kind: string
+          left_qty: number | null
+          list_item_id: string | null
+          lot_id: string | null
+          mode: string | null
+          product_id: string | null
+          qty: number | null
+          received_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+          result: Json
+          seq: number
+          status: string
+          target_id: string | null
+          time_estimated: boolean
+          undone_at: string | null
+          undone_by: string | null
+        }
+        Insert: {
+          at: string
+          bill_line_id?: string | null
+          code?: string | null
+          code_kind?: string | null
+          correlation_id?: string | null
+          count?: number
+          device_id?: string | null
+          epoch: number
+          error_code?: string | null
+          household_id: string
+          id?: string
+          kind?: string
+          left_qty?: number | null
+          list_item_id?: string | null
+          lot_id?: string | null
+          mode?: string | null
+          product_id?: string | null
+          qty?: number | null
+          received_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          result: Json
+          seq: number
+          status: string
+          target_id?: string | null
+          time_estimated?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Update: {
+          at?: string
+          bill_line_id?: string | null
+          code?: string | null
+          code_kind?: string | null
+          correlation_id?: string | null
+          count?: number
+          device_id?: string | null
+          epoch?: number
+          error_code?: string | null
+          household_id?: string
+          id?: string
+          kind?: string
+          left_qty?: number | null
+          list_item_id?: string | null
+          lot_id?: string | null
+          mode?: string | null
+          product_id?: string | null
+          qty?: number | null
+          received_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          result?: Json
+          seq?: number
+          status?: string
+          target_id?: string | null
+          time_estimated?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bin_scan_household_id_bill_line_id_fkey"
+            columns: ["household_id", "bill_line_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_line"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_bill_line_id_fkey"
+            columns: ["household_id", "bill_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_asset_pending_line"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_bill_line_id_fkey"
+            columns: ["household_id", "bill_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_line_route"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_bill_line_id_fkey"
+            columns: ["household_id", "bill_line_id"]
+            isOneToOne: false
+            referencedRelation: "v_spend_line"
+            referencedColumns: ["household_id", "line_id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_device_id_fkey"
+            columns: ["household_id", "device_id"]
+            isOneToOne: false
+            referencedRelation: "device"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_lot_id_fkey"
+            columns: ["household_id", "lot_id"]
+            isOneToOne: false
+            referencedRelation: "stock_lot"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock"
+            referencedColumns: ["household_id", "product_id"]
+          },
+          {
+            foreignKeyName: "bin_scan_household_id_product_id_fkey"
+            columns: ["household_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_velocity"
+            referencedColumns: ["household_id", "product_id"]
+          },
+        ]
+      }
       budget: {
         Row: {
           amount: number
@@ -845,6 +1009,8 @@ export type Database = {
           live_state: string | null
           live_uid: string | null
           name: string
+          paused_at: string | null
+          paused_reason: string | null
           reading_count: number
           revoked_at: string | null
           seq_floor: number
@@ -869,6 +1035,8 @@ export type Database = {
           live_state?: string | null
           live_uid?: string | null
           name: string
+          paused_at?: string | null
+          paused_reason?: string | null
           reading_count?: number
           revoked_at?: string | null
           seq_floor?: number
@@ -893,6 +1061,8 @@ export type Database = {
           live_state?: string | null
           live_uid?: string | null
           name?: string
+          paused_at?: string | null
+          paused_reason?: string | null
           reading_count?: number
           revoked_at?: string | null
           seq_floor?: number
@@ -4666,6 +4836,39 @@ export type Database = {
           },
         ]
       }
+      scanner_token: {
+        Row: {
+          device_id: string
+          household_id: string
+          token_hash: string
+        }
+        Insert: {
+          device_id: string
+          household_id: string
+          token_hash: string
+        }
+        Update: {
+          device_id?: string
+          household_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scanner_token_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "device"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_token_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopping_list_item: {
         Row: {
           created_at: string
@@ -6844,6 +7047,12 @@ export type Database = {
       rpc_asset_sell: { Args: { p: Json }; Returns: Json }
       rpc_asset_split: { Args: { p_asset: string }; Returns: string[] }
       rpc_asset_unsell: { Args: { p_asset: string }; Returns: undefined }
+      rpc_bin_add_settle: { Args: { p_transaction: string }; Returns: Json }
+      rpc_bin_scan_resolve: {
+        Args: { p_choice: string; p_scan: string }
+        Returns: Json
+      }
+      rpc_bin_scan_undo: { Args: { p_scan: string }; Returns: Json }
       rpc_consume: { Args: { p: Json }; Returns: Json }
       rpc_container_setup: {
         Args: { p_location: string; p_on?: boolean }
@@ -7102,6 +7311,23 @@ export type Database = {
       }
       rpc_scan_sync_begin: {
         Args: { p_force?: boolean; p_household: string }
+        Returns: Json
+      }
+      rpc_scanner_create: {
+        Args: { p_household: string; p_name: string }
+        Returns: Json
+      }
+      rpc_scanner_pause: { Args: { p_id: string }; Returns: undefined }
+      rpc_scanner_resume: {
+        Args: { p_held?: string; p_id: string }
+        Returns: Json
+      }
+      rpc_scanner_sync: {
+        Args: { p: Json; p_token_hash: string }
+        Returns: Json
+      }
+      rpc_scanner_undo_since: {
+        Args: { p_id: string; p_since: string }
         Returns: Json
       }
       rpc_set_lot_due: { Args: { p: Json }; Returns: Json }

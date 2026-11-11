@@ -34,6 +34,7 @@ import { Route as AppPantryProductIdRouteImport } from './routes/_app/pantry/$pr
 import { Route as AppPantryJournalRouteImport } from './routes/_app/pantry/journal'
 import { Route as AppPantryListRouteImport } from './routes/_app/pantry/list'
 import { Route as AppPantryScaleRouteImport } from './routes/_app/pantry/scale'
+import { Route as AppPantryScannerRouteImport } from './routes/_app/pantry/scanner'
 import { Route as AppPlacesIndexRouteImport } from './routes/_app/places/index'
 import { Route as AppPlacesPlaceIdRouteImport } from './routes/_app/places/$placeId'
 import { Route as AppPlacesBlankLabelsRouteImport } from './routes/_app/places/blank-labels'
@@ -62,6 +63,7 @@ import { Route as AppMoneyAccountsAccountIdRouteImport } from './routes/_app/mon
 import { Route as AppMoneyTxTxIdRouteImport } from './routes/_app/money/tx.$txId'
 import { Route as AppMusicPlaylistPlaylistIdRouteImport } from './routes/_app/music/playlist.$playlistId'
 import { Route as AppSettingsScaleDeviceIdRouteImport } from './routes/_app/settings/scale.$deviceId'
+import { Route as AppSettingsScannerDeviceIdRouteImport } from './routes/_app/settings/scanner.$deviceId'
 import { Route as AppSettingsSpeakerDeviceIdRouteImport } from './routes/_app/settings/speaker.$deviceId'
 
 const AppRoute = AppRouteImport.update({
@@ -186,6 +188,11 @@ const AppPantryListRoute = AppPantryListRouteImport.update({
 const AppPantryScaleRoute = AppPantryScaleRouteImport.update({
   id: '/pantry/scale',
   path: '/pantry/scale',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPantryScannerRoute = AppPantryScannerRouteImport.update({
+  id: '/pantry/scanner',
+  path: '/pantry/scanner',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlacesIndexRoute = AppPlacesIndexRouteImport.update({
@@ -333,6 +340,12 @@ const AppSettingsScaleDeviceIdRoute =
     path: '/settings/scale/$deviceId',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSettingsScannerDeviceIdRoute =
+  AppSettingsScannerDeviceIdRouteImport.update({
+    id: '/settings/scanner/$deviceId',
+    path: '/settings/scanner/$deviceId',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSettingsSpeakerDeviceIdRoute =
   AppSettingsSpeakerDeviceIdRouteImport.update({
     id: '/settings/speaker/$deviceId',
@@ -360,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/pantry/journal': typeof AppPantryJournalRoute
   '/pantry/list': typeof AppPantryListRoute
   '/pantry/scale': typeof AppPantryScaleRoute
+  '/pantry/scanner': typeof AppPantryScannerRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/blank-labels': typeof AppPlacesBlankLabelsRoute
   '/places/labels': typeof AppPlacesLabelsRoute
@@ -392,6 +406,7 @@ export interface FileRoutesByFullPath {
   '/money/tx/$txId': typeof AppMoneyTxTxIdRoute
   '/music/playlist/$playlistId': typeof AppMusicPlaylistPlaylistIdRoute
   '/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
+  '/settings/scanner/$deviceId': typeof AppSettingsScannerDeviceIdRoute
   '/settings/speaker/$deviceId': typeof AppSettingsSpeakerDeviceIdRoute
   '/money/accounts/': typeof AppMoneyAccountsIndexRoute
 }
@@ -415,6 +430,7 @@ export interface FileRoutesByTo {
   '/pantry/journal': typeof AppPantryJournalRoute
   '/pantry/list': typeof AppPantryListRoute
   '/pantry/scale': typeof AppPantryScaleRoute
+  '/pantry/scanner': typeof AppPantryScannerRoute
   '/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/places/blank-labels': typeof AppPlacesBlankLabelsRoute
   '/places/labels': typeof AppPlacesLabelsRoute
@@ -447,6 +463,7 @@ export interface FileRoutesByTo {
   '/money/tx/$txId': typeof AppMoneyTxTxIdRoute
   '/music/playlist/$playlistId': typeof AppMusicPlaylistPlaylistIdRoute
   '/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
+  '/settings/scanner/$deviceId': typeof AppSettingsScannerDeviceIdRoute
   '/settings/speaker/$deviceId': typeof AppSettingsSpeakerDeviceIdRoute
   '/money/accounts': typeof AppMoneyAccountsIndexRoute
 }
@@ -472,6 +489,7 @@ export interface FileRoutesById {
   '/_app/pantry/journal': typeof AppPantryJournalRoute
   '/_app/pantry/list': typeof AppPantryListRoute
   '/_app/pantry/scale': typeof AppPantryScaleRoute
+  '/_app/pantry/scanner': typeof AppPantryScannerRoute
   '/_app/places/$placeId': typeof AppPlacesPlaceIdRoute
   '/_app/places/blank-labels': typeof AppPlacesBlankLabelsRoute
   '/_app/places/labels': typeof AppPlacesLabelsRoute
@@ -504,6 +522,7 @@ export interface FileRoutesById {
   '/_app/money/tx/$txId': typeof AppMoneyTxTxIdRoute
   '/_app/music/playlist/$playlistId': typeof AppMusicPlaylistPlaylistIdRoute
   '/_app/settings/scale/$deviceId': typeof AppSettingsScaleDeviceIdRoute
+  '/_app/settings/scanner/$deviceId': typeof AppSettingsScannerDeviceIdRoute
   '/_app/settings/speaker/$deviceId': typeof AppSettingsSpeakerDeviceIdRoute
   '/_app/money/accounts/': typeof AppMoneyAccountsIndexRoute
 }
@@ -529,6 +548,7 @@ export interface FileRouteTypes {
     | '/pantry/journal'
     | '/pantry/list'
     | '/pantry/scale'
+    | '/pantry/scanner'
     | '/places/$placeId'
     | '/places/blank-labels'
     | '/places/labels'
@@ -561,6 +581,7 @@ export interface FileRouteTypes {
     | '/money/tx/$txId'
     | '/music/playlist/$playlistId'
     | '/settings/scale/$deviceId'
+    | '/settings/scanner/$deviceId'
     | '/settings/speaker/$deviceId'
     | '/money/accounts/'
   fileRoutesByTo: FileRoutesByTo
@@ -584,6 +605,7 @@ export interface FileRouteTypes {
     | '/pantry/journal'
     | '/pantry/list'
     | '/pantry/scale'
+    | '/pantry/scanner'
     | '/places/$placeId'
     | '/places/blank-labels'
     | '/places/labels'
@@ -616,6 +638,7 @@ export interface FileRouteTypes {
     | '/money/tx/$txId'
     | '/music/playlist/$playlistId'
     | '/settings/scale/$deviceId'
+    | '/settings/scanner/$deviceId'
     | '/settings/speaker/$deviceId'
     | '/money/accounts'
   id:
@@ -640,6 +663,7 @@ export interface FileRouteTypes {
     | '/_app/pantry/journal'
     | '/_app/pantry/list'
     | '/_app/pantry/scale'
+    | '/_app/pantry/scanner'
     | '/_app/places/$placeId'
     | '/_app/places/blank-labels'
     | '/_app/places/labels'
@@ -672,6 +696,7 @@ export interface FileRouteTypes {
     | '/_app/money/tx/$txId'
     | '/_app/music/playlist/$playlistId'
     | '/_app/settings/scale/$deviceId'
+    | '/_app/settings/scanner/$deviceId'
     | '/_app/settings/speaker/$deviceId'
     | '/_app/money/accounts/'
   fileRoutesById: FileRoutesById
@@ -857,6 +882,13 @@ declare module '@tanstack/react-router' {
       path: '/pantry/scale'
       fullPath: '/pantry/scale'
       preLoaderRoute: typeof AppPantryScaleRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pantry/scanner': {
+      id: '/_app/pantry/scanner'
+      path: '/pantry/scanner'
+      fullPath: '/pantry/scanner'
+      preLoaderRoute: typeof AppPantryScannerRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/places/': {
@@ -1055,6 +1087,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsScaleDeviceIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/scanner/$deviceId': {
+      id: '/_app/settings/scanner/$deviceId'
+      path: '/settings/scanner/$deviceId'
+      fullPath: '/settings/scanner/$deviceId'
+      preLoaderRoute: typeof AppSettingsScannerDeviceIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/speaker/$deviceId': {
       id: '/_app/settings/speaker/$deviceId'
       path: '/settings/speaker/$deviceId'
@@ -1083,6 +1122,7 @@ interface AppRouteChildren {
   AppPantryJournalRoute: typeof AppPantryJournalRoute
   AppPantryListRoute: typeof AppPantryListRoute
   AppPantryScaleRoute: typeof AppPantryScaleRoute
+  AppPantryScannerRoute: typeof AppPantryScannerRoute
   AppPlacesPlaceIdRoute: typeof AppPlacesPlaceIdRoute
   AppPlacesBlankLabelsRoute: typeof AppPlacesBlankLabelsRoute
   AppPlacesLabelsRoute: typeof AppPlacesLabelsRoute
@@ -1115,6 +1155,7 @@ interface AppRouteChildren {
   AppMoneyTxTxIdRoute: typeof AppMoneyTxTxIdRoute
   AppMusicPlaylistPlaylistIdRoute: typeof AppMusicPlaylistPlaylistIdRoute
   AppSettingsScaleDeviceIdRoute: typeof AppSettingsScaleDeviceIdRoute
+  AppSettingsScannerDeviceIdRoute: typeof AppSettingsScannerDeviceIdRoute
   AppSettingsSpeakerDeviceIdRoute: typeof AppSettingsSpeakerDeviceIdRoute
   AppMoneyAccountsIndexRoute: typeof AppMoneyAccountsIndexRoute
 }
@@ -1137,6 +1178,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPantryJournalRoute: AppPantryJournalRoute,
   AppPantryListRoute: AppPantryListRoute,
   AppPantryScaleRoute: AppPantryScaleRoute,
+  AppPantryScannerRoute: AppPantryScannerRoute,
   AppPlacesPlaceIdRoute: AppPlacesPlaceIdRoute,
   AppPlacesBlankLabelsRoute: AppPlacesBlankLabelsRoute,
   AppPlacesLabelsRoute: AppPlacesLabelsRoute,
@@ -1169,6 +1211,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMoneyTxTxIdRoute: AppMoneyTxTxIdRoute,
   AppMusicPlaylistPlaylistIdRoute: AppMusicPlaylistPlaylistIdRoute,
   AppSettingsScaleDeviceIdRoute: AppSettingsScaleDeviceIdRoute,
+  AppSettingsScannerDeviceIdRoute: AppSettingsScannerDeviceIdRoute,
   AppSettingsSpeakerDeviceIdRoute: AppSettingsSpeakerDeviceIdRoute,
   AppMoneyAccountsIndexRoute: AppMoneyAccountsIndexRoute,
 }

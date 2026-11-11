@@ -134,7 +134,7 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
 
     edge: async () => {
       // All at once: each may be a cold start, and in a row they could pass the 8 s limit.
-      const [ping, sms, push, drive, scale, media, match, ask] = await Promise.all([
+      const [ping, sms, push, drive, scale, media, match, ask, scanner] = await Promise.all([
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('ping', { method: 'POST', body: {} }),
         // Bank-SMS ingest (Phase 2b): its version answers a plain GET.
         supabase.functions.invoke<{ ok: boolean; fn_version: string }>('sms-ingest', { method: 'GET' }),
@@ -152,6 +152,8 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
         supabase.functions.invoke<{ ok: boolean; fn_version: string; keys: Record<string, boolean> }>('match-agent', { method: 'GET' }),
         // Ask Gedara (Phase 10): its version, and which of its two AI keys are set (never the keys).
         supabase.functions.invoke<{ ok: boolean; fn_version: string; keys: Record<string, boolean> }>('ask-gedara', { method: 'GET' }),
+        // Bin scanner (Phase 11): its version answers a plain GET.
+        supabase.functions.invoke<{ ok: boolean; fn_version: string }>('scanner-ingest', { method: 'GET' }),
       ]);
       if (ping.error) throw ping.error;
       if (!ping.data?.ok) throw new Error('ping returned no ok');
@@ -164,8 +166,9 @@ export function buildChecks({ supabase, appVersion, getSwVersion }: CheckDeps): 
       if (media.error || !media.data?.ok) throw new CheckError('diagnostics.errors.mediaAgent');
       if (match.error || !match.data?.ok) throw new CheckError('diagnostics.errors.matchAgent');
       if (ask.error || !ask.data?.ok) throw new CheckError('ask.diagnosticsError');
+      if (scanner.error || !scanner.data?.ok) throw new CheckError('diagnostics.errors.scannerIngest');
       const keys = Object.values(match.data.keys).filter(Boolean).length;
-      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version} · ${drive.data.fn_version} · ${scale.data.fn_version} · ${media.data.fn_version} · ${match.data.fn_version} (AI keys ${keys}/3) · ${ask.data.fn_version}`;
+      return `${ping.data.fn_version} · ${sms.data.fn_version} · ${push.data.fn_version} · ${drive.data.fn_version} · ${scale.data.fn_version} · ${media.data.fn_version} · ${match.data.fn_version} (AI keys ${keys}/3) · ${ask.data.fn_version} · ${scanner.data.fn_version}`;
     },
 
     sw: async () => {

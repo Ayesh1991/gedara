@@ -8,7 +8,7 @@ import { env } from '../env';
 import { invalidatePantry } from '../pantry/queries';
 import { placesKey } from '../places';
 import { supabase } from '../supabase';
-import { checkFirmware, sha256Hex, type FirmwareProblem } from './espImage';
+import { checkFirmware, sha256Hex, type FirmwareKind, type FirmwareProblem } from './espImage';
 
 export const scaleKey = (householdId: string, ...rest: unknown[]) => ['scale', householdId, ...rest] as const;
 
@@ -339,14 +339,15 @@ export interface Firmware {
   notes: string | null;
 }
 
-export const firmwareQuery = (householdId: string) =>
+export const firmwareQuery = (householdId: string, kind: FirmwareKind = 'scale') =>
   queryOptions({
-    queryKey: scaleKey(householdId, 'firmware'),
+    queryKey: scaleKey(householdId, 'firmware', kind),
     queryFn: async (): Promise<Firmware[]> => {
       const { data, error } = await supabase
         .from('device_firmware')
         .select('id, version, sha256, size, created_at, notes')
         .eq('household_id', householdId)
+        .eq('kind', kind)
         .order('created_at', { ascending: false })
         .limit(10);
       if (error) throw error;
@@ -362,12 +363,12 @@ export class FirmwareFileError extends Error {
 }
 
 /** Check the file, store it, register it. Returns the new firmware row's id and version. */
-export async function uploadFirmware(householdId: string, file: File): Promise<{ id: string; version: string }> {
+export async function uploadFirmware(householdId: string, file: File, kind: FirmwareKind = 'scale'): Promise<{ id: string; version: string }> {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const check = checkFirmware(bytes);
+  const check = checkFirmware(bytes, kind);
   if (!check.ok) throw new FirmwareFileError(check.problem);
   const sha256 = await sha256Hex(bytes);
-  const path = `${householdId}/scale/${check.info.version}.bin`;
+  const path = `${householdId}/${kind}/${check.info.version}.bin`;
   const { error: upErr } = await supabase.storage
     .from('device-firmware')
     .upload(path, new Blob([bytes], { type: 'application/octet-stream' }), { contentType: 'application/octet-stream', upsert: false });

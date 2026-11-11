@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 860" width="1200" height="860" font-family="Space Grotesk, Segoe UI, Arial, sans-serif">
+  <title>Gedara bin scanner — wiring (NodeMCU ESP32 30-pin, ESP-WROOM-32)</title>
+  <defs><style>
+    .bg { fill: #05070F; } .panel { fill: #0E1426; stroke: #2A3557; stroke-width: 1.5; }
+    .board { fill: #101A33; stroke: #6C7BD8; stroke-width: 2; }
+    .h { fill: #E8ECF8; font-size: 18px; font-weight: 600; } .t { fill: #C5CCE3; font-size: 13px; }
+    .m { fill: #8A94B8; font-size: 12px; } .pin { fill: #E8ECF8; font-size: 12px; font-family: IBM Plex Mono, Consolas, monospace; }
+    .off { fill: #5A6488; font-size: 12px; font-family: IBM Plex Mono, Consolas, monospace; }
+    .w { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .v3 { stroke: #F5B83D; } .gnd { stroke: #6B7280; stroke-dasharray: 6 4; } .i2c { stroke: #22D3EE; }
+    .ser { stroke: #2FC6A0; } .key { stroke: #A78BFA; } .buz { stroke: #F472B6; }
+    .warn { fill: #F5B83D; font-size: 12.5px; font-weight: 600; } .red { fill: #FF6B6B; font-size: 12.5px; font-weight: 600; }
+  </style></defs>
+  <rect class="bg" width="1200" height="860"/>
+  <text x="40" y="44" class="h" font-size="24">Gedara bin scanner · wiring</text>
+  <text x="40" y="68" class="m">NodeMCU ESP32 30-pin (ESP-WROOM-32, USB-C) · everything on 3.3 V · pins checked against the ESP32 datasheet and the GM861S manual (docs/bin-scanner/pins.md)</text>
+  <text x="40" y="92" class="red">Unplug USB before moving a wire. The scanner goes on 3V3, never on VIN (5 V).</text>
+  <rect class="board" x="500" y="150" width="200" height="590" rx="10"/>
+  <rect x="560" y="144" width="80" height="30" rx="4" fill="#1B2748" stroke="#6C7BD8"/><text x="600" y="164" class="m" text-anchor="middle">antenna</text>
+  <rect x="570" y="720" width="60" height="26" rx="4" fill="#1B2748" stroke="#6C7BD8"/><text x="600" y="738" class="m" text-anchor="middle">USB-C</text>
+  <text x="600" y="450" class="h" text-anchor="middle">ESP32</text><text x="600" y="470" class="m" text-anchor="middle">ESP-WROOM-32</text>
+  <circle cx="500" cy="190" r="5" fill="#3A4468"/><text x="512" y="194" class="off">EN</text>
+  <circle cx="500" cy="226" r="5" fill="#3A4468"/><text x="512" y="230" class="off">VP</text>
+  <circle cx="500" cy="262" r="5" fill="#3A4468"/><text x="512" y="266" class="off">VN</text>
+  <circle cx="500" cy="298" r="5" fill="#3A4468"/><text x="512" y="302" class="off">D34</text>
+  <circle cx="500" cy="334" r="5" fill="#3A4468"/><text x="512" y="338" class="off">D35</text>
+  <circle cx="500" cy="370" r="5" fill="#E8ECF8"/><text x="512" y="374" class="pin">D32</text>
+  <circle cx="500" cy="406" r="5" fill="#E8ECF8"/><text x="512" y="410" class="pin">D33</text>
+  <circle cx="500" cy="442" r="5" fill="#E8ECF8"/><text x="512" y="446" class="pin">D25</text>
+  <circle cx="500" cy="478" r="5" fill="#E8ECF8"/><text x="512" y="482" class="pin">D26</text>
+  <circle cx="500" cy="514" r="5" fill="#E8ECF8"/><text x="512" y="518" class="pin">D27</text>
+  <circle cx="500" cy="550" r="5" fill="#E8ECF8"/><text x="512" y="554" class="pin">D14</text>
+  <circle cx="500" cy="586" r="5" fill="#3A4468"/><text x="512" y="590" class="off">D12  leave</text>
+  <circle cx="500" cy="622" r="5" fill="#E8ECF8"/><text x="512" y="626" class="pin">D13</text>
+  <circle cx="500" cy="658" r="5" fill="#E8ECF8"/><text x="512" y="662" class="pin">GND</text>
+  <circle cx="500" cy="694" r="5" fill="#3A4468"/><text x="512" y="698" class="off">VIN  leave</text>
+  <circle cx="700" cy="190" r="5" fill="#3A4468"/><text x="688" y="194" class="off" text-anchor="end">D23</text>
+  <circle cx="700" cy="226" r="5" fill="#E8ECF8"/><text x="688" y="230" class="pin" text-anchor="end">D22</text>
+  <circle cx="700" cy="262" r="5" fill="#3A4468"/><text x="688" y="266" class="off" text-anchor="end">TX0</text>
+  <circle cx="700" cy="298" r="5" fill="#3A4468"/><text x="688" y="302" class="off" text-anchor="end">RX0</text>
+  <circle cx="700" cy="334" r="5" fill="#E8ECF8"/><text x="688" y="338" class="pin" text-anchor="end">D21</text>
+  <circle cx="700" cy="370" r="5" fill="#3A4468"/><text x="688" y="374" class="off" text-anchor="end">D19</text>
+  <circle cx="700" cy="406" r="5" fill="#E8ECF8"/><text x="688" y="410" class="pin" text-anchor="end">D18</text>
+  <circle cx="700" cy="442" r="5" fill="#3A4468"/><text x="688" y="446" class="off" text-anchor="end">D5</text>
+  <circle cx="700" cy="478" r="5" fill="#E8ECF8"/><text x="688" y="482" class="pin" text-anchor="end">TX2</text>
+  <circle cx="700" cy="514" r="5" fill="#E8ECF8"/><text x="688" y="518" class="pin" text-anchor="end">RX2</text>
+  <circle cx="700" cy="550" r="5" fill="#E8ECF8"/><text x="688" y="554" class="pin" text-anchor="end">D4</text>
+  <circle cx="700" cy="586" r="5" fill="#3A4468"/><text x="688" y="590" class="off" text-anchor="end">D2</text>
+  <circle cx="700" cy="622" r="5" fill="#3A4468"/><text x="688" y="626" class="off" text-anchor="end">D15</text>
+  <circle cx="700" cy="658" r="5" fill="#E8ECF8"/><text x="688" y="662" class="pin" text-anchor="end">GND</text>
+  <circle cx="700" cy="694" r="5" fill="#E8ECF8"/><text x="688" y="698" class="pin" text-anchor="end">3V3</text>
+  <rect class="panel" x="60" y="300" width="230" height="330" rx="10"/><text x="76" y="326" class="h">4×4 keypad</text>
+  <text x="76" y="346" class="m">keys facing you · pin 1 is the leftmost</text>
+  <rect x="82" y="362" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="97" y="381" class="pin" text-anchor="middle">1</text>
+  <rect x="120" y="362" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="135" y="381" class="pin" text-anchor="middle">2</text>
+  <rect x="158" y="362" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="173" y="381" class="pin" text-anchor="middle">3</text>
+  <rect x="196" y="362" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="211" y="381" class="pin" text-anchor="middle">A</text>
+  <rect x="82" y="398" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="97" y="417" class="pin" text-anchor="middle">4</text>
+  <rect x="120" y="398" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="135" y="417" class="pin" text-anchor="middle">5</text>
+  <rect x="158" y="398" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="173" y="417" class="pin" text-anchor="middle">6</text>
+  <rect x="196" y="398" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="211" y="417" class="pin" text-anchor="middle">B</text>
+  <rect x="82" y="434" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="97" y="453" class="pin" text-anchor="middle">7</text>
+  <rect x="120" y="434" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="135" y="453" class="pin" text-anchor="middle">8</text>
+  <rect x="158" y="434" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="173" y="453" class="pin" text-anchor="middle">9</text>
+  <rect x="196" y="434" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="211" y="453" class="pin" text-anchor="middle">C</text>
+  <rect x="82" y="470" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="97" y="489" class="pin" text-anchor="middle">*</text>
+  <rect x="120" y="470" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="135" y="489" class="pin" text-anchor="middle">0</text>
+  <rect x="158" y="470" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="173" y="489" class="pin" text-anchor="middle">#</text>
+  <rect x="196" y="470" width="30" height="28" rx="5" fill="#141C30" stroke="#2A3557"/><text x="211" y="489" class="pin" text-anchor="middle">D</text>
+  <text x="76" y="524" class="pin">pin 1  row 1</text>
+  <path class="w key" d="M 290 520 H 330 V 622 H 494"/>
+  <text x="76" y="537" class="pin">pin 2  row 2</text>
+  <path class="w key" d="M 290 533 H 348 V 550 H 494"/>
+  <text x="76" y="550" class="pin">pin 3  row 3</text>
+  <path class="w key" d="M 290 546 H 366 V 514 H 494"/>
+  <text x="76" y="563" class="pin">pin 4  row 4</text>
+  <path class="w key" d="M 290 559 H 384 V 478 H 494"/>
+  <text x="76" y="576" class="pin">pin 5  col 1</text>
+  <path class="w key" d="M 290 572 H 402 V 442 H 494"/>
+  <text x="76" y="589" class="pin">pin 6  col 2</text>
+  <path class="w key" d="M 290 585 H 420 V 406 H 494"/>
+  <text x="76" y="602" class="pin">pin 7  col 3</text>
+  <path class="w key" d="M 290 598 H 438 V 370 H 494"/>
+  <text x="76" y="615" class="pin">pin 8  col 4</text>
+  <path class="w key" d="M 290 611 H 310 V 790 H 758 V 550 H 706"/>
+  <text x="320" y="808" class="m">keypad pin 8 → D4 (the only keypad wire on the right side)</text>
+  <rect class="panel" x="880" y="130" width="270" height="140" rx="10"/><text x="896" y="156" class="h">OLED 0.96" (SSD1306)</text>
+  <text x="896" y="186" class="pin">VCC</text>
+  <path class="w v3" d="M 880 182 H 786 V 694 H 706"/>
+  <text x="896" y="208" class="pin">GND</text>
+  <path class="w gnd" d="M 880 204 H 798 V 658 H 706"/>
+  <text x="896" y="230" class="pin">SCL</text>
+  <path class="w i2c" d="M 880 226 H 810 V 226 H 706"/>
+  <text x="896" y="252" class="pin">SDA</text>
+  <path class="w i2c" d="M 880 248 H 822 V 334 H 706"/>
+  <rect class="panel" x="880" y="330" width="270" height="200" rx="10"/><text x="896" y="356" class="h">GM861S barcode reader</text>
+  <text x="896" y="376" class="warn">3.3 V only</text>
+  <text x="896" y="406" class="pin">pin 6 VCC</text>
+  <path class="w v3" d="M 880 402 H 868 V 694 H 706"/>
+  <text x="896" y="430" class="pin">pin 5 TXD</text>
+  <path class="w ser" d="M 880 426 H 856 V 514 H 706"/>
+  <text x="896" y="454" class="pin">pin 4 RXD</text>
+  <path class="w ser" d="M 880 450 H 844 V 478 H 706"/>
+  <text x="896" y="478" class="pin">pin 3 GND</text>
+  <path class="w gnd" d="M 880 474 H 832 V 658 H 706"/>
+  <text x="896" y="502" class="off">pins 1, 2 (D+, D−): not connected</text>
+  <text x="896" y="520" class="m">100 µF + 100 nF across VCC and GND, at the reader</text>
+  <rect class="panel" x="880" y="590" width="270" height="110" rx="10"/><text x="896" y="616" class="h">Buzzer</text>
+  <text x="896" y="646" class="pin">+ (signal)</text>
+  <path class="w buz" d="M 880 642 H 772 V 406 H 706"/>
+  <text x="896" y="670" class="pin">− (GND)</text>
+  <path class="w gnd" d="M 880 666 H 744 V 658 H 706"/>
+  <text x="896" y="688" class="m">3-pin module: also VCC → 3V3</text>
+  <rect class="panel" x="60" y="130" width="230" height="140" rx="10"/>
+  <path class="w v3" d="M 76 154 H 116"/><text x="128" y="158" class="t">3.3 V</text>
+  <path class="w gnd" d="M 76 174 H 116"/><text x="128" y="178" class="t">GND</text>
+  <path class="w i2c" d="M 76 194 H 116"/><text x="128" y="198" class="t">OLED (I²C)</text>
+  <path class="w ser" d="M 76 214 H 116"/><text x="128" y="218" class="t">reader (serial, crossed)</text>
+  <path class="w key" d="M 76 234 H 116"/><text x="128" y="238" class="t">keypad</text>
+  <path class="w buz" d="M 76 254 H 116"/><text x="128" y="258" class="t">buzzer</text>
+  <text x="60" y="700" class="m">Free for later, no rewiring: D19, D23 (outputs) · D34, D35, VP, VN (inputs).</text>
+  <text x="60" y="720" class="m">Never use for parts: D0, D2, D5, D12, D15 (the chip reads them while starting).</text>
+  <text x="60" y="740" class="m">Power: USB-C from a 5 V phone charger (1 A or more), always on.</text>
+</svg>

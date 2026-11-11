@@ -1,7 +1,7 @@
 // Wi-Fi, the setup portal and the one conversation with Gedara (protocol v1, docs/kitchen-scale/
 // protocol.md): POST status + queued readings + live state + finished commands → acks, results,
 // commands, config, containers. HTTPS with the certificate checked against pinned root CAs
-// (src/roots.h: Google Trust Services + Let's Encrypt, from the Mozilla bundle; tools/make-roots.py). Retries back off 1 s → 60 s with jitter; readings never leave the outbox unacked.
+// (devices/shared/lib/gedara_device/src/roots.h: Google Trust Services + Let's Encrypt, from the Mozilla bundle; tools/make-roots.py). Retries back off 1 s → 60 s with jitter; readings never leave the outbox unacked.
 #pragma once
 #include <Arduino.h>
 
@@ -14,7 +14,7 @@ void simulateOffline(bool on);  // Serial "offline on|off" (tests the outbox)
 bool online();             // Wi-Fi up and the last sync worked
 String lastError();        // "" or e.g. "http_404" / "net:connection refused"
 const char* resetReasonText();  // why the scale last restarted: poweron, software, crash, watchdog, brownout …
-const char* rootCAs();     // the pinned roots (src/roots.h), also used by OTA downloads
+const char* rootCAs();     // the pinned roots (shared roots.h), also used by OTA downloads
 String ip();
 int rssi();
 }  // namespace net

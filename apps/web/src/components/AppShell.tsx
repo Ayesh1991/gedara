@@ -27,6 +27,7 @@ import { CommandPalette } from './CommandPalette';
 import { MiniPlayer } from './media/MiniPlayer';
 import { OfflineBanner, OfflineSync, useOutbox } from './offline/OfflineSync';
 import { ScalePopups } from './scale/ScalePopups';
+import { ScannerPopups } from './scanner/ScannerPopups';
 import { ShortcutsHelp } from './ShortcutsHelp';
 import { WedgeListener } from './scan/WedgeListener';
 import { VersionBadge } from './VersionBadge';
@@ -155,6 +156,7 @@ export function AppShell({ membership, children }: { membership: Membership; chi
       <WedgeListener />
       <OfflineSync householdId={membership.household.id} />
       <ScalePopups householdId={membership.household.id} canWrite={membership.role !== 'viewer'} />
+      <ScannerPopups householdId={membership.household.id} canWrite={membership.role !== 'viewer'} />
       <CommandPalette open={palette} onClose={() => setPalette(false)} householdId={membership.household.id} locale={locale} />
       <ShortcutsHelp open={help} onClose={() => setHelp(false)} />
       {/* Desktop / iPad landscape: glass rail */}

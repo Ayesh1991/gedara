@@ -48,6 +48,8 @@ export default defineConfig({
       '@media': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/media'),
       // Home Assistant bridge protocol (Phase 8) shared with the home-agent Edge Function and the simulator.
       '@home': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/home'),
+      // Bin-scanner protocol (Phase 11) shared with the scanner-ingest Edge Function and the simulator.
+      '@scanner': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/scanner'),
       // Matching engines (bill line → product, bank alert → ledger) shared with the match-agent Edge Function (Phase 9b).
       '@match': path.resolve(import.meta.dirname, '../../supabase/functions/_shared/match'),
       // AI gateway (Phase 9b): only its pure parts (guard, schemas) are used by the app's tests.

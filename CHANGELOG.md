@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.11.1 — Bin scanner: a keener reader, and devices that survive a silent router
+- **How keenly it senses a pack** (Settings › Devices › the scanner): Normal / High / Highest. In a dim kitchen
+  the reader woke late or not at all; Highest makes it react to much smaller changes. The lamp still lights
+  only while it reads and each read is shorter (2 s), so the reader doesn't wear out faster. Schema 110,
+  scanner firmware 0.1.1 (new scanners start on High).
+- The scanner uses public name servers (8.8.8.8 / 1.1.1.1) when the home router's doesn't answer. On 11 Nov the
+  router refused every lookup and the scale, speaker and Home Assistant bridge all went offline until it was
+  restarted; the scanner now carries on by itself.
+- "2 packs left" instead of "2 pack left" for products counted in packs, bottles, cans … (app and scanner screen).
+- Scanner Serial Monitor: `buzz` (which kind of buzzer, and is it wired) and `sense <a> <b>` (try sensitivity numbers).
+
+## 0.11.0 — Phase 11: Bin scanner, the pantry counts itself at the kitchen bin
+- **Bin scanner**: a small barcode scanner next to the kitchen bin (ESP32 + GM861S reader + keypad + OLED +
+  buzzer). Show the empty pack to it on the way to the bin: an instant tick, the screen says
+  "Highland Yoghurt · 5 left", and one is recorded as used. When the last one goes, the product is put on the
+  shopping list. No phone needed. Schema 109, new function `scanner-ingest`.
+- **Keys**: A Used (the everyday mode; it always falls back to it after 30 s, so a pack scanned at the bin can
+  never add stock by mistake) · B Add (B twice = 5 minutes, for stocking a cupboard) · C Opened · D Waste ·
+  # Check (look, change nothing) · * undo the last scan · numbers = how many. Each mode looks and sounds different.
+- **Used, the smart way**: pieces −1; a pack with a size is finished (an opened pack is emptied, a part-used
+  pack loses its rest, otherwise one pack size); a product that lives in a kitchen-scale jar is moved into the
+  jar instead of being counted twice; nothing in stock → on the shopping list.
+- **Add and bills live together**: Add right after a bill for the same product waits for your yes; a bill that
+  arrives after Add doesn't count those packs twice (a note with Undo says so).
+- **Pantry › Bin scanner**: "Needs you" (barcodes to link once: the waiting scans are then applied; Add after a
+  bill; scans kept while paused) and recent scans with Undo. Pop-ups with Undo on every screen (per device).
+- **Settings › Devices › Bin scanners** (owner adds; the key is shown once, only its fingerprint is kept): health,
+  sound and quiet hours, how the reader watches (senses movement / always / after a key), keypad cable, pause /
+  resume, "undo everything since", firmware updates from the website, and the scanner's own log.
+- **Safety**: the scanner can only use, add, open, waste, check and undo its own last scan, in its own household.
+  Scanned text is treated as untrusted (96 plain characters, shown as text). Limits pause a scanner that scans
+  too much (20 a minute, 150 packs a day, 50 added a day) and alert the owner at once.
+- Works without Wi-Fi: scans are kept on the scanner and sent later, in order, each counted once. It calls the
+  server only when something is scanned, on # and every 30 minutes (about 0.2 MB of logs a day).
+- Kitchen scale: its updater, log buffer, certificates and sequence numbers moved to `devices/shared` (shared
+  with the scanner). No change in behaviour; the scale does not need a new firmware.
+- Guides: docs/bin-scanner (parts, pin-by-pin wiring, setup, staged checklist, troubleshooting).
+
 ## Unreleased — schema 104: deleting an account no longer trips over a shop memory
 - Deleting an account failed ("merchant_memory_check") when Gedara remembered a shop only by that account
   ("this shop is paid by the Seylan card", no category). That memory is now forgotten with the account; a

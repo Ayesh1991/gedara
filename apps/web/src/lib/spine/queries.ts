@@ -3,6 +3,7 @@
 // grants); routing and ticking-by-bill only happen in the RPCs of migration 31.
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import { newOpBase, outbox } from '../offline';
+import { settleAfterBills } from '../scanner/settle';
 import { supabase } from '../supabase';
 import type { Json, Tables } from '../db.types';
 import { pantryKey } from '../pantry/queries';
@@ -78,7 +79,10 @@ export async function routeLines(
     p_tick: tick as unknown as Json,
   });
   if (error) throw error;
-  return data as unknown as RouteLinesResult;
+  const result = data as unknown as RouteLinesResult;
+  // Packs the bin scanner's Add already put in are not counted twice (Phase 11).
+  if (result.lots > 0) await settleAfterBills([transactionId]);
+  return result;
 }
 
 // ── Shopping list ─────────────────────────────────────────────────────────────

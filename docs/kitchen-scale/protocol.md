@@ -9,7 +9,7 @@ simulator). Database side: `rpc_scale_sync` (migration 65, service role only).
 
 - The scale holds **no Supabase key**, only its own key. Gedara stores **only its sha256** (`device_token`, no
   client access). The owner adds and revokes scales; a revoked key fails at once (401).
-- HTTPS is verified against pinned **root** certificates (`src/roots.h`: GTS R1/R3/R4, ISRG X1/X2, from
+- HTTPS is verified against pinned **root** certificates (`devices/shared/lib/gedara_device/src/roots.h`: GTS R1/R3/R4, ISRG X1/X2, from
   the Mozilla bundle by `tools/make-roots.py`), so certificate renewals don't matter.
 - Every field is bounded twice: by Zod in the function, then again in SQL. Bodies ≤ 16 KB, ≤ 20 readings per
   request, ≤ 600 readings per 10 minutes per scale (`GDRTE` → 429). Logs never contain the key.

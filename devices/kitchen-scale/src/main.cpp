@@ -142,6 +142,11 @@ void setup() {
   esp_task_wdt_reconfigure(&wdt);
 
   settings::begin();
+  static const ota::Hooks otaHooks = {
+      FW_VERSION, net::rootCAs(),
+      [](const char* version) { ui::show(Screen::Updating, (String("Updating to ") + version).c_str(), "", "do not unplug"); },
+      [](int pct) { ui::setProgress(static_cast<int8_t>(pct)); }};
+  ota::setup(otaHooks);
   ota::bootCheck();
   ui::begin();
   ui::show(Screen::Boot, "Gedara scale " FW_VERSION, "self-test...");
