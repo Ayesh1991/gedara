@@ -36,6 +36,12 @@ In a terminal in the `gedara-handoff` folder:
 
 ## Stage 1 · The bare board (test firmware, `env:esp32_fake`)
 
+> **Already soldered everything?** (Didula, 11 Nov: yes, with the pins of [pins.md](pins.md).) Then
+> skip the test firmware: flash **`env:esp32`** (the real one), do **1.1** and **1.2** below, and go
+> straight to **Stage 2**, checking 2.2 → 2.5 in order without unplugging anything. Where Stage 1
+> says "type `scan …`", scan a real barcode; where it says `sync`, press **#**. Do 1.6 by switching
+> the router's Wi-Fi off for a minute, and 1.7 as written.
+
 The test firmware pretends to have a reader and a keypad. You "scan" by typing in the Serial Monitor.
 
 ### 1.1 Flash and connect
