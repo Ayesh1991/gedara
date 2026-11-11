@@ -75,6 +75,8 @@ void command(String cmd) {
     net::requestPortal();
   } else if (cmd == "offline on" || cmd == "offline off") {
     net::simulateOffline(cmd.endsWith("on"));
+  } else if (cmd == "buzz") {
+    buzzer::test();
   } else if (cmd == "reboot") {
     ESP.restart();
 #ifdef GEDARA_FAKE
@@ -88,7 +90,7 @@ void command(String cmd) {
     keypad::inject2('A', 'D', 10300);                    // A + D for 10 s (Wi-Fi setup)
 #endif
   } else {
-    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · reboot"
+    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · reboot"
 #ifdef GEDARA_FAKE
                    " · scan <code> · key <0-9 A-D * #> · hold <key> · setup"
 #endif

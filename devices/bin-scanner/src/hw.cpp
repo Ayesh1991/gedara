@@ -9,8 +9,11 @@
 #include "settings.h"
 
 // ── Buzzer ────────────────────────────────────────────────────────────────────
+#include <atomic>
+
 namespace {
 QueueHandle_t soundQ;
+std::atomic<bool> testAsked{false};
 
 const char* soundName(tunes::Sound s) {
   static const char* const names[] = {"boot", "tick", "key", "used", "added", "opened", "wasted", "checked", "unknown",
@@ -37,6 +40,8 @@ void buzzer::begin() {
 #endif
 }
 
+void buzzer::test() { testAsked = true; }
+
 void buzzer::play(tunes::Sound s) {
   if (soundQ) xQueueSend(soundQ, &s, 0);  // full queue: the newest sound is dropped, never blocks a scan
 }
@@ -48,8 +53,33 @@ void buzzer::task(void*) {
 #endif
   for (;;) {
     esp_task_wdt_reset();
+#ifndef GEDARA_FAKE
+    if (testAsked.exchange(false)) {
+      // Part 1: the pin simply on. An ACTIVE buzzer beeps by itself; a passive one only clicks.
+      if (attached) {
+        ledcDetach(PIN_BUZZER);
+        attached = false;
+      }
+      pinMode(PIN_BUZZER, OUTPUT);
+      Serial.println("[BUZZ] 1/2: pin D18 ON for 1 s (an active buzzer beeps now)");
+      digitalWrite(PIN_BUZZER, HIGH);
+      vTaskDelay(pdMS_TO_TICKS(1000));
+      digitalWrite(PIN_BUZZER, LOW);
+      vTaskDelay(pdMS_TO_TICKS(500));
+      // Part 2: a 2.7 kHz tone at full loudness. A PASSIVE buzzer sings; an active one also makes noise.
+      Serial.println("[BUZZ] 2/2: 2.7 kHz tone for 1 s (a passive buzzer sings now)");
+      attached = ledcAttach(PIN_BUZZER, 2700, 10);
+      ledcWrite(PIN_BUZZER, 512);
+      vTaskDelay(pdMS_TO_TICKS(1000));
+      ledcWrite(PIN_BUZZER, 0);
+      Serial.println("[BUZZ] done. Heard nothing in both parts? Then it is the wiring: + on D18, - on GND.");
+      continue;
+    }
+#else
+    if (testAsked.exchange(false)) Serial.println("[BUZZ] test build: no buzzer connected");
+#endif
     tunes::Sound s;
-    if (xQueueReceive(soundQ, &s, pdMS_TO_TICKS(1000)) != pdTRUE) continue;
+    if (xQueueReceive(soundQ, &s, pdMS_TO_TICKS(300)) != pdTRUE) continue;
     const ScannerConfig& c = settings::get().config;
     const bool quiet = quietNow();
     size_t n = 0;

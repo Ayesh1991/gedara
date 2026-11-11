@@ -38,6 +38,9 @@ namespace buzzer {
 void begin();
 void task(void*);             // plays queued sounds, one after the other
 void play(tunes::Sound s);
+/** Serial "buzz": 1 s of plain on (an active buzzer beeps), then 1 s of a 2.7 kHz tone at full
+ *  loudness (a passive buzzer sings). Ignores volume and quiet hours: it is a wiring test. */
+void test();
 /** Local time is inside the quiet hours from Gedara (false while the clock isn't set). */
 bool quietNow();
 }  // namespace buzzer
