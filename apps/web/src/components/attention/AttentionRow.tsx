@@ -10,7 +10,9 @@ import {
   MessageSquareText,
   PiggyBank,
   Receipt,
+  Pause,
   Scale,
+  ScanBarcode,
   ShieldAlert,
   ShieldCheck,
   ShoppingCart,
@@ -50,6 +52,9 @@ const ICON: Record<AttentionKind, LucideIcon> = {
   budget_near: PiggyBank,
   scale_decision: Scale,
   scale_new_tag: Tag,
+  bin_unknown: ScanBarcode,
+  bin_waiting: ScanBarcode,
+  bin_paused: Pause,
 };
 
 const TONE_BG = {
@@ -95,6 +100,12 @@ export function useAttentionText() {
         return t(i.extra.last_at ? 'attention.kinds.backup_due' : 'attention.kinds.backup_never');
       case 'scale_new_tag':
         return t('attention.kinds.scale_new_tag', { count: Number(i.qty ?? 0) });
+      case 'bin_unknown':
+        return t('attention.kinds.bin_unknown', { count: Number(i.qty ?? 0) });
+      case 'bin_waiting':
+        return t('attention.kinds.bin_waiting', { count: Number(i.qty ?? 0) });
+      case 'bin_paused':
+        return t('attention.kinds.bin_paused', { title });
       case 'bill_due':
       case 'insurance_due':
       case 'service_due':

@@ -1,0 +1,28 @@
+// NodeMCU ESP32 30-pin (ESP-WROOM-32) pin plan (docs/bin-scanner/pins.md). Checked 2026-11-10
+// against the ESP32 datasheet: none of these is a strapping pin (0, 2, 5, 12, 15), the flash
+// (6–11), an input-only pin (34–39) or UART0 (1, 3). Everything runs at 3.3 V: the GM861S scanner
+// is a 3.3 V part (its manual: "The power supply is DC +3.3V") and is fed from the board's 3V3 pin.
+#pragma once
+
+// SSD1306 128×64 OLED (I²C, address 0x3C) — the board's usual I²C pins
+constexpr int PIN_OLED_SDA = 21;
+constexpr int PIN_OLED_SCL = 22;
+constexpr int OLED_ADDR = 0x3C;
+
+// GM861S barcode reader on UART2 (9600 8N1). Scanner TXD → RX2, scanner RXD → TX2.
+constexpr int PIN_SCANNER_RX = 16;
+constexpr int PIN_SCANNER_TX = 17;
+
+// 4×4 membrane keypad: ribbon pins 1–4 are the rows, 5–8 the columns (left to right, keys facing you).
+// Rows are driven low one at a time; columns are inputs with the chip's own pull-ups.
+constexpr int PIN_KEY_ROWS[4] = {13, 14, 27, 26};
+constexpr int PIN_KEY_COLS[4] = {25, 33, 32, 4};
+
+// Buzzer (a passive one plays tunes; an active one beeps): signal pin, other leg to GND.
+constexpr int PIN_BUZZER = 18;
+
+// The board's BOOT button (to GND): hold 10 s = Wi-Fi setup, hold 5 s at power-on = forget Wi-Fi + key.
+constexpr int PIN_BOOT_BUTTON = 0;
+
+// Free for later, no rewiring of the above: GPIO19, GPIO23 (outputs); GPIO34, 35, 36 (VP), 39 (VN)
+// (inputs only, e.g. a light sensor).

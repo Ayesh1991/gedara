@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { compareVersions } from '@/lib/scale/espImage';
+import { compareVersions, type FirmwareKind } from '@/lib/scale/espImage';
 import {
   FirmwareFileError,
   firmwareQuery,
@@ -17,13 +17,35 @@ import {
   scaleKey,
   sendCommand,
   uploadFirmware,
-  type ScaleDevice,
 } from '@/lib/scale/queries';
 
-export function FirmwarePanel({ householdId, device, isOwner, locale }: { householdId: string; device: ScaleDevice; isOwner: boolean; locale: string }) {
+/** What the panel needs of a device: a scale or a bin scanner. */
+interface FirmwareDevice {
+  id: string;
+  name: string;
+  fw_version: string | null;
+  status: { ota?: string } | null;
+}
+
+export function FirmwarePanel({
+  householdId,
+  device,
+  isOwner,
+  locale,
+  kind = 'scale',
+  hint,
+}: {
+  householdId: string;
+  device: FirmwareDevice;
+  isOwner: boolean;
+  locale: string;
+  kind?: FirmwareKind;
+  /** Replaces the scale's "where the file is" hint. */
+  hint?: string;
+}) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const firmware = useQuery(firmwareQuery(householdId));
+  const firmware = useQuery(firmwareQuery(householdId, kind));
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
@@ -31,9 +53,9 @@ export function FirmwarePanel({ householdId, device, isOwner, locale }: { househ
   async function upload(file: File) {
     setBusy(true);
     try {
-      const r = await uploadFirmware(householdId, file);
+      const r = await uploadFirmware(householdId, file, kind);
       toast.success(t('scale.firmware.uploaded', { version: r.version }));
-      await qc.invalidateQueries({ queryKey: scaleKey(householdId, 'firmware') });
+      await qc.invalidateQueries({ queryKey: scaleKey(householdId, 'firmware', kind) });
     } catch (e) {
       toast.error(e instanceof FirmwareFileError ? t(`scale.firmware.problems.${e.problem}`) : t(`scale.errors.${scaleErrorKey(e)}`));
     } finally {
@@ -102,7 +124,7 @@ export function FirmwarePanel({ householdId, device, isOwner, locale }: { househ
             <Upload className="h-4 w-4" aria-hidden />
             {t('scale.firmware.upload')}
           </Button>
-          <p className="text-[12.5px] text-faint">{t('scale.firmware.uploadHint')}</p>
+          <p className="text-[12.5px] text-faint">{hint ?? t('scale.firmware.uploadHint')}</p>
         </>
       )}
     </Card>

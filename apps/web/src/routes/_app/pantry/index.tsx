@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { History, ListChecks, Plus, Scale, ScanLine, Search, ShoppingBasket } from 'lucide-react';
+import { History, ListChecks, Plus, Scale, ScanBarcode, ScanLine, Search, ShoppingBasket } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -139,6 +139,10 @@ function PantryPage() {
           <Link to="/pantry/scale" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <Scale className="h-4 w-4" aria-hidden />
             {t('scale.page.short')}
+          </Link>
+          <Link to="/pantry/scanner" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+            <ScanBarcode className="h-4 w-4" aria-hidden />
+            {t('scanner.page.short')}
           </Link>
           {canWrite && (
             <Link to="/scan" search={{ add: 'product' }} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>

@@ -452,6 +452,11 @@ verify_jwt = false
 enabled = true
 verify_jwt = false
 
+# The bin scanner (ESP32 by the kitchen bin, Phase 11): no Supabase session; its own key in X-Gedara-Device.
+[functions.scanner-ingest]
+enabled = true
+verify_jwt = false
+
 # Matching (Phase 9b): pg_cron twice a day (token checked in the database) or a signed-in user ("Check
 # now", the accuracy test, "test the keys") — the handler authenticates both itself.
 [functions.match-agent]

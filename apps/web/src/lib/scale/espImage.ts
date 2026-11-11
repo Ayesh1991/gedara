@@ -6,9 +6,15 @@
 
 export const FIRMWARE_PROJECT = 'gedara-kitchen-scale';
 const ESP_IMAGE_MAGIC = 0xe9;
-const CHIP_ID_ESP32S3 = 9;
 const MIN_SIZE = 64 * 1024;
-const MAX_SIZE = 3 * 1024 * 1024; // one OTA slot (partitions_8mb.csv)
+
+/** The two kinds of device that take firmware from the website (Phase 11 added the bin scanner). */
+export type FirmwareKind = 'scale' | 'scanner';
+/** Per kind: the project name in the marker, the chip (image header), and one OTA slot's size. */
+export const FIRMWARE_KINDS: Record<FirmwareKind, { project: string; chipId: number; maxSize: number }> = {
+  scale: { project: FIRMWARE_PROJECT, chipId: 9 /* ESP32-S3 */, maxSize: 3 * 1024 * 1024 /* partitions_8mb.csv */ },
+  scanner: { project: 'gedara-bin-scanner', chipId: 0 /* ESP32 */, maxSize: 0x1c0000 /* partitions_4mb.csv */ },
+};
 
 export type FirmwareProblem = 'too_small' | 'too_large' | 'not_esp' | 'wrong_chip' | 'full_flash' | 'not_gedara' | 'wrong_project';
 
@@ -34,19 +40,20 @@ function findMarker(bytes: Uint8Array): string | null {
   return null;
 }
 
-export function checkFirmware(bytes: Uint8Array): FirmwareCheck {
+export function checkFirmware(bytes: Uint8Array, kind: FirmwareKind = 'scale'): FirmwareCheck {
+  const want = FIRMWARE_KINDS[kind];
   if (bytes.length < MIN_SIZE) return { ok: false, problem: 'too_small' };
-  if (bytes.length > MAX_SIZE) return { ok: false, problem: 'too_large' };
+  if (bytes.length > want.maxSize) return { ok: false, problem: 'too_large' };
   if (bytes[0] !== ESP_IMAGE_MAGIC) return { ok: false, problem: 'not_esp' };
   // Partition table magic 0xAA 0x50 at 0x8000 = a merged/full-flash file, not firmware.bin.
   if (bytes.length > 0x8001 && bytes[0x8000] === 0xaa && bytes[0x8001] === 0x50) return { ok: false, problem: 'full_flash' };
   const chipId = bytes[12]! | (bytes[13]! << 8);
-  if (chipId !== CHIP_ID_ESP32S3) return { ok: false, problem: 'wrong_chip' };
+  if (chipId !== want.chipId) return { ok: false, problem: 'wrong_chip' };
 
   const tag = findMarker(bytes);
   const m = tag ? /^GEDARA-FW:([a-z0-9-]{1,40}):([0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]{1,20})?):END$/.exec(tag) : null;
   if (!m) return { ok: false, problem: 'not_gedara' };
-  if (m[1] !== FIRMWARE_PROJECT) return { ok: false, problem: 'wrong_project' };
+  if (m[1] !== want.project) return { ok: false, problem: 'wrong_project' };
   return { ok: true, info: { version: m[2]!, project: m[1]!, size: bytes.length, chipId } };
 }
 

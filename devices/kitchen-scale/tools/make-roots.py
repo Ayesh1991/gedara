@@ -1,4 +1,4 @@
-"""Writes src/roots.h: the root certificates the scale trusts for HTTPS to Supabase, taken from a local
+"""Writes devices/shared/lib/gedara_device/src/roots.h: the root certificates the scale and the bin scanner trust for HTTPS to Supabase, taken from a local
 Mozilla CA bundle (Git for Windows ships one). Supabase's functions and storage are served by Cloudflare
 with Google Trust Services certificates today (WE1 -> GTS Root R4; the GlobalSign cross-sign isn't
 needed and Mozilla no longer trusts that root);
@@ -20,7 +20,7 @@ WANTED = [
     "ISRG Root X2",
 ]
 BUNDLE = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "C:/Program Files/Git/mingw64/etc/ssl/certs/ca-bundle.crt")
-OUT = pathlib.Path(__file__).resolve().parent.parent / "src" / "roots.h"
+OUT = pathlib.Path(__file__).resolve().parent.parent.parent / "shared" / "lib" / "gedara_device" / "src" / "roots.h"
 OPENSSL = "C:/Program Files/Git/mingw64/bin/openssl.exe"
 
 

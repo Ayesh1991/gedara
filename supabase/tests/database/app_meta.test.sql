@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(5);
 
-select is(schema_version(), 104, 'schema_version is 104 (Phase 10 + deleting an account forgets its account-only shop memories)');
+select is(schema_version(), 109, 'schema_version is 109 (Phase 11 bin scanner)');
 
 set local role anon;
-select is(schema_version(), 104, 'anon can call schema_version()');
+select is(schema_version(), 109, 'anon can call schema_version()');
 select throws_ok($$select * from app_meta$$, '42501', null, 'anon cannot read app_meta');
 
 reset role;

@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { HomeAssistantSection } from '@/components/home/HomeAssistantSection';
 import { SpeakerDevicesSection } from '@/components/media/SpeakerDevicesSection';
 import { ScaleDevicesSection } from '@/components/scale/ScaleDevicesSection';
+import { ScannerDevicesSection } from '@/components/scanner/ScannerDevicesSection';
 import { moneyErrorKey } from '@/lib/money/queries';
 import { createDevice, devicesQuery, ingestUrl, revokeDevice, type Device } from '@/lib/sms/queries';
 
@@ -112,6 +113,13 @@ function DevicesPage() {
       </div>
 
       <ScaleDevicesSection
+        householdId={householdId}
+        isOwner={isOwner}
+        locale={membership.household.locale}
+        timezone={membership.household.timezone}
+      />
+
+      <ScannerDevicesSection
         householdId={householdId}
         isOwner={isOwner}
         locale={membership.household.locale}

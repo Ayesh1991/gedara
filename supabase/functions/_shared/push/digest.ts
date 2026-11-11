@@ -58,6 +58,12 @@ export function itemPhrase(i: DigestItem): string {
       return `${t} jar: say where the extra came from`;
     case 'scale_new_tag':
       return n === 1 ? '1 new tag on the kitchen scale' : `${n} new tags on the kitchen scale`;
+    case 'bin_unknown':
+      return n === 1 ? '1 new barcode from the bin scanner to link' : `${n} new barcodes from the bin scanner to link`;
+    case 'bin_waiting':
+      return n === 1 ? '1 bin-scanner scan waiting for you' : `${n} bin-scanner scans waiting for you`;
+    case 'bin_paused':
+      return `${t} is paused`;
     case 'budget_over':
       return `${t} budget is over`;
     case 'budget_near':

@@ -8,6 +8,7 @@
 //   media_token, device_pairing, device_pair_attempt, media_inbox_trash
 //                     music-speaker key hashes, waiting pairings, wrong-code tries, files to delete (Phase 7h)
 //   home_token        Home Assistant bridge key hashes — secrets (Phase 8)
+//   scanner_token     bin-scanner key hashes — secrets (Phase 11)
 // Pure (no Supabase import) so the test can read it.
 
 export interface ExportTable {
@@ -77,6 +78,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { name: 'device_command', order: ['id'], scope: 'household' },
   { name: 'device_firmware', order: ['id'], scope: 'household' },
   { name: 'device_log', order: ['id'], scope: 'household' },
+  { name: 'bin_scan', order: ['id'], scope: 'household' },
   { name: 'media_track', order: ['id'], scope: 'household' },
   { name: 'media_playlist', order: ['id'], scope: 'household' },
   { name: 'media_playlist_item', order: ['id'], scope: 'household' },
