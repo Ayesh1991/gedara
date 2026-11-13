@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ArrowUp, ChevronRight, CircleCheck, HousePlug, ListChecks, MapPin, MessageCircleQuestion, Music, Sparkles } from 'lucide-react';
+import { ArrowUp, ChevronRight, CircleCheck, HousePlug, ListChecks, MapPin, MessageCircleQuestion, Music, Sparkles, Zap } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ring, Sparkline, smoothPath } from '@/components/aurora/charts';
@@ -274,6 +274,25 @@ function AskCard({ householdId, isOwner }: { householdId: string; isOwner: boole
   );
 }
 
+/** Quick spend (Phase 12): cash in one tap; also has its own home-screen icon. */
+function QuickCard() {
+  const { t } = useTranslation();
+  return (
+    <Link to="/quick" className="block" data-testid="home-quick">
+      <Card className="flex items-center gap-4 py-3.5 transition-colors hover:border-white/25">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-gold/50 text-gold">
+          <Zap className="h-5 w-5" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-[16px] font-semibold">{t('quick.home')}</div>
+          <div className="text-[13px] text-muted">{t('quick.homeHint')}</div>
+        </div>
+        <ChevronRight className="h-5 w-5 text-muted" aria-hidden />
+      </Card>
+    </Link>
+  );
+}
+
 /** Places is not in the phone dock (§5.1), so Home links to it — with real counts only. */
 function PlacesCard({ householdId }: { householdId: string }) {
   const { t } = useTranslation();
@@ -388,6 +407,7 @@ function Pulse() {
         {t(`home.greeting.${part}`, { name })}
       </h1>
 
+      {membership.role !== 'viewer' && <QuickCard />}
       <AskCard householdId={householdId} isOwner={membership.role === 'owner'} />
 
       <section aria-label={t('home.net')} className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">

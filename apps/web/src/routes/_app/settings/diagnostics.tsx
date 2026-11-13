@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useOutbox } from '@/components/offline/OfflineSync';
+import { readPerf } from '@/lib/quick/state';
 import { Card, CardTitle } from '@/components/ui/card';
 import { CHECK_IDS, buildChecks, runCheck, type CheckId, type CheckResult } from '@/diagnostics/checks';
 import { env } from '@/lib/env';
@@ -68,6 +69,7 @@ function DiagnosticsPage() {
   const swVersion = sw.isPending ? undefined : (sw.data ?? null);
   // The offline outbox on THIS device (lesson from the ledger: always show the queue length).
   const outboxOps = useOutbox();
+  const quickPerf = readPerf();
 
   const versionRows: Array<[string, string]> = [
     [t('diagnostics.appVersion'), `v${APP_VERSION}`],
@@ -85,6 +87,14 @@ function DiagnosticsPage() {
         queued: outboxOps.filter((o) => o.state === 'queued').length,
         parked: outboxOps.filter((o) => o.state === 'parked').length,
       }),
+    ],
+    // Quick spend's "five seconds" on this device (Phase 12): the last real figures.
+    [
+      t('quick.diag.title'),
+      quickPerf?.readyMs != null
+        ? t('quick.diag.ready', { s: (quickPerf.readyMs / 1000).toFixed(1) }) +
+          (quickPerf.savedMs != null ? ` · ${t('quick.diag.saved', { s: (quickPerf.savedMs / 1000).toFixed(1) })}` : '')
+        : t('quick.diag.none'),
     ],
   ];
 

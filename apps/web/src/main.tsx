@@ -6,6 +6,8 @@ import { setLanguage } from './i18n';
 import './styles/index.css';
 import { outbox } from './lib/offline';
 import { clearOfflineCache, restoreOfflineCache } from './lib/offline/persist';
+import { clearSnapshot } from './lib/quick/state';
+import { takeSignOutAsked } from './lib/quick/signout';
 import { setResolverCache } from './lib/resolve';
 import { supabase } from './lib/supabase';
 import { registerServiceWorker } from './pwa/register';
@@ -37,11 +39,18 @@ let started = false;
 // Session changes (sign in/out, token refresh failure) re-run the route guards.
 supabase.auth.onAuthStateChange((event) => {
   if (event === 'SIGNED_OUT') {
+    // "Sign out" was tapped (Settings), or the login simply ran out / was ended elsewhere?
+    const asked = takeSignOutAsked();
     queryClient.removeQueries({ queryKey: ['membership'] });
-    // Nothing of this person's household stays on the device (saved catalogue, unsynced actions).
+    // Nothing of this person's household stays on the device (saved catalogue, unsynced actions) …
     void clearOfflineCache();
-    for (const op of outbox.list()) void outbox.remove(op.op_id);
-    void router.navigate({ to: '/login' });
+    // … except Quick spend entries after a login that ran out (Phase 12): only an amount, a tile and
+    // a time, and they are sent only once that same person signs in again. Nothing is lost.
+    for (const op of outbox.list()) if (asked || op.kind !== 'spend') void outbox.remove(op.op_id);
+    if (asked) void clearSnapshot();
+    // Quick spend keeps working signed out (it shows "Sign in" itself); every other screen needs the login.
+    if (asked || !location.pathname.startsWith('/quick')) void router.navigate({ to: '/login' });
+    else void router.invalidate();
   } else if (event === 'SIGNED_IN' && started) {
     void router.invalidate();
   }

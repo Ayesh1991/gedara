@@ -18,8 +18,7 @@ import {
   Sparkles,
   Tag,
   Wallet,
-  type LucideIcon,
-} from 'lucide-react';
+  type LucideIcon, Zap } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AskPanel } from '@/components/ask/AskPanel';
@@ -119,6 +118,7 @@ export function CommandPalette({ open, onClose, householdId, locale }: { open: b
       { key: 'c-insights', icon: ChartNoAxesColumn, title: t('palette.go', { place: t('nav.insights') }), target: { to: '/insights' } },
       { key: 'c-settings', icon: Settings, title: t('palette.go', { place: t('nav.settings') }), target: { to: '/settings' } },
       { key: 'c-expense', icon: Plus, title: t('palette.newExpense'), target: { to: '/money', search: { add: 'expense' } } },
+      { key: 'c-quick', icon: Zap, title: t('quick.home'), target: { to: '/quick' } },
       { key: 'c-product', icon: PackagePlus, title: t('palette.newProduct'), target: { to: '/pantry', search: { new: '1' } } },
       { key: 'c-thing', icon: Tag, title: t('palette.newThing'), target: { to: '/things', search: { new: '1' } } },
       { key: 'c-scan', icon: ScanLine, title: t('palette.scan'), target: { to: '/scan' } },

@@ -1,0 +1,18 @@
+{
+  "id": "/quick",
+  "name": "Gedara Quick spend",
+  "short_name": "Quick spend",
+  "description": "Enter a cash expense in five seconds",
+  "lang": "en",
+  "start_url": "/quick?src=icon",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05070F",
+  "theme_color": "#05070F",
+  "icons": [
+    { "src": "quick-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "quick-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "quick-maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

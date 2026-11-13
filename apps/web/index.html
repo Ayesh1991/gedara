@@ -29,6 +29,25 @@
     </script>
   </head>
   <body>
+    <!-- Phase 12: opened on /quick, "Add to Home Screen" / Install makes the Quick spend icon
+         (its own manifest, touch icon and name; public/quick.webmanifest). -->
+    <script>
+      (function () {
+        if (!/^\/quick(\/|$)/.test(location.pathname)) return;
+        var m = document.querySelector('link[rel="manifest"]');
+        if (!m) {
+          m = document.createElement('link');
+          m.rel = 'manifest';
+          document.head.appendChild(m);
+        }
+        m.href = '/quick.webmanifest';
+        var a = document.querySelector('link[rel="apple-touch-icon"]');
+        if (a) a.href = '/quick-apple-touch-icon-180x180.png';
+        var t = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+        if (t) t.content = 'Quick spend';
+        document.title = 'Quick spend · Gedara';
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
