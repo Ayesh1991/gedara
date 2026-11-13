@@ -126,19 +126,33 @@ test('Quick spend: one tap saves, Undo, its own icon, and the five seconds', asy
   // Saved once, as an ordinary expense from the wallet, by the signed-in person, on Transport › Taxi.
   await expect.poll(async () => (await entries(hh)).filter((e) => e.amount === 350 && e.transaction_id).length).toBe(1);
   const mine = (await entries(hh)).filter((e) => e.amount === 350);
-  const tx = (await stagingAdmin().from('money_transaction')
-    .select('type, total, source, account:account_id (kind), transaction_line (raw_name, destiny, category:category_id (name))')
-    .eq('id', mine[0]!.transaction_id!).single()).data as unknown as {
-      type: string; total: number; source: string; account: { kind: string };
-      transaction_line: Array<{ raw_name: string; destiny: string; category: { name: string } }>;
-    };
-  expect([tx.type, tx.total, tx.source, tx.account.kind]).toEqual(['expense', 350, 'manual', 'cash']);
-  expect(tx.transaction_line[0]).toMatchObject({ raw_name: 'Three-wheeler', destiny: 'expense', category: { name: 'Taxi / PickMe / Uber' } });
+  // Read it back in plain steps (an entry links to an account twice — paid from / paid to — so no embeds).
+  const admin = stagingAdmin();
+  const txId = mine[0]!.transaction_id!;
+  const tx = await admin.from('money_transaction').select('type, total, source, account_id').eq('id', txId).single();
+  if (tx.error) throw tx.error;
+  const acct = await admin.from('account').select('kind').eq('id', tx.data.account_id).single();
+  if (acct.error) throw acct.error;
+  expect([tx.data.type, Number(tx.data.total), tx.data.source, acct.data.kind]).toEqual(['expense', 350, 'manual', 'cash']);
+  const line = await admin.from('transaction_line').select('raw_name, destiny, category_id').eq('transaction_id', txId).single();
+  if (line.error) throw line.error;
+  const cat = await admin.from('category').select('name').eq('id', line.data.category_id!).single();
+  if (cat.error) throw cat.error;
+  expect([line.data.raw_name, line.data.destiny, cat.data.name]).toEqual(['Three-wheeler', 'expense', 'Taxi / PickMe / Uber']);
 
-  // Undo takes it away again (through the money RPC).
-  await page.getByTestId('quick-undo').click();
-  await expect.poll(async () => (await stagingAdmin().from('money_transaction').select('id').eq('id', mine[0]!.transaction_id!)).data?.length).toBe(0);
+  // Delete from today's list (tap it → Delete) goes through the money RPC.
+  await page.getByTestId('quick-today').getByRole('button', { name: /Three-wheeler/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
+  await expect.poll(async () => (await admin.from('money_transaction').select('id').eq('id', txId)).data?.length).toBe(0);
   await expect(page.getByTestId('quick-today')).not.toContainText('Three-wheeler');
+
+  // Undo right after saving: nothing stays (whether it was still on its way or already saved).
+  await enter(page, '100', 'tea');
+  await page.getByTestId('quick-undo').click();
+  await expect(page.getByTestId('quick-saved')).toHaveCount(0);
+  await page.waitForTimeout(3000);
+  expect((await entries(hh)).filter((e) => e.amount === 100 && e.transaction_id).length).toBe(0);
+  await expect(page.getByTestId('quick-today')).not.toContainText('Tea');
 
   // Reachable from Home and Money.
   await page.goto('/');
