@@ -15,7 +15,9 @@ what you saw (a screenshot is best).
 | 4 | The icons again, on the real site | the three devices | gedara.vercel.app |
 
 The **preview site** is https://gedara-git-phase-12-ayeshmantha.vercel.app (staging data, safe to play
-with). The **real site** is https://gedara.vercel.app. An icon added from one site opens that site
+with). If it says **404 DEPLOYMENT_NOT_FOUND**, Vercel hasn't built the `phase-12` branch yet: open
+**https://github.com/Ayesh1991/gedara/tree/phase-12**, click the green ✓ (or the yellow dot) next to the
+latest commit → **Vercel** → **Details**, and use the address it opens (gedara-xxxxxxxx-ayeshmantha.vercel.app). The **real site** is https://gedara.vercel.app. An icon added from one site opens that site
 only: add the preview icons now, and the real ones again in Stage 4.
 
 ---
