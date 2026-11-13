@@ -91,7 +91,7 @@ export function ScanCard({
   const unit = r.unit ?? null;
   const packs = packsLeft(s.left_qty, r.pack, r.sized);
   const left = s.left_qty != null ? formatAmount(s.left_qty, unit) : '';
-  const title = r.name ?? (s.status === 'unknown' ? t('scanner.card.newBarcode') : s.kind === 'undo' ? t('scanner.card.undoKey') : t('scanner.card.something'));
+  const title = r.name ?? (s.status === 'unknown' ? t(s.mode === 'check' ? 'scanner.card.linkThis' : 'scanner.card.newBarcode') : s.kind === 'undo' ? t('scanner.card.undoKey') : t('scanner.card.something'));
   const showChange = ['used', 'wasted', 'added'].includes(s.status) && s.qty != null;
 
   async function run(fn: () => Promise<unknown>, done?: string) {
@@ -209,6 +209,7 @@ export function ScanCard({
           scanId={s.id}
           code={s.code}
           waiting={waitingSame}
+          mode={s.mode}
           onLinked={() => {
             setLinking(false);
             onHandled?.();

@@ -25,6 +25,7 @@ Diagnostics** → the VS Code **Serial Monitor**.
 | No sound | volume 0, quiet hours, or the buzzer type | Volume; Buzzer: Passive ↔ Active; buzzer + on **D18** |
 | Only a harsh buzz instead of tunes | an **active** buzzer set as passive | Buzzer: **Active** (or buy a passive one for tunes) |
 | **New barcode · Saved for you** | Gedara doesn't know it yet | Pantry › Bin scanner › Needs you › **Link to a product** |
+| **Link it · on your phone** | you pressed **#** and scanned a barcode Gedara doesn't know | the phone's pop-up (or Pantry › Bin scanner › Needs you): **Link to a product**, tap the suggestion, **Link**. Nothing is used or added |
 | **Not a pantry item** | a place / Thing label, or some other QR code | nothing was changed |
 | **none left · + on the shopping list** | Gedara had no stock of it | right if it was the last one. Still have some? Tap **I still have some…** on the pop-up and set the count |
 | **already in jar** | the product lives in a kitchen-scale jar and the scale already counted this pack | nothing to do |

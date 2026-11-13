@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.2 — Bin scanner: link barcodes with # Check
+- Products from scanned bills have no barcode. Press **#** on the scanner and scan their packs: a barcode
+  Gedara doesn't know is only **linked** (nothing is used or added). The scanner says "Link it on your phone";
+  the phone's pop-up opens **Link this barcode**.
+- The link sheet now **suggests** the product: products with no barcode yet first, ranked by the name Open Food
+  Facts knows for the barcode, or else the newest products in stock without one. Its pack size fills in
+  "one scan means" when it fits (g / ml). Scanner firmware 0.1.3 (screen text only). No database change.
+
 ## 0.12.1 — Bin scanner: an IR sensor and a white light for a dim kitchen
 - **"IR sensor + light"** (Settings › Devices › the scanner › How it watches): an IR obstacle sensor tells the
   scanner a pack is in front; a 1 W white LED lights it and the reader is told to read. Works the same in a dark
