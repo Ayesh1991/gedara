@@ -52,6 +52,11 @@ export function OfflineSync({ householdId }: { householdId: string }) {
       if (!alive) return;
       if (report.sent.length) {
         const moved = report.sent.some((o) => o.kind === 'move');
+        // Quick spend entries that waited (Phase 12) are ordinary expenses: Money and Quick spend refresh.
+        if (report.sent.some((o) => o.kind === 'spend')) {
+          void qc.invalidateQueries({ queryKey: ['money', householdId] });
+          void qc.invalidateQueries({ queryKey: ['quick', householdId] });
+        }
         void Promise.all([
           invalidatePantry(qc, householdId),
           invalidateShopping(qc, householdId),
@@ -142,7 +147,8 @@ export function withWhatsLeft(op: StockOp): StockOp | null {
 export function CouldntSync({ householdId }: { householdId: string }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const parked = useOutbox().filter((o) => o.state === 'parked' && o.household_id === householdId);
+  // Quick spend entries have their own list (on the Quick spend screen).
+  const parked = useOutbox().filter((o) => o.state === 'parked' && o.household_id === householdId && o.kind !== 'spend');
   if (!parked.length) return null;
 
   /** "Move anyway": the same move again, forced, with a NEW op id (Phase 7b). */

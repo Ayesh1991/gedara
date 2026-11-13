@@ -90,6 +90,8 @@ export default defineConfig({
         short_name: 'Gedara',
         description: 'Household ledger, pantry and things',
         lang: 'en',
+        // Phase 12: a stable id, so "Quick spend" (public/quick.webmanifest, id /quick) is a second app.
+        id: '/',
         start_url: '/',
         scope: '/',
         display: 'standalone',
@@ -101,6 +103,16 @@ export default defineConfig({
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
           { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+        // Android: long-press the Gedara icon → Quick spend (and drag it out as its own icon).
+        shortcuts: [
+          {
+            name: 'Quick spend',
+            short_name: 'Quick spend',
+            description: 'Enter a cash expense',
+            url: '/quick?src=shortcut',
+            icons: [{ src: 'quick-192x192.png', sizes: '192x192', type: 'image/png' }],
+          },
         ],
         // Android: "Share → Gedara" from the Claude app (a bill's JSON text or a .json file). The
         // service worker takes the POST, keeps the text for one read and opens Money › Import.

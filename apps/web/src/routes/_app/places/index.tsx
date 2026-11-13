@@ -1,14 +1,24 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ListChecks, Map as MapIcon, MapPin, Plus, Printer, Tag, X } from 'lucide-react';
-import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ListChecks, Map as MapIcon, MapPin, Package, Plus, Printer, Search, ShoppingBasket, Tag, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { PlaceForm } from '@/components/places/PlaceForm';
 import { PlaceGrid, PlacesSkeleton, usePlaces } from '@/components/places/PlaceGrid';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { productsQuery, stockPlacesQuery } from '@/lib/pantry/queries';
+import { searchPlaces } from '@/lib/placeSearch';
+import { textParam } from '@/lib/search';
+import { assetsQuery } from '@/lib/things/queries';
 import { childrenOf } from '@/lib/tree';
 
+const SearchSchema = z.object({ q: textParam(80).optional() });
+
 export const Route = createFileRoute('/_app/places/')({
+  validateSearch: SearchSchema,
   component: PlacesPage,
 });
 
@@ -23,6 +33,27 @@ function PlacesPage() {
   const [adding, setAdding] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Search (Phase 12): by name and path, and by what is kept there. Things, products and lots are
+  // only asked for once something is typed; all three are already limited to what this person may see.
+  const { q } = Route.useSearch();
+  const searching = Boolean(q?.trim());
+  const things = useQuery({ ...assetsQuery(householdId), enabled: searching });
+  const products = useQuery({ ...productsQuery(householdId), enabled: searching });
+  const lots = useQuery({ ...stockPlacesQuery(householdId), enabled: searching });
+  const found = useMemo(
+    () =>
+      searchPlaces(
+        q ?? '',
+        places.data ?? [],
+        (things.data ?? [])
+          .filter((a) => !['sold', 'disposed', 'lost'].includes(a.status))
+          .map((a) => ({ id: a.id, name: a.name, location_id: a.location_id, words: [a.tag, a.manufacturer, a.model_no, a.serial_no] })),
+        lots.data ?? [],
+        products.data ?? [],
+      ),
+    [q, places.data, things.data, lots.data, products.data],
+  );
 
   const top = childrenOf(tree, null);
   const total = places.data?.length ?? 0;
@@ -90,7 +121,60 @@ function PlacesPage() {
         </div>
       )}
 
-      {places.isPending ? (
+      {total > 0 && !selecting && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-faint" aria-hidden />
+          <Input
+            type="search"
+            aria-label={t('places.search')}
+            placeholder={t('places.search')}
+            className="pl-10"
+            value={q ?? ''}
+            onChange={(e) => void navigate({ to: '/places', search: { q: e.target.value || undefined }, replace: true })}
+          />
+        </div>
+      )}
+
+      {searching && !selecting ? (
+        <div className="flex flex-col gap-5" data-testid="places-results">
+          {found.places.length > 0 && <PlaceGrid items={found.places} tree={tree} photos={photos} />}
+          {found.kept.length > 0 && (
+            <section aria-label={t('places.keptIn')} className="flex flex-col gap-2">
+              <h2 className="font-display text-[15px] font-semibold text-muted">{t('places.keptIn')}</h2>
+              <ul className="flex flex-col gap-2">
+                {found.kept.map((k) => (
+                  <li key={k.place.id}>
+                    <Link
+                      to="/places/$placeId"
+                      params={{ placeId: k.place.id }}
+                      className="glass flex flex-col gap-2 rounded-2xl px-4 py-3 transition-colors hover:border-white/25"
+                    >
+                      <span className="flex items-center gap-2 text-[14.5px] font-medium">
+                        <MapPin className="h-4 w-4 shrink-0 text-accent-b" aria-hidden />
+                        <span className="min-w-0 truncate">{k.place.path}</span>
+                      </span>
+                      <span className="flex flex-wrap gap-1.5">
+                        {k.items.slice(0, 8).map((i) => (
+                          <span key={`${i.kind}-${i.id}`} className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1 text-[12.5px]">
+                            {i.kind === 'thing' ? <Package className="h-3.5 w-3.5 text-muted" aria-hidden /> : <ShoppingBasket className="h-3.5 w-3.5 text-muted" aria-hidden />}
+                            {i.name}
+                          </span>
+                        ))}
+                        {k.items.length > 8 && <span className="tabular px-1 py-1 text-[12.5px] text-muted">+{k.items.length - 8}</span>}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {found.places.length === 0 && found.kept.length === 0 && (
+            <Card className="text-[14px] text-muted">
+              {things.isPending || products.isPending || lots.isPending ? t('common.loading') : t('places.searchNone')}
+            </Card>
+          )}
+        </div>
+      ) : places.isPending ? (
         <PlacesSkeleton />
       ) : places.isError ? (
         <Card className="text-[14px] text-red">{t('places.loadError')}</Card>

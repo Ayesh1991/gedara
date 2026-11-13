@@ -1,3 +1,5 @@
+import { outbox } from '@/lib/offline';
+import { markSignOutAsked } from '@/lib/quick/signout';
 import { Link, createFileRoute, type LinkProps } from '@tanstack/react-router';
 import { BellRing, ChevronRight, HardDrive, HardDriveDownload, ListPlus, MapPin, MessageCircleQuestion, Palette, Ruler, Shapes, Smartphone, Sparkles, Stethoscope, type LucideIcon, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -91,7 +93,17 @@ function SettingsPage() {
       <Card className="space-y-3">
         <div className="text-sm">{t('settings.signedInAs', { email: membership.email })}</div>
         <div className="text-sm text-muted">{t('settings.role', { role: t(`shell.roles.${membership.role}`) })}</div>
-        <Button variant="destructive" className="w-full" onClick={() => void supabase.auth.signOut()}>
+        <Button
+          variant="destructive"
+          className="w-full"
+          onClick={() => {
+            // Quick spend entries still waiting on this phone go with a sign-out: say so first.
+            const waiting = outbox.list().filter((o) => o.kind === 'spend').length;
+            if (waiting > 0 && !window.confirm(t('quick.signOutWarn', { count: waiting }))) return;
+            markSignOutAsked();
+            void supabase.auth.signOut();
+          }}
+        >
           {t('settings.signOut')}
         </Button>
       </Card>

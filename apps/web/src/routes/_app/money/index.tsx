@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { CalendarClock, ChevronLeft, ChevronRight, FileUp, History, MessageSquareText, PiggyBank, Plus, Repeat, Search, Sparkles, Wallet } from 'lucide-react';
+import { CalendarClock, ChevronLeft, ChevronRight, FileUp, History, MessageSquareText, PiggyBank, Plus, Repeat, Search, Sparkles, Wallet, Zap } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -121,6 +121,12 @@ function MoneyPage() {
             <Link to="/money/import" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
               <FileUp className="h-4 w-4" aria-hidden />
               {t('money.import.title')}
+            </Link>
+          )}
+          {canWrite && (
+            <Link to="/quick" className={buttonVariants({ variant: 'secondary', size: 'sm' })} data-testid="money-quick">
+              <Zap className="h-4 w-4" aria-hidden />
+              {t('quick.home')}
             </Link>
           )}
           {canWrite && (

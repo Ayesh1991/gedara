@@ -167,6 +167,23 @@ export const placeLotsQuery = (householdId: string, placeId: string) =>
     staleTime: 15 * 1000,
   });
 
+/** Which products are in which place right now (search on Places, Phase 12). Hidden places' lots never arrive (RLS). */
+export const stockPlacesQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: pantryKey(householdId, 'stock-places'),
+    queryFn: async (): Promise<Array<{ product_id: string; location_id: string | null }>> => {
+      const { data, error } = await supabase
+        .from('stock_lot')
+        .select('product_id, location_id')
+        .eq('household_id', householdId)
+        .gt('qty_remaining', 0)
+        .not('location_id', 'is', null);
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60 * 1000,
+  });
+
 function nextDay(day: string): string {
   const d = new Date(`${day}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 1);

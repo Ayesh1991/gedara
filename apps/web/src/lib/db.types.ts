@@ -4438,6 +4438,178 @@ export type Database = {
           },
         ]
       }
+      quick_entry: {
+        Row: {
+          actor: string | null
+          amount: number
+          client_at: string
+          created_at: string
+          household_id: string
+          kind: string
+          op_id: string
+          tile_id: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          actor?: string | null
+          amount: number
+          client_at: string
+          created_at?: string
+          household_id: string
+          kind?: string
+          op_id: string
+          tile_id?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          actor?: string | null
+          amount?: number
+          client_at?: string
+          created_at?: string
+          household_id?: string
+          kind?: string
+          op_id?: string
+          tile_id?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_entry_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_entry_household_id_tile_id_fkey"
+            columns: ["household_id", "tile_id"]
+            isOneToOne: false
+            referencedRelation: "quick_tile"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "quick_entry_household_id_transaction_id_fkey"
+            columns: ["household_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "money_transaction"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
+      quick_prefs: {
+        Row: {
+          cash_account_id: string | null
+          cash_check: boolean
+          cash_checked_on: string | null
+          created_at: string
+          hand: string
+          household_id: string
+          order_mode: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cash_account_id?: string | null
+          cash_check?: boolean
+          cash_checked_on?: string | null
+          created_at?: string
+          hand?: string
+          household_id: string
+          order_mode?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          cash_account_id?: string | null
+          cash_check?: boolean
+          cash_checked_on?: string | null
+          created_at?: string
+          hand?: string
+          household_id?: string
+          order_mode?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_prefs_household_id_cash_account_id_fkey"
+            columns: ["household_id", "cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "quick_prefs_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quick_tile: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          hidden: boolean
+          household_id: string
+          icon: string | null
+          id: string
+          key: string | null
+          kind: string
+          label: string | null
+          sort: number
+          updated_at: string
+          user_id: string
+          usual_amount: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          hidden?: boolean
+          household_id: string
+          icon?: string | null
+          id?: string
+          key?: string | null
+          kind?: string
+          label?: string | null
+          sort?: number
+          updated_at?: string
+          user_id?: string
+          usual_amount?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          hidden?: boolean
+          household_id?: string
+          icon?: string | null
+          id?: string
+          key?: string | null
+          kind?: string
+          label?: string | null
+          sort?: number
+          updated_at?: string
+          user_id?: string
+          usual_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_tile_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "quick_tile_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_rule: {
         Row: {
           account_id: string | null
@@ -7260,6 +7432,12 @@ export type Database = {
         Returns: undefined
       }
       rpc_push_subscribe: { Args: { p: Json }; Returns: string }
+      rpc_quick_setup: { Args: { p_household: string }; Returns: Json }
+      rpc_quick_spend: {
+        Args: { p_household: string; p_ops: Json }
+        Returns: Json
+      }
+      rpc_quick_state: { Args: { p_household: string }; Returns: Json }
       rpc_recurring_link: {
         Args: {
           p_period?: string

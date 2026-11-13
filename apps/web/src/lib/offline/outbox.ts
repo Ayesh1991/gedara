@@ -57,12 +57,37 @@ export interface MoveOp extends OpBase {
   /** Undo: only move back while the item is still here (omitted = no check). */
   expect_from?: string | null;
 }
-export type QueuedOp = StockOp | TickOp | MoveOp;
+/**
+ * Phase 12: a Quick spend entry (`rpc_quick_spend`, counted once by op id). Only the amount, the
+ * tile and the time wait on the phone. Unlike the others it is NEVER dropped (a refusal parks it
+ * even when it was sent at once), it is only sent while its own person is signed in (otherwise it
+ * is held and the rest of the queue goes on), and all waiting entries go in one request.
+ */
+export interface SpendOp extends OpBase {
+  kind: 'spend';
+  user_id: string;
+  entry: 'expense' | 'handover';
+  tile_id: string | null;
+  /** The tile's name as it was shown (the line's name). */
+  name: string;
+  category_id: string | null;
+  amount: number;
+  /** null = the person's own wallet (decided by the database). */
+  account_id: string | null;
+  to_account_id?: string | null;
+  /** Deterministic, worked out at the tap (rule 5): `m<djb2(…)>` and the line's `<djb2(name|amount)>`. */
+  fingerprint: string;
+  line_tail: string | null;
+  note?: string | null;
+}
+export type QueuedOp = StockOp | TickOp | MoveOp | SpendOp;
 
 export type SendResult =
   | { type: 'ok'; result: unknown }
   | { type: 'refused'; error: OpError }
-  | { type: 'transient'; message: string };
+  | { type: 'transient'; message: string }
+  /** Not now, but nothing is wrong with the network (not signed in as its person): stays queued, the queue goes on. */
+  | { type: 'hold'; reason: string };
 
 export type Outcome =
   | { status: 'done'; result: unknown }
@@ -78,6 +103,8 @@ export interface OutboxStorage {
 export interface FlushReport {
   sent: QueuedOp[];
   parked: QueuedOp[];
+  /** Left waiting without a network problem (Quick spend entries of someone not signed in). */
+  held: QueuedOp[];
   /** Results of the ops that went through, by op id (ticks: 'applied' | 'same' | 'stale' | 'gone'). */
   results: Map<string, unknown>;
   stoppedBy: string | null;
@@ -111,6 +138,8 @@ export function createOutbox(deps: {
   storage: OutboxStorage;
   send: (op: QueuedOp) => Promise<SendResult>;
   online: () => boolean;
+  /** Quick spend entries go together: one request for all that wait (same order, one result each). */
+  sendSpends?: (ops: SpendOp[]) => Promise<SendResult[]>;
   /** Serialise flushing across tabs (Web Locks); default runs directly. */
   withLock?: <T>(fn: () => Promise<T>) => Promise<T>;
 }): Outbox {
@@ -132,8 +161,10 @@ export function createOutbox(deps: {
   const holdBack = () => write((q) => q.map((o) => (o.state === 'queued' && o.immediate ? { ...o, immediate: false } : o)));
 
   async function runOnce(): Promise<FlushReport> {
-    const report: FlushReport = { sent: [], parked: [], results: new Map(), stoppedBy: null };
+    const report: FlushReport = { sent: [], parked: [], held: [], results: new Map(), stoppedBy: null };
     const tried = new Set<string>();
+    // Answers of a batch whose ops are settled one by one below.
+    const pending = new Map<string, SendResult>();
     for (;;) {
       // Re-read every step: another tab may have sent or added ops meanwhile.
       ops = await deps.storage.load();
@@ -145,8 +176,28 @@ export function createOutbox(deps: {
         report.stoppedBy = 'offline';
         break;
       }
-      const r = await deps.send(op);
+      let r: SendResult;
+      if (pending.has(op.op_id)) {
+        r = pending.get(op.op_id)!;
+        pending.delete(op.op_id);
+      } else if (op.kind === 'spend' && deps.sendSpends) {
+        // Every waiting entry of this person, oldest first, in one request (≤ 50); the others'
+        // answers are kept and settled when their turn comes just below.
+        const rest = ops
+          .filter((o): o is SpendOp => o.kind === 'spend' && o.state === 'queued' && !tried.has(o.op_id) &&
+            o.household_id === op.household_id && o.user_id === op.user_id)
+          .slice(0, 49);
+        const results = await deps.sendSpends([op, ...rest]);
+        rest.forEach((o, i) => pending.set(o.op_id, results[i + 1] ?? { type: 'transient', message: 'no answer' }));
+        r = results[0] ?? { type: 'transient', message: 'no answer' };
+      } else {
+        r = await deps.send(op);
+      }
       settled.set(op.op_id, r);
+      if (r.type === 'hold') {
+        report.held.push(op);
+        continue;
+      }
       if (r.type === 'ok') {
         await write((q) => q.filter((o) => o.op_id !== op.op_id));
         report.sent.push(op);
@@ -154,7 +205,7 @@ export function createOutbox(deps: {
         done.set(op.op_id, r.result);
         if (done.size > 100) done.delete(done.keys().next().value!);
       } else if (r.type === 'refused') {
-        if (op.immediate) {
+        if (op.immediate && op.kind !== 'spend') {
           await write((q) => q.filter((o) => o.op_id !== op.op_id));
         } else {
           const parked: QueuedOp = { ...op, state: 'parked', error: r.error };

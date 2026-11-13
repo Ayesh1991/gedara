@@ -31,6 +31,7 @@ import {
   type Account,
 } from '@/lib/money/queries';
 import { invalidatePantry } from '@/lib/pantry/queries';
+import { findTwins } from '@/lib/quick/twins';
 import { invalidateShopping, shoppingListQuery } from '@/lib/spine/queries';
 import { isBlocking, isUnresolved, routeProblem, toRpcRoute, unitByText, type LineRoute } from '@/lib/spine/route';
 import { billSummary, type BillSummary } from '@/lib/spine/summary';
@@ -288,6 +289,32 @@ export function BillImport({
         qc.invalidateQueries({ queryKey: thingsKey(householdId) }),
       ]);
       const ids = imported.map((r) => r.id).filter((x): x is string => Boolean(x));
+      // Phase 12: a bill for cash already entered in Quick spend would count twice — offer to keep the bill.
+      const cashIds = accounts.filter((a) => a.kind === 'cash' && !a.is_suspense).map((a) => a.id);
+      const cashBills = payload
+        .filter((b) => cashIds.includes(b.account_id))
+        .map((b) => ({ id: imported.find((r) => r.fingerprint === b.fingerprint)?.id ?? null, total: b.total, occurred_on: b.occurred_on }))
+        .filter((b): b is { id: string; total: number; occurred_on: string } => b.id !== null);
+      void findTwins(householdId, cashBills, cashIds)
+        .then((twins) => {
+          for (const twin of twins) {
+            toast(t('quick.sameAsQuick.title'), {
+              description: t('quick.sameAsQuick.body', {
+                name: twin.entry.name, amount: formatLKR(twin.entry.total), date: formatDay(twin.entry.occurred_on),
+              }),
+              duration: 30_000,
+              action: {
+                label: t('quick.sameAsQuick.keepBill'),
+                onClick: () =>
+                  void deleteTransaction(twin.entry.transaction_id)
+                    .then(() => invalidateMoney(qc, householdId))
+                    .catch((err: unknown) => toast.error(t(`money.errors.${moneyErrorKey(err)}`))),
+              },
+              cancel: { label: t('quick.sameAsQuick.both'), onClick: () => undefined },
+            });
+          }
+        })
+        .catch(() => undefined);
       toast.success(
         [
           t('money.import.done', { count: imported.length, skipped: results.length - imported.length }),

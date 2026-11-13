@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.12.0 — Phase 12: Quick spend, a cash expense in five seconds; search on Places
+- **Quick spend** (`/quick`): type the amount on a big pad, tap one tile, saved. Paid from your own cash
+  wallet, now, by you; a note, another date or another account can be added afterwards (tap it under
+  Today → Fix). "Saved" with Undo for 8 seconds, and today's entries underneath. They are ordinary
+  expenses everywhere else (Money, Insights, budgets, Ask). Schema 112.
+- **Its own icon**: a second installable icon (gold bolt, "Quick spend", `quick.webmanifest`) on Android,
+  iPhone and iPad, and a **Quick spend** shortcut on the Gedara icon (press and hold, Android). Also on
+  Home, in Money and in Ctrl+K. Steps per device: docs/quick-spend.md.
+- **Tiles**: Three-wheeler, Bus, Tea, Short eats, Meal, Petrol, Vendor, Parking, Other (and hidden: Train,
+  Water, Pharmacy, Donation, Gave cash), each on our real categories. The most used at this time of day
+  come first; a tile used with the same amount comes back as a one-tap favourite ("Tea 100"). Each person
+  adds, renames, reorders and hides their own.
+- **No signal, no problem**: entries wait on the phone (amount, tile, time only) and are sent later, in
+  order, counted once (each has its own id; a resend is a replay). An expired login loses nothing: they
+  wait for the same person to sign in. All waiting entries go in one request.
+- **A wallet each**: "Cash" becomes "Cash — Didula" (history kept); Sandeepani gets "Cash — Sandeepani"
+  when she first opens Quick spend. **Gave cash** moves cash between the two.
+- **Typo guard**: above Rs 5,000 (or five times a tile's usual) the tile asks for a second tap; Rs 200,000
+  is the limit. **Weekly cash check** (after five entries): "Cash — Didula should be Rs 3,200. Right?"
+- A scanned bill paid in cash with the same total as a quick entry (±1 day) offers "Keep the bill".
+- **Places search**: by name and path, and by what is kept there (things and pantry items, Sinhala names
+  too). Valuable places stay the owner's alone.
+- Diagnostics shows Quick spend's measured speed on this device.
+
 ## 0.11.1 — Bin scanner: a keener reader, and devices that survive a silent router
 - **How keenly it senses a pack** (Settings › Devices › the scanner): Normal / High / Highest. In a dim kitchen
   the reader woke late or not at all; Highest makes it react to much smaller changes. The lamp still lights

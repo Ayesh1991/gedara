@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotInvitedRouteImport } from './routes/not-invited'
+import { Route as QuickRouteImport } from './routes/quick'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAskRouteImport } from './routes/_app/ask'
 import { Route as AppAttentionRouteImport } from './routes/_app/attention'
@@ -78,6 +79,11 @@ const LoginRoute = LoginRouteImport.update({
 const NotInvitedRoute = NotInvitedRouteImport.update({
   id: '/not-invited',
   path: '/not-invited',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuickRoute = QuickRouteImport.update({
+  id: '/quick',
+  path: '/quick',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -357,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
+  '/quick': typeof QuickRoute
   '/ask': typeof AppAskRoute
   '/attention': typeof AppAttentionRoute
   '/scan': typeof AppScanRoute
@@ -413,6 +420,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
+  '/quick': typeof QuickRoute
   '/ask': typeof AppAskRoute
   '/attention': typeof AppAttentionRoute
   '/scan': typeof AppScanRoute
@@ -472,6 +480,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/not-invited': typeof NotInvitedRoute
+  '/quick': typeof QuickRoute
   '/_app/ask': typeof AppAskRoute
   '/_app/attention': typeof AppAttentionRoute
   '/_app/scan': typeof AppScanRoute
@@ -532,6 +541,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/not-invited'
+    | '/quick'
     | '/ask'
     | '/attention'
     | '/scan'
@@ -588,6 +598,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/not-invited'
+    | '/quick'
     | '/ask'
     | '/attention'
     | '/scan'
@@ -646,6 +657,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/not-invited'
+    | '/quick'
     | '/_app/ask'
     | '/_app/attention'
     | '/_app/scan'
@@ -705,6 +717,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   NotInvitedRoute: typeof NotInvitedRoute
+  QuickRoute: typeof QuickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -728,6 +741,13 @@ declare module '@tanstack/react-router' {
       path: '/not-invited'
       fullPath: '/not-invited'
       preLoaderRoute: typeof NotInvitedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quick': {
+      id: '/quick'
+      path: '/quick'
+      fullPath: '/quick'
+      preLoaderRoute: typeof QuickRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -1222,6 +1242,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   NotInvitedRoute: NotInvitedRoute,
+  QuickRoute: QuickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
