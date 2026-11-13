@@ -56,6 +56,7 @@ void test_mode_bytes() {
   TEST_ASSERT_EQUAL_HEX8(0xD7, modeByte(Eye::Sense));   // induction
   TEST_ASSERT_EQUAL_HEX8(0xD6, modeByte(Eye::Always));  // continuous
   TEST_ASSERT_EQUAL_HEX8(0xD5, modeByte(Eye::Key));     // command-triggered
+  TEST_ASSERT_EQUAL_HEX8(0xD5, modeByte(Eye::Near));    // an IR sensor triggers it: command mode too
 }
 
 void test_startup_settings_end_with_the_mode() {

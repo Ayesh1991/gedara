@@ -10,6 +10,12 @@ Diagnostics** → the VS Code **Serial Monitor**.
 | The reader's lamp never comes on | no power, or eye set to "Only after a key" | check 3V3 and GND at the reader; Settings › Devices › the scanner › How it watches |
 | It doesn't wake for a pack when the kitchen is dim | the reader senses a change in the picture, and in dim light a pack changes it little | Settings › Devices › the scanner › **How keenly it senses → Highest**, Save, press #. Still missing: "How it watches → Always", or fit the distance sensor |
 | It lights up when nobody is there | sensing set too keen for a room with changing light | one step lower (Highest → High → Normal) |
+| **IR sensor + light**: nothing happens when a pack comes | the sensor doesn't see it, or it is set too short | Serial `near`: does it say SEES something with your hand 15 cm away? If not: turn the blue screw clockwise; check OUT → **D34**, VCC → **3V3** |
+| **IR sensor + light**: the light comes on with nothing there | screw turned too far; a shiny surface behind | turn the blue screw back a little; aim the sensor away from the wall or the bin lid |
+| **Sensor covered** on the screen | the IR sensor has seen something for 15 s | move what's in front of it, or turn its screw back; it carries on by itself once clear |
+| The white LED never lights | wiring, or "Light the pack" is off | Serial `lamp`: lights for 1 s? If not: transistor legs (base = middle; pins.md), the 4.7 Ω from **VIN**, LED + / − the right way |
+| The white LED is on but reads still fail on shiny packs | glare straight back into the reader | aim the LED from the side (30–45°), not from beside the reader's window |
+| The light is dim after many packs in a row | its time budget is used up (about 15 s a minute); it reads without it meanwhile | normal; it is back after a minute's rest. Serial `near` shows what is left |
 | Lamp on, but no tick | the code is too close, too far, or glaring | 10–20 cm; tilt the pack a little; shiny foil: tilt more |
 | It reads the same pack twice | the pack stayed in view | a repeat within 2.5 s is ignored; move it away after the tick |
 | **screen MISSING** at start | OLED wiring | VCC 3V3, GND, SDA → **D21**, SCL → **D22**. Some OLEDs have VCC and GND swapped: read the print on yours |

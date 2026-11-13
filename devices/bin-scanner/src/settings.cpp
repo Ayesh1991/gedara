@@ -47,6 +47,7 @@ void begin() {
   c.eye = i32("cfg_eye", 0);
   c.eyeQuietKey = flag("cfg_eyeq", false);
   c.sense = i32("cfg_sense", 1);
+  c.light = flag("cfg_light", true);
   c.modeS = i32("cfg_mode", 30);
   c.buzzerPassive = flag("cfg_bzp", true);
   c.bright = i32("cfg_bri", 80);
@@ -74,6 +75,7 @@ void saveConfig(const ScannerConfig& c) {
   prefs.putInt("cfg_eye", c.eye);
   prefs.putBool("cfg_eyeq", c.eyeQuietKey);
   prefs.putInt("cfg_sense", c.sense);
+  prefs.putBool("cfg_light", c.light);
   prefs.putInt("cfg_mode", c.modeS);
   prefs.putBool("cfg_bzp", c.buzzerPassive);
   prefs.putInt("cfg_bri", c.bright);

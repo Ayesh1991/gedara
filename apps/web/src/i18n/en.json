@@ -2843,6 +2843,7 @@
         "sense": "Senses movement",
         "always": "Always reading",
         "key": "After a key",
+        "near": "IR sensor",
         "missing": "Not answering",
         "other": "Other"
       },
@@ -2874,9 +2875,12 @@
       "eyes": {
         "sense": "Senses movement (lamp only when something comes near)",
         "always": "Always reading (lamp flashes all the time)",
-        "key": "Only after a key press (20 seconds)"
+        "key": "Only after a key press (20 seconds)",
+        "near": "IR sensor + light (a pack in front starts each read)"
       },
       "eyeQuiet": "In quiet hours, only after a key press",
+      "light": "Light the pack with the white LED while it reads",
+      "nearHint": "Needs the IR sensor on D34 (and the LED on D19). The light stays on at most 4 seconds per pack and about 15 seconds in any minute, so it doesn't wear out. A pack the sensor misses: press any number or letter key to read once with the light.",
       "sense": "How keenly it senses a pack",
       "senses": {
         "normal": "Normal (the reader's factory setting)",

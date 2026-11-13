@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.1 — Bin scanner: an IR sensor and a white light for a dim kitchen
+- **"IR sensor + light"** (Settings › Devices › the scanner › How it watches): an IR obstacle sensor tells the
+  scanner a pack is in front; a 1 W white LED lights it and the reader is told to read. Works the same in a dark
+  kitchen. Schema 113, scanner firmware 0.1.2. Wiring: docs/bin-scanner/pins.md (IR OUT → D34; LED through a
+  2N2222 on D19, from 5 V with a 4.7 Ω 1 W resistor).
+- The light protects itself: at most 4 s per pack, off the moment a code is read, and about 15 s in any minute
+  (after that it still reads, without the extra light). A sensor covered for 15 s is ignored until clear. A pack
+  the sensor misses: press any number or letter key to read once with the light. "Light the pack" can be
+  switched off.
+- Scanner Serial Monitor: `lamp` (LED wiring test, 1 s) and `near` (does the IR sensor see something).
+
 ## 0.12.0 — Phase 12: Quick spend, a cash expense in five seconds; search on Places
 - **Quick spend** (`/quick`): type the amount on a big pad, tap one tile, saved. Paid from your own cash
   wallet, now, by you; a note, another date or another account can be added afterwards (tap it under

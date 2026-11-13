@@ -145,7 +145,7 @@ export type ScanResult = z.infer<typeof ScanResult>;
 export const DEVICE_COMMANDS = ['beep', 'identify', 'reboot', 'ota'] as const;
 export type DeviceCommand = (typeof DEVICE_COMMANDS)[number];
 
-export const EYES = ['sense', 'always', 'key'] as const;
+export const EYES = ['sense', 'always', 'key', 'near'] as const;
 export type Eye = (typeof EYES)[number];
 export const DEFAULT_KEYMAP = '123A456B789C*0#D';
 /** How keenly the reader senses a pack in its sensing mode (max = as keen as the GM861S goes). */
@@ -165,6 +165,7 @@ export const ScannerSettings = z.object({
   night_off: z.boolean(),
   keymap: z.string().regex(/^[0-9A-D*#]{16}$/),
   sense: z.enum(SENSES).optional(), // absent on scanners added before migration 110 = high
+  light: z.boolean().optional(), // near mode: the white LED while reading (absent = on, migration 113)
 });
 export type ScannerSettings = z.infer<typeof ScannerSettings>;
 

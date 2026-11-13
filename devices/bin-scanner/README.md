@@ -11,6 +11,7 @@ lib/binlogic      pure C++, unit-tested on the PC:
                     modes        the mode machine (starts in and falls back to USED), count keys
                     tunes        one tune per event, quiet hours, loudness
                     uilogic      result wording, burn-in walk, easing, ribbons
+                    assist       near mode: IR sensor → white LED → read, with the LED's time limits
 ../shared/lib     shared with the kitchen scale: gedara_core (CRC32, sequence numbers) and gedara_device
                   (log buffer, OTA with rollback, roots.h = pinned root CAs)
 src/              tasks: control (keys + reader) · buzzer · ui · net; outbox + names list on LittleFS
@@ -30,4 +31,5 @@ Bump `FW_VERSION` in `src/version.h` before every build you upload to Gedara. Th
 (`partitions_4mb.csv`) has two 1.75 MB app slots; the build must stay under that (0.1.0 uses 76 %).
 
 Serial Monitor commands (115200 baud): `status` · `sync` · `server gedara|gedara-staging` · `portal` ·
-`offline on|off` · `reboot`; test build also `scan <code>` · `key <k>` · `hold <k>` · `setup`.
+`offline on|off` · `buzz` (buzzer test) · `lamp` (white LED, 1 s) · `near` (IR sensor) · `sense <p1> <p2>` · `reboot`;
+test build also `scan <code>` · `key <k>` · `hold <k>` · `setup` · `near on|off`.
