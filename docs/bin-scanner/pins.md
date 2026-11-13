@@ -13,9 +13,9 @@ RX2 …). Checked on 2026-11-10 against the ESP32 datasheet and the GM861S manua
         EN ─┤               ├─ D23   (free)
         VP ─┤  (free, in)   ├─ D22   OLED SCL
         VN ─┤  (free, in)   ├─ TX0   (USB, leave)
-       D34 ─┤  (free, in)   ├─ RX0   (USB, leave)
+IR OUT ── D34              ├─ RX0   (USB, leave)
        D35 ─┤  (free, in)   ├─ D21   OLED SDA
-  key 7 ── D32              ├─ D19   (free)
+  key 7 ── D32              ├─ D19   LED (via 330 Ω)
   key 6 ── D33              ├─ D18   buzzer
   key 5 ── D25              ├─ D5    (leave)
   key 4 ── D26              ├─ TX2   scanner pin 4 (RXD)
@@ -24,7 +24,7 @@ RX2 …). Checked on 2026-11-10 against the ESP32 datasheet and the GM861S manua
        D12 ─┤  (leave!)     ├─ D2    (leave)
   key 1 ── D13              ├─ D15   (leave)
        GND ─┤               ├─ GND
-       VIN ─┤  (5 V: leave) ├─ 3V3   OLED VCC + scanner pin 6
+       VIN ─┤ 5 V: LED only ├─ 3V3   OLED, scanner, IR sensor
             └────[USB-C]────┘
 ```
 
@@ -83,6 +83,84 @@ the scanner's **RXD** to the board's **TX2**.
   For full loudness later: S8050 transistor (emitter → GND, collector → buzzer −, base through a
   1 kΩ resistor → D18; buzzer + → 3V3).
 
+## The IR sensor and the white light (added 13 Nov)
+
+For a dim kitchen: the IR sensor says "a pack is in front", the white LED lights it, and the reader
+reads. Your parts: IR obstacle module (MH-B / FC-51), 1 W white LED, 4.7 Ω 1 W resistor, 330 Ω
+resistor, 10 kΩ resistor, 2N2222 transistor.
+
+> **Unplug USB first.** The LED runs from **VIN** (5 V) — the only part that does. Nothing else
+> goes on VIN, and the IR sensor goes on **3V3**.
+
+### The IR sensor (3 pins: OUT · GND · VCC)
+
+| # | From | Its pin | To the board |
+|---|---|---|---|
+| 23 | IR sensor | VCC | **3V3** |
+| 24 | IR sensor | GND | **GND** |
+| 25 | IR sensor | OUT | **D34** |
+
+Mount it beside the reader's window, looking the same way.
+
+### The white LED with its transistor
+
+```
+   VIN (5 V) ──[ 4.7 Ω 1 W ]──► LED + (anode)
+                                LED − (cathode) ──► 2N2222  C (collector)
+                                                    2N2222  E (emitter) ──► GND
+   D19 ──[ 330 Ω ]──┬──► 2N2222  B (base, the middle leg)
+                    └──[ 10 kΩ ]──► GND
+```
+
+| # | From | To |
+|---|---|---|
+| 26 | **VIN** | one end of the **4.7 Ω** resistor |
+| 27 | other end of the 4.7 Ω | LED **+** (anode) |
+| 28 | LED **−** (cathode) | 2N2222 **collector** |
+| 29 | 2N2222 **emitter** | **GND** |
+| 30 | **D19** | one end of the **330 Ω** resistor |
+| 31 | other end of the 330 Ω | 2N2222 **base** (middle leg) |
+| 32 | 2N2222 **base** | one end of the **10 kΩ** resistor; its other end → **GND** |
+
+**Which leg is which on the 2N2222.** The **base is always the middle leg**. The two outer legs
+depend on the print on its flat face:
+- **PN2222A** or **2N2222A** (black plastic): flat face towards you, legs down → **E · B · C**
+  (emitter left, collector right).
+- **P2N2222A**: the other way round → **C · B · E**.
+- Not sure? Multimeter on **diode test**: red probe on the middle leg, black on each outer leg in
+  turn. Both read about 0.6–0.7 V; the one that reads a **little higher** is the **emitter**.
+
+**Which leg is which on the LED.** Its two flat tabs are marked: a small **+** or a notch/dot near
+one tab is the **+** (anode). Or put the multimeter on diode test across it: it glows faintly when the
+red probe is on **+**.
+
+Why these values: the LED gets about 0.25–0.3 A (it is rated 0.35 A), the 4.7 Ω resistor warms to
+about half its 1 W, and the pin drives the transistor with about 8 mA, well inside what it can give.
+The 10 kΩ keeps the LED dark while the board starts.
+
+**Heat.** The scanner keeps the LED on at most 4 seconds per pack and about 15 seconds in any minute,
+so it only gets warm. Still: don't glue it straight onto the acrylic — fix it to a small piece of
+aluminium (a strip of an old heatsink or a flattened can) and glue that.
+
+**Aim.** Point the LED at the spot about 15 cm in front of the reader, **from the side** (30–45° off
+the reader's line of sight), not from right next to its window: shiny wrappers then reflect the
+light away from the reader instead of into it.
+
+### First test (Serial Monitor)
+
+1. Upload firmware **0.1.2** (as before: **→** in VS Code, `env:esp32`).
+2. Type `lamp` + Enter → the LED lights for one second. Stays dark: check the transistor's legs and
+   the VIN wire.
+3. Type `near` + Enter with nothing in front, then with your hand 15 cm in front: it says **sees
+   nothing**, then **SEES something**. The sensor's own small green LED does the same.
+4. Wrong distance? Turn the **blue screw** on the sensor: clockwise sees further. Set it so your hand
+   at about 15–20 cm switches it on, and an empty kitchen behind it does not.
+5. In Gedara: **Settings → Devices → the scanner → How it watches → IR sensor + light**, tick
+   **Light the pack**, Save, press **#** on the scanner.
+
+From then on: a pack in front → light → tick → name. A pack it misses (very dark, or held too far):
+press any number or letter key and it reads once with the light.
+
 ## Why these pins (for the curious)
 
 | Pins | Reason |
@@ -93,7 +171,8 @@ the scanner's **RXD** to the board's **TX2**.
 | D18 | an ordinary output for the buzzer's tone |
 | not used: D0, D2, D5, D12, D15 | "strapping" pins: the chip reads them while starting; a key held down there could stop it booting |
 | not used: D6–D11 | the board's own flash memory |
-| free for later: D19, D23 (outputs), D34, D35, VP, VN (inputs only) | new parts without touching the wiring above |
+| D34 (IR sensor), D19 (LED) | added 13 Nov: D34 is input-only, right for a sensor; D19 is a plain output that is low while the board starts |
+| free for later: D23 (output), D35, VP, VN (inputs only) | new parts without touching the wiring above |
 
 Current on the 3V3 pin: board about 80 mA (peaks of 300–500 mA while Wi-Fi sends, from the board's
 own regulator), scanner up to 70 mA while its lamp is on, OLED 15 mA, buzzer under 30 mA. A normal

@@ -77,6 +77,20 @@ void command(String cmd) {
     net::simulateOffline(cmd.endsWith("on"));
   } else if (cmd == "buzz") {
     buzzer::test();
+  } else if (cmd == "lamp") {
+    // Wiring test of the white LED: on for 1 s (any eye mode).
+    Serial.println("[LAMP] on for 1 s (the white LED lights now)");
+    lamp::set(true);
+    delay(1000);
+    lamp::set(false);
+    Serial.println("[LAMP] off. Stayed dark? Check the transistor's legs and the 5 V (VIN) wire.");
+  } else if (cmd == "near") {
+    Serial.printf("[NEAR] the IR sensor %s right now%s · light budget %lu ms\n", nearsense::present() ? "SEES something" : "sees nothing",
+                  app::nearBlocked() ? " (blocked)" : "", static_cast<unsigned long>(app::lightBudgetMs()));
+#ifdef GEDARA_FAKE
+  } else if (cmd == "near on" || cmd == "near off") {
+    nearsense::inject(cmd.endsWith("on"));
+#endif
   } else if (cmd.startsWith("sense ")) {
     // sense <p1> <p2>: raw sensitivity numbers for tuning (lower = keener; factory 50 10). Until the next restart.
     int p1 = -1, p2 = -1;
@@ -98,9 +112,9 @@ void command(String cmd) {
     keypad::inject2('A', 'D', 10300);                    // A + D for 10 s (Wi-Fi setup)
 #endif
   } else {
-    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · sense <p1> <p2> · reboot"
+    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · lamp · near · sense <p1> <p2> · reboot"
 #ifdef GEDARA_FAKE
-                   " · scan <code> · key <0-9 A-D * #> · hold <key> · setup"
+                   " · scan <code> · key <0-9 A-D * #> · hold <key> · setup · near on|off"
 #endif
     );
   }
@@ -146,7 +160,12 @@ void setup() {
   keypad::begin();
   buzzer::begin();
   const ScannerConfig& c = settings::get().config;
-  const bool readerOk = scanner::begin(c.eye == 1 ? gm861::Eye::Always : (c.eye == 2 ? gm861::Eye::Key : gm861::Eye::Sense),
+  nearsense::begin();
+  lamp::begin();
+  const bool readerOk = scanner::begin(c.eye == 1   ? gm861::Eye::Always
+                                       : c.eye == 2 ? gm861::Eye::Key
+                                       : c.eye == 3 ? gm861::Eye::Near
+                                                    : gm861::Eye::Sense,
                                        c.sense == 2 ? gm861::Sense::Max : (c.sense == 0 ? gm861::Sense::Normal : gm861::Sense::High));
   app::begin();
   net::begin();

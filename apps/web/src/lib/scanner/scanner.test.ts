@@ -103,6 +103,8 @@ describe('scanner protocol', () => {
     expect(ScannerSettings.safeParse({ ...ok, eye: 'laser' }).success).toBe(false);
     expect(ScannerSettings.safeParse({ ...ok, sense: 'max' }).success).toBe(true);
     expect(ScannerSettings.safeParse({ ...ok, sense: 'laser' }).success).toBe(false);
+    expect(ScannerSettings.safeParse({ ...ok, eye: 'near', light: false }).success).toBe(true);
+    expect(ScannerSettings.safeParse({ ...ok, light: 'bright' }).success).toBe(false);
   });
 });
 

@@ -34,8 +34,12 @@
 | Clear **acrylic** piece, 30 × 30 mm, 2 mm | a window in front of the scanner (its manual recommends acrylic or clear glass) | Rs 50 |
 | Double-sided tape, 2 small screws, cable clips | mounting | — |
 
-Optional later (pins are free, no rewiring): a light sensor (LDR + 10 kΩ) on **D34** for automatic
-screen brightness.
+Added 13 Nov for a dim kitchen (pins.md, "The IR sensor and the white light"): IR obstacle module
+MH-B / FC-51 (Rs 140), 1 W white LED (Rs 30), 4.7 Ω 1 W + 330 Ω + 10 kΩ resistors, 2N2222 transistor.
+A small piece of aluminium to fix the LED to helps it stay cool.
+
+Optional later (pins are free, no rewiring): a light sensor (LDR + 10 kΩ) on **D35** for automatic
+screen brightness; a VL53L0X distance sensor on D21 / D22 if the IR sensor misses dark packs.
 
 ## Where it goes
 

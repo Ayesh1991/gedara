@@ -9,7 +9,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(76);
+select plan(79);
 
 create function pg_temp.u(p_code text) returns uuid language sql stable as
   $$ select id from public.unit where household_id is null and code = p_code $$;
@@ -225,6 +225,9 @@ select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"keymap":"1
   '23514', null, 'a key map must have every key once');
 select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"sense":"max"}}')$$, pg_temp.dev()), 'the reader can be made as keen as it goes');
 select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"sense":"laser"}}')$$, pg_temp.dev()), '23514', null, 'an unknown sensitivity is refused');
+select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"near","light":true}}')$$, pg_temp.dev()), 'an IR sensor and a white LED can be chosen');
+select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"light":"bright"}}')$$, pg_temp.dev()), '23514', null, 'the light is on or off, nothing else');
+select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"key"}}')$$, pg_temp.dev()), 'back to the key eye for the tests below');
 select throws_ok(format($$select rpc_device_command(%L, 'tare')$$, pg_temp.dev()), '23514', null, 'a scanner has no tare command');
 select lives_ok(format($$select rpc_device_command(%L, 'beep')$$, pg_temp.dev()), 'Test beep is queued');
 reset role;

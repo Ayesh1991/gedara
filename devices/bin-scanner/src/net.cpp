@@ -188,7 +188,8 @@ void applyConfig(JsonObject cfg) {
   c.quietFrom = qf.substring(0, 2).toInt() * 60 + qf.substring(3, 5).toInt();
   c.quietTo = qt.substring(0, 2).toInt() * 60 + qt.substring(3, 5).toInt();
   const String eye = cfg["eye"] | "sense";
-  c.eye = eye == "always" ? 1 : (eye == "key" ? 2 : 0);
+  c.eye = eye == "always" ? 1 : (eye == "key" ? 2 : (eye == "near" ? 3 : 0));
+  c.light = cfg["light"] | true;
   c.eyeQuietKey = String(cfg["eye_quiet"] | "same") == "key";
   const String sense = cfg["sense"] | "high";
   c.sense = sense == "max" ? 2 : (sense == "normal" ? 0 : 1);

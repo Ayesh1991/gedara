@@ -37,6 +37,21 @@ void inject2(char a, char b, uint32_t holdMs);
 #endif
 }  // namespace keypad
 
+namespace nearsense {
+void begin();
+/** Something is in front of the IR sensor right now (raw, not debounced). */
+bool present();
+#ifdef GEDARA_FAKE
+void inject(bool on);  // Serial Monitor: near on / near off
+#endif
+}  // namespace nearsense
+
+namespace lamp {
+void begin();          // GPIO19 low: dark
+void set(bool on);
+bool on();
+}  // namespace lamp
+
 namespace buzzer {
 void begin();
 void task(void*);             // plays queued sounds, one after the other

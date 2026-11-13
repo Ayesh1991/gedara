@@ -53,7 +53,8 @@ uint8_t modeByte(Eye eye) {
   const uint8_t base = 0x80 | 0x40 | 0x10 | 0x04;
   switch (eye) {
     case Eye::Always: return base | 0x02;
-    case Eye::Key: return base | 0x01;
+    case Eye::Key:
+    case Eye::Near: return base | 0x01;
     default: return base | 0x03;
   }
 }
@@ -86,7 +87,7 @@ size_t startupSettings(Eye eye, Sense sense, Setting* out, size_t max) {
       {kZoneSense1, s1},
       {kZoneSense2, s2},
       // A keener reader wakes more often: each read is shorter, so the lamp is on no longer overall.
-      {kZoneReadTime, static_cast<uint8_t>(sense == Sense::Normal ? 30 : 20)},  // 3 s / 2 s, then watch again
+      {kZoneReadTime, static_cast<uint8_t>(sense == Sense::Normal && eye != Eye::Near ? 30 : 20)},  // 3 s / 2 s
       {kZoneInterval, 5},       // 0.5 s between reads
       {kZoneStabilise, static_cast<uint8_t>(sense == Sense::Max ? 0 : 1)},  // time for the picture to settle
       {kZoneMode, modeByte(eye)},  // last: the eye opens once everything else is set

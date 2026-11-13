@@ -31,6 +31,9 @@ void onSendFailed();          // the outbox is holding scans (no Wi-Fi / server)
 void onConfig();              // new settings from Gedara: key map, mode time, eye
 void setPaused(bool paused);  // Gedara says this scanner is paused
 bool paused();
+bool nearNow();               // near mode: the IR sensor sees something
+bool nearBlocked();
+uint32_t lightBudgetMs();     // what is left of the LED's on-time budget
 uint32_t lastLatencyMs();     // scan → Gedara's answer, for Diagnostics
 const char* eyeName();        // sense · always · key · missing
 

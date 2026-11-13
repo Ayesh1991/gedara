@@ -24,5 +24,11 @@ constexpr int PIN_BUZZER = 18;
 // The board's BOOT button (to GND): hold 10 s = Wi-Fi setup, hold 5 s at power-on = forget Wi-Fi + key.
 constexpr int PIN_BOOT_BUTTON = 0;
 
-// Free for later, no rewiring of the above: GPIO19, GPIO23 (outputs); GPIO34, 35, 36 (VP), 39 (VN)
-// (inputs only, e.g. a light sensor).
+// Near mode (2026-11-13): an IR obstacle sensor (FC-51 / MH-B) says "something is in front"; its OUT is
+// LOW then. Powered from 3V3, so OUT is a 3.3 V signal. GPIO34 is input-only, which suits a sensor.
+constexpr int PIN_NEAR = 34;
+// A 1 W white LED lights the pack: 5 V (VIN) → 4.7 Ω 1 W → LED → 2N2222 collector; emitter → GND;
+// base ← 330 Ω ← GPIO19, and 10 kΩ base → GND keeps it dark while the board starts. About 0.3 A.
+constexpr int PIN_LAMP = 19;
+
+// Free for later, no rewiring of the above: GPIO23 (output); GPIO35, 36 (VP), 39 (VN) (inputs only).

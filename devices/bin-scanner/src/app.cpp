@@ -1,5 +1,7 @@
 #include "app.h"
 
+#include "assist.h"
+
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 #include <esp_timer.h>
@@ -59,8 +61,13 @@ uint32_t lookUntil = 0;
 uint32_t lastTrigger = 0;
 bool quietWas = false;
 
+// "Near" eye: the IR sensor starts each read and the white LED lights the pack (lib/binlogic/assist).
+assist::Controller nearCtl;
+uint32_t lastNearLog = 0;
+
 gm861::Eye wantedEye() {
   const ScannerConfig& c = settings::get().config;
+  if (c.eye == 3) return gm861::Eye::Near;  // the IR sensor already keeps it dark and quiet
   if (c.eye == 2 || (c.eyeQuietKey && buzzer::quietNow())) return gm861::Eye::Key;
   return c.eye == 1 ? gm861::Eye::Always : gm861::Eye::Sense;
 }
@@ -124,6 +131,7 @@ void onCode(const char* code) {
   strlcpy(lastCode, code, sizeof lastCode);
   lastCodeAt = now;
   lookUntil = 0;
+  nearCtl.onCode(now);  // the light goes off at once
   ui::wake();
   buzzer::play(Sound::Tick);  // at once: "I read it"
 
@@ -161,6 +169,8 @@ void onKeyEvent(const keys::Event& e) {
   const uint32_t now = millis();
   ui::wake();
   if (scanner::eye() == gm861::Eye::Key) lookUntil = now + 20000;
+  // Near: a letter or a number also starts one read with the light (for a pack the sensor misses).
+  if (scanner::eye() == gm861::Eye::Near && e.kind == keys::EventKind::Press && e.key != '*' && e.key != '#') nearCtl.manual(now);
   if (e.kind == keys::EventKind::Hold) {
     if (e.key == '*') app::showStatus();
     return;
@@ -309,6 +319,24 @@ void app::controlTask(void*) {
       scanner::trigger();
       lastTrigger = now;
     }
+    if (scanner::eye() == gm861::Eye::Near) {
+      const assist::Out o = nearCtl.update(nearsense::present(), now, settings::get().config.light);
+      lamp::set(o.led);
+      if (o.trigger) {
+        scanner::trigger();
+        if (now - lastNearLog > 10000) {
+          lastNearLog = now;
+          logbuf::logf("[NEAR] something in front - reading%s", o.led ? " with the light" : (settings::get().config.light ? " (light resting)" : ""));
+        }
+      }
+      if (o.led || nearCtl.inSession()) ui::wake();
+      if (nearCtl.takeBlockedEvent()) {
+        logbuf::logf("[NEAR] the IR sensor has seen something for 15 s - waiting until it is clear (turn its screw back a little?)");
+        ui::show(Screen::Notice, "Sensor covered", "Is something in front", "of the scanner?", "", Icon::Pause, 6000);
+      }
+    } else {
+      lamp::set(false);
+    }
     if (scanner::poll(code)) onCode(code);
 
     // The mode's clock.
@@ -358,6 +386,9 @@ void app::setPaused(bool p) {
   ui::setPaused(p);
 }
 bool app::paused() { return pausedNow; }
+bool app::nearNow() { return nearCtl.near(); }
+bool app::nearBlocked() { return nearCtl.blocked(); }
+uint32_t app::lightBudgetMs() { return nearCtl.budgetMs(); }
 uint32_t app::lastLatencyMs() { return latencyMs; }
 void app::locate() { locateAsked = true; }
 
@@ -366,6 +397,7 @@ const char* app::eyeName() {
   switch (scanner::eye()) {
     case gm861::Eye::Always: return "always";
     case gm861::Eye::Key: return "key";
+    case gm861::Eye::Near: return "near";
     default: return "sense";
   }
 }

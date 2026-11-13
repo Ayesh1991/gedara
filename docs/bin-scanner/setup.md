@@ -76,7 +76,8 @@ your phone, and Gedara open on it.
 |---|---|
 | Volume, quiet hours | in quiet hours it only ticks softly and the screen is dim |
 | Screen off in quiet hours | the screen goes dark after 30 s; any key or scan wakes it |
-| How it watches | **Senses movement** (lamp only when something comes near) · Always · Only after a key |
+| How it watches | **Senses movement** (lamp only when something comes near) · Always · Only after a key · **IR sensor + light** (needs the IR sensor and LED, pins.md) |
+| Light the pack | IR sensor mode: the white LED lights the pack while it reads (on at most 4 s per pack) |
 | How keenly it senses | Normal · **High** · Highest. Use Highest if it misses packs in a dim kitchen; go back a step if it lights up when nobody is there |
 | Seconds before it goes back to Used | 10–120 |
 | Buzzer | Passive (tunes) or Active (beeps) |

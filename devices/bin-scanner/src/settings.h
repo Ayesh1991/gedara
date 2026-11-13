@@ -9,9 +9,10 @@ struct ScannerConfig {      // from Gedara (reply.config)
   int volume = 60;          // 0–100
   int quietFrom = 22 * 60;  // minutes after midnight, local time
   int quietTo = 6 * 60;
-  int eye = 0;              // 0 senses movement · 1 always reading · 2 only after a key
+  int eye = 0;              // 0 senses movement · 1 always reading · 2 only after a key · 3 IR sensor (near)
   bool eyeQuietKey = false; // in quiet hours: only after a key
   int sense = 1;            // how keenly the reader senses: 0 normal · 1 high · 2 max
+  bool light = true;        // near mode: the white LED lights the pack while it reads
   int modeS = 30;           // seconds before Add / Opened / Waste / Check fall back to Used
   bool buzzerPassive = true;
   int bright = 80;          // 0–100
