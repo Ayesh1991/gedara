@@ -17,6 +17,10 @@ uint16_t last();
 /** Readings that failed since start, and restarts done. */
 uint32_t errors();
 uint32_t restarts();
+/** Not found: try to start it once more now (Serial `tof`). True = it answers. */
+bool retry();
+/** Serial `i2c`: what answers on the I²C wires, and the GPIO1 / XSHUT levels (high = the board has power). */
+void diagnose();
 #ifdef GEDARA_FAKE
 void inject(uint16_t mm);
 #endif

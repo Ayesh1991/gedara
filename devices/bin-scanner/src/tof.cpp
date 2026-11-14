@@ -70,6 +70,39 @@ bool tof::begin() {
 }
 
 bool tof::found() { return ok; }
+
+bool tof::retry() {
+  if (ok) return true;
+  ok = start() || restart();
+  if (ok) logbuf::logf("[TOF] the distance sensor answers again");
+  return ok;
+}
+
+void tof::diagnose() {
+  Serial.print("[I2C] answering on D21/D22:");
+  int n = 0;
+  {
+    i2cbus::Guard g;
+    for (uint8_t a = 1; a < 127; a++) {
+      Wire.beginTransmission(a);
+      if (Wire.endTransmission() == 0) {
+        n++;
+        Serial.printf(" 0x%02X%s", a, a == TOF_ADDR ? " (distance sensor)" : (a == 0x3C || a == 0x3D) ? " (screen)" : "");
+      }
+    }
+  }
+  if (!n) Serial.print(" nothing");
+  Serial.println();
+  // XSHUT is an input unless we are restarting the sensor; both are pulled up on the sensor board.
+  Serial.printf("[I2C] sensor GPIO1 (D35) %s · XSHUT (D23) %s\n", digitalRead(PIN_TOF_INT) ? "HIGH" : "LOW",
+                digitalRead(PIN_TOF_XSHUT) ? "HIGH" : "LOW");
+  if (!ok) {
+    Serial.println(digitalRead(PIN_TOF_XSHUT)
+                       ? "[I2C] XSHUT is high, so the sensor board has power: check SDA -> D21 and SCL -> D22 (swapped?)"
+                       : "[I2C] XSHUT is low: the sensor board seems to have no power (VIN -> 3V3, GND -> GND), or XSHUT is not on D23");
+  }
+}
+
 uint16_t tof::ambient() { return amb; }
 uint16_t tof::last() { return lastMm; }
 uint32_t tof::errors() { return errCount; }
@@ -133,6 +166,8 @@ uint16_t tof::ambient() { return 0; }
 uint16_t tof::last() { return fakeMm; }
 uint32_t tof::errors() { return 0; }
 uint32_t tof::restarts() { return 0; }
+bool tof::retry() { return true; }
+void tof::diagnose() { Serial.println("[I2C] test build: no real wires"); }
 void tof::inject(uint16_t mm) { fakeMm = mm; }
 bool tof::poll(uint16_t& mm) {
   const uint32_t now = millis();

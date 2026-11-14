@@ -89,7 +89,10 @@ void command(String cmd) {
     Serial.printf("[NEAR] the IR sensor %s right now%s · light budget %lu ms\n", nearsense::present() ? "SEES something" : "sees nothing",
                   app::nearBlocked() ? " (blocked)" : "", static_cast<unsigned long>(app::lightBudgetMs()));
   } else if (cmd == "tof") {
+    if (!tof::found() && tof::retry()) Serial.println("[TOF] found it now");
     app::printTof();
+  } else if (cmd == "i2c") {
+    tof::diagnose();
 #ifdef GEDARA_FAKE
   } else if (cmd == "near on" || cmd == "near off") {
     nearsense::inject(cmd.endsWith("on"));
@@ -119,7 +122,7 @@ void command(String cmd) {
     keypad::inject2('A', 'D', 10300);                    // A + D for 10 s (Wi-Fi setup)
 #endif
   } else {
-    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · lamp · near · tof · sense <p1> <p2> · reboot"
+    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · lamp · near · tof · i2c · sense <p1> <p2> · reboot"
 #ifdef GEDARA_FAKE
                    " · scan <code> · key <0-9 A-D * #> · hold <key> · setup · near on|off · tof <mm>|off"
 #endif

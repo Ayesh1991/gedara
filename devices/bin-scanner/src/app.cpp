@@ -505,10 +505,11 @@ void app::printTof() {
                 tof::found() ? "found" : "NOT FOUND", tof::last(), rng.background(), rng.range(),
                 rng.present() ? "PACK IN FRONT" : "nothing in front", tof::ambient(), static_cast<unsigned long>(tof::errors()),
                 static_cast<unsigned long>(tof::restarts()));
+  const uint8_t lm = settings::get().config.lightMode;
   const uint32_t plan = learner.estimate(h, millis()) >= lightlearn::kNeededAt ? 0 : learner.waitMs();
   Serial.printf("[TOF] light %s · now: %s · hour %d: %u%% needed (%u packs) · wait %lu ms · budget %lu ms\n",
-                settings::get().config.lightMode == 0 ? "off" : (settings::get().config.lightMode == 2 ? "always" : "auto"),
-                plan == 0 ? "LED at once" : "try without first", h, h >= 0 ? learner.slot(h) * 100 / 255 : 0,
+                lm == 0 ? "off" : (lm == 2 ? "always" : "auto"),
+                lm == 0 ? "never" : (lm == 2 || plan == 0) ? "LED at once" : "try without first", h, h >= 0 ? learner.slot(h) * 100 / 255 : 0,
                 h >= 0 ? learner.slotCount(h) : 0, static_cast<unsigned long>(learner.waitMs()),
                 static_cast<unsigned long>(nearCtl.budgetMs()));
 }
