@@ -3,21 +3,26 @@ import { CircleAlert, ScanLine } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ScanResult } from '@/components/scan/ScanResult';
 import { Card } from '@/components/ui/card';
+import { photoSearchSchema } from '@/lib/photoScan';
 import { resolveScan } from '@/lib/resolve';
 
 // A4 labels carry https://gedara.vercel.app/s/HL:LOC:… (or HL:PRD:… / HL:AST:… / HL:TAG:…), so a phone's normal camera lands here
 // (MASTER_PLAN §7d). Signed-out visitors go through /login?redirect=… and come back.
+// `?photo=1` (v0.13.0, the small QR on a photo space): the item's page opens its camera at once.
 export const Route = createFileRoute('/_app/s/$code')({
-  loader: async ({ params }) => {
+  validateSearch: photoSearchSchema,
+  loaderDeps: ({ search }) => ({ photo: search.photo }),
+  loader: async ({ params, deps }) => {
     const result = await resolveScan(params.code);
+    const photo = deps.photo ? { photo: 1 as const } : {};
     if (result.status === 'place') {
       throw redirect({ to: '/places/$placeId', params: { placeId: result.place.id }, replace: true });
     }
     if (result.status === 'product') {
-      throw redirect({ to: '/pantry/$productId', params: { productId: result.product.id }, replace: true });
+      throw redirect({ to: '/pantry/$productId', params: { productId: result.product.id }, search: photo, replace: true });
     }
     if (result.status === 'asset') {
-      throw redirect({ to: '/things/$assetId', params: { assetId: result.asset.id }, replace: true });
+      throw redirect({ to: '/things/$assetId', params: { assetId: result.asset.id }, search: photo, replace: true });
     }
     // A blank A4 label (Phase 7b): "New label — what is this?" on the Scan screen.
     if (result.status === 'blankTag') {

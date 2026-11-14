@@ -26,6 +26,7 @@ import { JournalList } from '@/components/pantry/JournalList';
 import { MergedIntoBanner, MergeProductSheet } from '@/components/pantry/MergeProduct';
 import { MoveToThingButton, isThingCategory } from '@/components/pantry/MoveToThings';
 import { ProductForm } from '@/components/pantry/ProductForm';
+import { PhotoQr, PhotoScanSheet } from '@/components/photos/PhotoByScan';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
 import { ExtraLabels } from '@/components/scan/ExtraLabels';
 import { AddLabelButton, ScanPlaceButton } from '@/components/scan/InstantScan';
@@ -69,10 +70,12 @@ import {
 import { EXTEND_DAYS, addDays, stockStatuses } from '@/lib/pantry/status';
 import { formatQty, parseQty, type UnitMap } from '@/lib/pantry/units';
 import { addListItem, invalidateShopping } from '@/lib/spine/queries';
+import { mayAddPhoto, photoSearchSchema } from '@/lib/photoScan';
 import { todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/_app/pantry/$productId')({
+  validateSearch: photoSearchSchema,
   component: ProductPage,
 });
 
@@ -108,6 +111,7 @@ function ProductPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { productId } = Route.useParams();
+  const search = Route.useSearch();
   const { membership } = Route.useRouteContext();
   const { id: householdId, timezone, locale } = membership.household;
   const canWrite = membership.role !== 'viewer';
@@ -151,6 +155,8 @@ function ProductPage() {
   );
   const inStock = product.stock.qty > 0;
   const photo = pantry.photos.data?.get(product.id);
+  // Products are never valuable themselves (only places are): writers may add photos.
+  const photoAccess = { canWrite, isOwner: membership.role === 'owner', valuable: false };
   const usualPlace = product.default_location_id ? pantry.places.data?.find((p) => p.id === product.default_location_id) : undefined;
   const category = product.category_id ? categoryLabel(pantry.categories.data ?? [], product.category_id) : null;
 
@@ -199,6 +205,9 @@ function ProductPage() {
                 photo={photo}
                 queryKey={productPhotosKey(householdId)}
               />
+            )}
+            {mayAddPhoto(photoAccess) && (
+              <PhotoQr code={product.code} entityType="product" entityId={product.id} queryKey={productPhotosKey(householdId)} />
             )}
           </div>
           <div className="flex flex-col gap-4 p-5 lg:p-6">
@@ -440,6 +449,17 @@ function ProductPage() {
         onSaved={(p) => {
           if (!p.id) void navigate({ to: '/pantry' });
         }}
+      />
+      <PhotoScanSheet
+        open={search.photo === 1}
+        onClose={() => void navigate({ to: '/pantry/$productId', params: { productId: product.id }, search: {}, replace: true })}
+        householdId={householdId}
+        entityType="product"
+        entityId={product.id}
+        name={product.name}
+        photo={photo}
+        queryKey={productPhotosKey(householdId)}
+        access={photoAccess}
       />
     </div>
   );

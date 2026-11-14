@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.0 — Photo by scan, and "Used" for things
+- **Photo by scan**: on the PC and the iPad, a thing's or product's photo space has a small QR in its upper-left
+  corner (tap it for a bigger one). Scan it with **Scan** in Gedara on the phone: the item opens with the camera
+  already running; one tap on the shutter saves the photo (WebP 1600 px + 320 px thumb, as always) and the PC
+  shows it within seconds, without a reload. Retake, the phone's camera app and the gallery are one tap away.
+  A new photo replaces the old one. Viewers can't add photos; a valuable thing's photos stay the owner's.
+  On Android Chrome the photo is a full-resolution still; elsewhere (iPhone) a 1080p frame.
+- **Used** (Things): for a small thing used up in building something you still have. Pick the day and, if you
+  like, what it went into ("Book rack, living room"). It leaves the list, is worth 0 from that day (months owned
+  stop there), gets no warranty / service alerts, Ask leaves it out, and its history says "Used in Book rack".
+  Undo for 8 s, and **Not used — bring back** on its page any time. Given away / thrown out stays under Sell.
+- Schema 115 (`asset.status` `used`, `gone_on`, `gone_note`; `attachment` in Realtime).
+
 ## 0.12.3 — Bin scanner: a distance sensor, and a light that comes on only when it helps
 - **How it watches → Distance sensor + light**: a VL53L0X or VL53L1X (the "VL53L0/1XV2" board comes with either; the scanner detects which) measures how far the pack is with its own laser, so
   dark, white and shiny packs and the room's light make no difference. It sees a pack 40 ms after it arrives

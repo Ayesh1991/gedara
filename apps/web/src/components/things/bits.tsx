@@ -14,7 +14,7 @@ import {
   tagsQuery,
   type AssetStatus,
 } from '@/lib/things/queries';
-import { WARRANTY_TONE, warrantyState } from '@/lib/things/value';
+import { WARRANTY_TONE, isGone, warrantyState } from '@/lib/things/value';
 import { cn } from '@/lib/utils';
 
 export { fieldLabel, selectClass } from '@/components/money/bits';
@@ -73,6 +73,7 @@ const STATUS_TONE: Record<AssetStatus, string> = {
   sold: 'bg-white/10 text-muted',
   disposed: 'bg-white/10 text-muted',
   lost: 'bg-red/15 text-red',
+  used: 'bg-info/15 text-info',
 };
 
 /** Status chip; nothing for "in use" (the normal case). */
@@ -98,7 +99,7 @@ export function WarrantyBadge({
   long?: boolean;
 }) {
   const { t } = useTranslation();
-  if (['sold', 'disposed', 'lost'].includes(asset.status)) return null;
+  if (isGone(asset.status)) return null;
   const w = warrantyState(asset, today);
   if (w.state === 'none' || (w.state === 'expired' && !long)) return null;
   const text =

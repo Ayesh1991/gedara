@@ -218,6 +218,8 @@ export type Database = {
           created_by: string | null
           custom: Json
           description: string | null
+          gone_note: string | null
+          gone_on: string | null
           household_id: string
           id: string
           insurance_notes: string | null
@@ -259,6 +261,8 @@ export type Database = {
           created_by?: string | null
           custom?: Json
           description?: string | null
+          gone_note?: string | null
+          gone_on?: string | null
           household_id: string
           id?: string
           insurance_notes?: string | null
@@ -300,6 +304,8 @@ export type Database = {
           created_by?: string | null
           custom?: Json
           description?: string | null
+          gone_note?: string | null
+          gone_on?: string | null
           household_id?: string
           id?: string
           insurance_notes?: string | null
@@ -4539,6 +4545,27 @@ export type Database = {
             referencedColumns: ["household_id", "id"]
           },
           {
+            foreignKeyName: "quick_prefs_household_id_cash_account_id_fkey"
+            columns: ["household_id", "cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_balance"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "quick_prefs_household_id_cash_account_id_fkey"
+            columns: ["household_id", "cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_account_month_end"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
+            foreignKeyName: "quick_prefs_household_id_cash_account_id_fkey"
+            columns: ["household_id", "cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_sms_balance_check"
+            referencedColumns: ["household_id", "account_id"]
+          },
+          {
             foreignKeyName: "quick_prefs_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
@@ -5955,6 +5982,8 @@ export type Database = {
           current_value: number | null
           custom: Json | null
           description: string | null
+          gone_note: string | null
+          gone_on: string | null
           household_id: string | null
           id: string | null
           insurance_notes: string | null

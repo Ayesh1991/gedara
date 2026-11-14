@@ -9,11 +9,11 @@ import { supabase } from '../supabase';
 import type { Json, Tables, TablesInsert, TablesUpdate } from '../db.types';
 import type { CategoryField } from './fields';
 
-export const ASSET_STATUSES = ['in_use', 'stored', 'lent', 'in_repair', 'sold', 'disposed', 'lost'] as const;
+export const ASSET_STATUSES = ['in_use', 'stored', 'lent', 'in_repair', 'sold', 'disposed', 'lost', 'used'] as const;
 export type AssetStatus = (typeof ASSET_STATUSES)[number];
 export const CONDITIONS = ['new', 'good', 'fair', 'poor', 'broken'] as const;
 export type Condition = (typeof CONDITIONS)[number];
-/** Statuses a person picks by hand (sold only through Sell, lent through Lend). */
+/** Statuses a person picks by hand (sold only through Sell, lent through Lend, used through Used). */
 export const MANUAL_STATUSES = ['in_use', 'stored', 'in_repair', 'disposed', 'lost'] as const;
 
 export type AssetRow = Tables<'asset'>;
@@ -195,7 +195,7 @@ export type AssetInput = Pick<
   | 'name' | 'description' | 'category_id' | 'location_id' | 'parent_id' | 'quantity' | 'manufacturer' | 'model_no'
   | 'serial_no' | 'condition' | 'status' | 'lent_to' | 'lent_on' | 'transaction_line_id' | 'purchase_price'
   | 'purchased_on' | 'vendor' | 'useful_life_months' | 'salvage_value' | 'warranty_until' | 'lifetime_warranty'
-  | 'warranty_notes' | 'insured' | 'insurance_notes' | 'custom'
+  | 'warranty_notes' | 'insured' | 'insurance_notes' | 'custom' | 'gone_on' | 'gone_note'
 >;
 
 /** `id` is chosen here so the photo can be uploaded under the new thing's folder; code/A-number come from the DB. */
@@ -215,6 +215,16 @@ export async function updateAsset(id: string, patch: Partial<AssetInput> & { arc
     .single();
   if (error) throw error;
   return data;
+}
+
+/** Used up in building something (v0.13.0): leaves the active list with the day and what it went into. */
+export async function markUsed(id: string, on: string, note: string | null): Promise<AssetRow> {
+  return updateAsset(id, { status: 'used', gone_on: on, gone_note: note?.trim() || null });
+}
+
+/** Undo / "Bring back": back to the status it had (in use by default); the database clears the day and note. */
+export async function bringBack(id: string, status: AssetStatus = 'in_use'): Promise<AssetRow> {
+  return updateAsset(id, { status: status === 'used' ? 'in_use' : status });
 }
 
 export async function deleteAsset(id: string) {
@@ -434,7 +444,7 @@ export const storageUsageQuery = (householdId: string) =>
 // ── Errors ────────────────────────────────────────────────────────────────────
 
 export type ThingsError =
-  | 'notThingLine' | 'sold' | 'routed' | 'duplicate' | 'reference' | 'invalid' | 'denied' | 'nameTaken' | 'generic';
+  | 'notThingLine' | 'sold' | 'routed' | 'duplicate' | 'goneDay' | 'reference' | 'invalid' | 'denied' | 'nameTaken' | 'generic';
 
 /** Postgres / RPC error → i18n key suffix under things.errors. */
 export function thingsErrorKey(e: unknown): ThingsError {
@@ -443,6 +453,7 @@ export function thingsErrorKey(e: unknown): ThingsError {
   if (code === 'GDSLD') return 'sold';
   if (code === 'GDRTD') return 'routed';
   if (code === 'GDDUP') return 'duplicate';
+  if (code === 'GDGON') return 'goneDay';
   if (code === '23505') return 'nameTaken';
   if (code === '23503') return 'reference';
   if (code === '23514') return 'invalid';
