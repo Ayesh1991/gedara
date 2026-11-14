@@ -32,13 +32,29 @@ void power(bool on) {
   }
 }
 
+const char* why = "not started yet";
+
 bool start() {
   i2cbus::Guard g;
   Wire.beginTransmission(TOF_ADDR);
-  if (Wire.endTransmission() != 0) return false;
+  if (Wire.endTransmission() != 0) {
+    why = "nothing answers at 0x29 (wires / power)";
+    return false;
+  }
   sensor.setBus(&Wire);
-  sensor.setTimeout(30);
-  if (!sensor.init()) return false;
+  if (sensor.readReg(0xC0) != 0xEE) {
+    why = "something answers at 0x29 but it is not a VL53L0X (model id is not 0xEE)";
+    return false;
+  }
+  // Start-up calibrates (SPADs, reference): that takes tens of ms, so give it 500 ms like the
+  // library's own examples. (14 Nov: 30 ms here made start-up fail on Didula's board.)
+  sensor.setTimeout(500);
+  if (!sensor.init()) {
+    why = sensor.timeoutOccurred() ? "start-up timed out" : "start-up (calibration) failed";
+    return false;
+  }
+  sensor.setTimeout(100);  // readings are only fetched once ready, so this never waits in practice
+  why = "ok";
   // 20 ms per reading: quick enough to start the read 40 ms after a pack arrives; plenty accurate
   // for "is something 5–40 cm in front".
   sensor.setMeasurementTimingBudget(20000);
@@ -81,12 +97,14 @@ bool tof::retry() {
 void tof::diagnose() {
   Serial.print("[I2C] answering on D21/D22:");
   int n = 0;
+  bool seen = false;
   {
     i2cbus::Guard g;
     for (uint8_t a = 1; a < 127; a++) {
       Wire.beginTransmission(a);
       if (Wire.endTransmission() == 0) {
         n++;
+        if (a == TOF_ADDR) seen = true;
         Serial.printf(" 0x%02X%s", a, a == TOF_ADDR ? " (distance sensor)" : (a == 0x3C || a == 0x3D) ? " (screen)" : "");
       }
     }
@@ -96,7 +114,8 @@ void tof::diagnose() {
   // XSHUT is an input unless we are restarting the sensor; both are pulled up on the sensor board.
   Serial.printf("[I2C] sensor GPIO1 (D35) %s · XSHUT (D23) %s\n", digitalRead(PIN_TOF_INT) ? "HIGH" : "LOW",
                 digitalRead(PIN_TOF_XSHUT) ? "HIGH" : "LOW");
-  if (!ok) {
+  if (!ok) Serial.printf("[I2C] distance sensor: %s\n", why);
+  if (!ok && !seen) {
     Serial.println(digitalRead(PIN_TOF_XSHUT)
                        ? "[I2C] XSHUT is high, so the sensor board has power: check SDA -> D21 and SCL -> D22 (swapped?)"
                        : "[I2C] XSHUT is low: the sensor board seems to have no power (VIN -> 3V3, GND -> GND), or XSHUT is not on D23");
