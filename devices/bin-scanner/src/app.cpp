@@ -501,6 +501,20 @@ uint32_t app::lightBudgetMs() { return nearCtl.budgetMs(); }
 
 void app::printTof() {
   const int h = localHour();
+  if (!tofActive() && tof::found()) {
+    // Not watching with it (How it watches is not "Distance sensor"), so nobody reads it: take a
+    // live reading here for the wiring test (up to 0.2 s). The control task doesn't touch it now.
+    // The first reading may be an old one the sensor kept since the last read: take the next one too.
+    uint16_t mm = 0;
+    const uint32_t t0 = millis();
+    int got = 0;
+    while (millis() - t0 < 300 && got < 2) {
+      if (tof::poll(mm)) got++;
+      else delay(5);
+    }
+    Serial.printf("[TOF] live reading: %s (not used yet: How it watches is not \"Distance sensor + light\")\n",
+                  tof::last() >= ranger::kNoEcho ? "nothing within reach" : (String(tof::last()) + " mm").c_str());
+  }
   Serial.printf("[TOF] %s %s · distance %u mm · empty view %u mm · range %u mm · %s · ambient IR %u · errors %lu · restarts %lu\n",
                 tof::chipName(), tof::found() ? "found" : "NOT FOUND", tof::last(), rng.background(), rng.range(),
                 rng.present() ? "PACK IN FRONT" : "nothing in front", tof::ambient(), static_cast<unsigned long>(tof::errors()),
