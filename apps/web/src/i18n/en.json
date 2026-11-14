@@ -2879,7 +2879,7 @@
         "always": "Always reading (lamp flashes all the time)",
         "key": "Only after a key press (20 seconds)",
         "near": "IR sensor + light (a pack in front starts each read)",
-        "tof": "Distance sensor + light (VL53L0X; reads at once, any light)"
+        "tof": "Distance sensor + light (VL53L0X or VL53L1X; reads at once, any light)"
       },
       "eyeQuiet": "In quiet hours, only after a key press",
       "light": "Light the pack with the white LED while it reads",
@@ -2910,7 +2910,7 @@
       "lightMode": "White LED",
       "lightModes": { "auto": "Auto: only when it helps (learned)", "always": "Always while reading", "off": "Off" },
       "range": "A pack counts within {{cm}} cm",
-      "tofHint": "Needs the VL53L0X on D21 / D22 (GPIO1 to D35, XSHUT to D23). Auto reads without the LED first and switches it on after a short wait, or at once at the times it has learned the kitchen is dark. The light is on at most 4 seconds per pack. A pack it misses: press any number or letter key."
+      "tofHint": "Needs the VL53L0X or VL53L1X on D21 / D22 (GPIO1 to D35, XSHUT to D23). Auto reads without the LED first and switches it on after a short wait, or at once at the times it has learned the kitchen is dark. The light is on at most 4 seconds per pack. A pack it misses: press any number or letter key."
     },
     "pause": {
       "title": "Pause",

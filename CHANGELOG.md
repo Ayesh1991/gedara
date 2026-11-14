@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.12.3 — Bin scanner: a distance sensor, and a light that comes on only when it helps
-- **How it watches → Distance sensor + light**: a VL53L0X measures how far the pack is with its own laser, so
+- **How it watches → Distance sensor + light**: a VL53L0X or VL53L1X (the "VL53L0/1XV2" board comes with either; the scanner detects which) measures how far the pack is with its own laser, so
   dark, white and shiny packs and the room's light make no difference. It sees a pack 40 ms after it arrives
   and the read starts at once; the session ends as soon as the pack leaves. It learns the empty view (wall,
   bin lid) and re-learns it if something is left there for a minute. Wiring: docs/bin-scanner/pins.md

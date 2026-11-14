@@ -501,8 +501,8 @@ uint32_t app::lightBudgetMs() { return nearCtl.budgetMs(); }
 
 void app::printTof() {
   const int h = localHour();
-  Serial.printf("[TOF] %s · distance %u mm · empty view %u mm · range %u mm · %s · ambient IR %u · errors %lu · restarts %lu\n",
-                tof::found() ? "found" : "NOT FOUND", tof::last(), rng.background(), rng.range(),
+  Serial.printf("[TOF] %s %s · distance %u mm · empty view %u mm · range %u mm · %s · ambient IR %u · errors %lu · restarts %lu\n",
+                tof::chipName(), tof::found() ? "found" : "NOT FOUND", tof::last(), rng.background(), rng.range(),
                 rng.present() ? "PACK IN FRONT" : "nothing in front", tof::ambient(), static_cast<unsigned long>(tof::errors()),
                 static_cast<unsigned long>(tof::restarts()));
   const uint8_t lm = settings::get().config.lightMode;

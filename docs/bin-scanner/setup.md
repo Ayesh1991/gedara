@@ -92,7 +92,7 @@ A barcode that is already linked just shows the name and how many are left.
 |---|---|
 | Volume, quiet hours | in quiet hours it only ticks softly and the screen is dim |
 | Screen off in quiet hours | the screen goes dark after 30 s; any key or scan wakes it |
-| How it watches | **Senses movement** (lamp only when something comes near) · Always · Only after a key · **IR sensor + light** (needs the IR sensor and LED, pins.md) · **Distance sensor + light** (needs the VL53L0X, pins.md; recommended) |
+| How it watches | **Senses movement** (lamp only when something comes near) · Always · Only after a key · **IR sensor + light** (needs the IR sensor and LED, pins.md) · **Distance sensor + light** (needs the VL53L0X or VL53L1X, pins.md; recommended) |
 | White LED (distance sensor) | **Auto** (only when it helps; learned) · Always · Off |
 | A pack counts within (distance sensor) | 12–40 cm (default 30) |
 | Light the pack | IR sensor mode: the white LED lights the pack while it reads (on at most 4 s per pack) |

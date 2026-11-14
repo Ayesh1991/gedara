@@ -38,7 +38,7 @@ Added 13 Nov for a dim kitchen (pins.md, "The IR sensor and the white light"): I
 MH-B / FC-51 (Rs 140), 1 W white LED (Rs 30), 4.7 Ω 1 W + 330 Ω + 10 kΩ resistors, 2N2222 transistor.
 A small piece of aluminium to fix the LED to helps it stay cool.
 
-Added 14 Nov: a **VL53L0X** distance sensor board (GY-VL53L0XV2, 6 holes) on the OLED's I²C wires,
+Added 14 Nov: a **VL53L0X or VL53L1X** distance sensor board (GY-VL53L0XV2 / "VL53L0/1XV2", 6 holes; the scanner finds out which chip) on the OLED's I²C wires,
 GPIO1 → D35, XSHUT → D23 (pins.md, "The distance sensor").
 
 Optional later (pins are free, no rewiring): a light sensor (LDR + 10 kΩ) on **VP** for automatic

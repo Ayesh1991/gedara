@@ -161,7 +161,11 @@ light away from the reader instead of into it.
 From then on: a pack in front → light → tick → name. A pack it misses (very dark, or held too far):
 press any number or letter key and it reads once with the light.
 
-## The distance sensor (VL53L0X, added 14 Nov)
+## The distance sensor (VL53L0X or VL53L1X, added 14 Nov)
+
+> The board "VL53L0/1XV2" is sold with either chip; the scanner finds out which it has and Serial
+> `tof` names it. Didula's board is most likely the **VL53L1X** (it sees further, up to about 1.3 m, and is less
+> bothered by daylight). Wiring and everything below are the same for both.
 
 It replaces the IR sensor's job: it measures how far away the pack is with its own invisible laser,
 so a dark, white or shiny pack and the room's light make no difference. It sees a pack **40 ms**
