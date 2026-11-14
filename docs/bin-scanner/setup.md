@@ -70,6 +70,22 @@ your phone, and Gedara open on it.
      **Pantry → Bin scanner** and tap **Apply**.
 4. The waiting scans are applied, and from now on that barcode just works.
 
+### Linking many at once (products from bills)
+
+Products that came in from a scanned bill have no barcode yet. To give them one without using or adding
+anything:
+
+1. Keep the phone open on Gedara (any page).
+2. Press **#** on the scanner, then scan a pack from the cupboard. The scanner says **Link it · on your
+   phone · Nothing else changes**.
+3. The phone shows **Link this barcode** with **Link to a product**. Tap it: under **Is it one of
+   these?** Gedara lists the likely products, those with **no barcode yet** first. Tap the right one,
+   check **One scan means** (filled in from the pack size when Open Food Facts knows it), tap **Link**.
+4. Scan the next pack. **#** stays on for 30 seconds after each scan, so a whole shelf goes in one
+   go; press **#** again if it went back to Used.
+
+A barcode that is already linked just shows the name and how many are left.
+
 ## Part 5 · Settings (Gedara → Settings → Devices → the scanner)
 
 | Setting | What it does |

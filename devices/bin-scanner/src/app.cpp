@@ -248,8 +248,14 @@ void present(const app::Result& r) {
   } else if (st == "unknown") {
     char code[22];
     uilogic::fitName(lastCode, 21, code, sizeof code);
-    ui::show(Screen::Notice, "New barcode", code, "Saved for you.", "Link it in Gedara.", Icon::Question, 7000);
-    buzzer::play(Sound::Unknown);
+    if (m == Mode::Check) {
+      // # then a scan: only linking (bill products have no barcode yet). Nothing else changes.
+      ui::show(Screen::Notice, "Link it", code, "on your phone.", "Nothing else changes.", Icon::Look, 7000);
+      buzzer::play(Sound::Checked);
+    } else {
+      ui::show(Screen::Notice, "New barcode", code, "Saved for you.", "Link it in Gedara.", Icon::Question, 7000);
+      buzzer::play(Sound::Unknown);
+    }
   } else if (st == "bill_guard") {
     ui::show(Screen::Notice, name, "A bill just added", "this. Say in Gedara", "if you want more.", Icon::Question, 7000);
     buzzer::play(Sound::Unknown);

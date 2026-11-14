@@ -2933,6 +2933,7 @@
     },
     "card": {
       "newBarcode": "New barcode",
+      "linkThis": "Link this barcode",
       "undoKey": "Undo on the scanner",
       "something": "Scan",
       "undone": "Undone",
@@ -2998,7 +2999,16 @@
       "newProduct": "It isn't in Gedara yet: new product",
       "newProductHint": "The new-product form opens with this barcode. Then come back here and tap Apply.",
       "done": "Linked. {{count}} scans applied.",
-      "done_one": "Linked. 1 scan applied."
+      "done_one": "Linked. 1 scan applied.",
+      "linkOnly": "Link only: this scan uses and adds nothing. Every later scan of this barcode just works.",
+      "linkButton": "Link",
+      "linked": "Linked to {{name}}",
+      "suggest": "Is it one of these?",
+      "noBarcodeYet": "no barcode yet",
+      "hasBarcode": "has a barcode",
+      "inStock": "{{qty}} in stock",
+      "offName": "Open Food Facts: {{name}}",
+      "looking": "Looking the barcode up…"
     },
     "settled": {
       "message": "The bin scanner had already added {{what}}. Not counted twice."
