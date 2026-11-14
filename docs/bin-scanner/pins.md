@@ -10,11 +10,11 @@ RX2 …). Checked on 2026-11-10 against the ESP32 datasheet and the GM861S manua
 
 ```
             ┌───────────────┐
-        EN ─┤               ├─ D23   (free)
-        VP ─┤  (free, in)   ├─ D22   OLED SCL
+        EN ─┤               ├─ D23   distance sensor XSHUT
+        VP ─┤  (free, in)   ├─ D22   OLED SCL + distance SCL
         VN ─┤  (free, in)   ├─ TX0   (USB, leave)
 IR OUT ── D34              ├─ RX0   (USB, leave)
-       D35 ─┤  (free, in)   ├─ D21   OLED SDA
+ GPIO1 ── D35              ├─ D21   OLED SDA + distance SDA
   key 7 ── D32              ├─ D19   LED (via 330 Ω)
   key 6 ── D33              ├─ D18   buzzer
   key 5 ── D25              ├─ D5    (leave)
@@ -24,7 +24,7 @@ IR OUT ── D34              ├─ RX0   (USB, leave)
        D12 ─┤  (leave!)     ├─ D2    (leave)
   key 1 ── D13              ├─ D15   (leave)
        GND ─┤               ├─ GND
-       VIN ─┤ 5 V: LED only ├─ 3V3   OLED, scanner, IR sensor
+       VIN ─┤ 5 V: LED only ├─ 3V3   OLED, scanner, IR + distance sensors
             └────[USB-C]────┘
 ```
 
@@ -161,6 +161,52 @@ light away from the reader instead of into it.
 From then on: a pack in front → light → tick → name. A pack it misses (very dark, or held too far):
 press any number or letter key and it reads once with the light.
 
+## The distance sensor (VL53L0X, added 14 Nov)
+
+It replaces the IR sensor's job: it measures how far away the pack is with its own invisible laser,
+so a dark, white or shiny pack and the room's light make no difference. It sees a pack **40 ms**
+after it arrives, and the scanner starts the read at once. Leave the IR sensor and the LED wired as
+they are.
+
+> **Unplug USB first.** Its VIN goes on **3V3** (it has its own regulator). It shares the OLED's two
+> I²C wires: solder its SDA and SCL to the **same** board pins as the OLED's.
+
+Your board has six holes: **VIN · GND · SCL · SDA · GPIO1 · XSHUT**.
+
+| # | Distance sensor | To the board | Why |
+|---|---|---|---|
+| 33 | VIN | **3V3** | power |
+| 34 | GND | **GND** | |
+| 35 | SCL | **D22** (with the OLED's SCL) | shared I²C |
+| 36 | SDA | **D21** (with the OLED's SDA) | shared I²C |
+| 37 | GPIO1 | **D35** | "a new distance is ready" |
+| 38 | XSHUT | **D23** | lets the scanner restart the sensor if it ever hangs |
+
+GPIO1 and XSHUT are optional: without them it still works (the scanner asks for each distance and
+can't restart a stuck sensor), but solder them if you can.
+
+**Mounting.** Beside the reader's window, looking the same way, with the **two small windows** of
+the sensor (the black chip in the middle) uncovered. Not behind the acrylic: a cover reflects its
+laser back and it then sees "something" all the time. If it has to sit behind the acrylic, drill a
+hole of about 8 mm in front of the chip. Keep the protective film off the chip (peel it if a yellow
+film is still on it).
+
+### First test (Serial Monitor)
+
+1. Upload firmware **0.2.0** by cable (VS Code, `env:esp32`, **→**). The start line now ends with
+   `distance sensor ok` (`none` = check the four main wires).
+2. Type `tof` + Enter. It prints the **distance**, the **empty view** it has learned (your wall or
+   bin lid), whether a **pack is in front**, and what it has learned about the light.
+3. Hold your hand at 10, 20 and 30 cm and type `tof` each time: the distance should match within
+   1–2 cm.
+4. In Gedara: **Settings → Devices → the scanner → How it watches → Distance sensor + light**,
+   **White LED → Auto**, Save, press **#** on the scanner.
+
+**Auto** reads without the LED first. If no code comes within a short wait (it learns how long your
+reads usually take: 0.4–1.2 s) the LED comes on and it reads again. It remembers, hour by hour,
+when the LED was needed, so in the evening it lights the LED at once, and in daylight it never does.
+Every 8th pack it tries without the light again, so it notices when the kitchen is bright.
+
 ## Why these pins (for the curious)
 
 | Pins | Reason |
@@ -172,7 +218,8 @@ press any number or letter key and it reads once with the light.
 | not used: D0, D2, D5, D12, D15 | "strapping" pins: the chip reads them while starting; a key held down there could stop it booting |
 | not used: D6–D11 | the board's own flash memory |
 | D34 (IR sensor), D19 (LED) | added 13 Nov: D34 is input-only, right for a sensor; D19 is a plain output that is low while the board starts |
-| free for later: D23 (output), D35, VP, VN (inputs only) | new parts without touching the wiring above |
+| D35 (distance GPIO1), D23 (XSHUT) | added 14 Nov: D35 is input-only; D23 is only ever pulled low (to restart the sensor), otherwise left to the sensor board's own pull-up |
+| free for later: VP, VN (inputs only) | e.g. a light sensor on VP, without touching the wiring above |
 
 Current on the 3V3 pin: board about 80 mA (peaks of 300–500 mA while Wi-Fi sends, from the board's
 own regulator), scanner up to 70 mA while its lamp is on, OLED 15 mA, buzzer under 30 mA. A normal

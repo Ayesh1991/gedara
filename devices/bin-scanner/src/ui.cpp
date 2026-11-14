@@ -55,6 +55,8 @@ int minuteNow() {
 #include <U8g2lib.h>
 #include <Wire.h>
 
+#include "i2cbus.h"
+
 namespace {
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C oled(U8G2_R0, U8X8_PIN_NONE, PIN_OLED_SCL, PIN_OLED_SDA);
 int ox = 0, oy = 0;  // the burn-in walk
@@ -321,12 +323,15 @@ void draw(const UiModel& m, const UiStatus& s, uint32_t now) {
       oled.drawStr(0, 56, m.line2);
       break;
   }
+  i2cbus::Guard g;  // the distance sensor shares these wires
   oled.sendBuffer();
 }
 }  // namespace
 
 void ui::begin() {
   mtx = xSemaphoreCreateMutex();
+  i2cbus::begin();
+  i2cbus::Guard g;
   Wire.begin(PIN_OLED_SDA, PIN_OLED_SCL, 400000);
   Wire.beginTransmission(OLED_ADDR);
   oledOk = Wire.endTransmission() == 0;
@@ -374,10 +379,12 @@ void ui::task(void*) {
       const bool sleeping = resting && !wantOff && idleFor > 300000;
       const uint8_t wantContrast = uilogic::contrast(c.bright, quiet || idleFor > 60000);
       if (wantContrast != lastContrast) {
+        i2cbus::Guard g;
         oled.setContrast(wantContrast);
         lastContrast = wantContrast;
       }
       if (wantOff != off) {
+        i2cbus::Guard g;
         oled.setPowerSave(wantOff ? 1 : 0);
         off = wantOff;
         drawn = UINT32_MAX;
@@ -392,6 +399,7 @@ void ui::task(void*) {
           if (sleeping) {
             oled.clearBuffer();
             drawSleep();
+            i2cbus::Guard g;
             oled.sendBuffer();
           } else {
             draw(m, s, now);

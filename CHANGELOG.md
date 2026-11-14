@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12.3 — Bin scanner: a distance sensor, and a light that comes on only when it helps
+- **How it watches → Distance sensor + light**: a VL53L0X measures how far the pack is with its own laser, so
+  dark, white and shiny packs and the room's light make no difference. It sees a pack 40 ms after it arrives
+  and the read starts at once; the session ends as soon as the pack leaves. It learns the empty view (wall,
+  bin lid) and re-learns it if something is left there for a minute. Wiring: docs/bin-scanner/pins.md
+  (shares the OLED's D21 / D22; GPIO1 → D35, XSHUT → D23). Schema 114, scanner firmware 0.2.0.
+- **White LED → Auto** (new default): it reads without the LED first and lights it after a learned wait
+  (0.4–1.2 s), or at once at the hours it has learned the kitchen is dark; every 8th pack it tries without
+  again. Also Always and Off. **A pack counts within** 12–40 cm.
+- The screen coaches: "A little closer" / "A little further". Serial `tof` shows distance, the empty view
+  and what it learned. A missing sensor falls back to the reader's own sensing and is retried every minute.
+
 ## 0.12.2 — Bin scanner: link barcodes with # Check
 - Products from scanned bills have no barcode. Press **#** on the scanner and scan their packs: a barcode
   Gedara doesn't know is only **linked** (nothing is used or added). The scanner says "Link it on your phone";

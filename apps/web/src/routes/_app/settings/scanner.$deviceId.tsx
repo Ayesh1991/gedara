@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { formatLatency, wifiQuality } from '@/lib/scale/format';
-import { keymapVariants, scannerOnline } from '@/lib/scanner/format';
+import { keymapVariants, lightModeOf, scannerOnline } from '@/lib/scanner/format';
 import {
   invalidateScanner,
   pauseScanner,
@@ -32,7 +32,7 @@ import {
   type ScannerCommand,
   type ScannerDevice,
 } from '@/lib/scanner/queries';
-import { DEFAULT_SENSE, EYES, SENSES, type ScannerSettings } from '@scanner/protocol';
+import { DEFAULT_SENSE, EYES, LIGHT_MODES, RANGE_MM, SENSES, type ScannerSettings } from '@scanner/protocol';
 
 export const Route = createFileRoute('/_app/settings/scanner/$deviceId')({
   component: ScannerPage,
@@ -146,7 +146,7 @@ function SettingsForm({ deviceId, settings, canWrite }: { deviceId: string; sett
               type="checkbox"
               className="h-4 w-4 accent-[var(--accent-a)]"
               checked={s.eye_quiet === 'key'}
-              disabled={!canWrite || s.eye === 'key' || s.eye === 'near'}
+              disabled={!canWrite || s.eye === 'key' || s.eye === 'near' || s.eye === 'tof'}
               onChange={(e) => setS({ ...s, eye_quiet: e.target.checked ? 'key' : 'same' })}
             />
             {t('scanner.settings.eyeQuiet')}
@@ -165,6 +165,49 @@ function SettingsForm({ deviceId, settings, canWrite }: { deviceId: string; sett
               </label>
               <p className="mt-1.5 text-[12.5px] text-faint">{t('scanner.settings.nearHint')}</p>
             </>
+          )}
+          {s.eye === 'tof' && (
+            <div className="mt-3 flex flex-col gap-3" data-testid="scanner-tof-settings">
+              <div>
+                <label className={fieldLabel} htmlFor="sc-light-mode">
+                  {t('scanner.settings.lightMode')}
+                </label>
+                <select
+                  id="sc-light-mode"
+                  className={selectClass}
+                  value={lightModeOf(s)}
+                  disabled={!canWrite}
+                  // The IR mode reads only "light": keep it in step (off stays off there too).
+                  onChange={(e) => {
+                    const m = e.target.value as (typeof LIGHT_MODES)[number];
+                    setS({ ...s, light_mode: m, light: m !== 'off' });
+                  }}
+                >
+                  {LIGHT_MODES.map((v) => (
+                    <option key={v} value={v}>
+                      {t(`scanner.settings.lightModes.${v}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={fieldLabel} htmlFor="sc-range">
+                  {t('scanner.settings.range', { cm: Math.round((s.range_mm ?? RANGE_MM.default) / 10) })}
+                </label>
+                <input
+                  id="sc-range"
+                  type="range"
+                  min={RANGE_MM.min}
+                  max={RANGE_MM.max}
+                  step={10}
+                  value={s.range_mm ?? RANGE_MM.default}
+                  disabled={!canWrite}
+                  onChange={(e) => setS({ ...s, range_mm: Number(e.target.value) })}
+                  className="w-full accent-[var(--accent-a)]"
+                />
+              </div>
+              <p className="text-[12.5px] text-faint">{t('scanner.settings.tofHint')}</p>
+            </div>
           )}
         </div>
 
@@ -424,7 +467,7 @@ function ScannerPage() {
           tone={wifi === 'weak' ? 'text-caution' : undefined}
         />
         <Stat label={t('scanner.detail.queue')} value={String(st.queue ?? 0)} tone={(st.queue ?? 0) > 0 ? 'text-caution' : undefined} />
-        <Stat label={t('scanner.detail.eye')} value={st.eye ? t(`scanner.detail.eyes.${(['sense', 'always', 'key', 'near', 'missing'] as const).find((e) => e === st.eye) ?? 'other'}`) : '—'} tone={st.eye === 'missing' ? 'text-red' : undefined} />
+        <Stat label={t('scanner.detail.eye')} value={st.eye ? t(`scanner.detail.eyes.${(['sense', 'always', 'key', 'near', 'tof', 'tof_missing', 'missing'] as const).find((e) => e === st.eye) ?? 'other'}`) : '—'} tone={st.eye === 'missing' || st.eye === 'tof_missing' ? 'text-red' : undefined} />
         <Stat label={t('scanner.detail.latency')} value={st.latency_ms != null ? formatLatency(st.latency_ms) : '—'} />
         <Stat label={t('scanner.detail.scans')} value={String(device.reading_count)} />
         <Stat label={t('scanner.detail.restart')} value={st.reset ?? '—'} />

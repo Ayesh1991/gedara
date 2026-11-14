@@ -13,6 +13,7 @@
 #include "app.h"
 #include "catalog.h"
 #include "hw.h"
+#include "tof.h"
 #include "logbuf.h"
 #include "net.h"
 #include "ota.h"
@@ -87,9 +88,15 @@ void command(String cmd) {
   } else if (cmd == "near") {
     Serial.printf("[NEAR] the IR sensor %s right now%s · light budget %lu ms\n", nearsense::present() ? "SEES something" : "sees nothing",
                   app::nearBlocked() ? " (blocked)" : "", static_cast<unsigned long>(app::lightBudgetMs()));
+  } else if (cmd == "tof") {
+    app::printTof();
 #ifdef GEDARA_FAKE
   } else if (cmd == "near on" || cmd == "near off") {
     nearsense::inject(cmd.endsWith("on"));
+  } else if (cmd == "tof off") {
+    tof::inject(8190);                                   // nothing in front
+  } else if (cmd.startsWith("tof ")) {
+    tof::inject(static_cast<uint16_t>(cmd.substring(4).toInt()));  // tof 150: something 15 cm away
 #endif
   } else if (cmd.startsWith("sense ")) {
     // sense <p1> <p2>: raw sensitivity numbers for tuning (lower = keener; factory 50 10). Until the next restart.
@@ -112,9 +119,9 @@ void command(String cmd) {
     keypad::inject2('A', 'D', 10300);                    // A + D for 10 s (Wi-Fi setup)
 #endif
   } else {
-    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · lamp · near · sense <p1> <p2> · reboot"
+    Serial.println("commands: status · sync · server gedara|gedara-staging · portal · offline on|off · buzz · lamp · near · tof · sense <p1> <p2> · reboot"
 #ifdef GEDARA_FAKE
-                   " · scan <code> · key <0-9 A-D * #> · hold <key> · setup · near on|off"
+                   " · scan <code> · key <0-9 A-D * #> · hold <key> · setup · near on|off · tof <mm>|off"
 #endif
     );
   }
@@ -162,9 +169,10 @@ void setup() {
   const ScannerConfig& c = settings::get().config;
   nearsense::begin();
   lamp::begin();
+  const bool tofOk = tof::begin();
   const bool readerOk = scanner::begin(c.eye == 1   ? gm861::Eye::Always
                                        : c.eye == 2 ? gm861::Eye::Key
-                                       : c.eye == 3 ? gm861::Eye::Near
+                                       : c.eye == 3 || (c.eye == 4 && tofOk) ? gm861::Eye::Near
                                                     : gm861::Eye::Sense,
                                        c.sense == 2 ? gm861::Sense::Max : (c.sense == 0 ? gm861::Sense::Normal : gm861::Sense::High));
   app::begin();
@@ -174,7 +182,8 @@ void setup() {
   snprintf(l1, sizeof l1, "reader %s  screen %s", readerOk ? "ok" : "MISSING", ui::ok() ? "ok" : "MISSING");
   snprintf(l2, sizeof l2, "storage %s  waiting %u", fsOk ? "ok" : "ERROR", static_cast<unsigned>(outbox::pending()));
   ui::show(Screen::Boot, "bin scanner " FW_VERSION, l1, l2, "", Icon::None, 3500);
-  logbuf::logf("[SELFTEST] %s | %s | %s | names %u\n", kBuild, l1, l2, static_cast<unsigned>(catalog::count()));
+  logbuf::logf("[SELFTEST] %s | %s | %s | names %u | distance sensor %s\n", kBuild, l1, l2, static_cast<unsigned>(catalog::count()),
+               tofOk ? "ok" : "none");
   logbuf::logf("[BOOT] fw %s · restart reason: %s · update: %s", FW_VERSION, net::resetReasonText(),
                ota::state().length() ? ota::state().c_str() : "-");
 

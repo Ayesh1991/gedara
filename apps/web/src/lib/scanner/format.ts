@@ -97,3 +97,10 @@ export function keymapVariants(): { id: 'normal' | 'swapped' | 'reversed' | 'swa
     { id: 'swappedReversed', map: build((r, c) => at(3 - c, 3 - r)) },
   ];
 }
+
+/** The light setting as the scanner reads it: light_mode, else the older on/off (= always / off), else auto. */
+export function lightModeOf(s: { light?: boolean; light_mode?: 'auto' | 'always' | 'off' }): 'auto' | 'always' | 'off' {
+  if (s.light_mode) return s.light_mode;
+  if (s.light === undefined) return 'auto';
+  return s.light ? 'always' : 'off';
+}

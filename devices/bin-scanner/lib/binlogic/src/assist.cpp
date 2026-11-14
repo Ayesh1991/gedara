@@ -8,6 +8,9 @@ bool passed(uint32_t now, uint32_t t) { return static_cast<int32_t>(now - t) >= 
 
 void Controller::start(uint32_t nowMs) {
   session_ = true;
+  manualSession_ = false;
+  lit_ = false;
+  relit_ = false;
   sessionStart_ = nowMs;
   lastTrigger_ = 0;
   triggers_ = 0;
@@ -21,8 +24,15 @@ void Controller::stop(uint32_t nowMs) {
   waitForClear_ = near_;
 }
 
-void Controller::onCode(uint32_t nowMs) {
-  if (session_) stop(nowMs);
+CodeInfo Controller::onCode(uint32_t nowMs) {
+  CodeInfo i;
+  if (session_) {
+    i.inSession = true;
+    i.withLight = lit_;
+    i.msToCode = nowMs - sessionStart_;
+    stop(nowMs);
+  }
+  return i;
 }
 
 void Controller::manual(uint32_t nowMs) {
@@ -37,6 +47,12 @@ bool Controller::takeBlockedEvent() {
 }
 
 Out Controller::update(bool nearRaw, uint32_t nowMs, bool lightWanted) {
+  Policy p;
+  p.lightAfterMs = lightWanted ? 0 : kNever;
+  return update(nearRaw, nowMs, p);
+}
+
+Out Controller::update(bool nearRaw, uint32_t nowMs, const Policy& p) {
   Out out;
 
   // LED budget: what was on since the last call is spent, the rest refills at a quarter speed.
@@ -58,19 +74,19 @@ Out Controller::update(bool nearRaw, uint32_t nowMs, bool lightWanted) {
     raw_ = nearRaw;
     rawSince_ = nowMs;
   }
-  if (raw_ != near_ && nowMs - rawSince_ >= kDebounceMs) {
+  if (raw_ != near_ && nowMs - rawSince_ >= p.debounceMs) {
     near_ = raw_;
     if (near_) nearSince_ = nowMs;
     else clearSince_ = nowMs;
   }
   if (!near_) {
     if (blocked_ || waitForClear_) {
-      if (nowMs - clearSince_ >= kClearMs) {
+      if (nowMs - clearSince_ >= p.clearMs) {
         blocked_ = false;
         waitForClear_ = false;
       }
     }
-  } else if (!blocked_ && nowMs - nearSince_ >= kBlockedMs) {
+  } else if (!blocked_ && p.blockedMs != kNever && nowMs - nearSince_ >= p.blockedMs) {
     blocked_ = true;
     blockedEvent_ = true;
     if (session_) stop(nowMs);
@@ -82,6 +98,7 @@ Out Controller::update(bool nearRaw, uint32_t nowMs, bool lightWanted) {
     if (pendingManual_) {
       pendingManual_ = false;
       start(nowMs);
+      manualSession_ = true;
     } else if (near_ && !blocked_ && !waitForClear_) {
       start(nowMs);
     }
@@ -89,20 +106,32 @@ Out Controller::update(bool nearRaw, uint32_t nowMs, bool lightWanted) {
 
   if (session_) {
     const uint32_t age = nowMs - sessionStart_;
-    if (age >= kSessionMs) {
+    if (age >= kSessionMs || (p.endOnLeave && !manualSession_ && !near_)) {
       stop(nowMs);
     } else {
-      const bool light = lightWanted && budget_ >= kBudgetMinMs;
+      const bool light = p.lightAfterMs != kNever && age >= p.lightAfterMs && budget_ >= kBudgetMinMs;
       out.led = light;
-      // First read after the light has come up (at once without the light), one more after 2.1 s.
-      const uint32_t first = light ? kWarmupMs : 0;
-      if (triggers_ == 0 && age >= first) {
+      if (light && !lit_) {
+        lit_ = true;
+        litAt_ = nowMs;
+        relit_ = triggers_ > 0;
+      }
+      // The first read at once (or once the light is up); again when the light came on later;
+      // again after 2.1 s (the reader reads for 2 s).
+      if (triggers_ == 0) {
+        if (!light || nowMs - litAt_ >= kWarmupMs) {
+          out.trigger = true;
+          triggers_ = 1;
+          lastTrigger_ = nowMs;
+        }
+      } else if (relit_ && nowMs - litAt_ >= kWarmupMs) {
         out.trigger = true;
-        triggers_ = 1;
+        relit_ = false;
+        triggers_++;
         lastTrigger_ = nowMs;
-      } else if (triggers_ == 1 && passed(nowMs, lastTrigger_ + kRetriggerMs)) {
+      } else if (triggers_ < 3 && passed(nowMs, lastTrigger_ + kRetriggerMs)) {
         out.trigger = true;
-        triggers_ = 2;
+        triggers_++;
         lastTrigger_ = nowMs;
       }
     }

@@ -48,6 +48,8 @@ void begin() {
   c.eyeQuietKey = flag("cfg_eyeq", false);
   c.sense = i32("cfg_sense", 1);
   c.light = flag("cfg_light", true);
+  c.lightMode = i32("cfg_lmode", c.light ? 2 : 0);
+  c.rangeMm = i32("cfg_range", 300);
   c.modeS = i32("cfg_mode", 30);
   c.buzzerPassive = flag("cfg_bzp", true);
   c.bright = i32("cfg_bri", 80);
@@ -76,6 +78,8 @@ void saveConfig(const ScannerConfig& c) {
   prefs.putBool("cfg_eyeq", c.eyeQuietKey);
   prefs.putInt("cfg_sense", c.sense);
   prefs.putBool("cfg_light", c.light);
+  prefs.putInt("cfg_lmode", c.lightMode);
+  prefs.putInt("cfg_range", c.rangeMm);
   prefs.putInt("cfg_mode", c.modeS);
   prefs.putBool("cfg_bzp", c.buzzerPassive);
   prefs.putInt("cfg_bri", c.bright);
@@ -96,6 +100,10 @@ uint32_t loadU32(const char* key, uint32_t def) { return u32(key, def); }
 void storeU32(const char* key, uint32_t v) { prefs.putUInt(key, v); }
 String loadStr(const char* key, const char* def) { return str(key, def); }
 void storeStr(const char* key, const String& v) { prefs.putString(key, v); }
+bool loadBytes(const char* key, uint8_t* out, size_t n) {
+  return prefs.isKey(key) && prefs.getBytesLength(key) == n && prefs.getBytes(key, out, n) == n;
+}
+void storeBytes(const char* key, const uint8_t* in, size_t n) { prefs.putBytes(key, in, n); }
 
 String ingestUrl() { return state.server == "gedara-staging" ? kStaging : kProd; }
 

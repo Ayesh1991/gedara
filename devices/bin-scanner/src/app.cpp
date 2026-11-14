@@ -1,6 +1,8 @@
 #include "app.h"
 
 #include "assist.h"
+#include "lightlearn.h"
+#include "ranger.h"
 
 #include <WiFi.h>
 #include <esp_task_wdt.h>
@@ -19,6 +21,7 @@
 #include "outbox.h"
 #include "scan_record.h"
 #include "settings.h"
+#include "tof.h"
 #include "ui.h"
 #include "uilogic.h"
 #include "version.h"
@@ -65,9 +68,55 @@ bool quietWas = false;
 assist::Controller nearCtl;
 uint32_t lastNearLog = 0;
 
+// "Distance sensor" eye (2026-11-14): the VL53L0X says a pack is in front (lib/binlogic/ranger); the
+// read starts at once; the LED comes on only when the learner expects it to be needed, or when no
+// code came within the learned wait (lib/binlogic/lightlearn); the session ends when the pack leaves.
+ranger::Ranger rng;
+lightlearn::Learner learner;
+bool planned = false;          // the light plan for the current pack is made
+uint32_t planMs = 0;           // its wait (0 = LED at once)
+bool sessionWasPlanned = false;
+bool coached = false;          // "a little closer / further" shown for this pack
+uint32_t zoneSince = 0;
+ranger::Zone zoneWas = ranger::Zone::None;
+uint32_t lastLearnSave = 0;
+bool tofLostLogged = false;
+constexpr const char* kLearnKey = "light_learn";
+
+bool tofWanted() { return settings::get().config.eye == 4; }
+bool tofActive() { return tofWanted() && tof::found(); }
+
+/** Local hour 0–23, or -1 while the clock isn't set. */
+int localHour() {
+  const uint64_t ms = app::epochMs();
+  if (ms == 0) return -1;
+  const int64_t s = static_cast<int64_t>(ms / 1000) + static_cast<int64_t>(settings::get().config.tzOffsetMin) * 60;
+  return static_cast<int>((s % 86400) / 3600);
+}
+
+void saveLearner(bool force) {
+  if (!learner.dirty()) return;
+  const uint32_t now = millis();
+  if (!force && now - lastLearnSave < 1800000) return;  // at most every 30 minutes (flash wear)
+  uint8_t blob[lightlearn::kBlobSize];
+  learner.save(blob);
+  settings::storeBytes(kLearnKey, blob, sizeof blob);
+  learner.clean();
+  lastLearnSave = now;
+}
+
 gm861::Eye wantedEye() {
   const ScannerConfig& c = settings::get().config;
   if (c.eye == 3) return gm861::Eye::Near;  // the IR sensor already keeps it dark and quiet
+  if (c.eye == 4) {
+    if (tof::found()) return gm861::Eye::Near;  // the distance sensor starts each read
+    // No distance sensor: the reader watches by itself (and the log says why).
+    if (!tofLostLogged) {
+      tofLostLogged = true;
+      logbuf::logf("[TOF] no distance sensor found - the reader watches by itself until it answers");
+    }
+    return gm861::Eye::Sense;
+  }
   if (c.eye == 2 || (c.eyeQuietKey && buzzer::quietNow())) return gm861::Eye::Key;
   return c.eye == 1 ? gm861::Eye::Always : gm861::Eye::Sense;
 }
@@ -131,7 +180,12 @@ void onCode(const char* code) {
   strlcpy(lastCode, code, sizeof lastCode);
   lastCodeAt = now;
   lookUntil = 0;
-  nearCtl.onCode(now);  // the light goes off at once
+  const assist::CodeInfo ci = nearCtl.onCode(now);  // the light goes off at once
+  // Learn from packs where the scanner first tried without the light (Auto).
+  if (ci.inSession && sessionWasPlanned && planMs != lightlearn::kAtOnce && tofActive() && settings::get().config.lightMode == 1) {
+    learner.record(localHour(), now, ci.withLight, ci.msToCode);
+    logbuf::logf("[TOF] read in %lu ms %s", static_cast<unsigned long>(ci.msToCode), ci.withLight ? "with the light" : "without the light");
+  }
   ui::wake();
   buzzer::play(Sound::Tick);  // at once: "I read it"
 
@@ -283,6 +337,10 @@ void present(const app::Result& r) {
 
 void app::begin() {
   resultQ = xQueueCreate(8, sizeof(Result));
+  {
+    uint8_t blob[lightlearn::kBlobSize];
+    if (settings::loadBytes(kLearnKey, blob, sizeof blob) && learner.load(blob)) logbuf::logf("[TOF] light habits loaded");
+  }
   seq.begin();
   const ScannerConfig& c = settings::get().config;
   machine.setModeSeconds(static_cast<uint32_t>(c.modeS));
@@ -325,7 +383,52 @@ void app::controlTask(void*) {
       scanner::trigger();
       lastTrigger = now;
     }
-    if (scanner::eye() == gm861::Eye::Near) {
+    if (scanner::eye() == gm861::Eye::Near && tofActive()) {
+      const ScannerConfig& c = settings::get().config;
+      rng.setRange(static_cast<uint16_t>(c.rangeMm));
+      uint16_t mm;
+      while (tof::poll(mm)) rng.update(mm, now);
+      if (rng.takeRelearnEvent()) logbuf::logf("[TOF] something stayed in front for a minute - it is part of the view now (%u mm)", rng.background());
+      // A new pack (or a key): decide about the light once, before the session starts.
+      if (!nearCtl.inSession() && !planned && (rng.present())) {
+        planned = true;
+        planMs = c.lightMode == 0 ? assist::kNever : (c.lightMode == 2 ? lightlearn::kAtOnce : learner.plan(localHour(), now));
+        coached = false;
+        zoneWas = ranger::Zone::None;
+      }
+      // A key press (a pack the sensor missed) lights the LED at once, as in IR mode.
+      assist::Policy pol;
+      pol.lightAfterMs = c.lightMode == 0 ? assist::kNever : (c.lightMode == 2 ? 0 : (planned ? planMs : 0));
+      pol.debounceMs = 0;   // the ranger already wants two readings in a row
+      pol.clearMs = 150;
+      pol.blockedMs = assist::kNever;  // the ranger re-learns the view instead
+      pol.endOnLeave = true;
+      const bool before = nearCtl.inSession();
+      const assist::Out o = nearCtl.update(rng.present(), now, pol);
+      if (!before && nearCtl.inSession()) sessionWasPlanned = planned;
+      if (!nearCtl.inSession() && !rng.present()) planned = false;
+      lamp::set(o.led);
+      if (o.trigger) {
+        scanner::trigger();
+        if (now - lastNearLog > 10000) {
+          lastNearLog = now;
+          logbuf::logf("[TOF] pack at %u mm - reading%s", rng.distance(), o.led ? " with the light" : "");
+        }
+      }
+      if (o.led || nearCtl.inSession()) ui::wake();
+      // Coaching: held too close or too far for 0.8 s without a code.
+      const ranger::Zone z = rng.zone();
+      if (z != zoneWas) {
+        zoneWas = z;
+        zoneSince = now;
+      }
+      if (nearCtl.inSession() && !coached && now - zoneSince >= 800 && (z == ranger::Zone::TooClose || z == ranger::Zone::TooFar)) {
+        coached = true;
+        ui::show(Screen::Notice, z == ranger::Zone::TooClose ? "A little further" : "A little closer",
+                 z == ranger::Zone::TooClose ? "about 10-20 cm" : "about 10-20 cm", "from the window", "", Icon::Look, 2500);
+      }
+      saveLearner(false);
+    } else if (scanner::eye() == gm861::Eye::Near) {
       const assist::Out o = nearCtl.update(nearsense::present(), now, settings::get().config.light);
       lamp::set(o.led);
       if (o.trigger) {
@@ -395,11 +498,26 @@ bool app::paused() { return pausedNow; }
 bool app::nearNow() { return nearCtl.near(); }
 bool app::nearBlocked() { return nearCtl.blocked(); }
 uint32_t app::lightBudgetMs() { return nearCtl.budgetMs(); }
+
+void app::printTof() {
+  const int h = localHour();
+  Serial.printf("[TOF] %s · distance %u mm · empty view %u mm · range %u mm · %s · ambient IR %u · errors %lu · restarts %lu\n",
+                tof::found() ? "found" : "NOT FOUND", tof::last(), rng.background(), rng.range(),
+                rng.present() ? "PACK IN FRONT" : "nothing in front", tof::ambient(), static_cast<unsigned long>(tof::errors()),
+                static_cast<unsigned long>(tof::restarts()));
+  const uint32_t plan = learner.estimate(h, millis()) >= lightlearn::kNeededAt ? 0 : learner.waitMs();
+  Serial.printf("[TOF] light %s · now: %s · hour %d: %u%% needed (%u packs) · wait %lu ms · budget %lu ms\n",
+                settings::get().config.lightMode == 0 ? "off" : (settings::get().config.lightMode == 2 ? "always" : "auto"),
+                plan == 0 ? "LED at once" : "try without first", h, h >= 0 ? learner.slot(h) * 100 / 255 : 0,
+                h >= 0 ? learner.slotCount(h) : 0, static_cast<unsigned long>(learner.waitMs()),
+                static_cast<unsigned long>(nearCtl.budgetMs()));
+}
 uint32_t app::lastLatencyMs() { return latencyMs; }
 void app::locate() { locateAsked = true; }
 
 const char* app::eyeName() {
   if (!scanner::found()) return "missing";
+  if (tofWanted()) return tof::found() ? "tof" : "tof_missing";
   switch (scanner::eye()) {
     case gm861::Eye::Always: return "always";
     case gm861::Eye::Key: return "key";

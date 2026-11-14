@@ -2845,7 +2845,9 @@
         "key": "After a key",
         "near": "IR sensor",
         "missing": "Not answering",
-        "other": "Other"
+        "other": "Other",
+        "tof": "Distance sensor",
+        "tof_missing": "Distance sensor not found"
       },
       "latency": "Last answer took",
       "scans": "Scans",
@@ -2876,7 +2878,8 @@
         "sense": "Senses movement (lamp only when something comes near)",
         "always": "Always reading (lamp flashes all the time)",
         "key": "Only after a key press (20 seconds)",
-        "near": "IR sensor + light (a pack in front starts each read)"
+        "near": "IR sensor + light (a pack in front starts each read)",
+        "tof": "Distance sensor + light (VL53L0X; reads at once, any light)"
       },
       "eyeQuiet": "In quiet hours, only after a key press",
       "light": "Light the pack with the white LED while it reads",
@@ -2903,7 +2906,11 @@
         "swappedReversed": "Swapped and reversed"
       },
       "keymapHint": "If pressing 1 shows another key on the scanner's screen, try another setting here. No rewiring.",
-      "save": "Save"
+      "save": "Save",
+      "lightMode": "White LED",
+      "lightModes": { "auto": "Auto: only when it helps (learned)", "always": "Always while reading", "off": "Off" },
+      "range": "A pack counts within {{cm}} cm",
+      "tofHint": "Needs the VL53L0X on D21 / D22 (GPIO1 to D35, XSHUT to D23). Auto reads without the LED first and switches it on after a short wait, or at once at the times it has learned the kitchen is dark. The light is on at most 4 seconds per pack. A pack it misses: press any number or letter key."
     },
     "pause": {
       "title": "Pause",
