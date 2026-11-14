@@ -188,8 +188,12 @@ void applyConfig(JsonObject cfg) {
   c.quietFrom = qf.substring(0, 2).toInt() * 60 + qf.substring(3, 5).toInt();
   c.quietTo = qt.substring(0, 2).toInt() * 60 + qt.substring(3, 5).toInt();
   const String eye = cfg["eye"] | "sense";
-  c.eye = eye == "always" ? 1 : (eye == "key" ? 2 : (eye == "near" ? 3 : 0));
+  c.eye = eye == "always" ? 1 : (eye == "key" ? 2 : (eye == "near" ? 3 : (eye == "tof" ? 4 : 0)));
   c.light = cfg["light"] | true;
+  // The light: Auto / Always / Off (migration 114); before that only "light" on or off (= Always / Off).
+  const String lm = cfg["light_mode"] | "";
+  c.lightMode = lm == "off" ? 0 : (lm == "always" ? 2 : (lm == "auto" ? 1 : (cfg["light"].is<bool>() ? (c.light ? 2 : 0) : 1)));
+  c.rangeMm = constrain(cfg["range_mm"] | 300, 120, 400);
   c.eyeQuietKey = String(cfg["eye_quiet"] | "same") == "key";
   const String sense = cfg["sense"] | "high";
   c.sense = sense == "max" ? 2 : (sense == "normal" ? 0 : 1);

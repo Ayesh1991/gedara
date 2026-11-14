@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cleanScanText, DEFAULT_KEYMAP, ScannerSettings, SyncRequest } from '@scanner/protocol';
 import { checkFirmware } from '../scale/espImage';
-import { canUndoScan, formatAmount, formatChange, keymapValid, keymapVariants, needsYou, packsLeft, scannerOnline, statusTone } from './format';
+import { canUndoScan, formatAmount, formatChange, keymapValid, keymapVariants, lightModeOf, needsYou, packsLeft, scannerOnline, statusTone } from './format';
 
 describe('scanner amounts', () => {
   it('shows pieces as a plain count and sizes with their unit', () => {
@@ -125,5 +125,14 @@ describe('scanner firmware file', () => {
     expect(checkFirmware(image(9, 'GEDARA-FW:gedara-bin-scanner:0.1.0:END'), 'scanner')).toEqual({ ok: false, problem: 'wrong_chip' });
     expect(checkFirmware(image(0, 'GEDARA-FW:gedara-bin-scanner:0.1.0:END', 0x1c0001), 'scanner')).toEqual({ ok: false, problem: 'too_large' });
     expect(checkFirmware(image(0, 'GEDARA-FW:gedara-bin-scanner:0.1.0:END'))).toEqual({ ok: false, problem: 'wrong_chip' });
+  });
+});
+
+describe('lightModeOf', () => {
+  it('reads the new setting, else the old on/off, else auto', () => {
+    expect(lightModeOf({ light_mode: 'off', light: true })).toBe('off');
+    expect(lightModeOf({ light: true })).toBe('always');
+    expect(lightModeOf({ light: false })).toBe('off');
+    expect(lightModeOf({})).toBe('auto');
   });
 });

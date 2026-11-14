@@ -14,6 +14,10 @@
 //   · a sensor that stays covered for 15 s (something left in front of it, or the sensor turned too
 //     far) counts as "blocked": nothing happens until it clears, and it is reported once;
 //   · a key press starts one session by hand, under the same rules (for when the sensor misses).
+//
+// The distance sensor (2026-11-14) uses the same sessions with a Policy: the read starts at once
+// without the LED, the LED comes on only after a learned wait (lib/binlogic/lightlearn) or at once
+// when the light is expected to be needed, and the session ends as soon as the pack leaves.
 #pragma once
 #include <stdint.h>
 
@@ -29,6 +33,23 @@ constexpr uint32_t kBlockedMs = 15000;      // covered this long = blocked
 constexpr uint32_t kBudgetMs = 15000;       // LED on-time the budget holds
 constexpr uint32_t kBudgetMinMs = 500;      // below this the LED stays off
 
+constexpr uint32_t kNever = 0xFFFFFFFFu;
+
+struct Policy {
+  uint32_t lightAfterMs = 0;        // 0 = LED at once · kNever = no LED · else after this long without a code
+  uint32_t debounceMs = kDebounceMs;
+  uint32_t clearMs = kClearMs;
+  uint32_t blockedMs = kBlockedMs;  // kNever = never "blocked"
+  bool endOnLeave = false;          // the session ends when the pack leaves (not for a key press)
+};
+
+/** What a code meant for the session (for the learning). */
+struct CodeInfo {
+  bool inSession = false;
+  bool withLight = false;   // the LED had come on before the code
+  uint32_t msToCode = 0;    // from the start of the session
+};
+
 struct Out {
   bool led = false;       // drive the LED now
   bool trigger = false;   // send "read now" (once per true)
@@ -39,8 +60,10 @@ class Controller {
   /** Call every few ms with the sensor's state (true = something in front), now, and whether the
    *  extra light is wanted (a setting). */
   Out update(bool nearRaw, uint32_t nowMs, bool lightWanted);
+  /** The same with a full policy (the distance sensor). */
+  Out update(bool nearRaw, uint32_t nowMs, const Policy& p);
   /** The reader produced a code. */
-  void onCode(uint32_t nowMs);
+  CodeInfo onCode(uint32_t nowMs);
   /** A key was pressed: one session by hand. */
   void manual(uint32_t nowMs);
 
@@ -66,6 +89,10 @@ class Controller {
   bool blockedEvent_ = false;
   // session
   bool session_ = false;
+  bool manualSession_ = false;
+  bool lit_ = false;            // the LED has come on in this session
+  bool relit_ = false;          // it came on after a read had started: read again once it is up
+  uint32_t litAt_ = 0;
   bool waitForClear_ = false;   // a session ended with the pack still there
   uint32_t sessionStart_ = 0;
   uint32_t lastTrigger_ = 0;

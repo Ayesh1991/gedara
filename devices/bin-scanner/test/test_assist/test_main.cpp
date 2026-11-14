@@ -141,6 +141,86 @@ void test_a_key_starts_one_session_by_hand() {
   TEST_ASSERT_EQUAL_UINT32(1, c.sessions());
 }
 
+// ── The distance sensor's policy (2026-11-14) ──
+namespace {
+assist::Policy tofPolicy(uint32_t lightAfter) {
+  assist::Policy p;
+  p.lightAfterMs = lightAfter;
+  p.debounceMs = 0;
+  p.clearMs = 150;
+  p.blockedMs = assist::kNever;
+  p.endOnLeave = true;
+  return p;
+}
+}  // namespace
+
+void test_tof_reads_at_once_without_the_light_and_lights_it_later() {
+  Controller c;
+  const assist::Policy p = tofPolicy(600);
+  Out o = c.update(true, 1000, p);
+  TEST_ASSERT_TRUE(o.trigger);           // the read starts the moment the pack is there
+  TEST_ASSERT_FALSE(o.led);
+  int triggers = 0;
+  uint32_t ledFrom = 0;
+  for (uint32_t t = 1005; t < 1700; t += 5) {
+    o = c.update(true, t, p);
+    if (o.trigger) triggers++;
+    if (o.led && !ledFrom) ledFrom = t;
+  }
+  TEST_ASSERT_EQUAL_UINT32(1600, ledFrom);  // no code after 0.6 s: the LED comes on
+  TEST_ASSERT_EQUAL_INT(1, triggers);       // and the reader is asked again once it is up
+  const assist::CodeInfo i = c.onCode(1800);
+  TEST_ASSERT_TRUE(i.inSession);
+  TEST_ASSERT_TRUE(i.withLight);
+  TEST_ASSERT_EQUAL_UINT32(800, i.msToCode);
+  TEST_ASSERT_FALSE(c.update(true, 1805, p).led);
+}
+
+void test_tof_a_quick_read_never_lights_the_led() {
+  Controller c;
+  const assist::Policy p = tofPolicy(600);
+  c.update(true, 0, p);
+  for (uint32_t t = 5; t < 200; t += 5) TEST_ASSERT_FALSE(c.update(true, t, p).led);
+  const assist::CodeInfo i = c.onCode(200);
+  TEST_ASSERT_FALSE(i.withLight);
+  TEST_ASSERT_EQUAL_UINT32(200, i.msToCode);
+  int triggers = 0;
+  for (uint32_t t = 205; t < 5000; t += 5) triggers += c.update(true, t, p).trigger ? 1 : 0;
+  TEST_ASSERT_EQUAL_INT(0, triggers);       // the pack is still there: nothing more
+}
+
+void test_tof_light_at_once_when_learned() {
+  Controller c;
+  const assist::Policy p = tofPolicy(0);
+  Out o = c.update(true, 0, p);
+  TEST_ASSERT_TRUE(o.led);
+  TEST_ASSERT_FALSE(o.trigger);             // the light comes up first
+  bool trig = false;
+  for (uint32_t t = 5; t <= 60; t += 5) trig = c.update(true, t, p).trigger || trig;
+  TEST_ASSERT_TRUE(trig);
+}
+
+void test_tof_the_session_ends_when_the_pack_leaves() {
+  Controller c;
+  const assist::Policy p = tofPolicy(600);
+  c.update(true, 0, p);
+  c.update(true, 100, p);
+  c.update(false, 105, p);                  // gone (the ranger has already debounced it)
+  TEST_ASSERT_FALSE(c.inSession());
+  TEST_ASSERT_FALSE(c.update(false, 2000, p).led);
+  // The next pack starts a new session after the 0.5 s rest.
+  TEST_ASSERT_TRUE(c.update(true, 2100, p).trigger);
+  TEST_ASSERT_EQUAL_UINT32(2, c.sessions());
+}
+
+void test_tof_off_never_lights() {
+  Controller c;
+  const assist::Policy p = tofPolicy(assist::kNever);
+  uint32_t led = 0;
+  for (uint32_t t = 0; t < 5000; t += 5) led += c.update(true, t, p).led ? 5 : 0;
+  TEST_ASSERT_EQUAL_UINT32(0, led);
+}
+
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_nothing_happens_with_nothing_in_front);
@@ -152,5 +232,10 @@ int main(int, char**) {
   RUN_TEST(test_a_covered_sensor_is_blocked_until_it_clears);
   RUN_TEST(test_the_light_budget_protects_the_led);
   RUN_TEST(test_a_key_starts_one_session_by_hand);
+  RUN_TEST(test_tof_reads_at_once_without_the_light_and_lights_it_later);
+  RUN_TEST(test_tof_a_quick_read_never_lights_the_led);
+  RUN_TEST(test_tof_light_at_once_when_learned);
+  RUN_TEST(test_tof_the_session_ends_when_the_pack_leaves);
+  RUN_TEST(test_tof_off_never_lights);
   return UNITY_END();
 }

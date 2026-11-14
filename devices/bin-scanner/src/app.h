@@ -34,8 +34,9 @@ bool paused();
 bool nearNow();               // near mode: the IR sensor sees something
 bool nearBlocked();
 uint32_t lightBudgetMs();     // what is left of the LED's on-time budget
+void printTof();              // Serial "tof": distance, empty view, light habits
 uint32_t lastLatencyMs();     // scan → Gedara's answer, for Diagnostics
-const char* eyeName();        // sense · always · key · missing
+const char* eyeName();        // sense · always · key · near · tof · tof_missing · missing
 
 void locate();                // "Find it" from Gedara
 void showStatus();            // * held 3 s

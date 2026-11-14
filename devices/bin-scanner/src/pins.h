@@ -31,4 +31,12 @@ constexpr int PIN_NEAR = 34;
 // base ← 330 Ω ← GPIO19, and 10 kΩ base → GND keeps it dark while the board starts. About 0.3 A.
 constexpr int PIN_LAMP = 19;
 
-// Free for later, no rewiring of the above: GPIO23 (output); GPIO35, 36 (VP), 39 (VN) (inputs only).
+// The VL53L0X distance sensor (2026-11-14) shares the OLED's I²C wires (address 0x29). Its GPIO1 output
+// goes low when a reading is ready (input-only GPIO35; the sensor board has its own pull-up). Its XSHUT
+// (low = off) is on GPIO23: the scanner only ever pulls it low, to restart a stuck sensor, and otherwise
+// leaves it to the board's pull-up (the sensor's own supply is 2.8 V).
+constexpr int TOF_ADDR = 0x29;
+constexpr int PIN_TOF_INT = 35;
+constexpr int PIN_TOF_XSHUT = 23;
+
+// Free for later, no rewiring of the above: GPIO36 (VP), 39 (VN) (inputs only), e.g. a light sensor on VP.

@@ -145,13 +145,17 @@ export type ScanResult = z.infer<typeof ScanResult>;
 export const DEVICE_COMMANDS = ['beep', 'identify', 'reboot', 'ota'] as const;
 export type DeviceCommand = (typeof DEVICE_COMMANDS)[number];
 
-export const EYES = ['sense', 'always', 'key', 'near'] as const;
+export const EYES = ['sense', 'always', 'key', 'near', 'tof'] as const;
 export type Eye = (typeof EYES)[number];
 export const DEFAULT_KEYMAP = '123A456B789C*0#D';
 /** How keenly the reader senses a pack in its sensing mode (max = as keen as the GM861S goes). */
 export const SENSES = ['normal', 'high', 'max'] as const;
 export type Sense = (typeof SENSES)[number];
 export const DEFAULT_SENSE: Sense = 'high';
+/** The white LED (migration 114): auto = only when the scanner has learned it helps. */
+export const LIGHT_MODES = ['auto', 'always', 'off'] as const;
+export type LightMode = (typeof LIGHT_MODES)[number];
+export const RANGE_MM = { min: 120, max: 400, default: 300 } as const;
 
 export const ScannerSettings = z.object({
   volume: z.number().int().min(0).max(100),
@@ -166,6 +170,8 @@ export const ScannerSettings = z.object({
   keymap: z.string().regex(/^[0-9A-D*#]{16}$/),
   sense: z.enum(SENSES).optional(), // absent on scanners added before migration 110 = high
   light: z.boolean().optional(), // near mode: the white LED while reading (absent = on, migration 113)
+  light_mode: z.enum(LIGHT_MODES).optional(), // distance sensor: auto / always / off (migration 114)
+  range_mm: z.number().int().min(RANGE_MM.min).max(RANGE_MM.max).optional(), // distance sensor (migration 114)
 });
 export type ScannerSettings = z.infer<typeof ScannerSettings>;
 

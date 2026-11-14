@@ -9,7 +9,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(84);
+select plan(87);
 
 create function pg_temp.u(p_code text) returns uuid language sql stable as
   $$ select id from public.unit where household_id is null and code = p_code $$;
@@ -227,6 +227,12 @@ select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"sense":"max
 select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"sense":"laser"}}')$$, pg_temp.dev()), '23514', null, 'an unknown sensitivity is refused');
 select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"near","light":true}}')$$, pg_temp.dev()), 'an IR sensor and a white LED can be chosen');
 select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"light":"bright"}}')$$, pg_temp.dev()), '23514', null, 'the light is on or off, nothing else');
+select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"tof","light_mode":"auto","range_mm":250}}')$$, pg_temp.dev()),
+  'a distance sensor, the light only when needed, a 25 cm range');
+select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"light_mode":"sometimes"}}')$$, pg_temp.dev()), '23514', null,
+  'the light is auto, always or off');
+select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"range_mm":900}}')$$, pg_temp.dev()), '23514', null,
+  'the range is 12-40 cm');
 select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"key"}}')$$, pg_temp.dev()), 'back to the key eye for the tests below');
 select throws_ok(format($$select rpc_device_command(%L, 'tare')$$, pg_temp.dev()), '23514', null, 'a scanner has no tare command');
 select lives_ok(format($$select rpc_device_command(%L, 'beep')$$, pg_temp.dev()), 'Test beep is queued');
