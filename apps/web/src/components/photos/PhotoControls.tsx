@@ -88,7 +88,7 @@ function CameraSnapSheet({ open, onClose, onPhoto }: { open: boolean; onClose: (
 }
 
 /** Two hidden inputs + the webcam sheet; `take()` / `choose()` open them. */
-function usePhotoSources(onPhoto: (f: File) => void) {
+export function usePhotoSources(onPhoto: (f: File) => void) {
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [snapOpen, setSnapOpen] = useState(false);

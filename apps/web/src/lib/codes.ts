@@ -70,6 +70,20 @@ export function labelUrl(code: string, base: string): string {
   return `${base.replace(/\/+$/, '')}/s/${code}`;
 }
 
+/**
+ * Photo by scan (v0.13.0): the small QR on a thing's / product's photo space carries the item's own
+ * URL plus `?photo=1`. Scanning it in Gedara (or with the phone's camera) opens the camera for that
+ * item.
+ */
+export function photoScanUrl(code: string, origin: string): string {
+  return `${labelUrl(code, origin)}?photo=1`;
+}
+
+/** Was this scan a "take a photo of it" QR? */
+export function hasPhotoIntent(input: string): boolean {
+  return /\/s\/[^?#\s]+\?(?:[^#\s]*&)?photo=1(?:[&#]|$)/i.test(input.trim());
+}
+
 /** Short human text for a label's single line (NIIMBOT: ≤ 10 chars). */
 export function shortLabelText(name: string, max = 10): string {
   const clean = name.normalize('NFKD').replace(/[^\x20-\x7E]/g, '').trim().toUpperCase();

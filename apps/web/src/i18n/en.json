@@ -1537,7 +1537,8 @@
       "in_repair": "In repair",
       "sold": "Sold",
       "disposed": "Given away / thrown out",
-      "lost": "Lost"
+      "lost": "Lost",
+      "used": "Used"
     },
     "condition": {
       "new": "New",
@@ -1579,6 +1580,7 @@
       "lend": "Lend",
       "returned": "Got it back",
       "sell": "Sell",
+      "used": "Used",
       "edit": "Edit",
       "split": "Split into {{count}}",
       "delete": "Delete"
@@ -1711,6 +1713,9 @@
       "sold": "Sold",
       "soldTo": "Sold to {{name}}",
       "unsold": "Sale undone",
+      "used": "Used",
+      "usedIn": "Used in {{what}}",
+      "unused": "Brought back (not used after all)",
       "status": "Marked {{status}}",
       "expense": "expense",
       "empty": "Nothing has happened yet."
@@ -1749,11 +1754,26 @@
       "undo": "Undo the sale",
       "undone": "Sale undone"
     },
+    "used": {
+      "title": "Used {{name}}?",
+      "intro": "For a small thing that went into building something you still have, like screws in a book rack. It leaves the list and is worth 0 from that day. Gave it away or threw it out? Use Sell instead.",
+      "what": "What did it go into? (optional)",
+      "whatHint": "e.g. Book rack, living room",
+      "on": "Used on",
+      "confirm": "Mark as used",
+      "done": "{{name}} marked as used",
+      "undone": "Back in the list",
+      "info": "Used on {{date}}",
+      "infoIn": "Used on {{date}} · went into {{what}}",
+      "bringBack": "Not used — bring back",
+      "broughtBack": "{{name}} is back in use"
+    },
     "errors": {
       "notThingLine": "That bill line isn't a Things line.",
       "sold": "This thing is sold. Undo the sale first.",
       "routed": "That bill line already has a thing. Delete the thing first.",
       "duplicate": "That's already saved.",
+      "goneDay": "That day can't be in the future, or before it was bought.",
       "nameTaken": "That name is already used.",
       "reference": "Something it points to is missing, or a place still has things in it.",
       "invalid": "Some of the values aren't valid.",
@@ -2429,7 +2449,25 @@
     "added": "Photo added",
     "replaced": "Photo replaced",
     "removed": "Photo removed",
-    "removeFailed": "Couldn't remove the photo."
+    "removeFailed": "Couldn't remove the photo.",
+    "scan": {
+      "hint": "Scan this with Gedara on your phone to take its photo",
+      "label": "Scan for photo",
+      "title": "Take the photo with your phone",
+      "step1": "Open Gedara on your phone and tap Scan.",
+      "step2": "Point it at this QR code.",
+      "step3": "The camera opens. Tap the shutter: the photo shows up here.",
+      "sheetTitle": "Photo of {{name}}",
+      "replaces": "This replaces the current photo.",
+      "noCamera": "The camera didn't start. Allow the camera for Gedara, or use the camera app or the gallery.",
+      "startCamera": "Start camera",
+      "cameraApp": "Camera app",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "retake": "Retake",
+      "done": "Done",
+      "refused": { "viewer": "You can look at this, but viewers can't add photos.", "valuable": "This is a valuable thing: only the owner can add its photos." }
+    }
   },
   "moves": {
     "moveAnyway": "Move anyway",

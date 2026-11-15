@@ -28,7 +28,14 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000);
 }
 
-const GONE = new Set(['sold', 'disposed', 'lost']);
+/** Statuses of a thing the household no longer has (or that went into something else: used). */
+export const GONE_STATUSES = ['sold', 'disposed', 'lost', 'used'] as const;
+const GONE = new Set<string>(GONE_STATUSES);
+
+/** Sold, given away, lost or used up: off the active list, worth 0. */
+export function isGone(status: string): boolean {
+  return GONE.has(status);
+}
 
 export interface ValueInput {
   purchase_price: number | null;
@@ -38,6 +45,8 @@ export interface ValueInput {
   status: string;
   sold_on: string | null;
   sold_price: number | null;
+  /** The day it was used / given away (v0.13.0). */
+  gone_on?: string | null;
   maintenance_cost?: number | null;
 }
 
@@ -55,7 +64,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 /** Straight-line depreciation and cost of ownership, as of `today` (or the day it left). */
 export function assetValue(a: ValueInput, today: string): AssetValue {
   const gone = GONE.has(a.status);
-  const end = gone ? (a.sold_on ?? today) : today;
+  const end = gone ? (a.sold_on ?? a.gone_on ?? today) : today;
   const monthsOwned = a.purchased_on ? monthsBetween(a.purchased_on, end) : null;
   let bookValue: number | null = null;
   if (a.purchase_price !== null) {

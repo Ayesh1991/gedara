@@ -10,6 +10,7 @@ import {
   suggestedLifeMonths,
   warrantyState,
   type ValueInput,
+  isGone,
 } from './value';
 
 const base: ValueInput = {
@@ -77,6 +78,15 @@ describe('assetValue (straight-line, mirrors v_asset)', () => {
   it('counts months only up to the day it was sold', () => {
     const v = assetValue({ ...base, status: 'sold', sold_on: '2025-01-15', sold_price: 1 }, '2026-09-25');
     expect(v.monthsOwned).toBe(12);
+  });
+  it('used: worth nothing, months stop on the day it was used, the whole price is its cost', () => {
+    const v = assetValue({ ...base, status: 'used', gone_on: '2025-01-15' }, '2026-09-25');
+    expect(v.currentValue).toBe(0);
+    expect(v.monthsOwned).toBe(12);
+    expect(v.costOfOwnership).toBe(120000);
+    expect(v.saleGain).toBeNull();
+    expect(isGone('used')).toBe(true);
+    expect(isGone('in_use')).toBe(false);
   });
   it('cost per month uses at least one month', () => {
     expect(assetValue({ ...base, purchased_on: '2026-09-20' }, '2026-09-25').costPerMonth).toBe(120000);

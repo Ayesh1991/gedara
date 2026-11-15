@@ -6,6 +6,7 @@ import { todayIn } from '@/lib/time';
 import { AssetForm } from './AssetForm';
 import { AssetCard } from './AssetViews';
 import { useThings } from './bits';
+import { isGone } from '@/lib/things/value';
 
 /** "What's in this room / box" for Things (MASTER_PLAN §4 #2): the things kept here, with photos. */
 export function PlaceThings({
@@ -25,7 +26,7 @@ export function PlaceThings({
   const things = useThings(householdId);
   const [adding, setAdding] = useState(false);
   const today = todayIn(timezone);
-  const here = (things.assets.data ?? []).filter((a) => a.location_id === placeId && !['sold', 'disposed', 'lost'].includes(a.status));
+  const here = (things.assets.data ?? []).filter((a) => a.location_id === placeId && !isGone(a.status));
 
   return (
     <section className="flex flex-col gap-3" data-testid="place-things">
