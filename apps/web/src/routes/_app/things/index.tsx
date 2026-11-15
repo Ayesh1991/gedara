@@ -18,6 +18,7 @@ import { SERVICE_SOON_DAYS, WARRANTY_SOON_DAYS, daysBetween, warrantyState } fro
 import { todayIn } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { textParam } from '@/lib/search';
+import { isGone } from '@/lib/things/value';
 
 const FILTERS = ['active', 'attention', 'lent', 'in_repair', 'stored', 'gone', 'all'] as const;
 type Filter = (typeof FILTERS)[number];
@@ -40,11 +41,10 @@ export const Route = createFileRoute('/_app/things/')({
   component: ThingsPage,
 });
 
-const GONE = new Set(['sold', 'disposed', 'lost']);
 
 /** Warranty ending soon or a service due soon (the "Attention" of Things). */
 function needsAttention(a: Asset, today: string): boolean {
-  if (GONE.has(a.status)) return false;
+  if (isGone(a.status)) return false;
   if (warrantyState(a, today).state === 'ending') return true;
   return a.next_due !== null && daysBetween(today, a.next_due) <= SERVICE_SOON_DAYS;
 }
@@ -52,11 +52,11 @@ function needsAttention(a: Asset, today: string): boolean {
 function matches(a: Asset, filter: Filter, today: string): boolean {
   switch (filter) {
     case 'active':
-      return !GONE.has(a.status);
+      return !isGone(a.status);
     case 'attention':
       return needsAttention(a, today);
     case 'gone':
-      return GONE.has(a.status);
+      return isGone(a.status);
     case 'all':
       return true;
     default:
@@ -81,7 +81,7 @@ function ThingsPage() {
 
   const assets = useMemo(() => things.assets.data ?? [], [things.assets.data]);
   const pending = things.pending.data ?? [];
-  const owned = assets.filter((a) => !GONE.has(a.status));
+  const owned = assets.filter((a) => !isGone(a.status));
   const cost = owned.reduce((s, a) => s + (a.purchase_price ?? 0), 0);
   const value = owned.reduce((s, a) => s + (a.current_value ?? 0), 0);
   const unpriced = owned.filter((a) => a.purchase_price === null).length;

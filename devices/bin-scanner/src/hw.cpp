@@ -168,6 +168,39 @@ void keypad::inject2(char a, char b, uint32_t holdMs) {
 }
 #endif
 
+// ── Near sensor and lamp ──────────────────────────────────────────────────────
+#ifndef GEDARA_FAKE
+void nearsense::begin() { pinMode(PIN_NEAR, INPUT); }  // the module drives it (pull-up on its board)
+bool nearsense::present() { return digitalRead(PIN_NEAR) == LOW; }
+#else
+namespace {
+volatile bool fakeNear = false;
+}
+void nearsense::begin() {}
+bool nearsense::present() { return fakeNear; }
+void nearsense::inject(bool on) { fakeNear = on; }
+#endif
+
+namespace {
+bool lampOn = false;
+}
+void lamp::begin() {
+#ifndef GEDARA_FAKE
+  pinMode(PIN_LAMP, OUTPUT);
+  digitalWrite(PIN_LAMP, LOW);
+#endif
+}
+void lamp::set(bool on) {
+  if (on == lampOn) return;
+  lampOn = on;
+#ifndef GEDARA_FAKE
+  digitalWrite(PIN_LAMP, on ? HIGH : LOW);
+#else
+  Serial.printf("[LAMP] %s\n", on ? "on" : "off");
+#endif
+}
+bool lamp::on() { return lampOn; }
+
 // ── GM861S ────────────────────────────────────────────────────────────────────
 namespace {
 gm861::LineAssembler lines;

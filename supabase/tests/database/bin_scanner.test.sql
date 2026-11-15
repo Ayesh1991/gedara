@@ -9,7 +9,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(76);
+select plan(87);
 
 create function pg_temp.u(p_code text) returns uuid language sql stable as
   $$ select id from public.unit where household_id is null and code = p_code $$;
@@ -225,6 +225,15 @@ select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"keymap":"1
   '23514', null, 'a key map must have every key once');
 select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"sense":"max"}}')$$, pg_temp.dev()), 'the reader can be made as keen as it goes');
 select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"sense":"laser"}}')$$, pg_temp.dev()), '23514', null, 'an unknown sensitivity is refused');
+select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"near","light":true}}')$$, pg_temp.dev()), 'an IR sensor and a white LED can be chosen');
+select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"light":"bright"}}')$$, pg_temp.dev()), '23514', null, 'the light is on or off, nothing else');
+select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"tof","light_mode":"auto","range_mm":250}}')$$, pg_temp.dev()),
+  'a distance sensor, the light only when needed, a 25 cm range');
+select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"light_mode":"sometimes"}}')$$, pg_temp.dev()), '23514', null,
+  'the light is auto, always or off');
+select throws_ok(format($$select rpc_device_update(%L, '{"settings":{"range_mm":900}}')$$, pg_temp.dev()), '23514', null,
+  'the range is 12-40 cm');
+select lives_ok(format($$select rpc_device_update(%L, '{"settings":{"eye":"key"}}')$$, pg_temp.dev()), 'back to the key eye for the tests below');
 select throws_ok(format($$select rpc_device_command(%L, 'tare')$$, pg_temp.dev()), '23514', null, 'a scanner has no tare command');
 select lives_ok(format($$select rpc_device_command(%L, 'beep')$$, pg_temp.dev()), 'Test beep is queued');
 reset role;
@@ -233,6 +242,30 @@ insert into t_c values ('s24', pg_temp.one(pg_temp.sc(24, 'check', '479000000001
 select is((select v -> 'commands' -> 0 ->> 'command' from t_c where k = 's24'), 'beep', 'the command comes with the next answer');
 select is((select (v ->> 'next_ms')::int from t_c where k = 's24'), 5000, '… and the scanner checks back soon, else every 30 minutes');
 select is((select v -> 'config' ->> 'eye' from t_c where k = 's24'), 'key', '… with its settings');
+
+-- ── # Check on a new barcode only links it (14 Nov) ───────────────────────────
+insert into t_c values ('s25', pg_temp.one(pg_temp.sc(25, 'check', '4796666666666')));
+select is(pg_temp.res('s25') ->> 'status', 'unknown', 'Check on a barcode no product has: it waits to be linked');
+insert into t_c values ('s26', pg_temp.one(pg_temp.sc(26, 'check', '4797777777777')));
+insert into t_c values ('s27', pg_temp.one(pg_temp.sc(27, 'use', '4797777777777')));
+reset role;
+set local role authenticated;
+insert into t_c values ('mv25', to_jsonb((select count(*) from stock_movement where household_id = '00000000-0000-0000-0000-000000f11daa')));
+insert into t_c values ('tb25', to_jsonb(pg_temp.lft('00000000-0000-0000-0000-000000d11d05')));
+insert into product_barcode (household_id, product_id, barcode) values
+  ('00000000-0000-0000-0000-000000f11daa', '00000000-0000-0000-0000-000000d11d05', '4796666666666'),
+  ('00000000-0000-0000-0000-000000f11daa', '00000000-0000-0000-0000-000000d11d05', '4797777777777');
+insert into t_c values ('r25', rpc_bin_scan_resolve(pg_temp.scan(25), 'apply'));
+select is((select v ->> 'status' || ' ' || (v ->> 'applied') from t_c where k = 'r25'), 'checked 1', 'after linking, the Check scan is only a check');
+select is((select count(*) from stock_movement where household_id = '00000000-0000-0000-0000-000000f11daa'),
+  (select (v #>> '{}')::bigint from t_c where k = 'mv25'), '… and no stock moved');
+insert into t_c values ('r26', rpc_bin_scan_resolve(pg_temp.scan(26), 'apply'));
+select is((select v ->> 'status' || ' ' || (v ->> 'applied') from t_c where k = 'r26'), 'checked 2',
+  'a Check scan linked while a Used scan of the same code waits: both are applied');
+select is(pg_temp.lft('00000000-0000-0000-0000-000000d11d05'), (select (v #>> '{}')::numeric - 1 from t_c where k = 'tb25'),
+  '… the Used one takes a toothbrush');
+reset role;
+set local role service_role;
 
 -- ── Limits: 20 scans in a minute → paused, scans held ─────────────────────────
 insert into t_c values ('b30', pg_temp.batch(30, 'use', '4798888888888'));

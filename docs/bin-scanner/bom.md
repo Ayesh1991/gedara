@@ -34,7 +34,14 @@
 | Clear **acrylic** piece, 30 × 30 mm, 2 mm | a window in front of the scanner (its manual recommends acrylic or clear glass) | Rs 50 |
 | Double-sided tape, 2 small screws, cable clips | mounting | — |
 
-Optional later (pins are free, no rewiring): a light sensor (LDR + 10 kΩ) on **D34** for automatic
+Added 13 Nov for a dim kitchen (pins.md, "The IR sensor and the white light"): IR obstacle module
+MH-B / FC-51 (Rs 140), 1 W white LED (Rs 30), 4.7 Ω 1 W + 330 Ω + 10 kΩ resistors, 2N2222 transistor.
+A small piece of aluminium to fix the LED to helps it stay cool.
+
+Added 14 Nov: a **VL53L0X or VL53L1X** distance sensor board (GY-VL53L0XV2 / "VL53L0/1XV2", 6 holes; the scanner finds out which chip) on the OLED's I²C wires,
+GPIO1 → D35, XSHUT → D23 (pins.md, "The distance sensor").
+
+Optional later (pins are free, no rewiring): a light sensor (LDR + 10 kΩ) on **VP** for automatic
 screen brightness.
 
 ## Where it goes

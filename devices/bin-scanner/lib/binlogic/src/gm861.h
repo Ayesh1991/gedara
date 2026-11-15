@@ -31,7 +31,9 @@ void trigger(uint8_t out[kCmdLen]);
 size_t parseReply(const uint8_t* buf, size_t len, uint8_t* value);
 
 // ── Settings bytes ────────────────────────────────────────────────────────────
-enum class Eye : uint8_t { Sense, Always, Key };
+/** Sense = the module's induction mode · Always = continuous · Key = read after a key press ·
+ *  Near = an IR sensor (and a key) starts each read; the module is in command mode for Key and Near. */
+enum class Eye : uint8_t { Sense, Always, Key, Near };
 
 constexpr uint16_t kZoneMode = 0x0000;       // LED, lamp, read mode
 constexpr uint16_t kZoneStabilise = 0x0004;  // image stabilisation time (sense mode), × 0.1 s

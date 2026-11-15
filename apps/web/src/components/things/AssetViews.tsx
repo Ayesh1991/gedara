@@ -1,11 +1,11 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowRightLeft, HandCoins, Handshake, PackagePlus, Receipt, RotateCcw, Tag as TagIcon, Wrench, type LucideIcon } from 'lucide-react';
+import { ArrowRightLeft, Hammer, HandCoins, Handshake, PackagePlus, Receipt, RotateCcw, Tag as TagIcon, Wrench, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Money } from '@/components/money/bits';
 import type { EntityPhoto } from '@/lib/photos';
 import type { Activity, Asset, AssetStatus, MaintenanceLog } from '@/lib/things/queries';
-import { SERVICE_SOON_DAYS, daysBetween } from '@/lib/things/value';
+import { SERVICE_SOON_DAYS, daysBetween, isGone } from '@/lib/things/value';
 import { formatDay } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { AssetArt, StatusBadge, WarrantyBadge } from './bits';
@@ -25,7 +25,7 @@ export function DueChip({ nextDue, today }: { nextDue: string | null; today: str
 
 /** Gallery tile: photo, A-tag, name, where it is, warranty / service / status chips. */
 export function AssetCard({ asset, photo, today }: { asset: Asset; photo?: EntityPhoto | null; today: string }) {
-  const gone = ['sold', 'disposed', 'lost'].includes(asset.status);
+  const gone = isGone(asset.status);
   return (
     <Link
       to="/things/$assetId"
@@ -129,6 +129,16 @@ export function AssetTimeline({
         break;
       case 'unsold':
         entries.push({ ...base, icon: RotateCcw, title: t('things.timeline.unsold') });
+        break;
+      case 'used':
+        entries.push({
+          ...base,
+          icon: Hammer,
+          title: s(p.note) ? t('things.timeline.usedIn', { what: s(p.note) }) : t('things.timeline.used'),
+        });
+        break;
+      case 'unused':
+        entries.push({ ...base, icon: RotateCcw, title: t('things.timeline.unused') });
         break;
       default:
         entries.push({

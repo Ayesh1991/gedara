@@ -14,6 +14,7 @@ import { SCAN_EVENT } from '@/components/scan/WedgeListener';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { hasPhotoIntent } from '@/lib/codes';
 import { membershipQuery } from '@/lib/queries';
 import { resolveScan, type Resolved } from '@/lib/resolve';
 import { shouldAutoStart } from '@/lib/scanner';
@@ -81,12 +82,33 @@ function ScanPage() {
     [t],
   );
 
+  // Photo by scan (v0.13.0): the small QR on a photo space opens that item's camera, whatever mode
+  // the HUD is in (leaving this page stops the scanner's camera first).
+  const takePhoto = useCallback(
+    async (text: string) => {
+      try {
+        const result = await resolveScan(text);
+        if (result.status === 'asset') {
+          return void navigate({ to: '/things/$assetId', params: { assetId: result.asset.id }, search: { photo: 1 } });
+        }
+        if (result.status === 'product') {
+          return void navigate({ to: '/pantry/$productId', params: { productId: result.product.id }, search: { photo: 1 } });
+        }
+        setHits((h) => [{ id: Date.now() + Math.random(), at: new Date(), result }, ...h].slice(0, 12));
+      } catch {
+        toast.error(t('scan.lookupFailed'));
+      }
+    },
+    [navigate, t],
+  );
+
   const handle = useCallback(
     (text: string) => {
-      if (modeRef.current) modeRef.current(text);
+      if (hasPhotoIntent(text)) void takePhoto(text);
+      else if (modeRef.current) modeRef.current(text);
       else void show(text);
     },
-    [show],
+    [show, takePhoto],
   );
 
   const leaveClaim = useCallback(

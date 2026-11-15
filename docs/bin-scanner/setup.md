@@ -70,13 +70,32 @@ your phone, and Gedara open on it.
      **Pantry → Bin scanner** and tap **Apply**.
 4. The waiting scans are applied, and from now on that barcode just works.
 
+### Linking many at once (products from bills)
+
+Products that came in from a scanned bill have no barcode yet. To give them one without using or adding
+anything:
+
+1. Keep the phone open on Gedara (any page).
+2. Press **#** on the scanner, then scan a pack from the cupboard. The scanner says **Link it · on your
+   phone · Nothing else changes**.
+3. The phone shows **Link this barcode** with **Link to a product**. Tap it: under **Is it one of
+   these?** Gedara lists the likely products, those with **no barcode yet** first. Tap the right one,
+   check **One scan means** (filled in from the pack size when Open Food Facts knows it), tap **Link**.
+4. Scan the next pack. **#** stays on for 30 seconds after each scan, so a whole shelf goes in one
+   go; press **#** again if it went back to Used.
+
+A barcode that is already linked just shows the name and how many are left.
+
 ## Part 5 · Settings (Gedara → Settings → Devices → the scanner)
 
 | Setting | What it does |
 |---|---|
 | Volume, quiet hours | in quiet hours it only ticks softly and the screen is dim |
 | Screen off in quiet hours | the screen goes dark after 30 s; any key or scan wakes it |
-| How it watches | **Senses movement** (lamp only when something comes near) · Always · Only after a key |
+| How it watches | **Senses movement** (lamp only when something comes near) · Always · Only after a key · **IR sensor + light** (needs the IR sensor and LED, pins.md) · **Distance sensor + light** (needs the VL53L0X or VL53L1X, pins.md; recommended) |
+| White LED (distance sensor) | **Auto** (only when it helps; learned) · Always · Off |
+| A pack counts within (distance sensor) | 12–40 cm (default 30) |
+| Light the pack | IR sensor mode: the white LED lights the pack while it reads (on at most 4 s per pack) |
 | How keenly it senses | Normal · **High** · Highest. Use Highest if it misses packs in a dim kitchen; go back a step if it lights up when nobody is there |
 | Seconds before it goes back to Used | 10–120 |
 | Buzzer | Passive (tunes) or Active (beeps) |

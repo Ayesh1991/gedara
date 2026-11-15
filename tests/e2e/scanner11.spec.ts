@@ -31,15 +31,25 @@ const ingestUrl = () => `${process.env.VITE_SUPABASE_URL!.replace(/\/+$/, '')}/f
 /** A 13-digit in-store code (prefix 2) nobody else uses. */
 const randomBarcode = () => `2${Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('')}`;
 
-test.afterAll(async ({}, testInfo) => {
+// A household may have 3 scanners: each test's scanner goes when the test ends.
+async function removeScanners(project: string) {
   const admin = stagingAdmin();
-  const like = `${tag(testInfo.project.name)}%`;
-  const { data: devices } = await admin.from('device').select('id').like('name', like);
+  const { data: devices } = await admin.from('device').select('id').like('name', `${tag(project)}%`);
   const deviceIds = (devices ?? []).map((d) => d.id as string);
   if (deviceIds.length) {
     await admin.from('bin_scan').delete().in('device_id', deviceIds);
     await admin.from('device').delete().in('id', deviceIds);
   }
+}
+
+test.afterEach(async ({}, testInfo) => {
+  await removeScanners(testInfo.project.name);
+});
+
+test.afterAll(async ({}, testInfo) => {
+  const admin = stagingAdmin();
+  const like = `${tag(testInfo.project.name)}%`;
+  await removeScanners(testInfo.project.name);
   const { data: products } = await admin.from('product').select('id').like('name', like);
   const ids = (products ?? []).map((p) => p.id as string);
   if (ids.length) {
@@ -114,7 +124,8 @@ test('a finished cup scanned at the bin pops up within 2 s; a replay moves nothi
   const result = await sim.scan(yoghurt.barcode!);
   const answered = Date.now() - started;
   expect(result?.status).toBe('used');
-  const popup = page.getByTestId('scanner-popups').getByTestId('scanner-scan').first();
+  // Phone and iPad runs share one household and see each other's pop-ups: pick this run's card.
+  const popup = page.getByTestId('scanner-popups').getByTestId('scanner-scan').filter({ hasText: `${t} Yoghurt` }).first();
   await expect(popup.getByTestId('scanner-scan-title')).toHaveText(`${t} Yoghurt`, { timeout: 2000 });
   await expect(popup.getByTestId('scanner-scan-left')).toHaveText('5 left', { timeout: 2000 });
   const elapsed = Date.now() - started;
@@ -178,4 +189,37 @@ test('an unknown barcode waits, is linked once and applied; no stock goes on the
   );
   const { data: list } = await userClient().from('shopping_list_item').select('source, done').eq('product_id', icecream.productId);
   expect(list).toEqual([{ source: 'scanner', done: false }]);
+});
+
+test('# Check on a new barcode only links it: the pop-up suggests the product, nothing is used', async ({ page }, testInfo) => {
+  const t = tag(testInfo.project.name);
+  // A product from a bill: in stock, no barcode yet.
+  const lentils = await seedProduct(`${t} Red lentils`, 2, true);
+  const sim = await addScanner(page, `${t} Scanner 3`);
+
+  await page.goto('/pantry');
+  await expect(page.getByRole('heading', { name: 'Pantry', level: 1 })).toBeVisible();
+  await page.waitForTimeout(1500);
+
+  const code = randomBarcode();
+  expect((await sim.scan(code, 'check'))?.status).toBe('unknown');
+  const popup = page.getByTestId('scanner-popups').getByTestId('scanner-scan').filter({ hasText: code });
+  await expect(popup.getByTestId('scanner-scan-title')).toHaveText('Link this barcode', { timeout: 3000 });
+  await popup.getByRole('button', { name: 'Link to a product' }).click();
+
+  const form = page.getByTestId('scanner-link-form');
+  await expect(form).toContainText('Link only');
+  const suggestion = form.getByTestId('scanner-link-suggestions').getByRole('button', { name: new RegExp(`${t} Red lentils`) });
+  await expect(suggestion).toContainText('no barcode yet');
+  await suggestion.click();
+  await expect(suggestion).toHaveAttribute('aria-pressed', 'true');
+  await form.getByRole('button', { name: 'Link', exact: true }).click();
+
+  await expect
+    .poll(async () => (await userClient().from('product_barcode').select('product_id').eq('barcode', code)).data?.[0]?.product_id)
+    .toBe(lentils.productId);
+  expect(await stockOf(lentils.productId)).toBe(2); // linked only: nothing used or added
+  // …and the next scan of it at the bin just works.
+  expect((await sim.scan(code))?.status).toBe('used');
+  expect(await stockOf(lentils.productId)).toBe(1);
 });

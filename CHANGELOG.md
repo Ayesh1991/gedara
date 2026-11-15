@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.13.0 — Photo by scan, and "Used" for things
+- **Photo by scan**: on the PC and the iPad, a thing's or product's photo space has a small QR in its upper-left
+  corner (tap it for a bigger one). Scan it with **Scan** in Gedara on the phone: the item opens with the camera
+  already running; one tap on the shutter saves the photo (WebP 1600 px + 320 px thumb, as always) and the PC
+  shows it within seconds, without a reload. Retake, the phone's camera app and the gallery are one tap away.
+  A new photo replaces the old one. Viewers can't add photos; a valuable thing's photos stay the owner's.
+  On Android Chrome the photo is a full-resolution still; elsewhere (iPhone) a 1080p frame.
+- **Used** (Things): for a small thing used up in building something you still have. Pick the day and, if you
+  like, what it went into ("Book rack, living room"). It leaves the list, is worth 0 from that day (months owned
+  stop there), gets no warranty / service alerts, Ask leaves it out, and its history says "Used in Book rack".
+  Undo for 8 s, and **Not used — bring back** on its page any time. Given away / thrown out stays under Sell.
+- Schema 115 (`asset.status` `used`, `gone_on`, `gone_note`; `attachment` in Realtime).
+
+## 0.12.3 — Bin scanner: a distance sensor, and a light that comes on only when it helps
+- **How it watches → Distance sensor + light**: a VL53L0X or VL53L1X (the "VL53L0/1XV2" board comes with either; the scanner detects which) measures how far the pack is with its own laser, so
+  dark, white and shiny packs and the room's light make no difference. It sees a pack 40 ms after it arrives
+  and the read starts at once; the session ends as soon as the pack leaves. It learns the empty view (wall,
+  bin lid) and re-learns it if something is left there for a minute. Wiring: docs/bin-scanner/pins.md
+  (shares the OLED's D21 / D22; GPIO1 → D35, XSHUT → D23). Schema 114, scanner firmware 0.2.0.
+- **White LED → Auto** (new default): it reads without the LED first and lights it after a learned wait
+  (0.4–1.2 s), or at once at the hours it has learned the kitchen is dark; every 8th pack it tries without
+  again. Also Always and Off. **A pack counts within** 12–40 cm.
+- The screen coaches: "A little closer" / "A little further". Serial `tof` shows distance, the empty view
+  and what it learned. A missing sensor falls back to the reader's own sensing and is retried every minute.
+
+## 0.12.2 — Bin scanner: link barcodes with # Check
+- Products from scanned bills have no barcode. Press **#** on the scanner and scan their packs: a barcode
+  Gedara doesn't know is only **linked** (nothing is used or added). The scanner says "Link it on your phone";
+  the phone's pop-up opens **Link this barcode**.
+- The link sheet now **suggests** the product: products with no barcode yet first, ranked by the name Open Food
+  Facts knows for the barcode, or else the newest products in stock without one. Its pack size fills in
+  "one scan means" when it fits (g / ml). Scanner firmware 0.1.3 (screen text only). No database change.
+
+## 0.12.1 — Bin scanner: an IR sensor and a white light for a dim kitchen
+- **"IR sensor + light"** (Settings › Devices › the scanner › How it watches): an IR obstacle sensor tells the
+  scanner a pack is in front; a 1 W white LED lights it and the reader is told to read. Works the same in a dark
+  kitchen. Schema 113, scanner firmware 0.1.2. Wiring: docs/bin-scanner/pins.md (IR OUT → D34; LED through a
+  2N2222 on D19, from 5 V with a 4.7 Ω 1 W resistor).
+- The light protects itself: at most 4 s per pack, off the moment a code is read, and about 15 s in any minute
+  (after that it still reads, without the extra light). A sensor covered for 15 s is ignored until clear. A pack
+  the sensor misses: press any number or letter key to read once with the light. "Light the pack" can be
+  switched off.
+- Scanner Serial Monitor: `lamp` (LED wiring test, 1 s) and `near` (does the IR sensor see something).
+
 ## 0.12.0 — Phase 12: Quick spend, a cash expense in five seconds; search on Places
 - **Quick spend** (`/quick`): type the amount on a big pad, tap one tile, saved. Paid from your own cash
   wallet, now, by you; a note, another date or another account can be added afterwards (tap it under

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { labelUrl, parseScan, shortLabelText, validGtin } from './codes';
+import { hasPhotoIntent, labelUrl, parseScan, photoScanUrl, shortLabelText, validGtin } from './codes';
 
 describe('parseScan', () => {
   it('accepts raw codes in any case and whitespace', () => {
@@ -59,5 +59,23 @@ describe('helpers', () => {
     expect(shortLabelText('Box 3')).toBe('BOX 3');
     expect(shortLabelText('Kitchen pantry cupboard')).toBe('KITCHEN PA');
     expect(shortLabelText('Café')).toBe('CAFE');
+  });
+});
+
+describe('photo by scan', () => {
+  it('builds the photo QR URL and still resolves to the item code', () => {
+    const url = photoScanUrl('HL:AST:SHW3ZF', 'https://gedara-git-photo-used-ayeshmantha.vercel.app');
+    expect(url).toBe('https://gedara-git-photo-used-ayeshmantha.vercel.app/s/HL:AST:SHW3ZF?photo=1');
+    expect(parseScan(url)).toEqual({ kind: 'ast', code: 'HL:AST:SHW3ZF' });
+    expect(hasPhotoIntent(url)).toBe(true);
+  });
+
+  it('spots the photo intent in the URL form only', () => {
+    expect(hasPhotoIntent('https://gedara.vercel.app/s/HL%3APRD%3A7K2P9Q?photo=1')).toBe(true);
+    expect(hasPhotoIntent('https://gedara.vercel.app/s/HL:PRD:7K2P9Q?x=2&photo=1')).toBe(true);
+    expect(hasPhotoIntent('https://gedara.vercel.app/s/HL:AST:SHW3ZF')).toBe(false);
+    expect(hasPhotoIntent('https://gedara.vercel.app/s/HL:AST:SHW3ZF?photo=10')).toBe(false);
+    expect(hasPhotoIntent('HL:AST:SHW3ZF')).toBe(false);
+    expect(hasPhotoIntent('https://evil.example/?photo=1')).toBe(false);
   });
 });

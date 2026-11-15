@@ -30,7 +30,7 @@ import {
   type PendingLine,
   type Tag,
 } from '@/lib/things/queries';
-import { assetTag, suggestedLifeMonths } from '@/lib/things/value';
+import { assetTag, isGone, suggestedLifeMonths } from '@/lib/things/value';
 import { formatDay } from '@/lib/time';
 import type { Tree } from '@/lib/tree';
 import { cn } from '@/lib/utils';
@@ -190,14 +190,14 @@ function AssetFormBody({
   const parents = useMemo(() => {
     const blocked = src ? partIds(assets, src.id) : new Set<string>();
     return assets
-      .filter((a) => !blocked.has(a.id) && !['sold', 'disposed', 'lost'].includes(a.status))
+      .filter((a) => !blocked.has(a.id) && !isGone(a.status))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [assets, src]);
   const templates = useMemo(() => fieldsFor(fields, categoryId, categories), [fields, categoryId, categories]);
   const category = categories.find((c) => c.id === categoryId);
   const lifeHint = suggestedLifeMonths(category?.name);
   const lineId = src?.transaction_line_id ?? initial?.transaction_line_id ?? null;
-  const statusLocked = src?.status === 'sold' || src?.status === 'lent';
+  const statusLocked = src?.status === 'sold' || src?.status === 'lent' || src?.status === 'used';
 
   async function addTag() {
     const n = newTag.trim();

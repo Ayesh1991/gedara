@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   Copy,
   Gem,
+  Hammer,
   HandCoins,
   Handshake,
   Pencil,
@@ -21,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { ValuableSwitch } from '@/components/ask/ValuableSwitch';
 import { toast } from 'sonner';
 import { Money } from '@/components/money/bits';
+import { PhotoQr, PhotoScanSheet } from '@/components/photos/PhotoByScan';
 import { PhotoEditButton } from '@/components/photos/PhotoControls';
 import { ExtraLabels } from '@/components/scan/ExtraLabels';
 import { AddLabelButton, ScanPlaceButton } from '@/components/scan/InstantScan';
@@ -29,16 +31,18 @@ import { AssetBarcodes } from '@/components/things/AssetBarcodes';
 import { AssetForm } from '@/components/things/AssetForm';
 import { AssetTimeline, DueChip, ValueLine } from '@/components/things/AssetViews';
 import { DocumentsPanel } from '@/components/things/DocumentsPanel';
-import { AssetMoveSheet, LendSheet, SellSheet } from '@/components/things/LifecycleSheets';
+import { AssetMoveSheet, LendSheet, SellSheet, UsedSheet } from '@/components/things/LifecycleSheets';
 import { LogServiceSheet, PlanSheet } from '@/components/things/MaintenanceSheets';
 import { AssetArt, IconAction, Section, StatusBadge, WarrantyBadge, useThings } from '@/components/things/bits';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { mayAddPhoto, photoSearchSchema } from '@/lib/photoScan';
 import { removeEntityPhoto } from '@/lib/photos';
 import { displayValue, fieldsFor } from '@/lib/things/fields';
 import {
   activityQuery,
   assetPhotosKey,
+  bringBack,
   deleteAsset,
   deleteLog,
   invalidateThings,
@@ -53,21 +57,23 @@ import {
   type MaintenanceLog,
   type Plan,
 } from '@/lib/things/queries';
-import { assetTag } from '@/lib/things/value';
+import { assetTag, isGone } from '@/lib/things/value';
 import { formatDay, todayIn } from '@/lib/time';
 import { scheduleUndoableDelete } from '@/lib/undo';
 
 export const Route = createFileRoute('/_app/things/$assetId')({
+  validateSearch: photoSearchSchema,
   component: AssetPage,
 });
 
-type SheetName = 'edit' | 'move' | 'lend' | 'sell' | 'log' | 'plan';
+type SheetName = 'edit' | 'move' | 'lend' | 'sell' | 'used' | 'log' | 'plan';
 
 function AssetPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { assetId } = Route.useParams();
+  const search = Route.useSearch();
   const { membership } = Route.useRouteContext();
   const { id: householdId, timezone, locale } = membership.household;
   const canWrite = membership.role !== 'viewer';
@@ -116,7 +122,7 @@ function AssetPage() {
   const accounts = things.accounts.data ?? [];
   const templates = fieldsFor(things.fields.data ?? [], asset.category_id, categories);
   const custom = (asset.custom ?? {}) as Record<string, unknown>;
-  const gone = ['sold', 'disposed', 'lost'].includes(asset.status);
+  const gone = isGone(asset.status);
   const category = asset.category_parent_name ? `${asset.category_parent_name} › ${asset.category_name}` : asset.category_name;
 
   async function act(fn: () => Promise<unknown>, done?: string) {
@@ -155,6 +161,7 @@ function AssetPage() {
   }
 
   const lent = asset.status === 'lent';
+  const photoAccess = { canWrite, isOwner: membership.role === 'owner', valuable: asset.valuable };
 
   return (
     <div className="flex flex-col gap-5">
@@ -176,6 +183,9 @@ function AssetPage() {
                 queryKey={assetPhotosKey(householdId)}
               />
             )}
+            {mayAddPhoto(photoAccess) && (
+              <PhotoQr code={asset.code} entityType="asset" entityId={asset.id} queryKey={assetPhotosKey(householdId)} />
+            )}
           </div>
           <div className="flex flex-col gap-4 p-5 lg:p-6">
             <div>
@@ -194,6 +204,13 @@ function AssetPage() {
               {lent && (
                 <p className="mt-2 text-[14px] text-info">
                   {t('things.lentTo', { name: asset.lent_to, date: asset.lent_on ? formatDay(asset.lent_on, locale) : '' })}
+                </p>
+              )}
+              {asset.status === 'used' && (
+                <p className="mt-2 text-[14px] text-info" data-testid="used-info">
+                  {asset.gone_note
+                    ? t('things.used.infoIn', { date: asset.gone_on ? formatDay(asset.gone_on, locale) : '', what: asset.gone_note })
+                    : t('things.used.info', { date: asset.gone_on ? formatDay(asset.gone_on, locale) : '' })}
                 </p>
               )}
               {asset.status === 'sold' && (
@@ -300,6 +317,16 @@ function AssetPage() {
                 {t('things.sell.undo')}
               </Button>
             )}
+            {canWrite && asset.status === 'used' && (
+              <Button
+                className="mt-auto w-full"
+                disabled={busy}
+                onClick={() => void act(() => bringBack(asset.id), t('things.used.broughtBack', { name: asset.name }))}
+              >
+                <RotateCcw className="h-[18px] w-[18px]" aria-hidden />
+                {t('things.used.bringBack')}
+              </Button>
+            )}
           </div>
         </div>
       </Card>
@@ -326,6 +353,7 @@ function AssetPage() {
             />
           )}
           {canWrite && !gone && <IconAction label={t('things.actions.sell')} icon={HandCoins} onClick={() => setSheet('sell')} />}
+          {canWrite && !gone && !lent && <IconAction label={t('things.actions.used')} icon={Hammer} onClick={() => setSheet('used')} />}
           <IconAction
             label={t('places.label')}
             icon={Printer}
@@ -525,6 +553,7 @@ function AssetPage() {
         tree={things.tree}
       />
       <LendSheet open={sheet === 'lend'} onClose={() => setSheet(null)} householdId={householdId} timezone={timezone} asset={asset} />
+      <UsedSheet open={sheet === 'used'} onClose={() => setSheet(null)} householdId={householdId} timezone={timezone} asset={asset} />
       <SellSheet
         open={sheet === 'sell'}
         onClose={() => setSheet(null)}
@@ -554,6 +583,17 @@ function AssetPage() {
         asset={asset}
         plan={planFor}
         categories={categories}
+      />
+      <PhotoScanSheet
+        open={search.photo === 1}
+        onClose={() => void navigate({ to: '/things/$assetId', params: { assetId: asset.id }, search: {}, replace: true })}
+        householdId={householdId}
+        entityType="asset"
+        entityId={asset.id}
+        name={asset.name}
+        photo={photo}
+        queryKey={assetPhotosKey(householdId)}
+        access={photoAccess}
       />
     </div>
   );

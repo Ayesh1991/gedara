@@ -15,13 +15,16 @@ import { lastAccount, pickableAccounts, rememberAccount, type Account } from '@/
 import type { Place } from '@/lib/places';
 import { resolveScan } from '@/lib/resolve';
 import {
+  bringBack,
   invalidateThings,
+  markUsed,
   moveAssets,
   sellAsset,
   thingsErrorKey,
   unsellAsset,
   updateAsset,
   type Asset,
+  type AssetStatus,
 } from '@/lib/things/queries';
 import { todayIn } from '@/lib/time';
 import type { Tree } from '@/lib/tree';
@@ -263,6 +266,100 @@ export function LendSheet({
         </div>
         <Button type="submit" variant="primary" disabled={busy || !to.trim()} className="w-full">
           {t('things.lend.confirm')}
+        </Button>
+      </form>
+    </Sheet>
+  );
+}
+
+/**
+ * Used (v0.13.0): a small thing that went into building something else (screws into a book rack).
+ * It leaves the active list with the day and an optional note; Undo and "Bring back" undo it.
+ * Different from "Given away / thrown out": what it became is still in the house.
+ */
+export function UsedSheet({
+  open,
+  onClose,
+  householdId,
+  timezone,
+  asset,
+}: {
+  open: boolean;
+  onClose: () => void;
+  householdId: string;
+  timezone: string;
+  asset: Asset;
+}) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const today = todayIn(timezone);
+  const [on, setOn] = useState(today);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (busy || !on) return;
+    setBusy(true);
+    const before = asset.status as AssetStatus;
+    try {
+      await markUsed(asset.id, on, note);
+      await invalidateThings(qc, householdId);
+      toast.success(t('things.used.done', { name: asset.name }), {
+        duration: UNDO_MS,
+        action: {
+          label: t('common.undo'),
+          onClick: () => {
+            bringBack(asset.id, before)
+              .then(() => invalidateThings(qc, householdId))
+              .then(() => toast(t('things.used.undone')))
+              .catch((err: unknown) => toast.error(t(`things.errors.${thingsErrorKey(err)}`)));
+          },
+        },
+      });
+      setNote('');
+      onClose();
+    } catch (err) {
+      toast.error(t(`things.errors.${thingsErrorKey(err)}`));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title={t('things.used.title', { name: asset.name })}>
+      <form onSubmit={submit} className="flex flex-col gap-4" data-testid="used-form">
+        <p className="text-[13.5px] leading-relaxed text-muted">{t('things.used.intro')}</p>
+        <div>
+          <label htmlFor="used-what" className={fieldLabel}>
+            {t('things.used.what')}
+          </label>
+          <Input
+            id="used-what"
+            value={note}
+            maxLength={200}
+            placeholder={t('things.used.whatHint')}
+            autoFocus
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="used-on" className={fieldLabel}>
+            {t('things.used.on')}
+          </label>
+          <Input
+            id="used-on"
+            type="date"
+            value={on}
+            required
+            max={today}
+            min={asset.purchased_on ?? undefined}
+            onChange={(e) => setOn(e.target.value)}
+            className="tabular"
+          />
+        </div>
+        <Button type="submit" variant="primary" disabled={busy || !on} className="w-full">
+          {busy ? t('common.saving') : t('things.used.confirm')}
         </Button>
       </form>
     </Sheet>
