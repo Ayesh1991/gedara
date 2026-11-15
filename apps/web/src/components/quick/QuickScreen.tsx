@@ -343,7 +343,7 @@ export function QuickScreen({ identity, signedIn, snapshot }: { identity: Identi
   );
 
   const dayPanel = (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       {saved && (
         <div role="status" data-testid="quick-saved" className="slide-up flex items-center gap-3 rounded-2xl border border-gold/40 bg-gold-soft px-3.5 py-3">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold text-[#1a1200]">
@@ -367,7 +367,7 @@ export function QuickScreen({ identity, signedIn, snapshot }: { identity: Identi
         </div>
       )}
 
-      <div className="glass rounded-[var(--r)] p-4" data-testid="quick-today">
+      <div className="glass flex flex-col rounded-[var(--r)] p-4 lg:min-h-0 lg:flex-1" data-testid="quick-today">
         <div className="flex items-baseline gap-2">
           <h2 className="flex-1 font-display text-[15px] font-semibold">{t('quick.today')}</h2>
           <span className="tabular font-mono text-[14px] text-muted">{formatLKR(todayTotal, { whole: true })}</span>
@@ -375,7 +375,7 @@ export function QuickScreen({ identity, signedIn, snapshot }: { identity: Identi
         {rows.length === 0 ? (
           <p className="mt-2 text-[13px] text-muted">{t('quick.todayEmpty')}</p>
         ) : (
-          <ul className="mt-2 flex flex-col">
+          <ul className="mt-2 flex flex-col lg:min-h-0 lg:overflow-y-auto">
             {rows.map((r) => (
               <li key={r.key}>
                 <button
@@ -440,10 +440,13 @@ export function QuickScreen({ identity, signedIn, snapshot }: { identity: Identi
       )}
 
       {/* iPad: the pad on the side of the hand that holds it, the day on the other. */}
-      <div className={cn('flex flex-col gap-4 lg:grid lg:flex-1 lg:gap-10', left ? 'lg:grid-cols-[420px_1fr]' : 'lg:grid-cols-[1fr_420px]')}>
+      <div className={cn('flex flex-col gap-4 lg:mt-auto lg:grid lg:items-stretch lg:gap-8 lg:pb-8', left ? 'lg:grid-cols-[420px_1fr]' : 'lg:grid-cols-[1fr_420px]')}>
         {/* the pad at the bottom of the screen (thumb reach), the day at the top */}
-        <div className={cn('lg:self-end lg:pb-8', !left && 'lg:order-2')}>{entryPanel}</div>
-        <div className="lg:self-start">{dayPanel}</div>
+        <div className={cn(!left && 'lg:order-2')}>{entryPanel}</div>
+        {/* as tall as the pad column: the grid row takes its height from the pad, and the list scrolls inside */}
+        <div className="lg:relative">
+          <div className="lg:absolute lg:inset-0">{dayPanel}</div>
+        </div>
       </div>
 
       {/* ── Sheets ─────────────────────────────────────────────────────────── */}

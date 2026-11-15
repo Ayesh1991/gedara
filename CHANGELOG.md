@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.1 — Quick spend lines up on the iPad
+- **Quick spend on the iPad**: today's list and the number pad sit together in one block at the bottom of the
+  screen, tops and bottoms in line; the list is as tall as the pad and scrolls inside. On the 13-inch iPad Air
+  the list floated at the top and the pad at the bottom. Phones unchanged.
+- Browser test for Quick spend: reads the saved entry back in plain steps (an entry links to an account twice,
+  which the earlier query tripped over), deletes from Today, and tests Undo on a fresh entry.
+
 ## 0.13.0 — Photo by scan, and "Used" for things
 - **Photo by scan**: on the PC and the iPad, a thing's or product's photo space has a small QR in its upper-left
   corner (tap it for a bigger one). Scan it with **Scan** in Gedara on the phone: the item opens with the camera
