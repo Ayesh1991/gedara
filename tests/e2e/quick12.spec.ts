@@ -16,6 +16,12 @@ import { STORAGE_STATE, stagingAdmin } from './staging-guard';
 test.use({ storageState: STORAGE_STATE });
 
 const token = (project: string) => `e2eq${project.startsWith('phone') ? 'p' : 'i'}`;
+/** Phone and iPad run at the same time as the same person, and Today rightly shows both devices'
+ *  entries: each device uses its own amounts so it finds its own rows. */
+const amounts = (project: string) => (project.startsWith('phone') ? { tuk: 350, tea: 100 } : { tuk: 360, tea: 110 });
+/** A row in Today: its name and amount ("10:32 Tea 100"). */
+const todayRow = (page: Page, name: string, amount: number) =>
+  page.getByTestId('quick-today').getByRole('button', { name: new RegExp(`${name}\\s+${amount}$`) });
 const opIds = new Set<string>();
 
 function userClient() {
@@ -49,6 +55,7 @@ async function rememberOps(page: Page) {
     return ops.filter((o) => o.kind === 'spend').map((o) => o.op_id);
   });
   ids.forEach((i) => opIds.add(i));
+  return ids;
 }
 
 /** Every entry id the page sends to the database (so the test checks and removes only its own). */
@@ -110,8 +117,9 @@ test('Quick spend: one tap saves, Undo, its own icon, and the five seconds', asy
   await expect(page.getByTestId('quick-tile-tuk')).toBeVisible();
   const ready = Date.now() - t0;
   const t1 = Date.now();
-  await enter(page, '350', 'tuk');
-  await expect(page.getByTestId('quick-saved')).toContainText('350');
+  const amt = amounts(testInfo.project.name);
+  await enter(page, String(amt.tuk), 'tuk');
+  await expect(page.getByTestId('quick-saved')).toContainText(String(amt.tuk));
   const saved = Date.now() - t1;
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
   testInfo.annotations.push({ type: 'quick-speed', description: `pad ready ${ready} ms, four taps to saved ${saved} ms` });
@@ -124,8 +132,8 @@ test('Quick spend: one tap saves, Undo, its own icon, and the five seconds', asy
   await expect(page).toHaveTitle(/Quick spend/);
 
   // Saved once, as an ordinary expense from the wallet, by the signed-in person, on Transport › Taxi.
-  await expect.poll(async () => (await entries(hh)).filter((e) => e.amount === 350 && e.transaction_id).length).toBe(1);
-  const mine = (await entries(hh)).filter((e) => e.amount === 350);
+  await expect.poll(async () => (await entries(hh)).filter((e) => e.amount === amt.tuk && e.transaction_id).length).toBe(1);
+  const mine = (await entries(hh)).filter((e) => e.amount === amt.tuk && e.transaction_id);
   // Read it back in plain steps (an entry links to an account twice — paid from / paid to — so no embeds).
   const admin = stagingAdmin();
   const txId = mine[0]!.transaction_id!;
@@ -133,7 +141,7 @@ test('Quick spend: one tap saves, Undo, its own icon, and the five seconds', asy
   if (tx.error) throw tx.error;
   const acct = await admin.from('account').select('kind').eq('id', tx.data.account_id).single();
   if (acct.error) throw acct.error;
-  expect([tx.data.type, Number(tx.data.total), tx.data.source, acct.data.kind]).toEqual(['expense', 350, 'manual', 'cash']);
+  expect([tx.data.type, Number(tx.data.total), tx.data.source, acct.data.kind]).toEqual(['expense', amt.tuk, 'manual', 'cash']);
   const line = await admin.from('transaction_line').select('raw_name, destiny, category_id').eq('transaction_id', txId).single();
   if (line.error) throw line.error;
   const cat = await admin.from('category').select('name').eq('id', line.data.category_id!).single();
@@ -141,18 +149,18 @@ test('Quick spend: one tap saves, Undo, its own icon, and the five seconds', asy
   expect([line.data.raw_name, line.data.destiny, cat.data.name]).toEqual(['Three-wheeler', 'expense', 'Taxi / PickMe / Uber']);
 
   // Delete from today's list (tap it → Delete) goes through the money RPC.
-  await page.getByTestId('quick-today').getByRole('button', { name: /Three-wheeler/ }).click();
+  await todayRow(page, 'Three-wheeler', amt.tuk).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
   await expect.poll(async () => (await admin.from('money_transaction').select('id').eq('id', txId)).data?.length).toBe(0);
-  await expect(page.getByTestId('quick-today')).not.toContainText('Three-wheeler');
+  await expect(todayRow(page, 'Three-wheeler', amt.tuk)).toHaveCount(0);
 
   // Undo right after saving: nothing stays (whether it was still on its way or already saved).
-  await enter(page, '100', 'tea');
+  await enter(page, String(amt.tea), 'tea');
   await page.getByTestId('quick-undo').click();
   await expect(page.getByTestId('quick-saved')).toHaveCount(0);
   await page.waitForTimeout(3000);
-  expect((await entries(hh)).filter((e) => e.amount === 100 && e.transaction_id).length).toBe(0);
-  await expect(page.getByTestId('quick-today')).not.toContainText('Tea');
+  expect((await entries(hh)).filter((e) => e.amount === amt.tea && e.transaction_id).length).toBe(0);
+  await expect(todayRow(page, 'Tea', amt.tea)).toHaveCount(0);
 
   // Reachable from Home and Money.
   await page.goto('/');
@@ -175,8 +183,8 @@ test('Quick spend offline: kept on the phone, sent later in order, counted once'
   await enter(page, '120', 'short_eats');
   await enter(page, '450', 'meal');
   await expect(page.getByTestId('quick-waiting')).toContainText('3');
-  await rememberOps(page);
-  expect(opIds.size).toBeGreaterThanOrEqual(3);
+  const offlineOps = new Set(await rememberOps(page));
+  expect(offlineOps.size).toBe(3);
 
   // The hospital basement: the app is closed and opened again with no signal.
   await page.reload();
@@ -185,11 +193,12 @@ test('Quick spend offline: kept on the phone, sent later in order, counted once'
   await page.getByTestId('quick-waiting').click();
   await expect(page.getByTestId('quick-waiting-why')).toBeVisible();
   await page.keyboard.press('Escape');
-  expect((await entries(hh)).filter((e) => e.transaction_id).length).toBe(0);
+  expect((await entries(hh)).filter((e) => offlineOps.has(e.op_id) && e.transaction_id).length).toBe(0);
 
   await context.setOffline(false);
   await expect(page.getByTestId('quick-waiting')).toHaveCount(0, { timeout: 30_000 });
-  const sent = (await entries(hh)).filter((e) => e.amount !== 350).sort((a, b) => a.client_at.localeCompare(b.client_at));
+  // Only entries made in this test that are still money entries (an undone entry keeps its "counted" record).
+  const sent = (await entries(hh)).filter((e) => offlineOps.has(e.op_id) && e.transaction_id).sort((a, b) => a.client_at.localeCompare(b.client_at));
   expect(sent.map((e) => e.amount)).toEqual([60, 120, 450]);
 
   // Another phone (or a retry after a lost answer) sends the very same entries again: nothing changes.
@@ -199,7 +208,7 @@ test('Quick spend offline: kept on the phone, sent later in order, counted once'
   });
   expect(again.error).toBeNull();
   expect((again.data as Array<{ status: string }>).map((r) => r.status)).toEqual(['replayed', 'replayed', 'replayed']);
-  const txIds = (await entries(hh)).filter((e) => e.amount !== 350).map((e) => e.transaction_id);
+  const txIds = (await entries(hh)).filter((e) => offlineOps.has(e.op_id) && e.transaction_id).map((e) => e.transaction_id);
   const { data: txs } = await stagingAdmin().from('money_transaction').select('id, total').in('id', txIds as string[]);
   expect(txs!.reduce((s, t) => s + Number(t.total), 0)).toBe(630);
 });
